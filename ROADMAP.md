@@ -51,21 +51,22 @@ Production-ready Docker setup with CLI installations and auth management scripts
 
 ---
 
-## Phase 5 — Deployment `PLANNED`
+## Phase 5 — VPS Deployment `COMPLETED`
 
-CI/CD pipeline and production deployment via Kamal.
+Direct VPS deployment with systemd and cloudflared tunnel. Pivoted from containerized approach because CLI OAuth tokens break on container rebuilds — native install keeps auth stable.
 
 | Task | Status | Files |
 |---|---|---|
-| Build and push Docker image to GHCR | Pending | `.github/workflows/` |
-| Add Kamal accessory config to Stockerly | Pending | `config/deploy.yml` (in Stockerly repo) |
-| First-time auth setup on VPS | Pending | Manual (documented in README) |
+| Systemd unit file | Done | `shellm.service` |
+| VPS provisioning script | Done | `scripts/setup-vps.sh` |
+| Deploy script (SSH + pull + restart) | Done | `scripts/deploy.sh` |
 
-**Deployment target:**
-- GHCR (GitHub Container Registry) for image hosting
-- Kamal accessory pattern (same as PostgreSQL in Stockerly)
-- Single VPS, Docker Compose in production
-- Consumed by Stockerly via `http://127.0.0.1:6000` or Docker network
+**Key decisions made:**
+- Direct on VPS (not containerized) — CLI auth persists naturally in `~shellm/`
+- systemd process manager — auto-restart, journalctl logs, boot start
+- `cloudflared` tunnel to `shellm.notdefined.dev` — zero open ports, Cloudflare handles TLS
+- Deploy via `ssh + git pull + systemctl restart` — simple, auditable
+- Dedicated `shellm` user with login shell (needed for CLI OAuth flows)
 
 ---
 
@@ -98,7 +99,7 @@ Architectural decisions made during implementation, with rationale.
 | Provider pattern | Functional modules | No classes — simpler, no `this` binding issues |
 | Max concurrent | 2 | Prevents CPU contention on shared VPS |
 | Timeout | 120s | CLI cold start + LLM generation can be slow |
-| Auth persistence | Docker volumes | Survives container restarts and redeploys |
+| Auth persistence | Native home dir (`~shellm/`) | Docker volumes broke on rebuilds; native FS survives CLI updates and deploys |
 | Port binding | 127.0.0.1 only | Internal service, not internet-facing |
 | Queue implementation | In-memory array | Low volume (< 100 req/day), no Redis needed |
 | System prompt handling | `--system-prompt` for Claude, prepend for others | Avoids wasted tokens on CLI agentic scaffolding |
@@ -120,3 +121,8 @@ Architectural decisions made during implementation, with rationale.
 | Container entrypoint | `CMD` exec form (no `ENTRYPOINT`) | Node.js is PID 1, receives signals; allows `docker run shellm bash` override |
 | Resource limits | 768MB RAM, 1.0 CPU | Accommodates Node.js heap + 2 concurrent CLI subprocesses |
 | Log rotation | json-file, 10MB x 3 | Prevents disk exhaustion on low-volume VPS |
+| Deployment model | Direct on VPS (not containerized) | CLI OAuth tokens break on container rebuilds; native install keeps auth stable |
+| Process manager | systemd | Native, zero deps, auto-restart, journalctl integration |
+| Deploy method | SSH + git pull + systemctl restart | Simple, auditable, single-VPS service |
+| Network access | cloudflared tunnel (`shellm.notdefined.dev`) | Zero open ports, Cloudflare handles TLS, no nginx/caddy needed |
+| App directory | `~shellm/shellm/` | User home dir — CLI auth tokens live alongside the app naturally |

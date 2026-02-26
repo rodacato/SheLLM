@@ -1,0 +1,18 @@
+[Unit]
+Description=SheLLM - LLM CLI services unified as a REST API
+After=network.target
+
+[Service]
+Type=simple
+User=shellm
+WorkingDirectory=/home/shellm/shellm
+ExecStart=/usr/bin/node src/server.js
+EnvironmentFile=/home/shellm/shellm/.env
+Environment=NODE_ENV=production NO_COLOR=1
+Restart=on-failure
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
