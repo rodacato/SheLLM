@@ -1,9 +1,15 @@
+'use strict';
+
+const logger = require('../lib/logger');
+
+const QUIET_PATHS = ['/health'];
+
 function requestLogger(req, res, next) {
   const start = Date.now();
 
   res.on('finish', () => {
     const entry = {
-      ts: new Date().toISOString(),
+      event: 'request',
       method: req.method,
       url: req.url,
       status: res.statusCode,
@@ -12,10 +18,14 @@ function requestLogger(req, res, next) {
       client: req.clientName || null,
     };
 
-    if (res.statusCode >= 400) {
-      console.warn(JSON.stringify(entry));
+    if (res.statusCode >= 500) {
+      logger.error(entry);
+    } else if (res.statusCode >= 400) {
+      logger.warn(entry);
+    } else if (QUIET_PATHS.some((p) => req.url.startsWith(p))) {
+      logger.debug(entry);
     } else {
-      console.log(JSON.stringify(entry));
+      logger.info(entry);
     }
   });
 

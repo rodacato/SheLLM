@@ -1,5 +1,6 @@
 const { timingSafeEqual } = require('node:crypto');
 const { sendError, authRequired, rateLimited } = require('../errors');
+const logger = require('../lib/logger');
 
 const GLOBAL_RPM = parseInt(process.env.SHELLM_GLOBAL_RPM || '30', 10);
 const WINDOW_MS = 60_000;
@@ -20,11 +21,7 @@ function loadClients() {
     }
     return clients;
   } catch {
-    console.warn(JSON.stringify({
-      ts: new Date().toISOString(),
-      event: 'config_error',
-      message: 'Failed to parse SHELLM_CLIENTS — auth disabled',
-    }));
+    logger.warn({ event: 'config_error', message: 'Failed to parse SHELLM_CLIENTS — auth disabled' });
     return null;
   }
 }

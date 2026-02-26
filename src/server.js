@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const logger = require('./lib/logger');
 const { route, listProviders } = require('./router');
 const { getHealthStatus } = require('./health');
 const { validateCompletionRequest } = require('./middleware/validate');
@@ -50,12 +51,7 @@ app.post('/completions', auth, sanitizeInput, validateCompletionRequest, async (
 if (require.main === module) {
   app.listen(PORT, () => {
     const authStatus = process.env.SHELLM_CLIENTS ? 'enabled' : 'disabled';
-    console.log(JSON.stringify({
-      ts: new Date().toISOString(),
-      event: 'server_start',
-      port: PORT,
-      auth: authStatus,
-    }));
+    logger.info({ event: 'server_start', port: PORT, auth: authStatus });
   });
 }
 
