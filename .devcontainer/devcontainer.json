@@ -1,0 +1,28 @@
+{
+  "name": "SheLLM",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "forwardPorts": [8000],
+  "postCreateCommand": "npm install",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+      },
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  },
+  "remoteEnv": {
+    "NODE_ENV": "development",
+    "MAX_CONCURRENT": "2",
+    "TIMEOUT_MS": "120000",
+    "LOG_LEVEL": "debug"
+  }
+}
