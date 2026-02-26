@@ -42,7 +42,11 @@ function startForeground(values) {
     process.env.PORT = values.port;
   }
 
-  require('dotenv').config({ path: path.resolve(PROJECT_ROOT, '.env') });
+  require('dotenv').config({ path: path.resolve(PROJECT_ROOT, '.env'), quiet: true });
+
+  const port = process.env.PORT || '6000';
+  console.log(`SheLLM starting on http://127.0.0.1:${port} (Ctrl+C to stop)`);
+
   require(SERVER_SCRIPT);
 }
 
