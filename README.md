@@ -53,7 +53,7 @@ npm run dev
 npm test
 ```
 
-In development, authentication is disabled when `SHELLM_CLIENTS` is not set.
+**Important:** When `SHELLM_CLIENTS` is not set, authentication is completely disabled — all requests to all endpoints are allowed without any token. This is by design for local development, but in production you **must** set `SHELLM_CLIENTS` to restrict access.
 
 ## Authentication
 
@@ -64,22 +64,26 @@ SheLLM supports multi-client authentication via bearer tokens. Each client gets 
 Set the `SHELLM_CLIENTS` environment variable with a JSON object:
 
 ```bash
-SHELLM_CLIENTS='{"stockerly":{"key":"sk-stock-abc123","rpm":10},"dev":{"key":"sk-dev-xyz789","rpm":5}}'
+SHELLM_CLIENTS='{"stockerly":{"key":"stockerly-shellm-2026","rpm":10},"dev":{"key":"dev-shellm-local","rpm":5}}'
 SHELLM_GLOBAL_RPM=30
 ```
 
-- **`key`**: Unique bearer token for the client
+- **`key`**: Unique bearer token for the client (any string you choose)
 - **`rpm`**: Max requests per minute for this client
 - **`SHELLM_GLOBAL_RPM`**: Max total requests per minute across all clients (default: 30)
 
-When `SHELLM_CLIENTS` is not set, authentication is disabled (development mode).
+| `SHELLM_CLIENTS` | Behavior |
+|---|---|
+| Not set | Auth disabled — **all requests are allowed** without a token |
+| Valid JSON | Auth enabled — requires `Authorization: Bearer <key>` |
+| Invalid JSON | Auth disabled + warning in logs |
 
 ### Usage
 
 Include the bearer token in the `Authorization` header:
 
 ```bash
-curl -H "Authorization: Bearer sk-stock-abc123" http://localhost:6000/providers
+curl -H "Authorization: Bearer stockerly-shellm-2026" http://localhost:6000/providers
 ```
 
 ### Request Tracing
