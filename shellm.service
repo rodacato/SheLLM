@@ -4,10 +4,10 @@ After=network.target
 
 [Service]
 Type=simple
-User=shellm
-WorkingDirectory=/home/shellm/shellm
+User=shellmer
+WorkingDirectory=/home/shellmer/shellm
 ExecStart=/usr/bin/node src/server.js
-EnvironmentFile=/home/shellm/shellm/.env
+EnvironmentFile=/home/shellmer/shellm/.env
 Environment=NODE_ENV=production NO_COLOR=1 LOG_LEVEL=info
 Restart=on-failure
 RestartSec=5s

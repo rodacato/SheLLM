@@ -233,12 +233,12 @@ SheLLM runs directly on a VPS with systemd and cloudflared. CLI OAuth tokens per
 bash scripts/setup-vps.sh
 ```
 
-This creates a `shellm` user, installs Node.js 22, CLI tools, clones the repo, configures systemd, and sets up cloudflared.
+This creates a `shellmer` user, installs Node.js 22, CLI tools, clones the repo, configures systemd, and sets up cloudflared.
 
 ### Authenticate CLIs
 
 ```bash
-sudo -iu shellm
+sudo -iu shellmer
 claude auth login
 gemini auth login
 codex auth login
@@ -256,7 +256,7 @@ journalctl -u shellm -f
 ### Update
 
 ```bash
-sudo -iu shellm
+sudo -iu shellmer
 cd ~/shellm && git pull && npm ci --omit=dev
 exit
 sudo systemctl restart shellm

@@ -86,11 +86,11 @@ Direct VPS deployment with systemd and cloudflared tunnel. Pivoted from containe
 | Deploy script (SSH + pull + restart) | Done | `scripts/deploy.sh` |
 
 **Key decisions made:**
-- Direct on VPS (not containerized) — CLI auth persists naturally in `~shellm/`
+- Direct on VPS (not containerized) — CLI auth persists naturally in `~shellmer/`
 - systemd process manager — auto-restart, journalctl logs, boot start
 - `cloudflared` tunnel to `shellm.notdefined.dev` — zero open ports, Cloudflare handles TLS
 - Deploy via `ssh + git pull + systemctl restart` — simple, auditable
-- Dedicated `shellm` user with login shell (needed for CLI OAuth flows)
+- Dedicated `shellmer` user with login shell (needed for CLI OAuth flows)
 
 ---
 
@@ -123,7 +123,7 @@ Architectural decisions made during implementation, with rationale.
 | Provider pattern | Functional modules | No classes — simpler, no `this` binding issues |
 | Max concurrent | 2 | Prevents CPU contention on shared VPS |
 | Timeout | 120s | CLI cold start + LLM generation can be slow |
-| Auth persistence | Native home dir (`~shellm/`) | Docker volumes broke on rebuilds; native FS survives CLI updates and deploys |
+| Auth persistence | Native home dir (`~shellmer/`) | Docker volumes broke on rebuilds; native FS survives CLI updates and deploys |
 | Port binding | 127.0.0.1 only | Internal service, not internet-facing |
 | Queue implementation | In-memory array | Low volume (< 100 req/day), no Redis needed |
 | System prompt handling | `--system-prompt` for Claude, prepend for others | Avoids wasted tokens on CLI agentic scaffolding |
@@ -149,7 +149,7 @@ Architectural decisions made during implementation, with rationale.
 | Process manager | systemd | Native, zero deps, auto-restart, journalctl integration |
 | Deploy method | SSH + git pull + systemctl restart | Simple, auditable, single-VPS service |
 | Network access | cloudflared tunnel (`shellm.notdefined.dev`) | Zero open ports, Cloudflare handles TLS, no nginx/caddy needed |
-| App directory | `~shellm/shellm/` | User home dir — CLI auth tokens live alongside the app naturally |
+| App directory | `~shellmer/shellm/` | User home dir — CLI auth tokens live alongside the app naturally |
 | CLI tool | `shellm` bin via npm link | Convenient dev/ad-hoc management; complements systemd, doesn't replace it |
 | Logger | Structured JSON, LOG_LEVEL filter | Health probes (every 30s) suppressed at `info`; 5xx → `error` for alerting |
 | Log rotation | System logrotate, `copytruncate` | No signal handling in app; daily, 7 rotations, 10M max |

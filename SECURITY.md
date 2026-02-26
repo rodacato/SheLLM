@@ -16,7 +16,7 @@ SheLLM is designed as an **internal service**. It is not intended to be exposed 
 
 Client API keys are configured via the `SHELLM_CLIENTS` environment variable (JSON). Keys must never be committed to the repository.
 
-- **Production**: Store in `.env` on the VPS (owned by `shellm` user, mode 600)
+- **Production**: Store in `.env` on the VPS (owned by `shellmer` user, mode 600)
 - **Development**: Use `.env` file (gitignored) or leave unset (auth disabled)
 - **Pre-commit hook**: `scripts/pre-commit` scans staged changes for secret patterns (`sk-*`, `csk-*`, hardcoded keys). Install with `cp scripts/pre-commit .git/hooks/pre-commit`
 - **Timing-safe comparison**: Bearer tokens are compared using `crypto.timingSafeEqual` to prevent timing attacks
@@ -27,16 +27,16 @@ SheLLM manages auth tokens for three CLI tools. These tokens are **equivalent to
 
 | Provider | Token Location | Persistence |
 |---|---|---|
-| Claude Code | `~/.claude/` | Native home dir (`~shellm/`) |
-| Gemini CLI | `~/.gemini/` | Native home dir (`~shellm/`) |
-| Codex CLI | `~/.codex/` | Native home dir (`~shellm/`) |
+| Claude Code | `~/.claude/` | Native home dir (`~shellmer/`) |
+| Gemini CLI | `~/.gemini/` | Native home dir (`~shellmer/`) |
+| Codex CLI | `~/.codex/` | Native home dir (`~shellmer/`) |
 | Cerebras | `CEREBRAS_API_KEY` env var | Environment |
 
 **Rules:**
 
-- Auth token directories live in the `shellm` user's home directory on the VPS — never committed to version control
+- Auth token directories live in the `shellmer` user's home directory on the VPS — never committed to version control
 - `.gitignore` excludes auth directories
-- Auth tokens should be rotated by running `sudo -iu shellm` then `<cli> auth login`
+- Auth tokens should be rotated by running `sudo -iu shellmer` then `<cli> auth login`
 
 ## Input Handling
 
@@ -80,7 +80,7 @@ If you discover a security issue, do **not** open a public issue. Instead:
 
 ## Runtime Security
 
-- In production, the service runs as a dedicated **non-root user** (`shellm`) on the VPS via systemd
+- In production, the service runs as a dedicated **non-root user** (`shellmer`) on the VPS via systemd
 - Network access via `cloudflared` tunnel — zero open ports, Cloudflare handles TLS
 - Resource limits enforced by systemd unit configuration
 - A Dockerfile exists for optional containerized use (development), using `node:22-slim` with non-root `node` user
