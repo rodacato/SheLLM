@@ -48,6 +48,20 @@ src/
 ├── server.js              # Express app setup and route wiring
 ├── router.js              # Provider dispatch + request queue
 ├── health.js              # Health check logic
+├── errors.js              # Error factories and response helper
+├── cli.js                 # CLI dispatcher (shellm command)
+├── cli/                   # CLI subcommands
+│   ├── paths.js           # Shared path constants (~/.shellm/)
+│   ├── pid.js             # PID file utilities
+│   ├── start.js           # Start foreground or daemon
+│   ├── stop.js            # Stop daemon
+│   ├── restart.js         # Restart daemon
+│   ├── status.js          # PID check + health fetch
+│   ├── logs.js            # Tail daemon log file
+│   ├── version.js         # Print version
+│   └── help.js            # Usage text
+├── lib/
+│   └── logger.js          # Structured JSON logger with LOG_LEVEL
 ├── providers/
 │   ├── base.js            # Subprocess execution utility
 │   ├── claude.js          # One file per provider
@@ -55,9 +69,11 @@ src/
 │   ├── codex.js
 │   └── cerebras.js
 └── middleware/
-    ├── validate.js         # Request validation
-    ├── sanitize.js         # Input sanitization
-    └── logging.js          # Request/response logging
+    ├── auth.js            # Multi-client auth + rate limiting
+    ├── request-id.js      # Request ID propagation
+    ├── validate.js        # Request validation
+    ├── sanitize.js        # Input sanitization
+    └── logging.js         # Request logging (level-aware)
 ```
 
 ### Provider Contract
@@ -94,5 +110,5 @@ When facing a technical decision:
 1. **Will this be easy to debug at 2 AM?** If not, simplify.
 2. **Does this add a dependency?** If yes, can we do it with Node.js built-ins instead?
 3. **Does this increase the blast radius of a failure?** If yes, isolate it.
-4. **Will this survive a container restart?** If not, use volumes or make it stateless.
+4. **Will this survive a service restart?** If not, persist it or make it stateless.
 5. **Can a new contributor understand this in 5 minutes?** If not, refactor.

@@ -5,18 +5,20 @@
 ### Prerequisites
 
 - Node.js >= 22
-- Docker and Docker Compose
 - Access to at least one CLI tool (Claude Code, Gemini CLI, or Codex CLI)
+- Docker and Docker Compose (optional — only for devcontainer)
 
 ### Development Setup
 
 ```bash
 # Clone and install
-git clone <repo-url> && cd shellm
+git clone git@github.com:rodacato/SheLLM.git && cd shellm
 npm install
+npm link    # makes `shellm` CLI available globally
 
 # Start in development mode (auto-restart on changes)
-npm run dev
+shellm start
+# or: npm run dev
 
 # Run tests
 npm test
@@ -24,7 +26,7 @@ npm test
 
 ### Using the Dev Container
 
-The project includes a full devcontainer configuration. Open in VS Code with the Dev Containers extension, or use GitHub Codespaces.
+The project includes a devcontainer configuration for local development. Open in VS Code with the Dev Containers extension.
 
 ```bash
 # The devcontainer installs all CLI tools automatically
@@ -33,6 +35,8 @@ claude --version
 gemini --version
 codex --version
 ```
+
+> **Note:** The devcontainer is for development only. In production, SheLLM runs directly on a VPS via systemd (see `scripts/setup-vps.sh`).
 
 ## Code Conventions
 
@@ -112,7 +116,7 @@ node --test test/providers/claude.test.js
 - Use Node.js built-in test runner (`node:test`)
 - Mock subprocess calls at the `execute()` boundary — don't spawn real CLIs in CI
 - API tests import the Express `app` directly — don't start a server
-- Tests should be fast (< 5s total) and deterministic (no network calls, no timers)
+- Tests should be fast (< 1s total, currently 56 tests across 16 suites) and deterministic (no network calls, no timers)
 
 ## Commit Messages
 

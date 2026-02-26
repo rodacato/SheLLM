@@ -2,9 +2,9 @@
 
 ## Context
 
-SheLLM is a lightweight Node.js/Express service that wraps LLM CLI tools (Claude Code, Gemini CLI, Codex CLI) and APIs (Cerebras) as a unified REST API. It runs as a Docker container on a shared VPS and is consumed by other applications via HTTP.
+SheLLM is a lightweight Node.js/Express service that wraps LLM CLI tools (Claude Code, Gemini CLI, Codex CLI) and APIs (Cerebras) as a unified REST API. It runs directly on a VPS with systemd and cloudflared, consumed by other applications via HTTP.
 
-The service is intentionally small (~400 lines of application code), has a single dependency (Express), and favors simplicity over abstraction.
+The service has a single runtime dependency (Express), favors simplicity over abstraction, and includes a `shellm` CLI for service management.
 
 ## Your Role
 
@@ -47,13 +47,21 @@ src/
 ├── server.js           # Express app, route wiring
 ├── router.js           # Provider dispatch, request queue
 ├── health.js           # Health check logic
+├── errors.js           # Error factories and response helper
+├── cli.js              # CLI dispatcher (shellm command)
+├── cli/                # CLI subcommands (start, stop, restart, status, logs)
+│   ├── paths.js        # Shared path constants (~/.shellm/)
+│   └── pid.js          # PID file utilities
+├── lib/
+│   └── logger.js       # Structured JSON logger with LOG_LEVEL
 ├── providers/
 │   ├── base.js         # Subprocess execution (spawn + timeout)
 │   └── <name>.js       # One file per provider
 └── middleware/
+    ├── auth.js         # Multi-client auth + rate limiting
     ├── validate.js     # Request validation
     ├── sanitize.js     # Input sanitization
-    └── logging.js      # Request/response logging
+    └── logging.js      # Request logging (level-aware)
 ```
 
 ### Adding a New Provider

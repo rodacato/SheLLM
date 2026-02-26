@@ -16,7 +16,7 @@ SheLLM is designed as an **internal service**. It is not intended to be exposed 
 
 Client API keys are configured via the `SHELLM_CLIENTS` environment variable (JSON). Keys must never be committed to the repository.
 
-- **Production**: Store in GitHub Secrets → inject via Kamal/Docker Compose environment
+- **Production**: Store in `.env` on the VPS (owned by `shellm` user, mode 600)
 - **Development**: Use `.env` file (gitignored) or leave unset (auth disabled)
 - **Pre-commit hook**: `scripts/pre-commit` scans staged changes for secret patterns (`sk-*`, `csk-*`, hardcoded keys). Install with `cp scripts/pre-commit .git/hooks/pre-commit`
 - **Timing-safe comparison**: Bearer tokens are compared using `crypto.timingSafeEqual` to prevent timing attacks
@@ -27,17 +27,16 @@ SheLLM manages auth tokens for three CLI tools. These tokens are **equivalent to
 
 | Provider | Token Location | Persistence |
 |---|---|---|
-| Claude Code | `~/.claude/` | Docker volume |
-| Gemini CLI | `~/.config/gemini/` | Docker volume |
-| Codex CLI | `~/.codex/` | Docker volume |
+| Claude Code | `~/.claude/` | Native home dir (`~shellm/`) |
+| Gemini CLI | `~/.gemini/` | Native home dir (`~shellm/`) |
+| Codex CLI | `~/.codex/` | Native home dir (`~shellm/`) |
 | Cerebras | `CEREBRAS_API_KEY` env var | Environment |
 
 **Rules:**
 
-- Auth token directories are mounted as Docker volumes — never committed to version control
+- Auth token directories live in the `shellm` user's home directory on the VPS — never committed to version control
 - `.gitignore` excludes auth directories
-- Volume backups (if any) must be encrypted
-- Auth tokens should be rotated by re-running `docker exec -it shellm <cli> auth login`
+- Auth tokens should be rotated by running `sudo -iu shellm` then `<cli> auth login`
 
 ## Input Handling
 
@@ -61,7 +60,7 @@ All user-supplied input passes through sanitization before reaching a CLI subpro
 
 - **Prompt injection**: SheLLM passes prompts to LLMs as-is. It is the caller's responsibility to construct safe prompts.
 - **PII exposure**: SheLLM does not inspect prompt content. Callers must anonymize data before sending it.
-- **Rate limiting abuse**: SheLLM has a basic queue (max concurrent + max depth) but no per-client rate limiting. It trusts the caller.
+- **Rate limiting bypass**: SheLLM has global + per-client rate limiting, but a compromised client key still allows requests up to its RPM limit.
 - **CLI vulnerabilities**: If a CLI tool has a vulnerability, SheLLM inherits it. Keep CLI tools updated.
 
 ## Reporting Vulnerabilities
@@ -79,9 +78,9 @@ If you discover a security issue, do **not** open a public issue. Instead:
 - **Lock versions.** `package-lock.json` is committed and used for reproducible installs (`npm ci`).
 - **No postinstall scripts.** If a dependency runs scripts on install, evaluate whether it's worth the risk.
 
-## Container Security
+## Runtime Security
 
-- The service runs as a **non-root user** (`node`) inside the container
-- The Dockerfile uses `node:22-slim` (minimal attack surface)
-- CLI tools are installed at build time — no runtime downloads
-- Resource limits (memory, CPU) are enforced via Docker/Kamal configuration
+- In production, the service runs as a dedicated **non-root user** (`shellm`) on the VPS via systemd
+- Network access via `cloudflared` tunnel — zero open ports, Cloudflare handles TLS
+- Resource limits enforced by systemd unit configuration
+- A Dockerfile exists for optional containerized use (development), using `node:22-slim` with non-root `node` user
