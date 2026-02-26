@@ -2,7 +2,7 @@ const { execute } = require('./base');
 
 const VALID_MODELS = ['claude', 'claude-sonnet', 'claude-haiku', 'claude-opus'];
 
-function buildArgs({ prompt, system, max_tokens }) {
+function buildArgs({ prompt, system }) {
   const args = [
     '--print',
     '--dangerously-skip-permissions',
@@ -12,9 +12,6 @@ function buildArgs({ prompt, system, max_tokens }) {
 
   if (system) {
     args.push('--system-prompt', system);
-  }
-  if (max_tokens) {
-    args.push('--max-tokens', String(max_tokens));
   }
 
   args.push('--', prompt);
@@ -33,8 +30,8 @@ function parseOutput(stdout) {
   }
 }
 
-async function chat({ prompt, system, max_tokens }) {
-  const args = buildArgs({ prompt, system, max_tokens });
+async function chat({ prompt, system }) {
+  const args = buildArgs({ prompt, system });
 
   // Exclude ANTHROPIC_API_KEY — the CLI uses its own stored credentials
   const env = { ...process.env };
@@ -53,7 +50,7 @@ module.exports = {
   capabilities: {
     supports_system_prompt: true,
     supports_json_output: true,
-    supports_max_tokens: true,
+    supports_max_tokens: false,
     cli_command: 'claude --print',
   },
 };

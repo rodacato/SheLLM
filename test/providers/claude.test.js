@@ -7,21 +7,19 @@ const { buildArgs, parseOutput } = require('../../src/providers/claude');
 
 describe('claude provider', () => {
   it('buildArgs constructs correct CLI arguments', () => {
-    const args = buildArgs({ prompt: 'hello', system: 'be nice', max_tokens: 100 });
+    const args = buildArgs({ prompt: 'hello', system: 'be nice' });
     assert.ok(args.includes('--print'));
     assert.ok(args.includes('--output-format'));
     assert.ok(args.includes('json'));
     assert.ok(args.includes('--system-prompt'));
     assert.ok(args.includes('be nice'));
-    assert.ok(args.includes('--max-tokens'));
-    assert.ok(args.includes('100'));
+    assert.ok(!args.includes('--max-tokens'), 'claude CLI does not support --max-tokens');
     assert.ok(args.includes('--'));
     assert.strictEqual(args[args.length - 1], 'hello');
 
-    // Without system or max_tokens
+    // Without system
     const args2 = buildArgs({ prompt: 'just prompt' });
     assert.ok(!args2.includes('--system-prompt'));
-    assert.ok(!args2.includes('--max-tokens'));
     assert.strictEqual(args2[args2.length - 1], 'just prompt');
   });
 
