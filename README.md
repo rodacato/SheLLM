@@ -179,6 +179,16 @@ shellm/
 └── docker-compose.yml
 ```
 
+## Documentation
+
+| Document | Purpose |
+|---|---|
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Development setup, code conventions, how to add providers |
+| [SECURITY.md](SECURITY.md) | Security architecture, input handling, auth token policy |
+| [IDENTITY.md](IDENTITY.md) | Project lead profile and architectural standards |
+| [EXPERTS.md](EXPERTS.md) | Expert panel for technical and domain decisions |
+| [AGENTS.md](AGENTS.md) | AI agent instructions and project context |
+
 ## License
 
 Private — Internal use only.
