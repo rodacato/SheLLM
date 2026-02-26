@@ -79,6 +79,6 @@ src/
 
 - Don't add TypeScript or ESM
 - Don't add an ORM, database, or persistence layer (stateless service)
-- Don't add authentication middleware (network isolation is the auth boundary)
+- Don't add additional auth mechanisms — multi-client bearer tokens (`src/middleware/auth.js`) are already implemented
 - Don't add a framework on top of Express (no Nest, no Fastify migration)
 - Consult `ROADMAP.md` for current project status, phase progress, and architectural decisions already made

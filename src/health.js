@@ -1,6 +1,10 @@
 const { execute } = require('./providers/base');
 const { queue } = require('./router');
 
+const CACHE_TTL_MS = parseInt(process.env.HEALTH_CACHE_TTL_MS || '30000', 10);
+
+let cache = { data: null, expires: 0 };
+
 async function checkCLI(name, command, testArgs, { timeout = 10000 } = {}) {
   try {
     await execute(command, testArgs, { timeout });
@@ -13,7 +17,6 @@ async function checkCLI(name, command, testArgs, { timeout = 10000 } = {}) {
     if (stderr.includes('not authenticated') || stderr.includes('login') || stderr.includes('auth')) {
       return { installed: true, authenticated: false };
     }
-    // CLI is installed but returned an error — could be auth or other issue
     return { installed: true, authenticated: false, error: stderr.slice(0, 200) };
   }
 }
@@ -26,6 +29,16 @@ async function checkCerebras() {
 }
 
 async function getHealthStatus() {
+  const now = Date.now();
+
+  if (cache.data && now < cache.expires) {
+    return {
+      ...cache.data,
+      queue: queue.stats,
+      uptime_seconds: Math.floor(process.uptime()),
+    };
+  }
+
   const [claudeStatus, geminiStatus, codexStatus, cerebrasStatus] = await Promise.all([
     checkCLI('claude', 'claude', ['--version']),
     checkCLI('gemini', 'gemini', ['--version']),
@@ -33,14 +46,17 @@ async function getHealthStatus() {
     checkCerebras(),
   ]);
 
+  const providers = {
+    claude: claudeStatus,
+    gemini: geminiStatus,
+    codex: codexStatus,
+    cerebras: cerebrasStatus,
+  };
+
+  cache = { data: { status: 'ok', providers }, expires: now + CACHE_TTL_MS };
+
   return {
-    status: 'ok',
-    providers: {
-      claude: claudeStatus,
-      gemini: geminiStatus,
-      codex: codexStatus,
-      cerebras: cerebrasStatus,
-    },
+    ...cache.data,
     queue: queue.stats,
     uptime_seconds: Math.floor(process.uptime()),
   };

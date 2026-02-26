@@ -1,34 +1,23 @@
 const { resolveProvider } = require('../router');
+const { sendError, invalidRequest } = require('../errors');
 
 function validateCompletionRequest(req, res, next) {
   const { model, prompt } = req.body;
 
   if (!model) {
-    return res.status(400).json({
-      error: 'invalid_request',
-      message: 'Missing required field: model',
-    });
+    return sendError(res, invalidRequest('Missing required field: model'), req.requestId);
   }
 
   if (!prompt) {
-    return res.status(400).json({
-      error: 'invalid_request',
-      message: 'Missing required field: prompt',
-    });
+    return sendError(res, invalidRequest('Missing required field: prompt'), req.requestId);
   }
 
   if (typeof prompt !== 'string') {
-    return res.status(400).json({
-      error: 'invalid_request',
-      message: 'Field "prompt" must be a string',
-    });
+    return sendError(res, invalidRequest('Field "prompt" must be a string'), req.requestId);
   }
 
   if (!resolveProvider(model)) {
-    return res.status(400).json({
-      error: 'invalid_request',
-      message: `Unknown model: ${model}. Use GET /providers for available models.`,
-    });
+    return sendError(res, invalidRequest(`Unknown model: ${model}. Use GET /providers for available models.`), req.requestId);
   }
 
   next();

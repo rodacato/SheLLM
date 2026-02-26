@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Pre-commit hook: block secrets from being committed
+# Install: cp scripts/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+set -euo pipefail
+
+PATTERNS=(
+  'sk-[a-zA-Z0-9_-]{10,}'     # SheLLM client keys
+  'csk-[a-zA-Z0-9_-]{10,}'    # Cerebras API keys
+  'SHELLM_CLIENTS=.*"key"'     # Inline client config with real keys
+  'CEREBRAS_API_KEY=[^$]'      # Hardcoded Cerebras key (not env reference)
+)
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -z "$STAGED" ]; then
+  exit 0
+fi
+
+for pattern in "${PATTERNS[@]}"; do
+  # Check staged content (not working tree)
+  if git diff --cached -U0 | grep -qP "$pattern"; then
+    echo "ERROR: Potential secret detected in staged changes."
+    echo "Pattern: $pattern"
+    echo ""
+    echo "If this is a false positive (e.g., .env.example with placeholder values),"
+    echo "review the match and use: git commit --no-verify"
+    exit 1
+  fi
+done

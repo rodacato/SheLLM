@@ -37,6 +37,7 @@ Existing solutions like LiteLLM or Portkey assume API keys for everything. SheLL
 
 ```bash
 git clone <repo-url> && cd shellm
+cp .env.example .env
 docker compose up --build
 
 curl http://localhost:6000/health
@@ -46,51 +47,142 @@ curl http://localhost:6000/health
 
 ```bash
 npm install
+cp .env.example .env
 npm run dev
 
 npm test
 ```
 
-## API
+In development, authentication is disabled when `SHELLM_CLIENTS` is not set.
 
-### POST /completions
+## Authentication
+
+SheLLM supports multi-client authentication via bearer tokens. Each client gets a unique API key and per-minute rate limit.
+
+### Configuration
+
+Set the `SHELLM_CLIENTS` environment variable with a JSON object:
+
+```bash
+SHELLM_CLIENTS='{"stockerly":{"key":"sk-stock-abc123","rpm":10},"dev":{"key":"sk-dev-xyz789","rpm":5}}'
+SHELLM_GLOBAL_RPM=30
+```
+
+- **`key`**: Unique bearer token for the client
+- **`rpm`**: Max requests per minute for this client
+- **`SHELLM_GLOBAL_RPM`**: Max total requests per minute across all clients (default: 30)
+
+When `SHELLM_CLIENTS` is not set, authentication is disabled (development mode).
+
+### Usage
+
+Include the bearer token in the `Authorization` header:
+
+```bash
+curl -H "Authorization: Bearer sk-stock-abc123" http://localhost:6000/providers
+```
+
+### Request Tracing
+
+Every request gets a `request_id` for traceability. Priority:
+1. `X-Request-ID` header (recommended for GET requests)
+2. `request_id` field in POST body
+3. Auto-generated UUID
+
+## API Contract
+
+### POST /completions *(authenticated)*
 
 ```bash
 curl -X POST http://localhost:6000/completions \
+  -H "Authorization: Bearer sk-stock-abc123" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "claude",
     "prompt": "Analyze this data and return JSON",
     "system": "You are a financial analyst. Return valid JSON only.",
-    "max_tokens": 1024
+    "max_tokens": 1024,
+    "request_id": "my-trace-id"
   }'
 ```
 
-**Response:**
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `model` | string | Yes | Provider name or model alias (see `GET /providers`) |
+| `prompt` | string | Yes | User prompt (max 50,000 characters) |
+| `system` | string | No | System prompt |
+| `max_tokens` | integer | No | Max output tokens |
+| `request_id` | string | No | Caller-assigned ID for tracing |
+
+**Success (200):**
 
 ```json
 {
   "content": "...",
   "provider": "claude",
-  "model": "claude-sonnet-4-5-20250514",
+  "model": "claude",
   "duration_ms": 3420,
-  "request_id": "optional-caller-id"
+  "request_id": "my-trace-id"
 }
 ```
 
-The response format is the same regardless of whether the provider is CLI-based or API-based.
+### GET /health *(unauthenticated)*
 
-### GET /health
+Returns provider status, queue stats, and uptime. Unauthenticated for Docker/Kamal healthchecks.
 
-Returns provider status, queue stats, and uptime.
+```json
+{
+  "status": "ok",
+  "providers": {
+    "claude": { "installed": true, "authenticated": true },
+    "gemini": { "installed": true, "authenticated": true },
+    "codex": { "installed": true, "authenticated": false },
+    "cerebras": { "installed": true, "authenticated": false, "error": "CEREBRAS_API_KEY not set" }
+  },
+  "queue": { "pending": 0, "active": 1, "max_concurrent": 2 },
+  "uptime_seconds": 86400
+}
+```
 
-### GET /providers
+### GET /providers *(authenticated)*
 
-Lists available providers and their capabilities.
+Lists available providers with their capabilities and supported models.
 
-## Auth Setup
+### Error Contract
 
-### CLI Providers
+Every error response follows this shape:
+
+```json
+{
+  "error": "error_type",
+  "message": "Human-readable description",
+  "request_id": "uuid"
+}
+```
+
+| Status | Error Type | Description |
+|---|---|---|
+| 400 | `invalid_request` | Missing/invalid fields, unknown model |
+| 401 | `auth_required` | Missing or invalid bearer token |
+| 429 | `rate_limited` | Client or global rate limit exceeded (includes `retry_after`) |
+| 502 | `cli_failed` | CLI process exited with non-zero code |
+| 503 | `provider_unavailable` | Provider not authenticated or misconfigured |
+| 504 | `timeout` | Process killed after deadline |
+
+## Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `PORT` | `6000` | Server port |
+| `TIMEOUT_MS` | `120000` | Subprocess timeout (ms) |
+| `MAX_CONCURRENT` | `2` | Max concurrent CLI processes |
+| `MAX_QUEUE_DEPTH` | `10` | Max queued requests before 429 |
+| `HEALTH_CACHE_TTL_MS` | `30000` | Health check cache duration (ms) |
+| `SHELLM_CLIENTS` | *(unset)* | Client auth config (JSON). Unset = auth disabled |
+| `SHELLM_GLOBAL_RPM` | `30` | Global rate limit (requests/minute) |
+| `CEREBRAS_API_KEY` | *(unset)* | Cerebras API key (optional) |
+
+## CLI Auth Setup
 
 After deploying, authenticate each CLI once:
 
@@ -102,56 +194,29 @@ docker exec -it shellm codex auth login
 
 Auth tokens persist in Docker volumes — survives restarts and redeployments.
 
-### API Providers
-
-Set API keys via environment variables:
-
-```bash
-CEREBRAS_API_KEY=csk-...
-```
-
-## Production Deployment (Kamal)
-
-Add as a Kamal accessory in your `config/deploy.yml`:
-
-```yaml
-accessories:
-  shellm:
-    image: ghcr.io/<your-org>/shellm:latest
-    host: <%= ENV["HOST_IP"] %>
-    port: "127.0.0.1:6000:6000"
-    directories:
-      - llm_claude_auth:/home/bridge/.claude
-      - llm_config:/home/bridge/.config
-      - llm_codex_auth:/home/bridge/.codex
-    options:
-      memory: 768m
-      cpus: "1.0"
-```
-
 ## Architecture
 
 ```text
 Client (Rails, curl, cron)
-  │ HTTP POST /completions
+  │ Authorization: Bearer <key>
+  │ POST /completions
   ▼
 Express.js server (:6000)
+  ├── Request ID (header / body / auto-generated UUID)
+  ├── Authentication (multi-client bearer tokens)
+  ├── Rate Limiting (global + per-client RPM)
   ├── Validation & Sanitization
   ├── Request Queue (max 2 concurrent)
   └── Provider Router
         │
         ├── CLI Providers (subprocess)
-        │   ├── claude.js   → claude -p --output-format json
+        │   ├── claude.js   → claude --print --output-format json
         │   ├── gemini.js   → gemini -p
         │   └── codex.js    → codex exec --json
         │
         └── API Providers (HTTP client)
             └── cerebras.js → REST API call
 ```
-
-## Adding a New Provider
-
-Each provider is a single module that implements `buildArgs/buildRequest` and `parseOutput/parseResponse`. CLI providers spawn subprocesses; API providers make HTTP requests. Both return the same unified response format.
 
 ## Project Structure
 
@@ -160,7 +225,8 @@ shellm/
 ├── src/
 │   ├── server.js            # Express entry point
 │   ├── router.js            # Request routing + queue
-│   ├── health.js            # Health check logic
+│   ├── errors.js            # Error factories and response helper
+│   ├── health.js            # Health check logic (cached)
 │   ├── providers/
 │   │   ├── base.js          # Base subprocess runner
 │   │   ├── claude.js        # Claude CLI wrapper
@@ -168,12 +234,14 @@ shellm/
 │   │   ├── codex.js         # Codex CLI wrapper
 │   │   └── cerebras.js      # Cerebras API client
 │   └── middleware/
+│       ├── auth.js          # Multi-client authentication + rate limiting
+│       ├── request-id.js    # Request ID propagation
 │       ├── validate.js      # Request validation
 │       ├── sanitize.js      # Input sanitization
-│       └── logging.js       # Request/response logging
+│       └── logging.js       # Structured JSON logging
 ├── scripts/
-│   ├── setup-auth.sh        # Interactive auth setup
-│   └── check-auth.sh        # Verify CLI auth
+│   └── pre-commit           # Git hook to block secrets
+├── .env.example             # Environment variable template
 ├── test/
 ├── Dockerfile
 └── docker-compose.yml

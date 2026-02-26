@@ -15,6 +15,7 @@ config/secrets/
 *.secret
 auth-profiles.json
 service.env
+clients.json
 
 # Node
 node_modules/

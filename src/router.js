@@ -2,6 +2,7 @@ const claude = require('./providers/claude');
 const gemini = require('./providers/gemini');
 const codex = require('./providers/codex');
 const cerebras = require('./providers/cerebras');
+const { invalidRequest, rateLimited } = require('./errors');
 
 const providers = { claude, gemini, codex, cerebras };
 
@@ -25,9 +26,7 @@ class RequestQueue {
 
   async enqueue(fn) {
     if (this.pending.length >= MAX_QUEUE_DEPTH) {
-      const err = new Error('Queue is full, try again later');
-      err.status = 429;
-      throw err;
+      throw rateLimited('Queue is full, try again later');
     }
 
     if (this.active >= this.maxConcurrent) {
@@ -69,9 +68,7 @@ function resolveProvider(model) {
 async function route({ model, prompt, system, max_tokens, request_id }) {
   const provider = resolveProvider(model);
   if (!provider) {
-    const err = new Error(`Unknown provider: ${model}`);
-    err.status = 400;
-    throw err;
+    throw invalidRequest(`Unknown provider: ${model}`);
   }
 
   const startTime = Date.now();

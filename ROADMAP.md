@@ -33,26 +33,31 @@ The Express server, provider wrappers, request queue, middleware, and health che
 
 ---
 
-## Phase 2 — API Contract & Authentication `PLANNED`
+## Phase 2 — API Contract & Authentication `COMPLETED`
 
-Formalize the API specification, error contract, and access control before writing tests.
+Formalized API specification, multi-client authentication, rate limiting, and error standardization.
 
 | Task | Status | Files |
 |---|---|---|
-| Define API contract for all endpoints (request/response shapes) | Pending | `src/server.js` |
-| Implement bearer token authentication (`SHELLM_API_KEY`) | Pending | `src/middleware/auth.js` |
-| Standardize error responses across all failure modes | Pending | `src/server.js`, `src/middleware/` |
-| Add `request_id` propagation and correlation in logs | Pending | `src/middleware/logging.js` |
-| Document API contract in README | Pending | `README.md` |
+| Error factory module | Done | `src/errors.js` |
+| Multi-client bearer token authentication | Done | `src/middleware/auth.js` |
+| Global + per-client rate limiting (sliding window RPM) | Done | `src/middleware/auth.js` |
+| Request ID propagation (header / body / auto-UUID) | Done | `src/middleware/request-id.js` |
+| Standardized error responses across all failure modes | Done | `src/errors.js`, `src/server.js` |
+| Structured JSON logging with request_id and client | Done | `src/middleware/logging.js` |
+| Health check TTL cache (30s default) | Done | `src/health.js` |
+| Pre-commit hook to block secrets | Done | `scripts/pre-commit` |
+| Environment variable template | Done | `.env.example` |
+| API contract documented in README | Done | `README.md` |
 
-**Scope:**
-- **Authentication:** Bearer token via `Authorization: Bearer <SHELLM_API_KEY>` header. A single shared secret set via environment variable. Health check (`GET /health`) remains unauthenticated for Docker/Kamal healthchecks.
-- **Error contract:** Every error response returns `{ error, message, request_id }` with the correct HTTP status code. No exceptions.
-- **Endpoints to finalize:**
-  - `POST /completions` — main endpoint (exists, needs contract review)
-  - `GET /health` — healthcheck (exists, unauthenticated)
-  - `GET /providers` — list capabilities (exists, needs auth)
-- **Logging:** Structured logs with `request_id` correlation for traceability across caller → SheLLM → provider.
+**Key decisions made:**
+- Multi-client auth via `SHELLM_CLIENTS` JSON env var (GitHub Secrets in CI, `.env` locally)
+- Auth disabled when env var unset (zero-friction development)
+- Timing-safe token comparison (`crypto.timingSafeEqual`)
+- Rate limiting: global RPM + per-client RPM, sliding window, in-memory
+- Error factories (not classes) with `fromCatchable()` bridge for old error shapes
+- Health cache: 30s TTL for provider status, queue/uptime always fresh
+- dotenv for `.env` file loading
 
 ---
 
@@ -148,3 +153,9 @@ Architectural decisions made during implementation, with rationale.
 | System prompt handling | `--system-prompt` for Claude, prepend for others | Avoids wasted tokens on CLI agentic scaffolding |
 | Response format | Unified JSON | Caller doesn't care which provider answered |
 | Phase order | API contract → Testing → Containerization | Tests validate contract; containerize a stable, tested service |
+| Authentication | Multi-client bearer tokens via env var | Supports multiple consumers with individual rate limits; disabled in dev |
+| Rate limiting | Global + per-client RPM (sliding window) | Protects VPS from overload while giving each client a fair share |
+| Client config | `SHELLM_CLIENTS` JSON env var | Public-repo safe (GitHub Secrets); no file-based config to leak |
+| Error handling | Factory functions + `fromCatchable()` bridge | Centralized error creation; no classes; gradual migration from old patterns |
+| Health caching | 30s TTL, queue/uptime always fresh | Avoids 4s CLI version checks on every healthcheck poll |
+| Env loading | dotenv | Standard `.env` file support for local development |

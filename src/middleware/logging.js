@@ -1,14 +1,22 @@
 function requestLogger(req, res, next) {
   const start = Date.now();
-  const { method, url } = req;
 
   res.on('finish', () => {
-    const duration = Date.now() - start;
-    const level = res.statusCode >= 400 ? 'warn' : 'info';
-    const requestId = req.body?.request_id || '-';
-    console[level](
-      `${method} ${url} ${res.statusCode} ${duration}ms [${requestId}]`
-    );
+    const entry = {
+      ts: new Date().toISOString(),
+      method: req.method,
+      url: req.url,
+      status: res.statusCode,
+      duration_ms: Date.now() - start,
+      request_id: req.requestId || null,
+      client: req.clientName || null,
+    };
+
+    if (res.statusCode >= 400) {
+      console.warn(JSON.stringify(entry));
+    } else {
+      console.log(JSON.stringify(entry));
+    }
   });
 
   next();
