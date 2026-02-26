@@ -6,7 +6,7 @@ services:
     volumes:
       - ..:/workspace:cached
       - claude-auth:/home/node/.claude
-      - gemini-auth:/home/node/.config
+      - gemini-auth:/home/node/.config/gemini
       - codex-auth:/home/node/.codex
     command: sleep infinity
     environment:

@@ -39,7 +39,7 @@ Existing solutions like LiteLLM or Portkey assume API keys for everything. SheLL
 git clone <repo-url> && cd shellm
 docker compose up --build
 
-curl http://localhost:8000/health
+curl http://localhost:6000/health
 ```
 
 ### Development (Local)
@@ -56,7 +56,7 @@ npm test
 ### POST /completions
 
 ```bash
-curl -X POST http://localhost:8000/completions \
+curl -X POST http://localhost:6000/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "claude",
@@ -119,7 +119,7 @@ accessories:
   shellm:
     image: ghcr.io/<your-org>/shellm:latest
     host: <%= ENV["HOST_IP"] %>
-    port: "127.0.0.1:8000:8000"
+    port: "127.0.0.1:6000:6000"
     directories:
       - llm_claude_auth:/home/bridge/.claude
       - llm_config:/home/bridge/.config
@@ -135,7 +135,7 @@ accessories:
 Client (Rails, curl, cron)
   │ HTTP POST /completions
   ▼
-Express.js server (:8000)
+Express.js server (:6000)
   ├── Validation & Sanitization
   ├── Request Queue (max 2 concurrent)
   └── Provider Router
