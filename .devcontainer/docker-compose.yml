@@ -1,0 +1,21 @@
+services:
+  shellm-dev:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - ..:/workspace:cached
+      - claude-auth:/home/node/.claude
+      - gemini-auth:/home/node/.config
+      - codex-auth:/home/node/.codex
+    command: sleep infinity
+    environment:
+      NODE_ENV: development
+      MAX_CONCURRENT: "2"
+      TIMEOUT_MS: "120000"
+      LOG_LEVEL: debug
+
+volumes:
+  claude-auth:
+  gemini-auth:
+  codex-auth:

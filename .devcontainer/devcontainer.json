@@ -1,21 +1,29 @@
 {
   "name": "SheLLM",
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "shellm-dev",
+  "workspaceFolder": "/workspace",
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/sshd:1": {},
+    "ghcr.io/stuartleeks/dev-container-features/shell-history:0": {}
   },
   "forwardPorts": [8000],
-  "postCreateCommand": "npm install",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
   "customizations": {
     "vscode": {
       "settings": {
         "editor.formatOnSave": true,
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "files.eol": "\n"
       },
       "extensions": [
+        "editorconfig.editorconfig",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
-        "ms-azuretools.vscode-docker"
+        "ms-azuretools.vscode-docker",
+        "anthropic.claude-code"
       ]
     }
   },

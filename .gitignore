@@ -1,0 +1,62 @@
+# Claude Code (local settings and session plans)
+.claude/
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+
+# Credentials & tokens
+config/secrets/
+*.secret
+auth-profiles.json
+service.env
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime data (all under data/)
+data/
+
+# Heartbeat (session-specific, not source)
+HEARTBEAT.md
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Build & artifacts
+*.tgz
+*.tar.gz
+*.zip
+
+# n8n workflow exports with credentials
+workflows/*.credentials.json
+
+# Testing
+coverage/
+
+# Temporary
+tmp/
+temp/
+scratchpad/
+.tmp
