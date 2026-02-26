@@ -41,7 +41,7 @@ COPY --chown=node:node package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 COPY --chown=node:node src/ ./src/
-COPY --chown=node:node scripts/setup-auth.sh scripts/check-auth.sh ./scripts/
+COPY --chown=node:node scripts/pre-commit ./scripts/
 
 ENV NODE_ENV=production \
     PORT=6000 \
