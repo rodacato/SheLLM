@@ -8,84 +8,21 @@ SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterpris
 
 ---
 
-## Phase 1 — Core Service `COMPLETED`
+## Phases 1–3 — Summary `COMPLETED`
 
-The Express server, provider wrappers, request queue, middleware, and health check endpoint.
-
-| Task | Status | Files |
+| Phase | Scope | Key Deliverables |
 |---|---|---|
-| Initialize Node.js project with Express | Done | `package.json`, `src/server.js` |
-| Base subprocess runner with timeout | Done | `src/providers/base.js` |
-| Claude CLI provider | Done | `src/providers/claude.js` |
-| Gemini CLI provider | Done | `src/providers/gemini.js` |
-| Codex CLI provider | Done | `src/providers/codex.js` |
-| Cerebras API provider | Done | `src/providers/cerebras.js` |
-| Request router with queue | Done | `src/router.js` |
-| Validation and sanitization middleware | Done | `src/middleware/` |
-| Health check endpoint | Done | `src/health.js` |
+| **1 — Core Service** | Express server, providers, queue, middleware | `src/server.js`, `src/router.js`, `src/providers/` (claude, gemini, codex, cerebras), `src/middleware/`, `src/health.js` |
+| **2 — API Contract & Auth** | Multi-client auth, rate limiting, error standardization | `src/errors.js`, `src/middleware/auth.js`, structured logging, pre-commit hook, `.env.example` |
+| **3 — Testing** | 33 tests across 12 suites, < 1s runtime | `test/` (unit + integration via `node:test` + `supertest`), `.github/workflows/ci.yml` |
 
-**Key decisions made:**
-- CommonJS throughout (no ESM, no transpilation)
-- Single dependency (Express) — everything else is Node.js built-ins
-- Functional provider modules (no classes, no inheritance)
-- Queue: max 2 concurrent, max 10 depth, in-memory
-- Timeout: 120s per subprocess, configurable via `TIMEOUT_MS`
-
----
-
-## Phase 2 — API Contract & Authentication `COMPLETED`
-
-Formalized API specification, multi-client authentication, rate limiting, and error standardization.
-
-| Task | Status | Files |
-|---|---|---|
-| Error factory module | Done | `src/errors.js` |
-| Multi-client bearer token authentication | Done | `src/middleware/auth.js` |
-| Global + per-client rate limiting (sliding window RPM) | Done | `src/middleware/auth.js` |
-| Request ID propagation (header / body / auto-UUID) | Done | `src/middleware/request-id.js` |
-| Standardized error responses across all failure modes | Done | `src/errors.js`, `src/server.js` |
-| Structured JSON logging with request_id and client | Done | `src/middleware/logging.js` |
-| Health check TTL cache (30s default) | Done | `src/health.js` |
-| Pre-commit hook to block secrets | Done | `scripts/pre-commit` |
-| Environment variable template | Done | `.env.example` |
-| API contract documented in README | Done | `README.md` |
-
-**Key decisions made:**
-- Multi-client auth via `SHELLM_CLIENTS` JSON env var (GitHub Secrets in CI, `.env` locally)
-- Auth disabled when env var unset (zero-friction development)
-- Timing-safe token comparison (`crypto.timingSafeEqual`)
-- Rate limiting: global RPM + per-client RPM, sliding window, in-memory
-- Error factories (not classes) with `fromCatchable()` bridge for old error shapes
-- Health cache: 30s TTL for provider status, queue/uptime always fresh
-- dotenv for `.env` file loading
-
----
-
-## Phase 3 — Testing `COMPLETED`
-
-Comprehensive test suite validating the API contract, provider wrappers, middleware, and error handling. No real CLI calls or network requests in tests.
-
-| Task | Status | Files |
-|---|---|---|
-| Error factory unit tests | Done | `test/errors.test.js` |
-| Sanitization unit tests | Done | `test/middleware/sanitize.test.js` |
-| Request ID middleware tests | Done | `test/middleware/request-id.test.js` |
-| Validation middleware tests | Done | `test/middleware/validate.test.js` |
-| Auth middleware tests (disabled/valid/invalid) | Done | `test/middleware/auth.test.js` |
-| Claude provider tests (buildArgs/parseOutput/chat) | Done | `test/providers/claude.test.js` |
-| Gemini provider tests | Done | `test/providers/gemini.test.js` |
-| Codex provider tests (JSONL parsing) | Done | `test/providers/codex.test.js` |
-| Cerebras provider tests (mocked fetch) | Done | `test/providers/cerebras.test.js` |
-| Router tests (resolve/list/queue) | Done | `test/router.test.js` |
-| Health check tests (status + cache) | Done | `test/health.test.js` |
-| Server integration tests (supertest) | Done | `test/server.test.js` |
-
-**Key decisions made:**
-- Node.js built-in test runner (`node:test`) + `supertest` devDependency
-- `mock.module()` with `--experimental-test-module-mocks` for CLI provider `chat()` tests (solves CommonJS destructured-import mocking)
-- `mock.method(global, 'fetch')` for Cerebras API tests
-- Pure function tests (buildArgs, parseOutput, sanitize, errors) need zero mocking
-- 33 test cases across 12 suites, < 1s total runtime
+**Key architectural decisions (phases 1–3):**
+- CommonJS, single runtime dependency (Express), functional provider modules
+- Queue: max 2 concurrent, max 10 depth, in-memory; 120s subprocess timeout
+- Multi-client bearer tokens via `SHELLM_CLIENTS` JSON env var; auth disabled when unset
+- Timing-safe token comparison; global + per-client sliding-window RPM
+- Health cache: 30s TTL for provider status; queue/uptime always fresh
+- Tests mock at subprocess boundary (`mock.module()`) and fetch (`mock.method()`); no real CLIs in CI
 
 ---
 
