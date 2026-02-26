@@ -24,8 +24,8 @@ RUN chown -R node:node /usr/local/lib/node_modules \
     && chown -R node:node /usr/local/bin
 
 # Pre-create volume mount points with correct ownership
-RUN mkdir -p /home/node/.claude /home/node/.config/gemini /home/node/.codex \
-    && chown -R node:node /home/node/.claude /home/node/.config /home/node/.codex
+RUN mkdir -p /home/node/.claude /home/node/.gemini /home/node/.codex \
+    && chown -R node:node /home/node/.claude /home/node/.gemini /home/node/.codex
 
 # Switch to non-root user
 USER node

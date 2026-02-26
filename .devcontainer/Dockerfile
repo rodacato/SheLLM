@@ -21,8 +21,8 @@ RUN chown -R node:node /usr/local/bin
 
 # Pre-create volume mount points with correct ownership (before USER switch)
 # This ensures Docker volumes inherit node:node ownership instead of root
-RUN mkdir -p /home/node/.claude /home/node/.config /home/node/.codex \
-    && chown -R node:node /home/node/.claude /home/node/.config /home/node/.codex
+RUN mkdir -p /home/node/.claude /home/node/.gemini /home/node/.codex \
+    && chown -R node:node /home/node/.claude /home/node/.gemini /home/node/.codex
 
 # Switch to node user for all subsequent operations
 USER node

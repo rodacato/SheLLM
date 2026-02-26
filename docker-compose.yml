@@ -7,7 +7,7 @@ services:
       - "127.0.0.1:6000:6000"
     volumes:
       - claude-auth:/home/node/.claude
-      - gemini-auth:/home/node/.config/gemini
+      - gemini-auth:/home/node/.gemini
       - codex-auth:/home/node/.codex
     env_file:
       - .env
