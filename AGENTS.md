@@ -81,4 +81,4 @@ src/
 - Don't add an ORM, database, or persistence layer (stateless service)
 - Don't add authentication middleware (network isolation is the auth boundary)
 - Don't add a framework on top of Express (no Nest, no Fastify migration)
-- Don't reference temporary planning documents — they will be removed after implementation is complete
+- Consult `ROADMAP.md` for current project status, phase progress, and architectural decisions already made

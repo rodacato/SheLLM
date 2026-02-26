@@ -188,6 +188,7 @@ shellm/
 | [IDENTITY.md](IDENTITY.md) | Project lead profile and architectural standards |
 | [EXPERTS.md](EXPERTS.md) | Expert panel for technical and domain decisions |
 | [AGENTS.md](AGENTS.md) | AI agent instructions and project context |
+| [ROADMAP.md](ROADMAP.md) | Implementation phases, progress tracking, decision log |
 
 ## License
 
