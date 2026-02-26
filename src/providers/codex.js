@@ -15,7 +15,6 @@ function buildArgs({ prompt, system }) {
     '--ephemeral',
     '--skip-git-repo-check',
     '--json',
-    '--quiet',
     fullPrompt,
   ];
 }

@@ -10,7 +10,7 @@ describe('codex provider', () => {
     assert.ok(args.includes('exec'));
     assert.ok(args.includes('--ephemeral'));
     assert.ok(args.includes('--json'));
-    assert.ok(args.includes('--quiet'));
+    assert.ok(!args.includes('--quiet'), 'codex CLI does not support --quiet');
 
     const fullPrompt = args[args.length - 1];
     assert.ok(fullPrompt.startsWith('context\n\n---\n\nhello'));

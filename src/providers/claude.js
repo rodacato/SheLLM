@@ -7,7 +7,6 @@ function buildArgs({ prompt, system }) {
     '--print',
     '--dangerously-skip-permissions',
     '--output-format', 'json',
-    '--no-input',
   ];
 
   if (system) {
