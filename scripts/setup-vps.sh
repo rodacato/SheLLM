@@ -69,6 +69,17 @@ echo "==> Installing dependencies..."
 sudo -u shellm bash -c "cd ${APP_DIR} && npm ci --omit=dev"
 
 echo ""
+echo "==> Setting up shellm CLI..."
+sudo -u shellm mkdir -p "${SHELLM_HOME}/.shellm/logs"
+cd "${APP_DIR}" && npm link
+echo "  Created ~/.shellm/ dirs and linked shellm CLI"
+
+echo ""
+echo "==> Installing logrotate config..."
+cp "${APP_DIR}/config/logrotate.conf" /etc/logrotate.d/shellm
+echo "  Installed /etc/logrotate.d/shellm"
+
+echo ""
 echo "==> Setting up .env..."
 if [[ -f "${APP_DIR}/.env" ]]; then
   echo "  .env already exists — skipping"

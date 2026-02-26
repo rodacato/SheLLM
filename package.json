@@ -4,6 +4,9 @@
   "private": true,
   "description": "Your LLM services — unified as a REST API",
   "main": "src/server.js",
+  "bin": {
+    "shellm": "src/cli.js"
+  },
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
