@@ -61,22 +61,31 @@ Formalized API specification, multi-client authentication, rate limiting, and er
 
 ---
 
-## Phase 3 — Testing `PLANNED`
+## Phase 3 — Testing `COMPLETED`
 
-Mocked subprocess tests, API endpoint tests, and queue/concurrency tests. Tests validate the contract defined in Phase 2.
+Comprehensive test suite validating the API contract, provider wrappers, middleware, and error handling. No real CLI calls or network requests in tests.
 
 | Task | Status | Files |
 |---|---|---|
-| Unit tests for each provider (mocked subprocess) | Pending | `test/providers/` |
-| API endpoint tests (including auth) | Pending | `test/server.test.js` |
-| Queue and concurrency tests | Pending | `test/router.test.js` |
+| Error factory unit tests | Done | `test/errors.test.js` |
+| Sanitization unit tests | Done | `test/middleware/sanitize.test.js` |
+| Request ID middleware tests | Done | `test/middleware/request-id.test.js` |
+| Validation middleware tests | Done | `test/middleware/validate.test.js` |
+| Auth middleware tests (disabled/valid/invalid) | Done | `test/middleware/auth.test.js` |
+| Claude provider tests (buildArgs/parseOutput/chat) | Done | `test/providers/claude.test.js` |
+| Gemini provider tests | Done | `test/providers/gemini.test.js` |
+| Codex provider tests (JSONL parsing) | Done | `test/providers/codex.test.js` |
+| Cerebras provider tests (mocked fetch) | Done | `test/providers/cerebras.test.js` |
+| Router tests (resolve/list/queue) | Done | `test/router.test.js` |
+| Health check tests (status + cache) | Done | `test/health.test.js` |
+| Server integration tests (supertest) | Done | `test/server.test.js` |
 
-**Approach:**
-- Node.js built-in test runner (`node --test`)
-- Mock at the `execute()` boundary — no real CLI calls in CI
-- Express app imported directly — no server.listen in tests
-- Tests verify the API contract: correct status codes, response shapes, auth enforcement
-- Target: ~25-30 test cases, < 5s total runtime
+**Key decisions made:**
+- Node.js built-in test runner (`node:test`) + `supertest` devDependency
+- `mock.module()` with `--experimental-test-module-mocks` for CLI provider `chat()` tests (solves CommonJS destructured-import mocking)
+- `mock.method(global, 'fetch')` for Cerebras API tests
+- Pure function tests (buildArgs, parseOutput, sanitize, errors) need zero mocking
+- 33 test cases across 12 suites, < 1s total runtime
 
 ---
 
@@ -159,3 +168,7 @@ Architectural decisions made during implementation, with rationale.
 | Error handling | Factory functions + `fromCatchable()` bridge | Centralized error creation; no classes; gradual migration from old patterns |
 | Health caching | 30s TTL, queue/uptime always fresh | Avoids 4s CLI version checks on every healthcheck poll |
 | Env loading | dotenv | Standard `.env` file support for local development |
+| Test framework | Node.js built-in `node:test` | Zero external test dependencies; built-in mocking, assertions, describe/it |
+| Test HTTP client | `supertest` (devDependency) | Tests Express app directly without starting a server |
+| Mock strategy | `mock.module()` for CLI providers, `mock.method()` for fetch | Solves CommonJS destructured-import problem; only 5 of 12 test files need module mocking |
+| Test scope | 33 tests, 12 suites, < 1s | Fast, deterministic; no real CLIs, no network calls |

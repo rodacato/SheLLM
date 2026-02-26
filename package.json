@@ -7,11 +7,14 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "test": "node --test test/**/*.test.js"
+    "test": "node --experimental-test-module-mocks --test 'test/*.test.js' 'test/**/*.test.js'"
   },
   "dependencies": {
     "dotenv": "^17.3.1",
     "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "supertest": "^7.1.0"
   },
   "engines": {
     "node": ">=22"
