@@ -26,23 +26,28 @@ SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterpris
 
 ---
 
-## Phase 4 — Containerization `PLANNED`
+## Phase 4 — Containerization `COMPLETED`
 
 Production-ready Docker setup with CLI installations and auth management scripts.
 
 | Task | Status | Files |
 |---|---|---|
-| Production Dockerfile with CLI installations | Pending | `Dockerfile` |
-| Production docker-compose.yml | Pending | `docker-compose.yml` |
-| Auth setup script (interactive) | Pending | `scripts/setup-auth.sh` |
-| Auth check script (verification) | Pending | `scripts/check-auth.sh` |
+| Production Dockerfile with CLI installations | Done | `Dockerfile` |
+| Production docker-compose.yml | Done | `docker-compose.yml` |
+| Auth setup script (interactive) | Done | `scripts/setup-auth.sh` |
+| Auth check script (verification) | Done | `scripts/check-auth.sh` |
+| Docker build context filter | Done | `.dockerignore` |
 
-**Notes:**
-- Dev container (`.devcontainer/`) already exists and works — this phase is for the production image
-- Production image: `node:22-slim` + Claude Code + Gemini CLI + Codex CLI
-- Auth tokens persist via Docker volumes (`~/.claude/`, `~/.config/gemini/`, `~/.codex/`)
-- Port binding: `127.0.0.1:6000` (loopback only)
-- Resource limits: 768MB RAM, 1.0 CPU
+**Key decisions made:**
+- Single-stage build (no compile step — plain CommonJS)
+- `node:22-slim` base, minimal system packages (curl, jq only — no sudo/editors)
+- CLI version-pinned via `ARG`: Gemini 0.30.0, Codex 0.105.0, Claude Code via native installer (latest)
+- Non-root `node` user at runtime; auth dirs as empty volume mount points
+- `127.0.0.1:6000` loopback-only binding; 768MB RAM, 1.0 CPU limits
+- HEALTHCHECK hits `GET /health` endpoint (not TCP); 60s start-period for CLI cold starts
+- `CMD ["node", "src/server.js"]` exec form — Node.js is PID 1, receives SIGTERM
+- Secrets via `.env` file (`env_file` directive), never in compose or image layers
+- Log rotation: json-file driver, 10MB x 3 files
 
 ---
 
@@ -109,3 +114,9 @@ Architectural decisions made during implementation, with rationale.
 | Test HTTP client | `supertest` (devDependency) | Tests Express app directly without starting a server |
 | Mock strategy | `mock.module()` for CLI providers, `mock.method()` for fetch | Solves CommonJS destructured-import problem; only 5 of 12 test files need module mocking |
 | Test scope | 33 tests, 12 suites, < 1s | Fast, deterministic; no real CLIs, no network calls |
+| Dockerfile stages | Single-stage (no multi-stage) | No compile/transpile step; plain CommonJS has no build artifacts to separate |
+| Production base image | `node:22-slim` + curl + jq only | Minimal attack surface; no sudo, editors, or dev tools |
+| CLI version pinning | `ARG` for Gemini/Codex; Claude via native installer | Reproducible builds; Claude installer has no version pin option |
+| Container entrypoint | `CMD` exec form (no `ENTRYPOINT`) | Node.js is PID 1, receives signals; allows `docker run shellm bash` override |
+| Resource limits | 768MB RAM, 1.0 CPU | Accommodates Node.js heap + 2 concurrent CLI subprocesses |
+| Log rotation | json-file, 10MB x 3 | Prevents disk exhaustion on low-volume VPS |

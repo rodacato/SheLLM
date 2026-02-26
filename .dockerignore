@@ -1,0 +1,34 @@
+# Version control
+.git
+.gitignore
+
+# Dev container (not needed in prod image)
+.devcontainer
+
+# Dependencies (rebuilt inside container)
+node_modules
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Auth token directories (never bake into image)
+.claude
+.codex
+.config
+
+# Documentation (not needed at runtime)
+*.md
+
+# CI/CD
+.github
+
+# Test suite (not needed in production)
+test
+
+# Editor/OS artifacts
+.vscode
+.idea
+.DS_Store
+*.swp

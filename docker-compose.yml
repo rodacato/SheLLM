@@ -1,0 +1,36 @@
+services:
+  shellm:
+    build: .
+    container_name: shellm
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6000:6000"
+    volumes:
+      - claude-auth:/home/node/.claude
+      - gemini-auth:/home/node/.config/gemini
+      - codex-auth:/home/node/.codex
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+    deploy:
+      resources:
+        limits:
+          memory: 768m
+          cpus: "1.0"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  claude-auth:
+  gemini-auth:
+  codex-auth:
