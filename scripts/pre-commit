@@ -19,7 +19,7 @@ fi
 
 for pattern in "${PATTERNS[@]}"; do
   # Check staged content (not working tree)
-  if git diff --cached -U0 | grep -qP "$pattern"; then
+  if git diff --cached -U0 | grep '^+' | grep -qP "$pattern"; then
     echo "ERROR: Potential secret detected in staged changes."
     echo "Pattern: $pattern"
     echo ""

@@ -21,7 +21,7 @@ Existing solutions like LiteLLM or Portkey assume API keys for everything. SheLL
 | Subscription | CLI Tool | Auth |
 | --- | --- | --- |
 | Claude Max (~$100/mo) | `claude` (Claude Code) | OAuth → `~/.claude/` |
-| Gemini AI Plus | `gemini` (Gemini CLI) | Google OAuth → `~/.config/` |
+| Gemini AI Plus | `gemini` (Gemini CLI) | Google OAuth → `~/.gemini/` |
 | OpenAI Enterprise | `codex` (Codex CLI) | OpenAI auth → `~/.codex/` |
 
 ### API-Based
@@ -33,27 +33,49 @@ Existing solutions like LiteLLM or Portkey assume API keys for everything. SheLL
 
 ## Quick Start
 
-### Development (Docker Compose)
+### Install
 
 ```bash
-git clone <repo-url> && cd shellm
-cp .env.example .env
-docker compose up --build
-
-curl http://localhost:6000/health
-```
-
-### Development (Local)
-
-```bash
+git clone git@github.com:rodacato/SheLLM.git && cd shellm
 npm install
-cp .env.example .env
-npm run dev
-
-npm test
+cp .env.example .env    # edit with your secrets
+npm link                # makes `shellm` CLI available globally
 ```
 
-**Important:** When `SHELLM_CLIENTS` is not set, authentication is completely disabled — all requests to all endpoints are allowed without any token. This is by design for local development, but in production you **must** set `SHELLM_CLIENTS` to restrict access.
+### Run
+
+```bash
+# Foreground (development)
+shellm start
+
+# Background daemon
+shellm start -d
+
+# Custom port
+shellm start -p 8080
+
+# Verify
+curl http://127.0.0.1:6000/health
+```
+
+### CLI Commands
+
+```
+shellm start [-d|--daemon] [-p|--port PORT]   Start the server
+shellm stop                                    Stop the daemon
+shellm restart                                 Restart the daemon
+shellm status                                  Show server status and health
+shellm logs [-f|--follow] [-n|--lines N]       View daemon logs
+shellm version                                 Show version
+shellm help                                    Show usage
+```
+
+### Run Tests
+
+```bash
+npm test             # 56 unit tests, 16 suites, < 1s
+npm run test:e2e     # end-to-end with real CLIs (requires auth)
+```
 
 ## Authentication
 
@@ -78,9 +100,9 @@ SHELLM_GLOBAL_RPM=30
 | Valid JSON | Auth enabled — requires `Authorization: Bearer <key>` |
 | Invalid JSON | Auth disabled + warning in logs |
 
-### Usage
+**Important:** When `SHELLM_CLIENTS` is not set, authentication is completely disabled — all requests are allowed without any token. This is by design for local development, but in production you **must** set `SHELLM_CLIENTS` to restrict access.
 
-Include the bearer token in the `Authorization` header:
+### Usage
 
 ```bash
 curl -H "Authorization: Bearer stockerly-shellm-2026" http://localhost:6000/providers
@@ -93,13 +115,13 @@ Every request gets a `request_id` for traceability. Priority:
 2. `request_id` field in POST body
 3. Auto-generated UUID
 
-## API Contract
+## API
 
 ### POST /completions *(authenticated)*
 
 ```bash
 curl -X POST http://localhost:6000/completions \
-  -H "Authorization: Bearer sk-stock-abc123" \
+  -H "Authorization: Bearer stockerly-shellm-2026" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "claude",
@@ -132,7 +154,7 @@ curl -X POST http://localhost:6000/completions \
 
 ### GET /health *(unauthenticated)*
 
-Returns provider status, queue stats, and uptime. Unauthenticated for Docker/Kamal healthchecks.
+Returns provider status, queue stats, and uptime. Unauthenticated for healthcheck probes.
 
 ```json
 {
@@ -182,21 +204,63 @@ Every error response follows this shape:
 | `MAX_CONCURRENT` | `2` | Max concurrent CLI processes |
 | `MAX_QUEUE_DEPTH` | `10` | Max queued requests before 429 |
 | `HEALTH_CACHE_TTL_MS` | `30000` | Health check cache duration (ms) |
+| `LOG_LEVEL` | `info` | Log verbosity: `debug`, `info`, `warn`, `error` |
 | `SHELLM_CLIENTS` | *(unset)* | Client auth config (JSON). Unset = auth disabled |
 | `SHELLM_GLOBAL_RPM` | `30` | Global rate limit (requests/minute) |
 | `CEREBRAS_API_KEY` | *(unset)* | Cerebras API key (optional) |
 
-## CLI Auth Setup
+## Logging
 
-After deploying, authenticate each CLI once:
+SheLLM outputs structured JSON logs to stdout/stderr.
+
+- `debug`/`info` → stdout
+- `warn`/`error` → stderr
+- Health check requests (`/health`) are logged at `debug` level — suppressed by default
+- 4xx → `warn`, 5xx → `error`
+
+Set `LOG_LEVEL=debug` to see all requests including health probes.
+
+Daemon mode logs to `~/.shellm/logs/shellm.log` with logrotate support (daily, 7 rotations, 10MB max).
+
+## Production Deployment (VPS)
+
+SheLLM runs directly on a VPS with systemd and cloudflared. CLI OAuth tokens persist naturally in the home directory — no Docker volume issues.
+
+### First-time setup
 
 ```bash
-docker exec -it shellm claude auth login
-docker exec -it shellm gemini auth login
-docker exec -it shellm codex auth login
+# On the VPS as root
+bash scripts/setup-vps.sh
 ```
 
-Auth tokens persist in Docker volumes — survives restarts and redeployments.
+This creates a `shellm` user, installs Node.js 22, CLI tools, clones the repo, configures systemd, and sets up cloudflared.
+
+### Authenticate CLIs
+
+```bash
+sudo -iu shellm
+claude auth login
+gemini auth login
+codex auth login
+exit
+```
+
+### Start
+
+```bash
+sudo systemctl start shellm
+sudo systemctl status shellm
+journalctl -u shellm -f
+```
+
+### Update
+
+```bash
+sudo -iu shellm
+cd ~/shellm && git pull && npm ci --omit=dev
+exit
+sudo systemctl restart shellm
+```
 
 ## Architecture
 
@@ -231,6 +295,19 @@ shellm/
 │   ├── router.js            # Request routing + queue
 │   ├── errors.js            # Error factories and response helper
 │   ├── health.js            # Health check logic (cached)
+│   ├── cli.js               # CLI dispatcher
+│   ├── cli/
+│   │   ├── paths.js         # Shared path constants (~/.shellm/)
+│   │   ├── pid.js           # PID file utilities
+│   │   ├── start.js         # Start foreground or daemon
+│   │   ├── stop.js          # Stop daemon (SIGTERM → SIGKILL)
+│   │   ├── restart.js       # Restart daemon
+│   │   ├── status.js        # PID check + health fetch
+│   │   ├── logs.js          # Tail daemon log file
+│   │   ├── version.js       # Print version
+│   │   └── help.js          # Usage text
+│   ├── lib/
+│   │   └── logger.js        # Structured JSON logger with LOG_LEVEL
 │   ├── providers/
 │   │   ├── base.js          # Base subprocess runner
 │   │   ├── claude.js        # Claude CLI wrapper
@@ -238,29 +315,30 @@ shellm/
 │   │   ├── codex.js         # Codex CLI wrapper
 │   │   └── cerebras.js      # Cerebras API client
 │   └── middleware/
-│       ├── auth.js          # Multi-client authentication + rate limiting
+│       ├── auth.js          # Multi-client auth + rate limiting
 │       ├── request-id.js    # Request ID propagation
 │       ├── validate.js      # Request validation
 │       ├── sanitize.js      # Input sanitization
-│       └── logging.js       # Structured JSON logging
+│       └── logging.js       # Request logging (level-aware)
+├── test/                    # 56 tests, 16 suites
+├── config/
+│   └── logrotate.conf       # Daemon log rotation
 ├── scripts/
-│   └── pre-commit           # Git hook to block secrets
+│   ├── pre-commit           # Git hook (block secrets)
+│   └── setup-vps.sh         # VPS provisioning (one-time)
+├── shellm.service           # systemd unit file
 ├── .env.example             # Environment variable template
-├── test/
-├── Dockerfile
-└── docker-compose.yml
+├── Dockerfile               # Production container (optional)
+└── docker-compose.yml       # Docker Compose (optional)
 ```
 
 ## Documentation
 
 | Document | Purpose |
 |---|---|
+| [ROADMAP.md](ROADMAP.md) | Implementation phases, progress tracking, decision log |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Development setup, code conventions, how to add providers |
 | [SECURITY.md](SECURITY.md) | Security architecture, input handling, auth token policy |
-| [IDENTITY.md](IDENTITY.md) | Project lead profile and architectural standards |
-| [EXPERTS.md](EXPERTS.md) | Expert panel for technical and domain decisions |
-| [AGENTS.md](AGENTS.md) | AI agent instructions and project context |
-| [ROADMAP.md](ROADMAP.md) | Implementation phases, progress tracking, decision log |
 
 ## License
 
