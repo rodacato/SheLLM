@@ -4,7 +4,7 @@
 
 ## Overview
 
-SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterprise) and API providers (Cerebras) as a unified REST API. The project is organized in four implementation phases plus a future enhancements backlog.
+SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterprise) and API providers (Cerebras) as a unified REST API. The project is organized in five implementation phases plus a future enhancements backlog.
 
 ---
 
@@ -33,7 +33,49 @@ The Express server, provider wrappers, request queue, middleware, and health che
 
 ---
 
-## Phase 2 — Containerization `PLANNED`
+## Phase 2 — API Contract & Authentication `PLANNED`
+
+Formalize the API specification, error contract, and access control before writing tests.
+
+| Task | Status | Files |
+|---|---|---|
+| Define API contract for all endpoints (request/response shapes) | Pending | `src/server.js` |
+| Implement bearer token authentication (`SHELLM_API_KEY`) | Pending | `src/middleware/auth.js` |
+| Standardize error responses across all failure modes | Pending | `src/server.js`, `src/middleware/` |
+| Add `request_id` propagation and correlation in logs | Pending | `src/middleware/logging.js` |
+| Document API contract in README | Pending | `README.md` |
+
+**Scope:**
+- **Authentication:** Bearer token via `Authorization: Bearer <SHELLM_API_KEY>` header. A single shared secret set via environment variable. Health check (`GET /health`) remains unauthenticated for Docker/Kamal healthchecks.
+- **Error contract:** Every error response returns `{ error, message, request_id }` with the correct HTTP status code. No exceptions.
+- **Endpoints to finalize:**
+  - `POST /completions` — main endpoint (exists, needs contract review)
+  - `GET /health` — healthcheck (exists, unauthenticated)
+  - `GET /providers` — list capabilities (exists, needs auth)
+- **Logging:** Structured logs with `request_id` correlation for traceability across caller → SheLLM → provider.
+
+---
+
+## Phase 3 — Testing `PLANNED`
+
+Mocked subprocess tests, API endpoint tests, and queue/concurrency tests. Tests validate the contract defined in Phase 2.
+
+| Task | Status | Files |
+|---|---|---|
+| Unit tests for each provider (mocked subprocess) | Pending | `test/providers/` |
+| API endpoint tests (including auth) | Pending | `test/server.test.js` |
+| Queue and concurrency tests | Pending | `test/router.test.js` |
+
+**Approach:**
+- Node.js built-in test runner (`node --test`)
+- Mock at the `execute()` boundary — no real CLI calls in CI
+- Express app imported directly — no server.listen in tests
+- Tests verify the API contract: correct status codes, response shapes, auth enforcement
+- Target: ~25-30 test cases, < 5s total runtime
+
+---
+
+## Phase 4 — Containerization `PLANNED`
 
 Production-ready Docker setup with CLI installations and auth management scripts.
 
@@ -53,25 +95,7 @@ Production-ready Docker setup with CLI installations and auth management scripts
 
 ---
 
-## Phase 3 — Testing `PLANNED`
-
-Mocked subprocess tests, API endpoint tests, and queue/concurrency tests.
-
-| Task | Status | Files |
-|---|---|---|
-| Unit tests for each provider (mocked subprocess) | Pending | `test/providers/` |
-| API endpoint tests | Pending | `test/server.test.js` |
-| Queue and concurrency tests | Pending | `test/router.test.js` |
-
-**Approach:**
-- Node.js built-in test runner (`node --test`)
-- Mock at the `execute()` boundary — no real CLI calls in CI
-- Express app imported directly — no server.listen in tests
-- Target: ~25-30 test cases, < 5s total runtime
-
----
-
-## Phase 4 — Deployment `PLANNED`
+## Phase 5 — Deployment `PLANNED`
 
 CI/CD pipeline and production deployment via Kamal.
 
@@ -123,3 +147,4 @@ Architectural decisions made during implementation, with rationale.
 | Queue implementation | In-memory array | Low volume (< 100 req/day), no Redis needed |
 | System prompt handling | `--system-prompt` for Claude, prepend for others | Avoids wasted tokens on CLI agentic scaffolding |
 | Response format | Unified JSON | Caller doesn't care which provider answered |
+| Phase order | API contract → Testing → Containerization | Tests validate contract; containerize a stable, tested service |
