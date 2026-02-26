@@ -4,7 +4,7 @@
 
 ## Overview
 
-SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterprise) and API providers (Cerebras) as a unified REST API. The project is organized in five implementation phases plus a future enhancements backlog.
+SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterprise) and API providers (Cerebras) as a unified REST API. The project is organized in six implementation phases plus a future enhancements backlog.
 
 ---
 
@@ -51,7 +51,31 @@ Production-ready Docker setup with CLI installations and auth management scripts
 
 ---
 
-## Phase 5 — VPS Deployment `COMPLETED`
+## Phase 5 — CLI & Logging `COMPLETED`
+
+`shellm` CLI for service management, structured logging with LOG_LEVEL, and log rotation.
+
+| Task | Status | Files |
+|---|---|---|
+| Logger module with LOG_LEVEL support | Done | `src/lib/logger.js` |
+| Logging middleware with level filtering | Done | `src/middleware/logging.js` |
+| CLI dispatcher and subcommands | Done | `src/cli.js`, `src/cli/*.js` |
+| CLI shared utilities (paths, PID) | Done | `src/cli/paths.js`, `src/cli/pid.js` |
+| Logrotate config for daemon mode | Done | `config/logrotate.conf` |
+| VPS setup updated (CLI link, logrotate) | Done | `scripts/setup-vps.sh` |
+| package.json bin field | Done | `package.json` |
+
+**Key decisions made:**
+- `shellm` CLI complements systemd — `shellm start -d` for dev/ad-hoc, systemd for production
+- LOG_LEVEL (debug/info/warn/error, default `info`); health probes logged at `debug` — suppressed by default
+- Structured JSON logger using `process.stdout.write`/`process.stderr.write` (not console)
+- PID file at `~/.shellm/shellm.pid`; daemon log at `~/.shellm/logs/shellm.log`
+- Log rotation via system `logrotate` with `copytruncate` (no signal handling needed in app)
+- No new npm dependencies — uses `node:util` parseArgs, global `fetch` (Node 22+), `child_process.spawn`
+
+---
+
+## Phase 6 — VPS Deployment `COMPLETED`
 
 Direct VPS deployment with systemd and cloudflared tunnel. Pivoted from containerized approach because CLI OAuth tokens break on container rebuilds — native install keeps auth stable.
 
@@ -126,3 +150,7 @@ Architectural decisions made during implementation, with rationale.
 | Deploy method | SSH + git pull + systemctl restart | Simple, auditable, single-VPS service |
 | Network access | cloudflared tunnel (`shellm.notdefined.dev`) | Zero open ports, Cloudflare handles TLS, no nginx/caddy needed |
 | App directory | `~shellm/shellm/` | User home dir — CLI auth tokens live alongside the app naturally |
+| CLI tool | `shellm` bin via npm link | Convenient dev/ad-hoc management; complements systemd, doesn't replace it |
+| Logger | Structured JSON, LOG_LEVEL filter | Health probes (every 30s) suppressed at `info`; 5xx → `error` for alerting |
+| Log rotation | System logrotate, `copytruncate` | No signal handling in app; daily, 7 rotations, 10M max |
+| PID/log storage | `~/.shellm/` | Outside repo, survives deploys, owned by shellm user |
