@@ -51,7 +51,7 @@ codex --version
 
 ### Architecture Rules
 
-1. **One dependency** (Express). Don't add packages unless you can justify why a Node.js built-in won't work.
+1. **Minimal dependencies** (Express + dotenv). Don't add packages unless you can justify why a Node.js built-in won't work.
 2. **One file per provider.** Each provider is a self-contained module with the same export shape.
 3. **No classes.** Providers export plain objects with functions. No inheritance, no `this` binding issues.
 4. **Errors are objects, not strings.** Every error response has `{ error, message, request_id }`.
