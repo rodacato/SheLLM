@@ -17,6 +17,9 @@
 .link-brand:hover { color: #02b8d4; }
 .bar-brand { background-color: #03E3FF; }
 
+/* Hide x-cloak elements until Alpine initializes */
+[x-cloak] { display: none !important; }
+
 /* Modal overlay */
 .modal-overlay {
   position: fixed;

@@ -9,7 +9,7 @@ info:
     ## Authentication
 
     **Client endpoints** (`/v1/*`) use Bearer token authentication.
-    Tokens are managed via the Admin API or the `SHELLM_CLIENTS` environment variable.
+    Tokens are managed via the Admin API.
 
     **Admin endpoints** (`/admin/*`) use HTTP Basic authentication.
     The password is set via the `SHELLM_ADMIN_PASSWORD` environment variable.

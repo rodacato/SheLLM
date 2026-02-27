@@ -107,41 +107,6 @@ function keysPage() {
           class="btn-brand px-4 py-2 rounded text-sm">Create Key</button>
       </div>`;
 
-      // Create modal
-      if (this.showCreateModal) {
-        html += `<div class="modal-overlay" onclick="if(event.target===this) this.closest('[x-data]').__x.$data.showCreateModal = false">
-          <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
-            <h3 class="text-lg font-semibold mb-4">Create API Key</h3>
-            <div class="space-y-3">
-              <div>
-                <label class="block text-sm text-gray-600 mb-1">Client Name</label>
-                <input type="text" value="${escapeHtml(this.createForm.name)}"
-                  oninput="this.closest('[x-data]').__x.$data.createForm.name = this.value"
-                  class="w-full border rounded px-3 py-2 text-sm" placeholder="e.g. my-app">
-              </div>
-              <div>
-                <label class="block text-sm text-gray-600 mb-1">RPM (requests/min)</label>
-                <input type="number" value="${this.createForm.rpm}"
-                  oninput="this.closest('[x-data]').__x.$data.createForm.rpm = this.value"
-                  class="w-full border rounded px-3 py-2 text-sm" min="1">
-              </div>
-              <div>
-                <label class="block text-sm text-gray-600 mb-1">Models (comma-separated, blank = all)</label>
-                <input type="text" value="${escapeHtml(this.createForm.models)}"
-                  oninput="this.closest('[x-data]').__x.$data.createForm.models = this.value"
-                  class="w-full border rounded px-3 py-2 text-sm" placeholder="claude, gemini">
-              </div>
-            </div>
-            <div class="flex justify-end gap-2 mt-4">
-              <button onclick="this.closest('[x-data]').__x.$data.showCreateModal = false"
-                class="px-4 py-2 rounded text-sm border hover:bg-gray-50">Cancel</button>
-              <button onclick="this.closest('[x-data]').__x.$data.createKey(); this.closest('[x-data]').__x.$data.showCreateModal = false"
-                class="btn-brand px-4 py-2 rounded text-sm">Create</button>
-            </div>
-          </div>
-        </div>`;
-      }
-
       // Keys table
       html += `<div class="bg-white rounded-lg shadow overflow-x-auto">
         <table class="w-full text-sm">

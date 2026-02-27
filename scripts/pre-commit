@@ -7,7 +7,6 @@ set -euo pipefail
 PATTERNS=(
   'sk-[a-zA-Z0-9_-]{10,}'     # SheLLM client keys
   'csk-[a-zA-Z0-9_-]{10,}'    # Cerebras API keys
-  'SHELLM_CLIENTS=.*"key"'     # Inline client config with real keys
   'CEREBRAS_API_KEY=[^$]'      # Hardcoded Cerebras key (not env reference)
 )
 

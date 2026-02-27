@@ -27,7 +27,7 @@ SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterpris
 **Key architectural decisions (phases 1–6, 9):**
 - CommonJS, three runtime dependencies (Express + dotenv + better-sqlite3), functional provider modules
 - Queue: max 2 concurrent, max 10 depth, in-memory; 120s subprocess timeout, 1MB buffer cap
-- Multi-client bearer tokens via `SHELLM_CLIENTS` JSON env var; auth disabled when unset
+- Multi-client bearer tokens managed via Admin API; auth disabled when no keys exist
 - Direct VPS deployment (not containerized) — CLI OAuth tokens persist in `~shellmer/`
 - cloudflared tunnel to `shellm.notdefined.dev` — zero open ports, Cloudflare handles TLS
 
