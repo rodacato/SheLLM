@@ -23,26 +23,37 @@ describe('claude provider', () => {
     assert.strictEqual(args2[args2.length - 1], 'just prompt');
   });
 
-  it('parseOutput handles JSON and fallback', () => {
-    // JSON with result field
-    const json1 = parseOutput(JSON.stringify({ result: 'hello', cost_usd: 0.01 }));
-    assert.strictEqual(json1.content, 'hello');
-    assert.strictEqual(json1.cost_usd, 0.01);
+  it('parseOutput extracts result, cost and usage from stderr JSON', () => {
+    const stderr = JSON.stringify({
+      type: 'result',
+      result: 'hello',
+      total_cost_usd: 0.019,
+      usage: { input_tokens: 10, output_tokens: 24 },
+    });
+    const parsed = parseOutput('', stderr);
+    assert.strictEqual(parsed.content, 'hello');
+    assert.strictEqual(parsed.cost_usd, 0.019);
+    assert.deepStrictEqual(parsed.usage, { input_tokens: 10, output_tokens: 24 });
+  });
 
-    // JSON with content field
-    const json2 = parseOutput(JSON.stringify({ content: 'alt field' }));
-    assert.strictEqual(json2.content, 'alt field');
+  it('parseOutput falls back to stdout JSON when stderr is empty', () => {
+    const stdout = JSON.stringify({ result: 'hello', cost_usd: 0.01 });
+    const parsed = parseOutput(stdout, '');
+    assert.strictEqual(parsed.content, 'hello');
+    assert.strictEqual(parsed.cost_usd, 0.01);
+  });
 
-    // Plain text fallback
-    const plain = parseOutput('plain text response');
+  it('parseOutput handles plain text fallback', () => {
+    const plain = parseOutput('plain text response', '');
     assert.strictEqual(plain.content, 'plain text response');
     assert.strictEqual(plain.cost_usd, null);
+    assert.strictEqual(plain.usage, null);
   });
 
   it('chat() calls execute with correct command and env', async () => {
     const mockExecute = mock.fn(async () => ({
-      stdout: JSON.stringify({ result: 'mocked reply', cost_usd: 0.003 }),
-      stderr: '',
+      stdout: '',
+      stderr: JSON.stringify({ type: 'result', result: 'mocked reply', total_cost_usd: 0.003, usage: { input_tokens: 5, output_tokens: 10 } }),
       duration_ms: 50,
     }));
 

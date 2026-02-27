@@ -18,20 +18,36 @@ describe('gemini provider', () => {
 
     // Includes expected flags
     assert.ok(args.includes('--output-format'));
-    assert.ok(args.includes('text'));
+    assert.ok(args.includes('json'));
     assert.ok(args.includes('--approval-mode'));
     assert.ok(args.includes('yolo'));
   });
 
-  it('parseOutput returns raw stdout', () => {
-    const result = parseOutput('gemini output');
-    assert.strictEqual(result.content, 'gemini output');
+  it('parseOutput extracts response and usage from JSON', () => {
+    const json = JSON.stringify({
+      response: 'hello',
+      stats: {
+        models: {
+          'gemini-flash': { tokens: { input: 100, candidates: 20 } },
+          'gemini-router': { tokens: { input: 50, candidates: 5 } },
+        },
+      },
+    });
+    const result = parseOutput(json);
+    assert.strictEqual(result.content, 'hello');
+    assert.deepStrictEqual(result.usage, { input_tokens: 150, output_tokens: 25 });
     assert.strictEqual(result.cost_usd, null);
+  });
+
+  it('parseOutput handles plain text fallback', () => {
+    const result = parseOutput('not json');
+    assert.strictEqual(result.content, 'not json');
+    assert.strictEqual(result.usage, null);
   });
 
   it('chat() calls execute with correct command', async () => {
     const mockExecute = mock.fn(async () => ({
-      stdout: 'mocked gemini reply',
+      stdout: JSON.stringify({ response: 'mocked gemini reply', stats: { models: {} } }),
       stderr: '',
       duration_ms: 30,
     }));

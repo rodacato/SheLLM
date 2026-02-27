@@ -17,16 +17,28 @@ function buildArgs({ prompt, system }) {
   return args;
 }
 
-function parseOutput(stdout) {
+function parseOutput(stdout, stderr) {
+  let content = stdout;
+  let cost_usd = null;
+  let usage = null;
+
+  // Claude CLI writes the result JSON to stderr with --output-format json
+  const source = stderr || stdout;
   try {
-    const data = JSON.parse(stdout);
-    return {
-      content: data.result || data.content || stdout,
-      cost_usd: data.cost_usd || null,
-    };
+    const data = JSON.parse(source);
+    content = data.result || data.content || stdout;
+    cost_usd = data.total_cost_usd || data.cost_usd || null;
+    if (data.usage) {
+      usage = {
+        input_tokens: data.usage.input_tokens || 0,
+        output_tokens: data.usage.output_tokens || 0,
+      };
+    }
   } catch {
-    return { content: stdout, cost_usd: null };
+    // Not JSON — use raw stdout as content
   }
+
+  return { content, cost_usd, usage };
 }
 
 async function chat({ prompt, system }) {
@@ -37,7 +49,7 @@ async function chat({ prompt, system }) {
   delete env.ANTHROPIC_API_KEY;
 
   const result = await execute('claude', args, { env });
-  return parseOutput(result.stdout);
+  return parseOutput(result.stdout, result.stderr);
 }
 
 module.exports = {
