@@ -8,7 +8,7 @@ SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterpris
 
 ---
 
-## Phases 1–6 — Summary `COMPLETED`
+## Phases 1–7 — Summary `COMPLETED`
 
 | Phase | Scope | Key Deliverables |
 |---|---|---|
@@ -18,57 +18,28 @@ SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterpris
 | **4 — Containerization** | Dockerfile, compose (dev use) | `Dockerfile`, `docker-compose.yml`, `.dockerignore` |
 | **5 — CLI & Logging** | `shellm` CLI, structured JSON logger, log rotation | `src/cli.js`, `src/cli/*.js`, `src/lib/logger.js`, `config/logrotate.conf` |
 | **6 — VPS Deployment** | systemd, cloudflared, provisioning script | `shellm.service`, `scripts/setup-vps.sh` |
+| **7 — API Hardening** | Validation, graceful shutdown, observability | 82 tests, settled guard, buffer cap, queue headers |
 
 **Key architectural decisions (phases 1–6):**
 - CommonJS, two runtime dependencies (Express + dotenv), functional provider modules
-- Queue: max 2 concurrent, max 10 depth, in-memory; 120s subprocess timeout
+- Queue: max 2 concurrent, max 10 depth, in-memory; 120s subprocess timeout, 1MB buffer cap
 - Multi-client bearer tokens via `SHELLM_CLIENTS` JSON env var; auth disabled when unset
 - Direct VPS deployment (not containerized) — CLI OAuth tokens persist in `~shellmer/`
 - cloudflared tunnel to `shellm.notdefined.dev` — zero open ports, Cloudflare handles TLS
 
 ---
 
-## Phase 7 — API Hardening `PENDING`
+## Phase 7 — API Hardening `COMPLETED`
 
-Fix correctness, safety, and reliability gaps identified by expert review. All changes are low-effort, no new dependencies. Foundation for everything that follows.
+Correctness, safety, and reliability gaps fixed. No new dependencies. 82 tests (26 new), all passing.
 
-### 7a — Correctness & Validation
+**7a — Correctness:** `max_tokens` validation (1–128000), `system` type check, prompt length cap (50k), Content-Type enforcement, 256kb body limit, double-rejection guard in base.js.
 
-| Task | Status | Files |
-|---|---|---|
-| Validate `max_tokens` type and range (1–128000) | Pending | `src/middleware/validate.js` |
-| Validate `system` field type (must be string) | Pending | `src/middleware/validate.js` |
-| Reject prompt > 50,000 chars with error (not silent truncation) | Pending | `src/middleware/validate.js`, `src/middleware/sanitize.js` |
-| Validate `Content-Type: application/json` on POST | Pending | `src/server.js` |
-| Explicit body size limit (`express.json({ limit: '256kb' })`) | Pending | `src/server.js` |
-| Guard double-rejection in base.js (error + close race) | Pending | `src/providers/base.js` |
+**7b — Reliability:** Graceful shutdown (SIGTERM/SIGINT, 30s drain), fail-fast on unauthenticated provider, 1MB subprocess buffer cap, SIGTERM→SIGKILL (5s grace), Retry-After header on 429.
 
-### 7b — Reliability & Shutdown
+**7c — Observability:** `queued_ms` in responses, `duration_ms` in errors, `X-Queue-Depth`/`X-Queue-Active` headers, provider/model in logs, queue depth logging, token redaction in health stderr.
 
-| Task | Status | Files |
-|---|---|---|
-| Graceful shutdown (SIGTERM/SIGINT drain connections) | Pending | `src/server.js`, `src/cli/start.js` |
-| Fail-fast on unauthenticated provider (check health before queue) | Pending | `src/router.js`, `src/health.js` |
-| Cap subprocess stdout/stderr buffer (1MB max) | Pending | `src/providers/base.js` |
-| SIGTERM before SIGKILL on subprocess timeout (5s grace) | Pending | `src/providers/base.js` |
-| `Retry-After` HTTP header on 429 responses | Pending | `src/errors.js` |
-
-### 7c — Observability
-
-| Task | Status | Files |
-|---|---|---|
-| Add `queued_ms` to response (separate from `duration_ms`) | Pending | `src/router.js` |
-| Add `duration_ms` to error responses | Pending | `src/server.js` |
-| Log provider/model in request logs | Pending | `src/middleware/logging.js` |
-| Log queue depth on enqueue/dequeue | Pending | `src/router.js` |
-| `X-Queue-Depth` and `X-Queue-Active` response headers | Pending | `src/server.js` |
-| Redact long tokens from health check stderr | Pending | `src/health.js` |
-
-### 7d — Tests
-
-| Task | Status | Files |
-|---|---|---|
-| Unit tests for all 7a/7b/7c changes | Pending | `test/` |
+**7d — Tests:** base.js (timeout, buffer, spawn error, env), validate (prompt length, system, max_tokens), server integration (Content-Type, body limit, queue headers), health cache, router fail-fast.
 
 ---
 
