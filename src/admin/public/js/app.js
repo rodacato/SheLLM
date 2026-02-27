@@ -48,14 +48,11 @@ function statusBadgeClass(status) {
   return 'badge-5xx';
 }
 
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+const VALID_PAGES = ['overview', 'logs', 'keys', 'models'];
 
 function app() {
   return {
-    page: 'overview',
+    page: VALID_PAGES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview',
     health: { uptime: null, providers: {}, queue: {} },
     nav: [
       { id: 'overview', label: 'Overview' },
@@ -65,9 +62,14 @@ function app() {
     ],
     navigate(pageId) {
       this.page = pageId;
+      location.hash = pageId;
     },
     formatUptime,
     async init() {
+      window.addEventListener('hashchange', () => {
+        const id = location.hash.slice(1);
+        if (VALID_PAGES.includes(id)) this.page = id;
+      });
       await this.fetchHealth();
       setInterval(() => this.fetchHealth(), 30000);
     },

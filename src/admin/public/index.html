@@ -22,7 +22,7 @@
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="css/custom.css">
 </head>
-<body x-data="app()" class="bg-gray-50 min-h-screen flex">
+<body x-data="app()" x-init="init()" class="bg-gray-50 min-h-screen flex">
 
   <!-- Sidebar -->
   <aside class="w-56 bg-brand-dark text-gray-300 min-h-screen flex flex-col shrink-0">
@@ -50,72 +50,302 @@
 
   <!-- Main content -->
   <main class="flex-1 p-6 overflow-auto">
-    <div x-show="page === 'overview'" x-data="overviewPage()" x-init="init()">
-      <template x-if="page === 'overview'">
-        <div>
-          <h2 class="text-xl font-semibold text-gray-800 mb-4">Overview</h2>
-          <div x-html="renderOverview()"></div>
+
+    <!-- OVERVIEW PAGE -->
+    <div x-show="page === 'overview'" x-data="overviewPage()" x-effect="if (page === 'overview' && !stats) fetchStats()">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Overview</h2>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <template x-for="[name, info] in Object.entries($root.health.providers || {})" :key="name">
+          <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-2.5 h-2.5 rounded-full inline-block"
+                :class="info.installed && info.authenticated ? 'dot-green' : (info.installed ? 'dot-red' : 'dot-gray')"></span>
+              <span class="font-medium text-gray-800" x-text="name"></span>
+            </div>
+            <p class="text-xs text-gray-500"
+              x-text="info.installed && info.authenticated ? 'Ready' : (info.installed ? 'Not authenticated' : 'Not installed')"></p>
+          </div>
+        </template>
+        <div class="bg-white rounded-lg shadow p-4">
+          <span class="font-medium text-gray-800">Queue</span>
+          <p class="text-xs text-gray-500 mt-1">
+            Active: <span x-text="$root.health.queue?.active ?? 0"></span> / <span x-text="$root.health.queue?.max_concurrent ?? 0"></span>
+            &middot; Pending: <span x-text="$root.health.queue?.pending ?? 0"></span>
+          </p>
         </div>
-      </template>
-    </div>
+      </div>
 
-    <div x-show="page === 'logs'" x-data="logsPage()" x-init="page === 'logs' && init()">
-      <template x-if="page === 'logs'">
+      <div class="flex items-center gap-2 mb-4">
+        <template x-for="p in ['24h', '7d', '30d']" :key="p">
+          <button @click="changePeriod(p)"
+            :class="period === p ? 'btn-brand' : 'bg-white text-gray-600 border'"
+            class="px-3 py-1 rounded text-sm" x-text="p"></button>
+        </template>
+      </div>
+
+      <template x-if="stats">
         <div>
-          <h2 class="text-xl font-semibold text-gray-800 mb-4">Request Logs</h2>
-          <div x-html="renderLogs()"></div>
-        </div>
-      </template>
-    </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow p-4">
+              <p class="text-xs text-gray-500 uppercase tracking-wide">Requests</p>
+              <p class="text-2xl font-bold text-gray-800 mt-1" x-text="stats.total_requests"></p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+              <p class="text-xs text-gray-500 uppercase tracking-wide">Tokens</p>
+              <p class="text-2xl font-bold text-gray-800 mt-1" x-text="(stats.total_tokens || 0).toLocaleString()"></p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+              <p class="text-xs text-gray-500 uppercase tracking-wide">Cost</p>
+              <p class="text-2xl font-bold text-gray-800 mt-1" x-text="formatCost(stats.total_cost_usd)"></p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+              <p class="text-xs text-gray-500 uppercase tracking-wide">Avg Duration</p>
+              <p class="text-2xl font-bold text-gray-800 mt-1" x-text="formatDuration(stats.avg_duration_ms)"></p>
+            </div>
+          </div>
 
-    <div x-show="page === 'keys'" x-data="keysPage()" x-init="page === 'keys' && init()">
-      <template x-if="page === 'keys'">
-        <div>
-          <h2 class="text-xl font-semibold text-gray-800 mb-4">API Keys</h2>
-          <div x-html="renderKeys()"></div>
-
-          <!-- Create Key modal (native Alpine x-show for proper reactivity) -->
-          <div x-show="showCreateModal" x-cloak
-            class="modal-overlay" @click.self="showCreateModal = false">
-            <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" @click.stop>
-              <h3 class="text-lg font-semibold mb-4">Create API Key</h3>
-              <div class="space-y-3">
-                <div>
-                  <label class="block text-sm text-gray-600 mb-1">Client Name</label>
-                  <input type="text" x-model="createForm.name"
-                    class="w-full border rounded px-3 py-2 text-sm" placeholder="e.g. my-app">
-                </div>
-                <div>
-                  <label class="block text-sm text-gray-600 mb-1">RPM (requests/min)</label>
-                  <input type="number" x-model="createForm.rpm"
-                    class="w-full border rounded px-3 py-2 text-sm" min="1">
-                </div>
-                <div>
-                  <label class="block text-sm text-gray-600 mb-1">Models (comma-separated, blank = all)</label>
-                  <input type="text" x-model="createForm.models"
-                    class="w-full border rounded px-3 py-2 text-sm" placeholder="claude, gemini">
-                </div>
-              </div>
-              <div class="flex justify-end gap-2 mt-4">
-                <button @click="showCreateModal = false"
-                  class="px-4 py-2 rounded text-sm border hover:bg-gray-50">Cancel</button>
-                <button @click="createKey(); showCreateModal = false"
-                  class="btn-brand px-4 py-2 rounded text-sm">Create</button>
+          <template x-if="stats.by_provider && Object.keys(stats.by_provider).length > 0">
+            <div class="bg-white rounded-lg shadow p-4 mb-4">
+              <h3 class="text-sm font-medium text-gray-600 mb-2">Requests by Provider</h3>
+              <div class="space-y-1">
+                <template x-for="[prov, count] in Object.entries(stats.by_provider)" :key="prov">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-700 w-20" x-text="prov"></span>
+                    <div class="flex-1 bg-gray-100 rounded h-4">
+                      <div class="bar-brand rounded h-4" :style="'width:' + (stats.total_requests > 0 ? Math.round(count / stats.total_requests * 100) : 0) + '%'"></div>
+                    </div>
+                    <span class="text-sm text-gray-500 w-12 text-right" x-text="count"></span>
+                  </div>
+                </template>
               </div>
             </div>
+          </template>
+
+          <div class="bg-white rounded-lg shadow p-4">
+            <h3 class="text-sm font-medium text-gray-600 mb-1">Active Clients</h3>
+            <p class="text-2xl font-bold text-gray-800" x-text="stats.active_clients"></p>
           </div>
         </div>
       </template>
+      <p x-show="loading && !stats" class="text-gray-500">Loading stats...</p>
     </div>
 
-    <div x-show="page === 'models'" x-data="modelsPage()" x-init="page === 'models' && init()">
-      <template x-if="page === 'models'">
+    <!-- LOGS PAGE -->
+    <div x-show="page === 'logs'" x-data="logsPage()" x-effect="if (page === 'logs' && logs.length === 0 && loading) fetchLogs()">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Request Logs</h2>
+
+      <div class="flex flex-wrap gap-3 mb-4 items-end">
         <div>
-          <h2 class="text-xl font-semibold text-gray-800 mb-4">Models</h2>
-          <div x-html="renderModels()"></div>
+          <label class="block text-xs text-gray-500 mb-1">Provider</label>
+          <select x-model="filterProvider" @change="applyFilters()" class="border rounded px-2 py-1.5 text-sm bg-white">
+            <option value="">All</option>
+            <option value="claude">claude</option>
+            <option value="gemini">gemini</option>
+            <option value="codex">codex</option>
+            <option value="cerebras">cerebras</option>
+          </select>
         </div>
-      </template>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Status</label>
+          <select x-model="filterStatus" @change="applyFilters()" class="border rounded px-2 py-1.5 text-sm bg-white">
+            <option value="">All</option>
+            <option value="2">2xx</option>
+            <option value="4">4xx</option>
+            <option value="5">5xx</option>
+          </select>
+        </div>
+        <div class="text-sm text-gray-500 self-end pb-1" x-text="total + ' total'"></div>
+        <button x-show="total > 0" @click="clearLogs()"
+          class="ml-auto self-end px-3 py-1.5 rounded text-sm bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors">Clear All</button>
+      </div>
+
+      <div class="bg-white rounded-lg shadow overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-600 text-xs uppercase">
+            <tr>
+              <th class="px-3 py-2 text-left">Time</th>
+              <th class="px-3 py-2 text-left">Status</th>
+              <th class="px-3 py-2 text-left">Client</th>
+              <th class="px-3 py-2 text-left">Provider</th>
+              <th class="px-3 py-2 text-left">Model</th>
+              <th class="px-3 py-2 text-right">Duration</th>
+              <th class="px-3 py-2 text-right">Tokens</th>
+              <th class="px-3 py-2 text-right">Cost</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr x-show="logs.length === 0">
+              <td colspan="8" class="px-3 py-8 text-center text-gray-400" x-text="loading ? 'Loading...' : 'No logs found'"></td>
+            </tr>
+            <template x-for="log in logs" :key="log.id">
+              <tr class="hover:bg-gray-50">
+                <td class="px-3 py-2 text-gray-500 whitespace-nowrap" x-text="formatTime(log.created_at)"></td>
+                <td class="px-3 py-2">
+                  <span class="px-2 py-0.5 rounded text-xs font-medium"
+                    :class="statusBadgeClass(log.status)" x-text="log.status"></span>
+                </td>
+                <td class="px-3 py-2 text-gray-700" x-text="log.client_name || '-'"></td>
+                <td class="px-3 py-2 text-gray-700" x-text="log.provider || '-'"></td>
+                <td class="px-3 py-2 text-gray-700" x-text="log.model || '-'"></td>
+                <td class="px-3 py-2 text-right text-gray-600" x-text="formatDuration(log.duration_ms)"></td>
+                <td class="px-3 py-2 text-right text-gray-600" x-text="log.tokens != null ? log.tokens.toLocaleString() : '-'"></td>
+                <td class="px-3 py-2 text-right text-gray-600" x-text="formatCost(log.cost_usd)"></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="flex items-center justify-between mt-4">
+        <button @click="prevPage()" :disabled="offset <= 0"
+          :class="offset <= 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'"
+          class="px-3 py-1.5 rounded text-sm border">Previous</button>
+        <span class="text-sm text-gray-500">Page <span x-text="currentPage"></span> of <span x-text="totalPages"></span></span>
+        <button @click="nextPage()" :disabled="offset + limit >= total"
+          :class="offset + limit >= total ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'"
+          class="px-3 py-1.5 rounded text-sm border">Next</button>
+      </div>
     </div>
+
+    <!-- KEYS PAGE -->
+    <div x-show="page === 'keys'" x-data="keysPage()" x-effect="if (page === 'keys' && keys.length === 0 && loading) fetchKeys()">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">API Keys</h2>
+
+      <div x-show="newKeyResult" x-cloak class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-sm font-medium text-green-800">
+              Key <span x-text="newKeyResult?.raw_key ? 'created' : 'rotated'"></span> for "<span x-text="newKeyResult?.name"></span>"
+            </p>
+            <p class="text-xs text-green-600 mt-1">Copy this key now — it won't be shown again.</p>
+            <code class="block mt-2 bg-white border rounded px-3 py-2 text-sm font-mono select-all" x-text="newKeyResult?.raw_key"></code>
+          </div>
+          <button @click="newKeyResult = null" class="text-green-400 hover:text-green-600 text-lg">&times;</button>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <button @click="showCreateModal = true" class="btn-brand px-4 py-2 rounded text-sm">Create Key</button>
+      </div>
+
+      <div class="bg-white rounded-lg shadow overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-600 text-xs uppercase">
+            <tr>
+              <th class="px-3 py-2 text-left">Name</th>
+              <th class="px-3 py-2 text-left">Key Prefix</th>
+              <th class="px-3 py-2 text-center">RPM</th>
+              <th class="px-3 py-2 text-left">Models</th>
+              <th class="px-3 py-2 text-center">Status</th>
+              <th class="px-3 py-2 text-left">Created</th>
+              <th class="px-3 py-2 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr x-show="keys.length === 0">
+              <td colspan="7" class="px-3 py-8 text-center text-gray-400" x-text="loading ? 'Loading...' : 'No keys created yet'"></td>
+            </tr>
+            <template x-for="key in keys" :key="key.id">
+              <tr class="hover:bg-gray-50">
+                <td class="px-3 py-2 font-medium text-gray-800" x-text="key.name"></td>
+                <td class="px-3 py-2 font-mono text-gray-500 text-xs" x-text="key.key_prefix + '...'"></td>
+                <td class="px-3 py-2 text-center" x-text="key.rpm"></td>
+                <td class="px-3 py-2 text-gray-600 text-xs" x-text="key.models ? key.models.join(', ') : 'All'"></td>
+                <td class="px-3 py-2 text-center">
+                  <button @click="toggleActive(key)"
+                    :class="key.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
+                    class="px-2 py-0.5 rounded text-xs font-medium cursor-pointer"
+                    x-text="key.active ? 'Active' : 'Inactive'"></button>
+                </td>
+                <td class="px-3 py-2 text-gray-500 text-xs whitespace-nowrap" x-text="formatTime(key.created_at)"></td>
+                <td class="px-3 py-2 text-right whitespace-nowrap">
+                  <button @click="rotateKey(key)" class="link-brand text-xs mr-2">Rotate</button>
+                  <button @click="deleteKey(key)" class="text-red-600 hover:text-red-800 text-xs">Delete</button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Create Key modal -->
+      <div x-show="showCreateModal" x-cloak class="modal-overlay" @click.self="showCreateModal = false">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" @click.stop>
+          <h3 class="text-lg font-semibold mb-4">Create API Key</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-sm text-gray-600 mb-1">Client Name</label>
+              <input type="text" x-model="createForm.name"
+                class="w-full border rounded px-3 py-2 text-sm" placeholder="e.g. my-app">
+            </div>
+            <div>
+              <label class="block text-sm text-gray-600 mb-1">RPM (requests/min)</label>
+              <input type="number" x-model="createForm.rpm"
+                class="w-full border rounded px-3 py-2 text-sm" min="1">
+            </div>
+            <div>
+              <label class="block text-sm text-gray-600 mb-1">Models (comma-separated, blank = all)</label>
+              <input type="text" x-model="createForm.models"
+                class="w-full border rounded px-3 py-2 text-sm" placeholder="claude, gemini">
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 mt-4">
+            <button @click="showCreateModal = false"
+              class="px-4 py-2 rounded text-sm border hover:bg-gray-50">Cancel</button>
+            <button @click="createKey()"
+              class="btn-brand px-4 py-2 rounded text-sm">Create</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODELS PAGE -->
+    <div x-show="page === 'models'" x-data="modelsPage()" x-effect="if (page === 'models' && models.length === 0 && loading) fetchModels()">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Models</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <template x-for="[name, info] in Object.entries($root.health.providers || {})" :key="name">
+          <div class="bg-white rounded-lg shadow p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-3 h-3 rounded-full inline-block"
+                :class="info.installed && info.authenticated ? 'dot-green' : (info.installed ? 'dot-red' : 'dot-gray')"></span>
+              <h3 class="text-lg font-semibold text-gray-800" x-text="name"></h3>
+            </div>
+            <p class="text-sm text-gray-500 mb-3"
+              x-text="info.installed && info.authenticated ? 'Authenticated' : (info.installed ? (info.error || 'Not authenticated') : 'Not installed')"></p>
+            <div class="flex flex-wrap gap-1.5">
+              <template x-for="m in models.filter(m => m.id.startsWith(name) || m.id === name)" :key="m.id">
+                <span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs font-mono" x-text="m.id"></span>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <div class="bg-white rounded-lg shadow overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-600 text-xs uppercase">
+            <tr>
+              <th class="px-3 py-2 text-left">Model ID</th>
+              <th class="px-3 py-2 text-left">Owned By</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <tr x-show="loading && models.length === 0">
+              <td colspan="2" class="px-3 py-8 text-center text-gray-400">Loading...</td>
+            </tr>
+            <template x-for="model in models" :key="model.id">
+              <tr class="hover:bg-gray-50">
+                <td class="px-3 py-2 font-mono text-gray-800" x-text="model.id"></td>
+                <td class="px-3 py-2 text-gray-500" x-text="model.owned_by"></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </main>
 
   <script src="js/app.js"></script>
