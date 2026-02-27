@@ -1,7 +1,7 @@
 {
   "name": "shellm",
   "version": "0.1.0",
-  "private": true,
+  "license": "MIT",
   "description": "Your LLM services — unified as a REST API",
   "main": "src/server.js",
   "bin": {

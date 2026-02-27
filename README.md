@@ -342,4 +342,4 @@ shellm/
 
 ## License
 
-Private — Internal use only.
+[MIT](LICENSE)

@@ -118,6 +118,57 @@ node --test test/providers/claude.test.js
 - API tests import the Express `app` directly — don't start a server
 - Tests should be fast (< 1s total, currently 56 tests across 16 suites) and deterministic (no network calls, no timers)
 
+## Testing Before Deployment
+
+Before deploying to the VPS, you can verify everything locally.
+
+### Testing the CLI (`npm link`)
+
+```bash
+# Register the shellm command globally
+npm link
+
+# Verify the CLI works
+shellm help
+shellm version
+
+# Start the server in foreground mode
+shellm start
+
+# In another terminal, verify the health endpoint
+curl http://127.0.0.1:6000/health
+
+# Stop with Ctrl+C, then test daemon mode
+shellm start -d
+shellm status
+shellm logs -n 20
+shellm stop
+```
+
+To unlink later: `npm unlink -g shellm`
+
+### Testing the VPS Setup Script
+
+The setup script (`scripts/setup-vps.sh`) requires root and is designed for a fresh Ubuntu server. To test it safely without a real VPS, run it in a disposable Docker container:
+
+```bash
+# Launch a disposable Ubuntu container
+docker run --rm -it ubuntu:22.04 bash
+
+# Inside the container: install git and fetch the script
+apt-get update && apt-get install -y git curl sudo
+
+# Clone the repo (or copy the script in)
+git clone https://github.com/rodacato/SheLLM.git /tmp/shellm
+
+# Run the setup script as root
+bash /tmp/shellm/scripts/setup-vps.sh
+```
+
+The script will create the `shellmer` user, install Node.js 22, CLI tools, clone the repo, configure systemd, and set up cloudflared. Since this is a disposable container, nothing persists after you exit — safe to experiment freely.
+
+> **Note:** The container won't have real CLI auth tokens, so health checks will show providers as unauthenticated. The goal is to verify the script runs without errors and all components install correctly.
+
 ## Commit Messages
 
 Write clear, imperative commit messages:
