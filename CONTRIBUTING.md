@@ -136,7 +136,7 @@ shellm version
 shellm start
 
 # In another terminal, verify the health endpoint
-curl http://127.0.0.1:6000/health
+curl http://127.0.0.1:6100/health
 
 # Stop with Ctrl+C, then test daemon mode
 shellm start -d

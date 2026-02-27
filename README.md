@@ -25,7 +25,7 @@ shellm start
 Verify it's running:
 
 ```bash
-curl http://127.0.0.1:6000/health
+curl http://127.0.0.1:6100/health
 ```
 
 ## Usage
@@ -35,7 +35,7 @@ SheLLM exposes two chat endpoints — **OpenAI format** and **Anthropic format**
 ### OpenAI format
 
 ```bash
-curl http://localhost:6000/v1/chat/completions \
+curl http://localhost:6100/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "claude",
@@ -58,7 +58,7 @@ Response:
 ### Anthropic format
 
 ```bash
-curl http://localhost:6000/v1/messages \
+curl http://localhost:6100/v1/messages \
   -H "Content-Type: application/json" \
   -d '{
     "model": "claude",
@@ -152,14 +152,14 @@ Both endpoints return errors in their respective format:
 export SHELLM_ADMIN_PASSWORD=your-admin-password
 
 # Create a key
-curl -u admin:your-admin-password http://localhost:6000/admin/keys \
+curl -u admin:your-admin-password http://localhost:6100/admin/keys \
   -d '{"name": "my-app", "rpm": 10}'
 ```
 
 Then use the returned key:
 
 ```bash
-curl -H "Authorization: Bearer shellm-abc123..." http://localhost:6000/v1/chat/completions ...
+curl -H "Authorization: Bearer shellm-abc123..." http://localhost:6100/v1/chat/completions ...
 ```
 
 **Option 2: Environment variable** — Set `SHELLM_CLIENTS` for static client keys:

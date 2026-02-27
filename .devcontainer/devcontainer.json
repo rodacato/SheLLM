@@ -11,7 +11,7 @@
     "ghcr.io/devcontainers/features/sshd:1": {},
     "ghcr.io/stuartleeks/dev-container-features/shell-history:0": {}
   },
-  "forwardPorts": [6000],
+  "forwardPorts": [6100],
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "customizations": {
     "vscode": {

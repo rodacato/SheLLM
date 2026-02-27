@@ -21,7 +21,7 @@ const path = require('node:path');
 initDb();
 
 const app = express();
-const PORT = parseInt(process.env.PORT || '6000', 10);
+const PORT = parseInt(process.env.PORT || '6100', 10);
 const auth = createAuthMiddleware();
 
 // --- Global middleware (order matters) ---

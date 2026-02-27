@@ -4,7 +4,7 @@ services:
     container_name: shellm
     restart: unless-stopped
     ports:
-      - "127.0.0.1:6000:6000"
+      - "127.0.0.1:6100:6100"
     volumes:
       - claude-auth:/home/node/.claude
       - gemini-auth:/home/node/.gemini
@@ -19,7 +19,7 @@ services:
           memory: 768m
           cpus: "1.0"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:6100/health"]
       interval: 30s
       timeout: 10s
       start_period: 60s

@@ -44,7 +44,7 @@ function startForeground(values) {
 
   require('dotenv').config({ path: path.resolve(PROJECT_ROOT, '.env'), quiet: true });
 
-  const port = parseInt(process.env.PORT || '6000', 10);
+  const port = parseInt(process.env.PORT || '6100', 10);
   const app = require(SERVER_SCRIPT);
   const { gracefulShutdown } = require(SERVER_SCRIPT);
 

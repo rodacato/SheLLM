@@ -4,7 +4,7 @@ const { readPid } = require('./pid');
 
 async function run() {
   const daemonPid = readPid();
-  const port = process.env.PORT || '6000';
+  const port = process.env.PORT || '6100';
 
   let health = null;
   try {
