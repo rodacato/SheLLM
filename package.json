@@ -14,8 +14,10 @@
     "test:e2e": "node --test --test-timeout 120000 test/e2e/*.e2e.js"
   },
   "dependencies": {
+    "better-sqlite3": "^12.6.2",
     "dotenv": "^17.3.1",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "supertest": "^7.1.0"

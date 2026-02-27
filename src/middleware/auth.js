@@ -1,5 +1,6 @@
 const { timingSafeEqual } = require('node:crypto');
 const { sendError, authRequired, rateLimited } = require('../errors');
+const { getDb, findClientByKey } = require('../db');
 const logger = require('../lib/logger');
 
 const GLOBAL_RPM = parseInt(process.env.SHELLM_GLOBAL_RPM || '30', 10);
@@ -29,6 +30,9 @@ function loadClients() {
 // Sliding window: count requests in the last 60 seconds
 const globalTimestamps = [];
 
+// Per-client rate limit timestamps (keyed by client name, shared across DB + env clients)
+const clientTimestamps = new Map();
+
 function checkRateLimit(timestamps, maxRpm) {
   const now = Date.now();
   const cutoff = now - WINDOW_MS;
@@ -48,20 +52,39 @@ function checkRateLimit(timestamps, maxRpm) {
   return 0;
 }
 
+function getOrCreateTimestamps(clientName) {
+  if (!clientTimestamps.has(clientName)) {
+    clientTimestamps.set(clientName, []);
+  }
+  return clientTimestamps.get(clientName);
+}
+
 function createAuthMiddleware() {
-  const clients = loadClients();
+  const envClients = loadClients();
 
-  if (!clients) {
-    return (_req, _res, next) => next();
+  // Pre-compute key buffers for env-based timing-safe comparison
+  let keyBuffers = null;
+  if (envClients) {
+    keyBuffers = new Map();
+    for (const [key, client] of envClients) {
+      keyBuffers.set(key, { buffer: Buffer.from(key), client });
+    }
   }
 
-  // Pre-compute key buffers for timing-safe comparison
-  const keyBuffers = new Map();
-  for (const [key, client] of clients) {
-    keyBuffers.set(key, { buffer: Buffer.from(key), client });
-  }
+  // No auth at all: no DB clients, no env clients
+  const hasDb = () => {
+    const db = getDb();
+    if (!db) return false;
+    const row = db.prepare('SELECT COUNT(*) as count FROM clients WHERE active = 1').get();
+    return row.count > 0;
+  };
 
   return (req, res, next) => {
+    // If no env clients and no DB clients, auth is disabled
+    if (!keyBuffers && !hasDb()) {
+      return next();
+    }
+
     const header = req.headers.authorization || '';
     const match = header.match(/^Bearer\s+(.+)$/i);
 
@@ -70,19 +93,33 @@ function createAuthMiddleware() {
     }
 
     const token = match[1];
-    const tokenBuffer = Buffer.from(token);
+    let clientName = null;
+    let clientRpm = 10;
 
-    // Find matching client (timing-safe)
-    let matched = null;
-    for (const [, entry] of keyBuffers) {
-      if (entry.buffer.length === tokenBuffer.length &&
-          timingSafeEqual(entry.buffer, tokenBuffer)) {
-        matched = entry.client;
-        break;
+    // Try DB first
+    const db = getDb();
+    if (db) {
+      const dbClient = findClientByKey(token);
+      if (dbClient && dbClient.active) {
+        clientName = dbClient.name;
+        clientRpm = dbClient.rpm;
       }
     }
 
-    if (!matched) {
+    // Fall back to env var clients (timing-safe)
+    if (!clientName && keyBuffers) {
+      const tokenBuffer = Buffer.from(token);
+      for (const [, entry] of keyBuffers) {
+        if (entry.buffer.length === tokenBuffer.length &&
+            timingSafeEqual(entry.buffer, tokenBuffer)) {
+          clientName = entry.client.name;
+          clientRpm = entry.client.rpm;
+          break;
+        }
+      }
+    }
+
+    if (!clientName) {
       return sendError(res, authRequired(), req.requestId);
     }
 
@@ -97,23 +134,19 @@ function createAuthMiddleware() {
     }
 
     // Check per-client rate limit
-    const clientRetry = checkRateLimit(matched.timestamps, matched.rpm);
+    const timestamps = getOrCreateTimestamps(clientName);
+    const clientRetry = checkRateLimit(timestamps, clientRpm);
     if (clientRetry > 0) {
       return sendError(
         res,
-        rateLimited(`Rate limit exceeded for client: ${matched.name}`, clientRetry),
+        rateLimited(`Rate limit exceeded for client: ${clientName}`, clientRetry),
         req.requestId,
       );
     }
 
-    req.clientName = matched.name;
+    req.clientName = clientName;
     next();
   };
-}
-
-function getClientCount() {
-  const clients = loadClients();
-  return clients ? clients.size : 0;
 }
 
 module.exports = { createAuthMiddleware, loadClients };

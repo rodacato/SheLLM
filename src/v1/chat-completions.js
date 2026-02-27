@@ -100,6 +100,9 @@ async function chatCompletionsHandler(req, res) {
   try {
     const result = await route({ model, prompt, system, max_tokens, request_id: req.requestId });
     res.locals.provider = result.provider;
+    res.locals.queued_ms = result.queued_ms ?? null;
+    res.locals.cost_usd = result.cost_usd ?? null;
+    res.locals.usage = result.usage ?? null;
 
     res.set('X-Queue-Depth', String(queue.stats.pending));
     res.set('X-Queue-Active', String(queue.stats.active));
