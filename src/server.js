@@ -4,6 +4,7 @@ const express = require('express');
 const logger = require('./lib/logger');
 const { getHealthStatus } = require('./health');
 const { chatCompletionsHandler } = require('./v1/chat-completions');
+const { messagesHandler } = require('./v1/messages');
 const { modelsHandler } = require('./v1/models');
 const { requestLogger } = require('./middleware/logging');
 const { requestId } = require('./middleware/request-id');
@@ -51,6 +52,9 @@ app.get('/v1/models', auth, modelsHandler);
 
 // --- POST /v1/chat/completions (authenticated) ---
 app.post('/v1/chat/completions', auth, chatCompletionsHandler);
+
+// --- POST /v1/messages (authenticated — Anthropic Messages API format) ---
+app.post('/v1/messages', auth, messagesHandler);
 
 // --- Admin routes (Basic auth via SHELLM_ADMIN_PASSWORD) ---
 const adminAuth = createAdminAuth();
