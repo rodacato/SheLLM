@@ -12,6 +12,7 @@
     "dev": "node --watch src/server.js",
     "test": "node --experimental-test-module-mocks --test 'test/*.test.js' 'test/**/*.test.js'",
     "test:e2e": "node --test --test-timeout 120000 test/e2e/*.e2e.js",
+    "smoke": "node test/smoke.mjs",
     "docs:build": "redocly build-docs docs/openapi.yaml -o docs/index.html",
     "docs:preview": "redocly preview docs/openapi.yaml",
     "docs:lint": "redocly lint docs/openapi.yaml"
