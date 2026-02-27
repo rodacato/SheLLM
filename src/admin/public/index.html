@@ -188,7 +188,10 @@
                 <td class="px-3 py-2 text-gray-700" x-text="log.client_name || '-'"></td>
                 <td class="px-3 py-2 text-gray-700" x-text="log.provider || '-'"></td>
                 <td class="px-3 py-2 text-gray-700" x-text="log.model || '-'"></td>
-                <td class="px-3 py-2 text-right text-gray-600" x-text="formatDuration(log.duration_ms)"></td>
+                <td class="px-3 py-2 text-right text-gray-600">
+                  <span x-text="formatDuration(log.duration_ms)"></span>
+                  <span x-show="log.queued_ms" class="text-xs text-amber-500" x-text="'(' + formatDuration(log.queued_ms) + ' queued)'"></span>
+                </td>
                 <td class="px-3 py-2 text-right text-gray-600" x-text="log.tokens != null ? log.tokens.toLocaleString() : '-'"></td>
                 <td class="px-3 py-2 text-right text-gray-600" x-text="formatCost(log.cost_usd)"></td>
               </tr>
