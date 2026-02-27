@@ -65,8 +65,28 @@ app.use('/admin', adminAuth, adminStatsRouter);
 // Admin models endpoint (avoids needing Bearer auth for dashboard)
 app.get('/admin/models', adminAuth, modelsHandler);
 
+// Security headers for admin dashboard
+function adminSecurityHeaders(req, res, next) {
+  res.set('X-Frame-Options', 'DENY');
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.set('Referrer-Policy', 'no-referrer');
+  res.set('Cache-Control', 'no-store');
+  res.set(
+    'Content-Security-Policy',
+    [
+      "default-src 'none'",
+      "script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self'",
+      "connect-src 'self'",
+      "frame-ancestors 'none'",
+    ].join('; '),
+  );
+  next();
+}
+
 // Static dashboard files
-app.use('/admin/dashboard', adminAuth, express.static(path.join(__dirname, 'admin/public')));
+app.use('/admin/dashboard', adminAuth, adminSecurityHeaders, express.static(path.join(__dirname, 'admin/public')));
 
 // Graceful shutdown: drain in-flight requests before exiting
 function gracefulShutdown(server, signal) {

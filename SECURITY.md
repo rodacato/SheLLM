@@ -12,6 +12,25 @@ SheLLM is designed as an **internal service**. It is not intended to be exposed 
 - **Multi-client bearer token authentication** via `SHELLM_CLIENTS` env var. When not set, auth is disabled (development mode). Network isolation remains the primary trust boundary in production; bearer tokens add defense-in-depth.
 - **Rate limiting**: Global + per-client sliding window (requests per minute). Prevents abuse even from trusted internal clients.
 
+### Admin Authentication Hardening
+
+The admin dashboard (`/admin/*`) uses HTTP Basic Auth via `SHELLM_ADMIN_PASSWORD`.
+
+**Brute-force protection:** Failed login attempts are tracked per IP address using an in-memory sliding window. After 5 failures within 5 minutes (configurable via `SHELLM_ADMIN_MAX_ATTEMPTS`), further attempts from that IP are rejected with `429 Too Many Requests` and a `Retry-After` header.
+
+**Audit logging:** All admin authentication attempts (success and failure) are logged via the structured JSON logger. Failed attempts include: IP address, attempted username, and failure reason (`missing_header`, `invalid_encoding`, `invalid_format`, `wrong_password`, `wrong_username`). Successful attempts log the IP and username at `info` level.
+
+**Password strength validation:** At startup, if `SHELLM_ADMIN_PASSWORD` is set, the service warns (via `logger.warn`) if the password is shorter than 12 characters or matches a list of commonly used weak passwords. This is advisory only — the server still starts.
+
+**Username validation:** Optionally, set `SHELLM_ADMIN_USER` to restrict admin access to a specific username. When not set (default), any username is accepted with the correct password. When set, username comparison uses `crypto.timingSafeEqual`.
+
+**Security headers:** The admin dashboard (`/admin/dashboard/*`) is served with restrictive headers:
+- `X-Frame-Options: DENY` — prevents clickjacking
+- `X-Content-Type-Options: nosniff` — prevents MIME sniffing
+- `Content-Security-Policy` — restricts script/style sources to self + CDNs (Tailwind, Alpine.js)
+- `Referrer-Policy: no-referrer` — prevents URL leakage
+- `Cache-Control: no-store` — prevents caching of admin pages
+
 ### Client Key Management
 
 Client API keys are configured via the `SHELLM_CLIENTS` environment variable (JSON). Keys must never be committed to the repository.
