@@ -104,7 +104,7 @@ function keysPage() {
       // Create button
       html += `<div class="mb-4">
         <button onclick="this.closest('[x-data]').__x.$data.showCreateModal = true"
-          class="bg-gray-900 text-white px-4 py-2 rounded text-sm hover:bg-gray-700">Create Key</button>
+          class="btn-brand px-4 py-2 rounded text-sm">Create Key</button>
       </div>`;
 
       // Create modal
@@ -136,7 +136,7 @@ function keysPage() {
               <button onclick="this.closest('[x-data]').__x.$data.showCreateModal = false"
                 class="px-4 py-2 rounded text-sm border hover:bg-gray-50">Cancel</button>
               <button onclick="this.closest('[x-data]').__x.$data.createKey(); this.closest('[x-data]').__x.$data.showCreateModal = false"
-                class="px-4 py-2 rounded text-sm bg-gray-900 text-white hover:bg-gray-700">Create</button>
+                class="btn-brand px-4 py-2 rounded text-sm">Create</button>
             </div>
           </div>
         </div>`;
@@ -178,7 +178,7 @@ function keysPage() {
           <td class="px-3 py-2 text-gray-500 text-xs whitespace-nowrap">${formatTime(key.created_at)}</td>
           <td class="px-3 py-2 text-right whitespace-nowrap">
             <button onclick="this.closest('[x-data]').__x.$data.rotateKey(${JSON.stringify(key).replace(/"/g, '&quot;')})"
-              class="text-blue-600 hover:text-blue-800 text-xs mr-2">Rotate</button>
+              class="link-brand text-xs mr-2">Rotate</button>
             <button onclick="this.closest('[x-data]').__x.$data.deleteKey(${JSON.stringify(key).replace(/"/g, '&quot;')})"
               class="text-red-600 hover:text-red-800 text-xs">Delete</button>
           </td>

@@ -4,23 +4,40 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SheLLM Admin</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-dark-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-dark-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="img/favicon-dark-180.png">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { cyan: '#03E3FF', dark: '#1A1E21', slate: '#2E3B44' }
+          }
+        }
+      }
+    }
+  </script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="css/custom.css">
 </head>
 <body x-data="app()" class="bg-gray-50 min-h-screen flex">
 
   <!-- Sidebar -->
-  <aside class="w-56 bg-gray-900 text-gray-300 min-h-screen flex flex-col shrink-0">
-    <div class="p-4 border-b border-gray-700">
-      <h1 class="text-lg font-bold text-white tracking-wide">SheLLM</h1>
-      <p class="text-xs text-gray-500">Admin Dashboard</p>
+  <aside class="w-56 bg-brand-dark text-gray-300 min-h-screen flex flex-col shrink-0">
+    <div class="p-4 border-b border-gray-700 flex items-center gap-3">
+      <img src="img/logo-icon-color.png" alt="" class="w-8 h-8 object-contain">
+      <div>
+        <h1 class="text-lg font-bold text-white tracking-wide">SheLLM</h1>
+        <p class="text-xs text-gray-500">Admin Dashboard</p>
+      </div>
     </div>
     <nav class="flex-1 p-3 space-y-1">
       <template x-for="item in nav" :key="item.id">
         <button
           @click="navigate(item.id)"
-          :class="page === item.id ? 'bg-gray-800 text-white' : 'hover:bg-gray-800 hover:text-white'"
+          :class="page === item.id ? 'bg-gray-800 text-white border-l-2 border-brand-cyan' : 'hover:bg-gray-800 hover:text-white border-l-2 border-transparent'"
           class="w-full text-left px-3 py-2 rounded text-sm transition-colors"
           x-text="item.label">
         </button>

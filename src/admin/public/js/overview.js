@@ -62,7 +62,7 @@ function overviewPage() {
         for (const p of ['24h', '7d', '30d']) {
           const active = this.period === p;
           html += `<button onclick="document.querySelector('[x-data=\\'overviewPage()\\']').__x.$data.changePeriod('${p}')"
-            class="px-3 py-1 rounded text-sm ${active ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border'}">${p}</button>`;
+            class="px-3 py-1 rounded text-sm ${active ? 'btn-brand' : 'bg-white text-gray-600 border'}">${p}</button>`;
         }
         html += '</div>';
 
@@ -83,7 +83,7 @@ function overviewPage() {
             html += `<div class="flex items-center gap-2">
               <span class="text-sm text-gray-700 w-20">${escapeHtml(prov)}</span>
               <div class="flex-1 bg-gray-100 rounded h-4">
-                <div class="bg-blue-500 rounded h-4" style="width: ${pct}%"></div>
+                <div class="bar-brand rounded h-4" style="width: ${pct}%"></div>
               </div>
               <span class="text-sm text-gray-500 w-12 text-right">${count}</span>
             </div>`;

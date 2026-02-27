@@ -10,6 +10,13 @@
 .dot-red   { background-color: #ef4444; }
 .dot-gray  { background-color: #9ca3af; }
 
+/* Brand accent utilities (for JS-rendered content) */
+.btn-brand       { background-color: #1A1E21; color: #fff; }
+.btn-brand:hover { background-color: #2E3B44; }
+.link-brand       { color: #03E3FF; }
+.link-brand:hover { color: #02b8d4; }
+.bar-brand { background-color: #03E3FF; }
+
 /* Modal overlay */
 .modal-overlay {
   position: fixed;
