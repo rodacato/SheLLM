@@ -12,9 +12,9 @@ SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterpris
 
 | Phase | Scope | Key Deliverables |
 |---|---|---|
-| **1 — Core Service** | Express server, providers, queue, middleware | `src/server.js`, `src/router.js`, `src/providers/` (claude, gemini, codex, cerebras), `src/middleware/`, `src/health.js` |
-| **2 — API Contract & Auth** | Multi-client auth, rate limiting, error standardization | `src/errors.js`, `src/middleware/auth.js`, structured logging, pre-commit hook, `.env.example` |
-| **3 — Testing** | 56 tests across 16 suites, < 1s runtime | `test/` (unit + integration via `node:test` + `supertest`), `.github/workflows/ci.yml` |
+| **1 — Core Service** | Express server, providers, queue, middleware | `src/server.js`, `src/router.js`, `src/providers/`, `src/middleware/`, `src/health.js` |
+| **2 — API Contract & Auth** | Multi-client auth, rate limiting, error standardization | `src/errors.js`, `src/middleware/auth.js`, pre-commit hook, `.env.example` |
+| **3 — Testing** | 56 tests across 16 suites, < 1s runtime | `test/` (unit + integration via `node:test` + `supertest`) |
 | **4 — Containerization** | Dockerfile, compose (dev use) | `Dockerfile`, `docker-compose.yml`, `.dockerignore` |
 | **5 — CLI & Logging** | `shellm` CLI, structured JSON logger, log rotation | `src/cli.js`, `src/cli/*.js`, `src/lib/logger.js`, `config/logrotate.conf` |
 | **6 — VPS Deployment** | systemd, cloudflared, provisioning script | `shellm.service`, `scripts/setup-vps.sh` |
@@ -23,82 +23,277 @@ SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterpris
 - CommonJS, two runtime dependencies (Express + dotenv), functional provider modules
 - Queue: max 2 concurrent, max 10 depth, in-memory; 120s subprocess timeout
 - Multi-client bearer tokens via `SHELLM_CLIENTS` JSON env var; auth disabled when unset
-- Timing-safe token comparison; global + per-client sliding-window RPM
-- Health cache: 30s TTL for provider status; queue/uptime always fresh
-- Tests mock at subprocess boundary (`mock.module()`) and fetch (`mock.method()`); no real CLIs in CI
-- `shellm` CLI complements systemd — convenience for dev, systemd for production
-- LOG_LEVEL filtering (debug/info/warn/error); health probes at `debug` level
 - Direct VPS deployment (not containerized) — CLI OAuth tokens persist in `~shellmer/`
 - cloudflared tunnel to `shellm.notdefined.dev` — zero open ports, Cloudflare handles TLS
 
 ---
 
-## Phase 7 — Provider Fallback & Streaming `IN PROGRESS`
+## Phase 7 — API Hardening `PENDING`
 
-Improve reliability with automatic provider fallback and add real-time streaming support.
+Fix correctness, safety, and reliability gaps identified by expert review. All changes are low-effort, no new dependencies. Foundation for everything that follows.
 
-### 7a — Provider Fallback
-
-When a provider fails (502, 503, 504), automatically retry with an alternative provider. The caller gets a response without needing to know which provider served it.
+### 7a — Correctness & Validation
 
 | Task | Status | Files |
 |---|---|---|
-| Fallback configuration (env var or per-request) | Pending | `src/router.js` |
-| Fallback chain logic in router | Pending | `src/router.js` |
-| Response includes `fallback: true` + original error | Pending | `src/router.js` |
-| Health-aware fallback (skip unauthenticated providers) | Pending | `src/router.js`, `src/health.js` |
-| Unit tests for fallback scenarios | Pending | `test/router.test.js` |
+| Validate `max_tokens` type and range (1–128000) | Pending | `src/middleware/validate.js` |
+| Validate `system` field type (must be string) | Pending | `src/middleware/validate.js` |
+| Reject prompt > 50,000 chars with error (not silent truncation) | Pending | `src/middleware/validate.js`, `src/middleware/sanitize.js` |
+| Validate `Content-Type: application/json` on POST | Pending | `src/server.js` |
+| Explicit body size limit (`express.json({ limit: '256kb' })`) | Pending | `src/server.js` |
+| Guard double-rejection in base.js (error + close race) | Pending | `src/providers/base.js` |
 
-**Design notes:**
-- Default fallback order: `claude → gemini → cerebras` (configurable via `SHELLM_FALLBACK_CHAIN` env var)
-- Only retry on 502 (`cli_failed`), 503 (`provider_unavailable`), 504 (`timeout`) — NOT on 400/401/429
-- Max 1 fallback attempt (no cascading retries beyond one alternate)
-- Response shape adds optional fields: `{ fallback: true, original_provider, original_error }`
-- Caller can disable fallback per-request with `"fallback": false` in POST body
-- Health check data used to skip providers known to be down (avoids wasting time)
-
-### 7b — Streaming Support
-
-SSE endpoint for real-time token-by-token output. Essential for interactive use cases.
+### 7b — Reliability & Shutdown
 
 | Task | Status | Files |
 |---|---|---|
-| `POST /completions/stream` endpoint | Pending | `src/server.js` |
-| SSE response writer utility | Pending | `src/lib/sse.js` |
-| Claude CLI streaming (`--stream-json`) | Pending | `src/providers/claude.js` |
-| Gemini CLI streaming (stdout pipe) | Pending | `src/providers/gemini.js` |
-| Cerebras API streaming (SSE from API) | Pending | `src/providers/cerebras.js` |
-| Base provider stream support | Pending | `src/providers/base.js` |
-| Unit tests for streaming | Pending | `test/streaming.test.js` |
+| Graceful shutdown (SIGTERM/SIGINT drain connections) | Pending | `src/server.js`, `src/cli/start.js` |
+| Fail-fast on unauthenticated provider (check health before queue) | Pending | `src/router.js`, `src/health.js` |
+| Cap subprocess stdout/stderr buffer (1MB max) | Pending | `src/providers/base.js` |
+| SIGTERM before SIGKILL on subprocess timeout (5s grace) | Pending | `src/providers/base.js` |
+| `Retry-After` HTTP header on 429 responses | Pending | `src/errors.js` |
 
-**Design notes:**
-- SSE format: `data: {"content": "token", "done": false}\n\n`
-- Final event: `data: {"content": "", "done": true, "provider": "claude", "duration_ms": 3420}\n\n`
-- Reuse same auth/rate-limiting middleware as `/completions`
-- CLI providers: pipe subprocess stdout line-by-line
-- API providers: proxy SSE stream from upstream API
-- Fallback NOT supported in streaming mode (too complex for v1)
+### 7c — Observability
+
+| Task | Status | Files |
+|---|---|---|
+| Add `queued_ms` to response (separate from `duration_ms`) | Pending | `src/router.js` |
+| Add `duration_ms` to error responses | Pending | `src/server.js` |
+| Log provider/model in request logs | Pending | `src/middleware/logging.js` |
+| Log queue depth on enqueue/dequeue | Pending | `src/router.js` |
+| `X-Queue-Depth` and `X-Queue-Active` response headers | Pending | `src/server.js` |
+| Redact long tokens from health check stderr | Pending | `src/health.js` |
+
+### 7d — Tests
+
+| Task | Status | Files |
+|---|---|---|
+| Unit tests for all 7a/7b/7c changes | Pending | `test/` |
+
+---
+
+## Phase 8 — OpenAI-Compatible Proxy `PENDING`
+
+Make SheLLM a drop-in replacement for any OpenAI-compatible client (SDKs, LangChain, Continue.dev, Cursor). Every major LLM gateway exposes this format — it's the de facto standard.
+
+### 8a — `/v1/chat/completions`
+
+Translation layer: accept OpenAI-format requests, route through existing providers, return OpenAI-format responses.
+
+| Task | Status | Files |
+|---|---|---|
+| `POST /v1/chat/completions` endpoint | Pending | `src/v1/chat-completions.js`, `src/server.js` |
+| Translate `messages[]` → `prompt` + `system` | Pending | `src/v1/chat-completions.js` |
+| Return OpenAI response shape (`choices`, `usage`, `id`) | Pending | `src/v1/chat-completions.js` |
+| Reuse existing auth, rate limiting, queue middleware | Pending | `src/server.js` |
+| Unit tests | Pending | `test/v1/chat-completions.test.js` |
+
+**Request:**
+```json
+{
+  "model": "claude",
+  "messages": [
+    { "role": "system", "content": "You are helpful." },
+    { "role": "user", "content": "Hello" }
+  ],
+  "max_tokens": 1024
+}
+```
+
+**Response:**
+```json
+{
+  "id": "shellm-abc123",
+  "object": "chat.completion",
+  "created": 1709071200,
+  "model": "claude",
+  "choices": [{
+    "index": 0,
+    "message": { "role": "assistant", "content": "..." },
+    "finish_reason": "stop"
+  }],
+  "usage": { "prompt_tokens": null, "completion_tokens": null, "total_tokens": null }
+}
+```
+
+### 8b — `/v1/models`
+
+| Task | Status | Files |
+|---|---|---|
+| `GET /v1/models` — OpenAI model list format | Pending | `src/v1/models.js`, `src/server.js` |
+| Unit tests | Pending | `test/v1/models.test.js` |
+
+### 8c — Model Aliases
+
+| Task | Status | Files |
+|---|---|---|
+| `SHELLM_ALIASES` env var (JSON) | Pending | `src/router.js` |
+| Alias resolution before provider lookup | Pending | `src/router.js` |
+| Aliases visible in `/v1/models` and `/providers` | Pending | `src/v1/models.js` |
+| Unit tests | Pending | `test/router.test.js` |
+
+```bash
+SHELLM_ALIASES='{"gpt-4":"claude","gpt-3.5-turbo":"cerebras","fast":"cerebras-8b","smart":"claude-opus"}'
+```
+
+---
+
+## Phase 9 — SQLite + Key Management API `PENDING`
+
+Migrate client auth from `SHELLM_CLIENTS` env var to SQLite. Keys can be created, rotated, and revoked without restarting the service. Foundation for request logging, metrics, and the admin dashboard.
+
+**Expert rationale:**
+- **SRE:** SQLite is the prerequisite for logs, metrics, and dashboard — without persistence, none of those features work.
+- **SecEng:** Env var keys require restart to rotate — unacceptable in production. SQLite file with mode 600 on VPS is secure and auditable.
+- **Runtime:** `better-sqlite3` is synchronous but at <100 req/day, blocking is negligible. Adds one native dependency.
+- **QA:** Tests use `:memory:` SQLite — no file cleanup, fast, deterministic.
+
+### 9a — Database Layer
+
+| Task | Status | Files |
+|---|---|---|
+| Add `better-sqlite3` dependency | Pending | `package.json` |
+| Database module (init, migrations, connection) | Pending | `src/db/index.js` |
+| `clients` table (id, name, key_hash, rpm, models, active, created_at) | Pending | `src/db/index.js` |
+| `request_logs` table (id, request_id, client_id, provider, model, status, duration_ms, tokens, cost_usd, created_at) | Pending | `src/db/index.js` |
+| DB file at `~/.shellm/shellm.db` (mode 600) | Pending | `src/db/index.js` |
+| Backwards-compatible: fall back to `SHELLM_CLIENTS` env var if DB is empty | Pending | `src/middleware/auth.js` |
+| Unit tests (`:memory:` DB) | Pending | `test/db/` |
+
+### 9b — Key Management REST API
+
+| Task | Status | Files |
+|---|---|---|
+| `GET /admin/keys` — list all keys (masked) | Pending | `src/admin/keys.js` |
+| `POST /admin/keys` — create key (name, rpm, models) | Pending | `src/admin/keys.js` |
+| `PATCH /admin/keys/:id` — update rpm, models, active | Pending | `src/admin/keys.js` |
+| `DELETE /admin/keys/:id` — revoke key | Pending | `src/admin/keys.js` |
+| `POST /admin/keys/:id/rotate` — generate new secret | Pending | `src/admin/keys.js` |
+| Admin auth middleware (admin password via env var) | Pending | `src/middleware/admin-auth.js` |
+| Unit tests | Pending | `test/admin/keys.test.js` |
+
+**Admin auth:** Single admin account via `SHELLM_ADMIN_PASSWORD` env var. All `/admin/*` routes require `Authorization: Basic admin:<password>`. Simple, no DB overhead for user management.
+
+### 9c — Request Logging to DB
+
+| Task | Status | Files |
+|---|---|---|
+| Log every request to `request_logs` table | Pending | `src/middleware/logging.js`, `src/db/index.js` |
+| Fields: request_id, client, provider, model, status, duration_ms, queued_ms, tokens, error | Pending | `src/db/index.js` |
+| Auto-prune logs older than 30 days (on startup + daily) | Pending | `src/db/index.js` |
+| Unit tests | Pending | `test/db/` |
+
+---
+
+## Phase 10 — Admin Dashboard `PENDING`
+
+Static HTML dashboard served by Express. **Tailwind CSS 4** (CDN) for styling, **Alpine.js** (CDN) for reactivity — no build step, no `node_modules` frontend deps. Consumes the `/admin/*` and `/health` APIs.
+
+**Tech stack:**
+- **Tailwind CSS 4** via CDN (`<script src="https://cdn.tailwindcss.com">`) — utility-first, responsive, clean design out of the box
+- **Alpine.js** via CDN (`<script src="https://cdn.jsdelivr.net/npm/alpinejs">`) — 15KB, declarative `x-data`/`x-for`/`x-show` for tables, filters, modals. Modern jQuery replacement, no build step
+- **Express `static()`** serves the files — no template engine, no SSR
+
+**Expert rationale:**
+- **Contract:** Dashboard is a view layer, not a new API. All data comes from existing endpoints.
+- **SecEng:** Same admin auth as Phase 9 (`SHELLM_ADMIN_PASSWORD`). Dashboard behind `/admin/` prefix. Tailwind/Alpine via CDN = no supply chain risk in `node_modules`.
+- **Runtime:** Zero server-side rendering. Express serves static files. Alpine.js `fetch()` calls consume the REST API.
+
+**Data storage (runtime, outside repo):**
+```
+~/.shellm/
+├── shellm.db          # SQLite (clients, request_logs)
+├── shellm.pid         # PID file (daemon mode)
+└── logs/
+    └── shellm.log     # Daemon log file (logrotate)
+```
+
+### 10a — Dashboard Pages
+
+| Page | Content | API Source |
+|---|---|---|
+| **Overview** | Health status, queue stats, uptime, provider status cards | `GET /health`, `GET /admin/stats` |
+| **Request Logs** | Sortable table: time, status (badge), request_id, client, provider, model, duration, cost. Search by request_id, filter by status/provider/date range, pagination | `GET /admin/logs` |
+| **API Keys** | Table: alias, key (masked), rpm, allowed models, active toggle, created_at. Create modal, revoke/rotate actions | `GET/POST/PATCH/DELETE /admin/keys` |
+| **Models** | Provider cards with: name, models, capabilities, health status (green/red dot) | `GET /providers`, `GET /health` |
+
+### 10b — File Structure
+
+```
+src/admin/public/
+├── index.html          # SPA shell: sidebar nav, Tailwind CDN, Alpine.js CDN
+├── css/
+│   └── custom.css      # Minimal overrides (if any — Tailwind handles most)
+└── js/
+    ├── app.js          # Alpine.js global store (auth, navigation, shared state)
+    ├── overview.js     # Overview page component
+    ├── logs.js         # Request Logs page component
+    ├── keys.js         # API Keys page component
+    └── models.js       # Models page component
+```
+
+### 10c — Tasks
+
+| Task | Status | Files |
+|---|---|---|
+| HTML shell with sidebar nav (Tailwind + Alpine.js) | Pending | `src/admin/public/index.html` |
+| Alpine.js global store (auth, fetch wrapper, navigation) | Pending | `src/admin/public/js/app.js` |
+| Overview page (health cards, queue stats, uptime) | Pending | `src/admin/public/js/overview.js` |
+| Request Logs page (table, search, filters, pagination) | Pending | `src/admin/public/js/logs.js` |
+| API Keys page (CRUD table with create modal) | Pending | `src/admin/public/js/keys.js` |
+| Models page (provider cards with health dots) | Pending | `src/admin/public/js/models.js` |
+| `GET /admin/logs` endpoint (paginated, filterable) | Pending | `src/admin/logs.js` |
+| `GET /admin/stats` endpoint (aggregated metrics from DB) | Pending | `src/admin/stats.js` |
+| Serve static files at `/admin/` behind admin auth | Pending | `src/server.js` |
+| Unit tests for admin API endpoints | Pending | `test/admin/` |
+
+---
+
+## Phase 11 — Additional Endpoints `PENDING`
+
+Expand API compatibility with Anthropic Messages format and embeddings.
+
+### 11a — `/v1/messages` (Anthropic Format)
+
+High value because Claude Code and the Anthropic SDK speak this format natively. Pure translation layer — no new provider logic.
+
+| Task | Status | Files |
+|---|---|---|
+| `POST /v1/messages` endpoint | Pending | `src/v1/messages.js` |
+| Translate Anthropic request → internal format | Pending | `src/v1/messages.js` |
+| Return Anthropic response shape (`content[]`, `stop_reason`, `usage`) | Pending | `src/v1/messages.js` |
+| Unit tests | Pending | `test/v1/messages.test.js` |
+
+### 11b — `/v1/embeddings`
+
+Requires direct API access — CLIs don't expose embedding functionality. Needs at least one embedding-capable API provider.
+
+| Task | Status | Files |
+|---|---|---|
+| Embedding provider interface | Pending | `src/providers/embeddings/` |
+| OpenAI embeddings provider (API key) | Pending | `src/providers/embeddings/openai.js` |
+| `POST /v1/embeddings` endpoint | Pending | `src/v1/embeddings.js` |
+| Unit tests | Pending | `test/v1/embeddings.test.js` |
+
+**Note:** This is the first feature that cannot be served by CLI backends. It requires a direct API key (OpenAI, Cohere, or Vertex AI). Lower priority unless a consumer specifically needs it.
 
 ---
 
 ## Future Enhancements `BACKLOG`
 
-Features to consider after Phase 7 is stable in production.
-
 | Feature | Description | Effort | Priority |
 |---|---|---|---|
-| Response caching | Cache identical prompts for N minutes (in-memory) | Low | Medium |
-| Token usage tracking | Log estimated token consumption per provider | Low | Medium |
-| Prompt templates | Named templates with variable substitution | Low | Low |
-| Conversation history | Multi-turn with session persistence | Medium | Low |
-| Web UI dashboard | Simple stats page (requests/day, latency, errors) | Medium | Low |
-| Webhook callback | Async: accept request, POST result to callback URL | Medium | Low |
+| Streaming support | `POST /v1/chat/completions` with `stream: true` (SSE) | Medium | Medium |
+| Webhook callbacks | `POST /tasks` → async, POST result to `callback_url` | Medium | Medium |
+| Provider fallback | If primary fails, auto-retry with alternate provider | Low | Low |
+| Per-client model restrictions | Optional `models` array in client config | Low | Low |
+| Response caching | In-memory LRU cache with per-request opt-out | Low | Low |
+| Scheduled tasks | Cron-like recurring completions (via node-cron or external) | Medium | Low |
+| Token usage tracking | Estimate token consumption per provider | Low | Low |
 
 ---
 
 ## Decision Log
-
-Architectural decisions made during implementation, with rationale.
 
 | Decision | Resolution | Rationale |
 |---|---|---|
@@ -111,21 +306,14 @@ Architectural decisions made during implementation, with rationale.
 | Auth persistence | Native home dir (`~shellmer/`) | Docker volumes broke on rebuilds; native FS survives CLI updates and deploys |
 | Port binding | 127.0.0.1 only | Internal service, not internet-facing |
 | Queue implementation | In-memory array | Low volume (< 100 req/day), no Redis needed |
-| System prompt handling | `--system-prompt` for Claude, prepend for others | Avoids wasted tokens on CLI agentic scaffolding |
 | Response format | Unified JSON | Caller doesn't care which provider answered |
-| Authentication | Multi-client bearer tokens via env var | Supports multiple consumers with individual rate limits; disabled in dev |
-| Rate limiting | Global + per-client RPM (sliding window) | Protects VPS from overload while giving each client a fair share |
-| Client config | `SHELLM_CLIENTS` JSON env var | Public-repo safe (GitHub Secrets); no file-based config to leak |
-| Error handling | Factory functions + `fromCatchable()` bridge | Centralized error creation; no classes; gradual migration from old patterns |
-| Health caching | 30s TTL, queue/uptime always fresh | Avoids 4s CLI version checks on every healthcheck poll |
-| Env loading | dotenv | Standard `.env` file support for local development |
-| Test framework | Node.js built-in `node:test` | Zero external test dependencies; built-in mocking, assertions, describe/it |
-| Test HTTP client | `supertest` (devDependency) | Tests Express app directly without starting a server |
-| Mock strategy | `mock.module()` for CLI providers, `mock.method()` for fetch | Solves CommonJS destructured-import problem; only 5 of 12 test files need module mocking |
-| Deployment model | Direct on VPS (not containerized) | CLI OAuth tokens break on container rebuilds; native install keeps auth stable |
-| Process manager | systemd | Native, zero deps, auto-restart, journalctl integration |
-| Network access | cloudflared tunnel (`shellm.notdefined.dev`) | Zero open ports, Cloudflare handles TLS, no nginx/caddy needed |
-| CLI tool | `shellm` bin via npm link | Convenient dev/ad-hoc management; complements systemd, doesn't replace it |
-| Logger | Structured JSON, LOG_LEVEL filter | Health probes (every 30s) suppressed at `info`; 5xx → `error` for alerting |
-| Log rotation | System logrotate, `copytruncate` | No signal handling in app; daily, 7 rotations, 10M max |
+| Authentication | Multi-client bearer tokens → SQLite (Phase 9) | Env var keys require restart to rotate; DB allows runtime management |
+| Error handling | Factory functions + `fromCatchable()` bridge | Centralized error creation; no classes |
+| Test framework | Node.js built-in `node:test` | Zero external test dependencies; built-in mocking |
+| Deployment model | Direct on VPS (not containerized) | CLI OAuth tokens break on container rebuilds |
+| Network access | cloudflared tunnel (`shellm.notdefined.dev`) | Zero open ports, Cloudflare handles TLS |
+| Database | SQLite via `better-sqlite3` (Phase 9) | No PostgreSQL needed for <100 req/day; single file, zero ops, backup = cp |
+| Dashboard | Static HTML + vanilla JS (Phase 10) | No React/Vue/build step; Express serves static files; no frontend dependencies |
+| Admin auth | Single admin via `SHELLM_ADMIN_PASSWORD` env var | Simple, no DB user table needed; one admin is sufficient for self-hosted |
+| OpenAI compatibility | `/v1/chat/completions` + `/v1/models` (Phase 8) | De facto standard; enables any OpenAI SDK client to use SheLLM |
 | License | MIT | Open source, permissive, standard for Node.js ecosystem |
