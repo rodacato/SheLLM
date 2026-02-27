@@ -1,4 +1,3 @@
-const { timingSafeEqual } = require('node:crypto');
 const { sendError, authRequired, rateLimited } = require('../errors');
 const { getDb, findClientByKey } = require('../db');
 const logger = require('../lib/logger');
@@ -6,31 +5,10 @@ const logger = require('../lib/logger');
 const GLOBAL_RPM = parseInt(process.env.SHELLM_GLOBAL_RPM || '30', 10);
 const WINDOW_MS = 60_000;
 
-function loadClients() {
-  const raw = process.env.SHELLM_CLIENTS;
-  if (!raw) return null;
-
-  try {
-    const parsed = JSON.parse(raw);
-    const clients = new Map();
-    for (const [name, config] of Object.entries(parsed)) {
-      clients.set(config.key, {
-        name,
-        rpm: config.rpm || 10,
-        timestamps: [],
-      });
-    }
-    return clients;
-  } catch {
-    logger.warn({ event: 'config_error', message: 'Failed to parse SHELLM_CLIENTS — auth disabled' });
-    return null;
-  }
-}
-
 // Sliding window: count requests in the last 60 seconds
 const globalTimestamps = [];
 
-// Per-client rate limit timestamps (keyed by client name, shared across DB + env clients)
+// Per-client rate limit timestamps (keyed by client name, shared across DB clients)
 const clientTimestamps = new Map();
 
 function checkRateLimit(timestamps, maxRpm) {
@@ -60,19 +38,8 @@ function getOrCreateTimestamps(clientName) {
 }
 
 function createAuthMiddleware() {
-  const envClients = loadClients();
-
-  // Pre-compute key buffers for env-based timing-safe comparison
-  let keyBuffers = null;
-  if (envClients) {
-    keyBuffers = new Map();
-    for (const [key, client] of envClients) {
-      keyBuffers.set(key, { buffer: Buffer.from(key), client });
-    }
-  }
-
-  // No auth at all: no DB clients, no env clients
-  const hasDb = () => {
+  // Check if DB has any active clients
+  const hasDbClients = () => {
     const db = getDb();
     if (!db) return false;
     const row = db.prepare('SELECT COUNT(*) as count FROM clients WHERE active = 1').get();
@@ -80,8 +47,8 @@ function createAuthMiddleware() {
   };
 
   return (req, res, next) => {
-    // If no env clients and no DB clients, auth is disabled
-    if (!keyBuffers && !hasDb()) {
+    // If no DB clients, auth is disabled
+    if (!hasDbClients()) {
       return next();
     }
 
@@ -93,35 +60,14 @@ function createAuthMiddleware() {
     }
 
     const token = match[1];
-    let clientName = null;
-    let clientRpm = 10;
+    const dbClient = findClientByKey(token);
 
-    // Try DB first
-    const db = getDb();
-    if (db) {
-      const dbClient = findClientByKey(token);
-      if (dbClient && dbClient.active) {
-        clientName = dbClient.name;
-        clientRpm = dbClient.rpm;
-      }
-    }
-
-    // Fall back to env var clients (timing-safe)
-    if (!clientName && keyBuffers) {
-      const tokenBuffer = Buffer.from(token);
-      for (const [, entry] of keyBuffers) {
-        if (entry.buffer.length === tokenBuffer.length &&
-            timingSafeEqual(entry.buffer, tokenBuffer)) {
-          clientName = entry.client.name;
-          clientRpm = entry.client.rpm;
-          break;
-        }
-      }
-    }
-
-    if (!clientName) {
+    if (!dbClient || !dbClient.active) {
       return sendError(res, authRequired(), req.requestId);
     }
+
+    const clientName = dbClient.name;
+    const clientRpm = dbClient.rpm;
 
     // Check global rate limit
     const globalRetry = checkRateLimit(globalTimestamps, GLOBAL_RPM);

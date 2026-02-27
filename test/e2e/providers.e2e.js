@@ -13,8 +13,6 @@ let app;
 let authenticated = {};
 
 before(async () => {
-  // Ensure auth is disabled for e2e
-  delete process.env.SHELLM_CLIENTS;
   app = require('../../src/server');
 
   // Check which providers are actually authenticated

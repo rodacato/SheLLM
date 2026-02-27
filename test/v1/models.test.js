@@ -17,8 +17,6 @@ describe('/v1/models', () => {
       },
     });
 
-    delete process.env.SHELLM_CLIENTS;
-
     mock.module('dotenv', {
       namedExports: { config: () => {} },
       defaultExport: { config: () => {} },

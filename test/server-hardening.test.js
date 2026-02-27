@@ -19,8 +19,6 @@ describe('server hardening (Phase 7)', () => {
       },
     });
 
-    delete process.env.SHELLM_CLIENTS;
-
     mock.module('dotenv', {
       namedExports: { config: () => {} },
       defaultExport: { config: () => {} },

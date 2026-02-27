@@ -9,7 +9,7 @@ SheLLM is designed as an **internal service**. It is not intended to be exposed 
 - The service binds to `127.0.0.1` (loopback) in production — only accessible from the same host
 - When using Docker networking, the service is accessible only from containers on the same bridge network
 - **No TLS termination** is performed by SheLLM — this is the responsibility of the reverse proxy (if any)
-- **Multi-client bearer token authentication** via `SHELLM_CLIENTS` env var. When not set, auth is disabled (development mode). Network isolation remains the primary trust boundary in production; bearer tokens add defense-in-depth.
+- **Multi-client bearer token authentication** managed via the Admin API. When no API keys exist, auth is disabled (development mode). Network isolation remains the primary trust boundary in production; bearer tokens add defense-in-depth.
 - **Rate limiting**: Global + per-client sliding window (requests per minute). Prevents abuse even from trusted internal clients.
 
 ### Admin Authentication Hardening
@@ -33,12 +33,11 @@ The admin dashboard (`/admin/*`) uses HTTP Basic Auth via `SHELLM_ADMIN_PASSWORD
 
 ### Client Key Management
 
-Client API keys are configured via the `SHELLM_CLIENTS` environment variable (JSON). Keys must never be committed to the repository.
+Client API keys are managed via the Admin API (`/admin/keys`). Keys are stored hashed (SHA-256) in the SQLite database.
 
-- **Production**: Store in `.env` on the VPS (owned by `shellmer` user, mode 600)
-- **Development**: Use `.env` file (gitignored) or leave unset (auth disabled)
+- **Production**: Database file stored on VPS (owned by `shellmer` user, mode 600)
+- **Development**: In-memory or file DB — when no keys exist, auth is disabled
 - **Pre-commit hook**: `scripts/pre-commit` scans staged changes for secret patterns (`sk-*`, `csk-*`, hardcoded keys). Install with `cp scripts/pre-commit .git/hooks/pre-commit`
-- **Timing-safe comparison**: Bearer tokens are compared using `crypto.timingSafeEqual` to prevent timing attacks
 
 ### Auth Token Handling
 

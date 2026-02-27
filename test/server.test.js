@@ -20,23 +20,6 @@ describe('server integration', () => {
       },
     });
 
-    // Ensure auth is disabled for integration tests
-    // Must delete BEFORE requiring server.js (dotenv loads .env at import time)
-    delete process.env.SHELLM_CLIENTS;
-
-    // Prevent dotenv from re-injecting SHELLM_CLIENTS from .env
-    mock.module('dotenv', {
-      namedExports: { config: () => {} },
-      defaultExport: { config: () => {} },
-    });
-
-    // Clear all cached src modules
-    for (const key of Object.keys(require.cache)) {
-      if (key.includes('/src/') || key.includes('dotenv')) {
-        delete require.cache[key];
-      }
-    }
-
     request = require('supertest');
     app = require('../src/server');
   });

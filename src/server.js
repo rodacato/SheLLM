@@ -13,7 +13,7 @@ const { createAdminAuth } = require('./middleware/admin-auth');
 const adminKeysRouter = require('./admin/keys');
 const adminLogsRouter = require('./admin/logs');
 const adminStatsRouter = require('./admin/stats');
-const { initDb } = require('./db');
+const { initDb, getDb } = require('./db');
 const { sendError, invalidRequest } = require('./errors');
 const path = require('node:path');
 
@@ -108,7 +108,9 @@ function gracefulShutdown(server, signal) {
 // Only start listening when run directly (not when required for testing)
 if (require.main === module) {
   const server = app.listen(PORT, () => {
-    const authStatus = process.env.SHELLM_CLIENTS ? 'enabled' : 'disabled';
+    const db = getDb();
+    const hasClients = db && db.prepare('SELECT COUNT(*) as count FROM clients WHERE active = 1').get().count > 0;
+    const authStatus = hasClients ? 'enabled' : 'disabled';
     logger.info({ event: 'server_start', port: PORT, auth: authStatus });
   });
 

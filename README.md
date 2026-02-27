@@ -145,7 +145,7 @@ Both endpoints return errors in their respective format:
 
 ## Authentication
 
-**Option 1: API Keys (recommended)** — Create keys via the admin API or dashboard:
+Create keys via the admin API or dashboard:
 
 ```bash
 # Set admin password
@@ -162,13 +162,7 @@ Then use the returned key:
 curl -H "Authorization: Bearer shellm-abc123..." http://localhost:6100/v1/chat/completions ...
 ```
 
-**Option 2: Environment variable** — Set `SHELLM_CLIENTS` for static client keys:
-
-```bash
-SHELLM_CLIENTS='{"myapp":{"key":"my-secret-token","rpm":10}}'
-```
-
-When neither is configured, auth is disabled (all requests allowed). See [.env.example](.env.example) for all options.
+When no API keys exist, auth is disabled (all requests allowed). See [.env.example](.env.example) for all options.
 
 ## Admin Dashboard
 

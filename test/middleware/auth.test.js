@@ -1,5 +1,6 @@
 const { describe, it, mock, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
+const { initDb, closeDb, createClient } = require('../../src/db');
 const { createAuthMiddleware } = require('../../src/middleware/auth');
 
 function mockRes() {
@@ -10,22 +11,15 @@ function mockRes() {
 }
 
 describe('auth middleware', () => {
-  let savedClients;
-
   beforeEach(() => {
-    savedClients = process.env.SHELLM_CLIENTS;
+    initDb(':memory:');
   });
 
   afterEach(() => {
-    if (savedClients !== undefined) {
-      process.env.SHELLM_CLIENTS = savedClients;
-    } else {
-      delete process.env.SHELLM_CLIENTS;
-    }
+    closeDb();
   });
 
-  it('auth disabled when SHELLM_CLIENTS not set', () => {
-    delete process.env.SHELLM_CLIENTS;
+  it('auth disabled when no DB clients exist', () => {
     const middleware = createAuthMiddleware();
     const next = mock.fn();
     middleware({}, {}, next);
@@ -33,7 +27,7 @@ describe('auth middleware', () => {
   });
 
   it('rejects missing and invalid Bearer tokens', () => {
-    process.env.SHELLM_CLIENTS = JSON.stringify({ testclient: { key: 'test-valid-key-abc123', rpm: 10 } });
+    createClient({ name: 'testclient', rpm: 10 });
     const middleware = createAuthMiddleware();
 
     // Missing header
@@ -49,9 +43,9 @@ describe('auth middleware', () => {
   });
 
   it('accepts valid Bearer token and sets clientName', () => {
-    process.env.SHELLM_CLIENTS = JSON.stringify({ testclient: { key: 'test-valid-key-abc123', rpm: 100 } });
+    const client = createClient({ name: 'testclient', rpm: 100 });
     const middleware = createAuthMiddleware();
-    const req = { headers: { authorization: 'Bearer test-valid-key-abc123' }, requestId: 'req-3' };
+    const req = { headers: { authorization: `Bearer ${client.rawKey}` }, requestId: 'req-3' };
     const next = mock.fn();
     middleware(req, mockRes(), next);
     assert.strictEqual(next.mock.callCount(), 1);

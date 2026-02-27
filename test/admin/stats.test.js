@@ -16,7 +16,6 @@ describe('admin /admin/stats', () => {
       },
     });
 
-    delete process.env.SHELLM_CLIENTS;
     process.env.SHELLM_ADMIN_PASSWORD = 'test-admin-pass';
 
     mock.module('dotenv', {

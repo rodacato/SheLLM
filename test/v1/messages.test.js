@@ -19,8 +19,6 @@ describe('/v1/messages', () => {
       },
     });
 
-    delete process.env.SHELLM_CLIENTS;
-
     mock.module('dotenv', {
       namedExports: { config: () => {} },
       defaultExport: { config: () => {} },
