@@ -8,7 +8,7 @@ SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterpris
 
 ---
 
-## Phases 1–8 — Summary `COMPLETED`
+## Phases 1–10 — Summary `COMPLETED`
 
 | Phase | Scope | Key Deliverables |
 |---|---|---|
@@ -20,9 +20,11 @@ SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterpris
 | **6 — VPS Deployment** | systemd, cloudflared, provisioning script | `shellm.service`, `scripts/setup-vps.sh` |
 | **7 — API Hardening** | Validation, graceful shutdown, observability | 82 tests, settled guard, buffer cap, queue headers |
 | **8 — OpenAI Proxy** | `/v1/chat/completions`, `/v1/models`, model aliases | Replaced legacy `/completions` + `/providers`, 93 tests |
+| **9 — SQLite + Key Mgmt** | SQLite persistence, admin key CRUD, request logging | `src/db/`, `src/admin/keys.js`, `src/middleware/admin-auth.js`, 138 tests |
+| **10 — Admin Dashboard** | Browser dashboard, logs/stats endpoints, SPA | `src/admin/public/`, `src/admin/logs.js`, `src/admin/stats.js`, 156 tests |
 
-**Key architectural decisions (phases 1–6):**
-- CommonJS, two runtime dependencies (Express + dotenv), functional provider modules
+**Key architectural decisions (phases 1–6, 9):**
+- CommonJS, three runtime dependencies (Express + dotenv + better-sqlite3), functional provider modules
 - Queue: max 2 concurrent, max 10 depth, in-memory; 120s subprocess timeout, 1MB buffer cap
 - Multi-client bearer tokens via `SHELLM_CLIENTS` JSON env var; auth disabled when unset
 - Direct VPS deployment (not containerized) — CLI OAuth tokens persist in `~shellmer/`
@@ -58,114 +60,27 @@ Drop-in replacement for any OpenAI SDK, LangChain, Continue.dev, or Cursor. Lega
 
 ---
 
-## Phase 9 — SQLite + Key Management API `PENDING`
+## Phase 9 — SQLite + Key Management API `COMPLETED`
 
-Migrate client auth from `SHELLM_CLIENTS` env var to SQLite. Keys can be created, rotated, and revoked without restarting the service. Foundation for request logging, metrics, and the admin dashboard.
+SQLite persistence via `better-sqlite3` for client key management and request logging. Keys can be created, rotated, and revoked at runtime without restarting the service.
 
-**Expert rationale:**
-- **SRE:** SQLite is the prerequisite for logs, metrics, and dashboard — without persistence, none of those features work.
-- **SecEng:** Env var keys require restart to rotate — unacceptable in production. SQLite file with mode 600 on VPS is secure and auditable.
-- **Runtime:** `better-sqlite3` is synchronous but at <100 req/day, blocking is negligible. Adds one native dependency.
-- **QA:** Tests use `:memory:` SQLite — no file cleanup, fast, deterministic.
+**9a — Database Layer:** Singleton `src/db/index.js` with WAL mode, two tables (`clients` + `request_logs`), SHA-256 key hashing, `shellm-<32hex>` key format, auto-prune (30 days), DB at `~/.shellm/shellm.db` (mode 600). Tests use `:memory:`.
 
-### 9a — Database Layer
+**9b — Key Management API:** `src/admin/keys.js` Express Router — `GET/POST/PATCH/DELETE /admin/keys`, `POST /admin/keys/:id/rotate`. Admin auth via `SHELLM_ADMIN_PASSWORD` (HTTP Basic). Raw key only visible on create and rotate. `src/middleware/admin-auth.js` with timing-safe password comparison.
 
-| Task | Status | Files |
-|---|---|---|
-| Add `better-sqlite3` dependency | Pending | `package.json` |
-| Database module (init, migrations, connection) | Pending | `src/db/index.js` |
-| `clients` table (id, name, key_hash, rpm, models, active, created_at) | Pending | `src/db/index.js` |
-| `request_logs` table (id, request_id, client_id, provider, model, status, duration_ms, tokens, cost_usd, created_at) | Pending | `src/db/index.js` |
-| DB file at `~/.shellm/shellm.db` (mode 600) | Pending | `src/db/index.js` |
-| Backwards-compatible: fall back to `SHELLM_CLIENTS` env var if DB is empty | Pending | `src/middleware/auth.js` |
-| Unit tests (`:memory:` DB) | Pending | `test/db/` |
-
-### 9b — Key Management REST API
-
-| Task | Status | Files |
-|---|---|---|
-| `GET /admin/keys` — list all keys (masked) | Pending | `src/admin/keys.js` |
-| `POST /admin/keys` — create key (name, rpm, models) | Pending | `src/admin/keys.js` |
-| `PATCH /admin/keys/:id` — update rpm, models, active | Pending | `src/admin/keys.js` |
-| `DELETE /admin/keys/:id` — revoke key | Pending | `src/admin/keys.js` |
-| `POST /admin/keys/:id/rotate` — generate new secret | Pending | `src/admin/keys.js` |
-| Admin auth middleware (admin password via env var) | Pending | `src/middleware/admin-auth.js` |
-| Unit tests | Pending | `test/admin/keys.test.js` |
-
-**Admin auth:** Single admin account via `SHELLM_ADMIN_PASSWORD` env var. All `/admin/*` routes require `Authorization: Basic admin:<password>`. Simple, no DB overhead for user management.
-
-### 9c — Request Logging to DB
-
-| Task | Status | Files |
-|---|---|---|
-| Log every request to `request_logs` table | Pending | `src/middleware/logging.js`, `src/db/index.js` |
-| Fields: request_id, client, provider, model, status, duration_ms, queued_ms, tokens, error | Pending | `src/db/index.js` |
-| Auto-prune logs older than 30 days (on startup + daily) | Pending | `src/db/index.js` |
-| Unit tests | Pending | `test/db/` |
+**9c — Request Logging + Auth:** `/v1/*` requests logged to `request_logs` (request_id, client, provider, model, status, duration_ms, queued_ms, tokens, cost_usd). `src/middleware/auth.js` updated with DB-first client lookup, env var fallback. `src/v1/chat-completions.js` exposes `queued_ms`, `cost_usd`, `usage` on `res.locals`.
 
 ---
 
-## Phase 10 — Admin Dashboard `PENDING`
+## Phase 10 — Admin Dashboard `COMPLETED`
 
-Static HTML dashboard served by Express. **Tailwind CSS 4** (CDN) for styling, **Alpine.js** (CDN) for reactivity — no build step, no `node_modules` frontend deps. Consumes the `/admin/*` and `/health` APIs.
+Browser-based admin dashboard at `/admin/dashboard/`. Static HTML SPA served by Express — Tailwind CSS 4 (CDN) + Alpine.js (CDN), no build step, no frontend `node_modules`.
 
-**Tech stack:**
-- **Tailwind CSS 4** via CDN (`<script src="https://cdn.tailwindcss.com">`) — utility-first, responsive, clean design out of the box
-- **Alpine.js** via CDN (`<script src="https://cdn.jsdelivr.net/npm/alpinejs">`) — 15KB, declarative `x-data`/`x-for`/`x-show` for tables, filters, modals. Modern jQuery replacement, no build step
-- **Express `static()`** serves the files — no template engine, no SSR
+**10a — Backend endpoints:** `GET /admin/logs` (paginated, filterable by provider/client/status/date), `GET /admin/stats` (aggregated metrics by period: 24h/7d/30d), `GET /admin/models` (proxy for dashboard, avoids Bearer auth).
 
-**Expert rationale:**
-- **Contract:** Dashboard is a view layer, not a new API. All data comes from existing endpoints.
-- **SecEng:** Same admin auth as Phase 9 (`SHELLM_ADMIN_PASSWORD`). Dashboard behind `/admin/` prefix. Tailwind/Alpine via CDN = no supply chain risk in `node_modules`.
-- **Runtime:** Zero server-side rendering. Express serves static files. Alpine.js `fetch()` calls consume the REST API.
+**10b — Dashboard pages:** Overview (provider health cards, queue stats, request metrics by period), Request Logs (filterable table with pagination, status badges, duration/token/cost columns), API Keys (full CRUD — create modal, active toggle, rotate, delete), Models (provider cards with health dots + model list table).
 
-**Data storage (runtime, outside repo):**
-```
-~/.shellm/
-├── shellm.db          # SQLite (clients, request_logs)
-├── shellm.pid         # PID file (daemon mode)
-└── logs/
-    └── shellm.log     # Daemon log file (logrotate)
-```
-
-### 10a — Dashboard Pages
-
-| Page | Content | API Source |
-|---|---|---|
-| **Overview** | Health status, queue stats, uptime, provider status cards | `GET /health`, `GET /admin/stats` |
-| **Request Logs** | Sortable table: time, status (badge), request_id, client, provider, model, duration, cost. Search by request_id, filter by status/provider/date range, pagination | `GET /admin/logs` |
-| **API Keys** | Table: alias, key (masked), rpm, allowed models, active toggle, created_at. Create modal, revoke/rotate actions | `GET/POST/PATCH/DELETE /admin/keys` |
-| **Models** | Provider cards with: name, models, capabilities, health status (green/red dot) | `GET /providers`, `GET /health` |
-
-### 10b — File Structure
-
-```
-src/admin/public/
-├── index.html          # SPA shell: sidebar nav, Tailwind CDN, Alpine.js CDN
-├── css/
-│   └── custom.css      # Minimal overrides (if any — Tailwind handles most)
-└── js/
-    ├── app.js          # Alpine.js global store (auth, navigation, shared state)
-    ├── overview.js     # Overview page component
-    ├── logs.js         # Request Logs page component
-    ├── keys.js         # API Keys page component
-    └── models.js       # Models page component
-```
-
-### 10c — Tasks
-
-| Task | Status | Files |
-|---|---|---|
-| HTML shell with sidebar nav (Tailwind + Alpine.js) | Pending | `src/admin/public/index.html` |
-| Alpine.js global store (auth, fetch wrapper, navigation) | Pending | `src/admin/public/js/app.js` |
-| Overview page (health cards, queue stats, uptime) | Pending | `src/admin/public/js/overview.js` |
-| Request Logs page (table, search, filters, pagination) | Pending | `src/admin/public/js/logs.js` |
-| API Keys page (CRUD table with create modal) | Pending | `src/admin/public/js/keys.js` |
-| Models page (provider cards with health dots) | Pending | `src/admin/public/js/models.js` |
-| `GET /admin/logs` endpoint (paginated, filterable) | Pending | `src/admin/logs.js` |
-| `GET /admin/stats` endpoint (aggregated metrics from DB) | Pending | `src/admin/stats.js` |
-| Serve static files at `/admin/` behind admin auth | Pending | `src/server.js` |
-| Unit tests for admin API endpoints | Pending | `test/admin/` |
+**10c — Architecture:** SPA shell `src/admin/public/index.html` with sidebar navigation. Alpine.js components per page (`js/overview.js`, `js/logs.js`, `js/keys.js`, `js/models.js`). Auth via browser's native HTTP Basic dialog (triggered by `WWW-Authenticate` header from `admin-auth.js`).
 
 ---
 
