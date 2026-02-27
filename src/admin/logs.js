@@ -61,4 +61,12 @@ router.get('/logs', (req, res) => {
   res.json({ logs, total, limit, offset });
 });
 
+router.delete('/logs', (req, res) => {
+  const db = getDb();
+  if (!db) return res.json({ deleted: 0 });
+
+  const result = db.prepare('DELETE FROM request_logs').run();
+  res.json({ deleted: result.changes });
+});
+
 module.exports = router;

@@ -866,6 +866,28 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
 
+    delete:
+      operationId: clearLogs
+      tags: [Admin — Logs]
+      summary: Delete all request logs
+      security:
+        - BasicAuth: []
+      responses:
+        '200':
+          description: Logs deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: integer
+                    description: Number of log entries deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
   # --- Admin Stats ---
   /admin/stats:
     get:

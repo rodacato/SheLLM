@@ -81,7 +81,7 @@ function adminSecurityHeaders(req, res, next) {
     'Content-Security-Policy',
     [
       "default-src 'none'",
-      "script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net 'unsafe-inline'",
+      "script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self'",
       "connect-src 'self'",

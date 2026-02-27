@@ -31,6 +31,18 @@ function logsPage() {
       this.loading = false;
     },
 
+    async clearLogs() {
+      if (!confirm('Delete all request logs? This cannot be undone.')) return;
+      try {
+        const res = await apiFetch(`${API_BASE}/logs`, { method: 'DELETE' });
+        if (res.ok) {
+          this.logs = [];
+          this.total = 0;
+          this.offset = 0;
+        }
+      } catch { /* ignore */ }
+    },
+
     async applyFilters() {
       this.offset = 0;
       await this.fetchLogs();
@@ -85,6 +97,8 @@ function logsPage() {
           </select>
         </div>
         <div class="text-sm text-gray-500 self-end pb-1">${this.total} total</div>
+        ${this.total > 0 ? `<button onclick="this.closest('[x-data]').__x.$data.clearLogs()"
+          class="ml-auto self-end px-3 py-1.5 rounded text-sm bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors">Clear All</button>` : ''}
       </div>`;
 
       // Table
