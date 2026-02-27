@@ -80,6 +80,18 @@ async function chatCompletionsHandler(req, res) {
   if (err) return sendOpenAIError(res, err);
 
   const { model, max_tokens } = req.body;
+
+  // Enforce per-key model restrictions
+  if (req.allowedModels && req.allowedModels.length > 0) {
+    const providerObj = resolveProvider(model);
+    const providerName = providerObj ? providerObj.name : null;
+    if (!req.allowedModels.includes(model) && (!providerName || !req.allowedModels.includes(providerName))) {
+      return sendOpenAIError(res, invalidRequest(
+        `Model "${model}" is not allowed for this API key. Allowed: ${req.allowedModels.join(', ')}`
+      ));
+    }
+  }
+
   let { prompt, system } = extractMessages(req.body.messages);
 
   // Sanitize extracted text

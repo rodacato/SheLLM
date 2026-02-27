@@ -46,11 +46,19 @@ async function getHealthStatus() {
     checkCerebras(),
   ]);
 
+  // Merge enabled status from provider_settings
+  const { getProviderSettings } = require('./db');
+  let enabledMap = {};
+  try {
+    const rows = getProviderSettings();
+    for (const row of rows) enabledMap[row.name] = !!row.enabled;
+  } catch { /* DB might not be initialized */ }
+
   const providers = {
-    claude: claudeStatus,
-    gemini: geminiStatus,
-    codex: codexStatus,
-    cerebras: cerebrasStatus,
+    claude: { ...claudeStatus, enabled: enabledMap.claude ?? true },
+    gemini: { ...geminiStatus, enabled: enabledMap.gemini ?? true },
+    codex: { ...codexStatus, enabled: enabledMap.codex ?? true },
+    cerebras: { ...cerebrasStatus, enabled: enabledMap.cerebras ?? true },
   };
 
   cache = { data: { status: 'ok', providers }, expires: now + CACHE_TTL_MS };

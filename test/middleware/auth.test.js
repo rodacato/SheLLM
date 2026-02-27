@@ -51,4 +51,24 @@ describe('auth middleware', () => {
     assert.strictEqual(next.mock.callCount(), 1);
     assert.strictEqual(req.clientName, 'testclient');
   });
+
+  it('sets allowedModels from client with model restrictions', () => {
+    const client = createClient({ name: 'restricted-client', rpm: 100, models: ['claude', 'gemini'] });
+    const middleware = createAuthMiddleware();
+    const req = { headers: { authorization: `Bearer ${client.rawKey}` }, requestId: 'req-4' };
+    const next = mock.fn();
+    middleware(req, mockRes(), next);
+    assert.strictEqual(next.mock.callCount(), 1);
+    assert.deepStrictEqual(req.allowedModels, ['claude', 'gemini']);
+  });
+
+  it('sets allowedModels to null when client has no model restriction', () => {
+    const client = createClient({ name: 'unrestricted-client', rpm: 100 });
+    const middleware = createAuthMiddleware();
+    const req = { headers: { authorization: `Bearer ${client.rawKey}` }, requestId: 'req-5' };
+    const next = mock.fn();
+    middleware(req, mockRes(), next);
+    assert.strictEqual(next.mock.callCount(), 1);
+    assert.strictEqual(req.allowedModels, null);
+  });
 });

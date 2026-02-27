@@ -116,6 +116,17 @@ async function messagesHandler(req, res) {
 
   const { model, max_tokens } = req.body;
 
+  // Enforce per-key model restrictions
+  if (req.allowedModels && req.allowedModels.length > 0) {
+    const providerObj = resolveProvider(model);
+    const providerName = providerObj ? providerObj.name : null;
+    if (!req.allowedModels.includes(model) && (!providerName || !req.allowedModels.includes(providerName))) {
+      return sendAnthropicError(res, invalidRequest(
+        `Model "${model}" is not allowed for this API key. Allowed: ${req.allowedModels.join(', ')}`
+      ));
+    }
+  }
+
   // Extract and normalize content
   const extracted = extractPrompt(req.body.messages, req.body.system);
   if (extracted.error) {

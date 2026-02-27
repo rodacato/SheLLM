@@ -13,6 +13,7 @@ const { createAdminAuth } = require('./middleware/admin-auth');
 const adminKeysRouter = require('./admin/keys');
 const adminLogsRouter = require('./admin/logs');
 const adminStatsRouter = require('./admin/stats');
+const adminProvidersRouter = require('./admin/providers');
 const { initDb, getDb } = require('./db');
 const { sendError, invalidRequest } = require('./errors');
 const path = require('node:path');
@@ -67,6 +68,7 @@ const adminAuth = createAdminAuth();
 app.use('/admin', adminAuth, adminKeysRouter);
 app.use('/admin', adminAuth, adminLogsRouter);
 app.use('/admin', adminAuth, adminStatsRouter);
+app.use('/admin', adminAuth, adminProvidersRouter);
 
 // Admin models endpoint (avoids needing Bearer auth for dashboard)
 app.get('/admin/models', adminAuth, modelsHandler);

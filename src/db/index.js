@@ -72,7 +72,19 @@ function initDb(dbPath) {
 
     CREATE INDEX IF NOT EXISTS idx_logs_created ON request_logs(created_at);
     CREATE INDEX IF NOT EXISTS idx_logs_client  ON request_logs(client_name);
+
+    CREATE TABLE IF NOT EXISTS provider_settings (
+      name       TEXT PRIMARY KEY,
+      enabled    INTEGER NOT NULL DEFAULT 1,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
+
+  // Seed default provider settings
+  const seedStmt = db.prepare('INSERT OR IGNORE INTO provider_settings (name) VALUES (?)');
+  for (const name of ['claude', 'gemini', 'codex', 'cerebras']) {
+    seedStmt.run(name);
+  }
 
   // Prune old logs on startup and daily
   pruneOldLogs(30);
@@ -193,6 +205,39 @@ function pruneOldLogs(days = 30) {
   db.prepare(`DELETE FROM request_logs WHERE created_at < datetime('now', ?)`).run(`-${days} days`);
 }
 
+// --- Provider Settings ---
+
+function getProviderSettings() {
+  if (!db) return [];
+  return db.prepare('SELECT name, enabled, updated_at FROM provider_settings ORDER BY name').all();
+}
+
+function getProviderSetting(name) {
+  if (!db) return null;
+  return db.prepare('SELECT name, enabled, updated_at FROM provider_settings WHERE name = ?').get(name) || null;
+}
+
+function setProviderEnabled(name, enabled) {
+  const result = db.prepare(
+    "UPDATE provider_settings SET enabled = ?, updated_at = datetime('now') WHERE name = ?"
+  ).run(enabled ? 1 : 0, name);
+  if (result.changes === 0) return null;
+  return db.prepare('SELECT name, enabled, updated_at FROM provider_settings WHERE name = ?').get(name);
+}
+
+function getProviderLastUsage() {
+  return db.prepare(`
+    SELECT provider,
+           MAX(created_at) as last_used_at,
+           (SELECT status FROM request_logs r2
+            WHERE r2.provider = r1.provider
+            ORDER BY r2.id DESC LIMIT 1) as last_status
+    FROM request_logs r1
+    WHERE provider IS NOT NULL
+    GROUP BY provider
+  `).all();
+}
+
 module.exports = {
   initDb,
   getDb,
@@ -205,6 +250,10 @@ module.exports = {
   findClientByKey,
   insertRequestLog,
   pruneOldLogs,
+  getProviderSettings,
+  getProviderSetting,
+  setProviderEnabled,
+  getProviderLastUsage,
   // Exposed for testing
   hashKey,
   generateKey,

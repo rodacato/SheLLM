@@ -87,6 +87,13 @@ async function route({ model, prompt, system, max_tokens, request_id }) {
     throw invalidRequest(`Unknown provider: ${model}`);
   }
 
+  // Fail-fast: check if provider is disabled by admin
+  const { getProviderSetting } = require('./db');
+  const setting = getProviderSetting(provider.name);
+  if (setting && !setting.enabled) {
+    throw providerUnavailable(`${provider.name} is disabled`);
+  }
+
   // Fail-fast: check if provider is known to be down (from cached health)
   // Lazy require to avoid circular dependency (health.js imports router.js for queue)
   const { getCachedProviderStatus } = require('./health');
@@ -115,12 +122,22 @@ async function route({ model, prompt, system, max_tokens, request_id }) {
   };
 }
 
-function listProviders() {
-  return Object.values(providers).map((p) => ({
-    name: p.name,
-    models: p.validModels,
-    ...p.capabilities,
-  }));
+function listProviders({ includeDisabled = true } = {}) {
+  const { getProviderSettings } = require('./db');
+  let settingsMap = {};
+  try {
+    const rows = getProviderSettings();
+    for (const row of rows) settingsMap[row.name] = row;
+  } catch { /* DB might not be initialized in tests */ }
+
+  return Object.values(providers)
+    .filter((p) => includeDisabled || !settingsMap[p.name] || settingsMap[p.name].enabled)
+    .map((p) => ({
+      name: p.name,
+      models: p.validModels,
+      ...p.capabilities,
+      enabled: settingsMap[p.name] ? !!settingsMap[p.name].enabled : true,
+    }));
 }
 
 module.exports = { route, queue, listProviders, resolveProvider, providers, getAliases };

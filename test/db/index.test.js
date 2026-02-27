@@ -6,6 +6,7 @@ const {
   createClient, listClients, updateClient, deleteClient,
   rotateClientKey, findClientByKey,
   insertRequestLog, pruneOldLogs,
+  getProviderSettings, getProviderSetting, setProviderEnabled, getProviderLastUsage,
   hashKey, generateKey,
 } = require('../../src/db');
 
@@ -24,6 +25,7 @@ describe('db layer', () => {
     const names = tables.map((t) => t.name);
     assert.ok(names.includes('clients'));
     assert.ok(names.includes('request_logs'));
+    assert.ok(names.includes('provider_settings'));
   });
 
   it('getDb returns the cached connection', () => {
@@ -230,6 +232,64 @@ describe('db layer', () => {
 
       const after = getDb().prepare("SELECT COUNT(*) as count FROM request_logs WHERE request_id = 'old-req'").get();
       assert.strictEqual(after.count, 0);
+    });
+  });
+
+  describe('provider_settings', () => {
+    it('seeds default providers on initDb', () => {
+      const settings = getProviderSettings();
+      assert.ok(settings.length >= 4);
+      const names = settings.map((s) => s.name);
+      assert.ok(names.includes('claude'));
+      assert.ok(names.includes('gemini'));
+      assert.ok(names.includes('codex'));
+      assert.ok(names.includes('cerebras'));
+      for (const s of settings) {
+        assert.strictEqual(s.enabled, 1);
+      }
+    });
+
+    it('getProviderSetting returns a single provider', () => {
+      const setting = getProviderSetting('claude');
+      assert.ok(setting);
+      assert.strictEqual(setting.name, 'claude');
+      assert.strictEqual(setting.enabled, 1);
+    });
+
+    it('getProviderSetting returns null for unknown provider', () => {
+      assert.strictEqual(getProviderSetting('unknown-provider'), null);
+    });
+
+    it('setProviderEnabled disables a provider', () => {
+      const updated = setProviderEnabled('gemini', false);
+      assert.ok(updated);
+      assert.strictEqual(updated.enabled, 0);
+      assert.strictEqual(getProviderSetting('gemini').enabled, 0);
+    });
+
+    it('setProviderEnabled re-enables a provider', () => {
+      const updated = setProviderEnabled('gemini', true);
+      assert.ok(updated);
+      assert.strictEqual(updated.enabled, 1);
+    });
+
+    it('setProviderEnabled returns null for unknown provider', () => {
+      assert.strictEqual(setProviderEnabled('nonexistent', true), null);
+    });
+
+    it('getProviderLastUsage returns last usage from logs', () => {
+      // We already inserted a log for claude in the request logs tests
+      const usage = getProviderLastUsage();
+      const claudeUsage = usage.find((u) => u.provider === 'claude');
+      assert.ok(claudeUsage);
+      assert.ok(claudeUsage.last_used_at);
+      assert.strictEqual(claudeUsage.last_status, 200);
+    });
+
+    it('getProviderLastUsage returns empty for providers with no logs', () => {
+      const usage = getProviderLastUsage();
+      const codexUsage = usage.find((u) => u.provider === 'codex');
+      assert.strictEqual(codexUsage, undefined);
     });
   });
 });

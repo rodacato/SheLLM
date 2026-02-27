@@ -91,6 +91,7 @@ function createAuthMiddleware() {
     }
 
     req.clientName = clientName;
+    req.allowedModels = dbClient.models || null;
     next();
   };
 }
