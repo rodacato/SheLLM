@@ -63,39 +63,4 @@ router.patch('/providers/:name', (req, res) => {
   res.json({ provider: { ...updated, enabled: !!updated.enabled } });
 });
 
-// POST /admin/providers/:name/test — send a test prompt
-router.post('/providers/:name/test', async (req, res) => {
-  const { name } = req.params;
-
-  if (!providers[name]) {
-    return sendError(res, invalidRequest(`Unknown provider: ${name}`), req.requestId);
-  }
-
-  const provider = providers[name];
-  const startTime = Date.now();
-
-  try {
-    const result = await provider.chat({
-      prompt: 'Say "hello" and nothing else.',
-      system: null,
-      max_tokens: 50,
-      model: name,
-    });
-
-    res.json({
-      success: true,
-      provider: name,
-      content: (result.content || '').slice(0, 200),
-      duration_ms: Date.now() - startTime,
-    });
-  } catch (err) {
-    res.json({
-      success: false,
-      provider: name,
-      error: (err.stderr || err.message || 'Unknown error').slice(0, 300),
-      duration_ms: Date.now() - startTime,
-    });
-  }
-});
-
 module.exports = router;

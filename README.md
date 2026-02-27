@@ -12,6 +12,20 @@ SheLLM turns CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterprise) a
 
 > Existing solutions like LiteLLM assume API keys for everything. SheLLM supports **both** CLI-based and API-based providers.
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/landing.png" alt="Landing page" width="720">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-overview.png" alt="Admin Dashboard — Overview" width="720">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-logs.png" alt="Admin Dashboard — Request Logs" width="720">
+</p>
+
 ## Quick Start
 
 ```bash
@@ -205,6 +219,10 @@ sudo systemctl start shellm
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code conventions, testing, and how to add providers.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ## License
 

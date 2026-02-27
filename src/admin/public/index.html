@@ -81,22 +81,7 @@
                 :class="prov.last_status >= 200 && prov.last_status < 300 ? 'badge-2xx' : 'badge-5xx'"
                 x-text="prov.last_status" x-show="prov.last_status"></span>
             </div>
-            <p class="text-xs text-gray-400 mb-2" x-show="!prov.last_used_at">Never used</p>
-            <div class="flex items-center gap-2">
-              <button @click="testProvider(prov.name)"
-                :disabled="!prov.enabled || (testResults[prov.name] && testResults[prov.name].loading)"
-                :class="!prov.enabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'"
-                class="text-xs border rounded px-2 py-1 text-gray-600 transition-colors">
-                <span x-show="!testResults[prov.name] || !testResults[prov.name].loading">Test</span>
-                <span x-show="testResults[prov.name] && testResults[prov.name].loading">Testing...</span>
-              </button>
-            </div>
-            <div x-show="testResults[prov.name] && !testResults[prov.name].loading" class="mt-2">
-              <p class="text-xs break-all" :class="testResults[prov.name] && testResults[prov.name].success ? 'text-green-600' : 'text-red-600'"
-                x-text="testResults[prov.name] && testResults[prov.name].success
-                  ? 'OK (' + formatDuration(testResults[prov.name].duration_ms) + '): ' + (testResults[prov.name].content || '').slice(0, 80)
-                  : 'Error: ' + ((testResults[prov.name] && testResults[prov.name].error) || 'unknown')"></p>
-            </div>
+            <p class="text-xs text-gray-400" x-show="!prov.last_used_at">Never used</p>
           </div>
         </template>
       </div>

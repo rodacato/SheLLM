@@ -4,7 +4,6 @@ function overviewPage() {
     period: '24h',
     loading: true,
     providers: [],
-    testResults: {},
 
     async fetchStats() {
       this.loading = true;
@@ -34,17 +33,6 @@ function overviewPage() {
         await this.fetchProviders();
         if (this.$root && this.$root.fetchHealth) await this.$root.fetchHealth();
       } catch { /* ignore */ }
-    },
-
-    async testProvider(name) {
-      this.testResults = { ...this.testResults, [name]: { loading: true, success: null, content: '', error: '', duration_ms: 0 } };
-      try {
-        const res = await apiFetch(`${API_BASE}/providers/${name}/test`, { method: 'POST' });
-        const data = await res.json();
-        this.testResults = { ...this.testResults, [name]: { loading: false, ...data } };
-      } catch {
-        this.testResults = { ...this.testResults, [name]: { loading: false, success: false, error: 'Network error', duration_ms: 0 } };
-      }
     },
 
     async changePeriod(p) {
