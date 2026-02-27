@@ -8,7 +8,7 @@ SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterpris
 
 ---
 
-## Phases 1–7 — Summary `COMPLETED`
+## Phases 1–8 — Summary `COMPLETED`
 
 | Phase | Scope | Key Deliverables |
 |---|---|---|
@@ -19,6 +19,7 @@ SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterpris
 | **5 — CLI & Logging** | `shellm` CLI, structured JSON logger, log rotation | `src/cli.js`, `src/cli/*.js`, `src/lib/logger.js`, `config/logrotate.conf` |
 | **6 — VPS Deployment** | systemd, cloudflared, provisioning script | `shellm.service`, `scripts/setup-vps.sh` |
 | **7 — API Hardening** | Validation, graceful shutdown, observability | 82 tests, settled guard, buffer cap, queue headers |
+| **8 — OpenAI Proxy** | `/v1/chat/completions`, `/v1/models`, model aliases | Replaced legacy `/completions` + `/providers`, 93 tests |
 
 **Key architectural decisions (phases 1–6):**
 - CommonJS, two runtime dependencies (Express + dotenv), functional provider modules
@@ -43,69 +44,17 @@ Correctness, safety, and reliability gaps fixed. No new dependencies. 82 tests (
 
 ---
 
-## Phase 8 — OpenAI-Compatible Proxy `PENDING`
+## Phase 8 — OpenAI-Compatible Proxy `COMPLETED`
 
-Make SheLLM a drop-in replacement for any OpenAI-compatible client (SDKs, LangChain, Continue.dev, Cursor). Every major LLM gateway exposes this format — it's the de facto standard.
+Drop-in replacement for any OpenAI SDK, LangChain, Continue.dev, or Cursor. Legacy `/completions` and `/providers` endpoints removed.
 
-### 8a — `/v1/chat/completions`
+**8a — `/v1/chat/completions`:** Accepts `messages[]` array, translates to `prompt` + `system` for all providers. Returns OpenAI shape (`choices`, `usage`, `id: "shellm-..."`). Multi-turn conversation support. OpenAI error format `{ error: { message, type, code, param } }`. Inline validation (model, messages, max_tokens, prompt length).
 
-Translation layer: accept OpenAI-format requests, route through existing providers, return OpenAI-format responses.
+**8b — `/v1/models`:** OpenAI model list format (`object: "list"`, `data[]` with `id`, `object: "model"`, `owned_by: "shellm"`). Includes all provider models plus user-defined aliases.
 
-| Task | Status | Files |
-|---|---|---|
-| `POST /v1/chat/completions` endpoint | Pending | `src/v1/chat-completions.js`, `src/server.js` |
-| Translate `messages[]` → `prompt` + `system` | Pending | `src/v1/chat-completions.js` |
-| Return OpenAI response shape (`choices`, `usage`, `id`) | Pending | `src/v1/chat-completions.js` |
-| Reuse existing auth, rate limiting, queue middleware | Pending | `src/server.js` |
-| Unit tests | Pending | `test/v1/chat-completions.test.js` |
+**8c — Model Aliases:** `SHELLM_ALIASES` env var (JSON `{"gpt-4":"claude","fast":"cerebras-8b"}`). Aliases resolve through existing `modelToProvider` map, visible in `/v1/models`.
 
-**Request:**
-```json
-{
-  "model": "claude",
-  "messages": [
-    { "role": "system", "content": "You are helpful." },
-    { "role": "user", "content": "Hello" }
-  ],
-  "max_tokens": 1024
-}
-```
-
-**Response:**
-```json
-{
-  "id": "shellm-abc123",
-  "object": "chat.completion",
-  "created": 1709071200,
-  "model": "claude",
-  "choices": [{
-    "index": 0,
-    "message": { "role": "assistant", "content": "..." },
-    "finish_reason": "stop"
-  }],
-  "usage": { "prompt_tokens": null, "completion_tokens": null, "total_tokens": null }
-}
-```
-
-### 8b — `/v1/models`
-
-| Task | Status | Files |
-|---|---|---|
-| `GET /v1/models` — OpenAI model list format | Pending | `src/v1/models.js`, `src/server.js` |
-| Unit tests | Pending | `test/v1/models.test.js` |
-
-### 8c — Model Aliases
-
-| Task | Status | Files |
-|---|---|---|
-| `SHELLM_ALIASES` env var (JSON) | Pending | `src/router.js` |
-| Alias resolution before provider lookup | Pending | `src/router.js` |
-| Aliases visible in `/v1/models` and `/providers` | Pending | `src/v1/models.js` |
-| Unit tests | Pending | `test/router.test.js` |
-
-```bash
-SHELLM_ALIASES='{"gpt-4":"claude","gpt-3.5-turbo":"cerebras","fast":"cerebras-8b","smart":"claude-opus"}'
-```
+**Removed:** `POST /completions`, `GET /providers`, `src/middleware/validate.js`. Kept: `GET /health`.
 
 ---
 
