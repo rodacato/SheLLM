@@ -47,7 +47,7 @@ describe('logging middleware', () => {
   }
 
   it('calls next() immediately', () => {
-    const { next } = fireRequest('/completions', 200);
+    const { next } = fireRequest('/v1/chat/completions', 200);
     assert.strictEqual(next.mock.callCount(), 1);
   });
 
@@ -64,7 +64,7 @@ describe('logging middleware', () => {
   });
 
   it('logs normal 2xx requests at info level', () => {
-    fireRequest('/completions', 200);
+    fireRequest('/v1/chat/completions', 200);
 
     assert.strictEqual(mockInfo.mock.callCount(), 1);
     assert.strictEqual(mockDebug.mock.callCount(), 0);
@@ -78,19 +78,19 @@ describe('logging middleware', () => {
   });
 
   it('logs 4xx responses at warn level', () => {
-    fireRequest('/completions', 400);
+    fireRequest('/v1/chat/completions', 400);
     assert.strictEqual(mockWarn.mock.callCount(), 1);
     assert.strictEqual(mockWarn.mock.calls[0].arguments[0].status, 400);
   });
 
   it('logs 5xx responses at error level', () => {
-    fireRequest('/completions', 503);
+    fireRequest('/v1/chat/completions', 503);
     assert.strictEqual(mockError.mock.callCount(), 1);
     assert.strictEqual(mockError.mock.calls[0].arguments[0].status, 503);
   });
 
   it('includes client name when present', () => {
-    const req = { method: 'POST', url: '/completions', requestId: 'req-2', clientName: 'myapp' };
+    const req = { method: 'POST', url: '/v1/chat/completions', requestId: 'req-2', clientName: 'myapp' };
     const res = new EventEmitter();
     res.statusCode = 200;
     res.locals = { provider: null, model: null };

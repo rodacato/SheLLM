@@ -1,6 +1,6 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
-const { resolveProvider, listProviders, queue } = require('../src/router');
+const { resolveProvider, listProviders, queue, getAliases } = require('../src/router');
 
 describe('router', () => {
   it('resolveProvider resolves direct names and model aliases', () => {
@@ -36,5 +36,11 @@ describe('router', () => {
     assert.strictEqual(typeof stats.max_concurrent, 'number');
     assert.strictEqual(stats.pending, 0);
     assert.strictEqual(stats.active, 0);
+  });
+
+  it('getAliases returns an object', () => {
+    const aliases = getAliases();
+    assert.strictEqual(typeof aliases, 'object');
+    assert.ok(aliases !== null);
   });
 });

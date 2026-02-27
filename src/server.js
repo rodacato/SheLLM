@@ -2,14 +2,13 @@ require('dotenv').config({ quiet: true });
 
 const express = require('express');
 const logger = require('./lib/logger');
-const { route, listProviders, queue } = require('./router');
 const { getHealthStatus } = require('./health');
-const { validateCompletionRequest } = require('./middleware/validate');
-const { sanitizeInput } = require('./middleware/sanitize');
+const { chatCompletionsHandler } = require('./v1/chat-completions');
+const { modelsHandler } = require('./v1/models');
 const { requestLogger } = require('./middleware/logging');
 const { requestId } = require('./middleware/request-id');
 const { createAuthMiddleware } = require('./middleware/auth');
-const { fromCatchable, sendError, invalidRequest } = require('./errors');
+const { sendError, invalidRequest } = require('./errors');
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '6000', 10);
@@ -38,33 +37,11 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// --- GET /providers (authenticated) ---
-app.get('/providers', auth, (_req, res) => {
-  res.json({ providers: listProviders() });
-});
+// --- GET /v1/models (authenticated) ---
+app.get('/v1/models', auth, modelsHandler);
 
-// --- POST /completions (authenticated) ---
-app.post('/completions', auth, sanitizeInput, validateCompletionRequest, async (req, res) => {
-  const { model, prompt, system, max_tokens } = req.body;
-  const startTime = Date.now();
-
-  // Expose provider/model in res.locals for logging middleware
-  res.locals.provider = null;
-  res.locals.model = model;
-
-  try {
-    const result = await route({ model, prompt, system, max_tokens, request_id: req.requestId });
-    res.locals.provider = result.provider;
-    // Queue depth headers for consumer-side backpressure
-    res.set('X-Queue-Depth', String(queue.stats.pending));
-    res.set('X-Queue-Active', String(queue.stats.active));
-    res.json(result);
-  } catch (err) {
-    const errObj = fromCatchable(err, model);
-    errObj.duration_ms = Date.now() - startTime;
-    sendError(res, errObj, req.requestId);
-  }
-});
+// --- POST /v1/chat/completions (authenticated) ---
+app.post('/v1/chat/completions', auth, chatCompletionsHandler);
 
 // Graceful shutdown: drain in-flight requests before exiting
 function gracefulShutdown(server, signal) {

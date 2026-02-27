@@ -15,6 +15,19 @@ for (const [name, provider] of Object.entries(providers)) {
   }
 }
 
+// User-defined aliases via SHELLM_ALIASES env var (JSON { alias: target })
+const userAliases = (() => {
+  try { return JSON.parse(process.env.SHELLM_ALIASES || '{}'); } catch { return {}; }
+})();
+for (const [alias, target] of Object.entries(userAliases)) {
+  const providerName = providers[target] ? target : modelToProvider[target];
+  if (providerName) modelToProvider[alias] = providerName;
+}
+
+function getAliases() {
+  return { ...userAliases };
+}
+
 const MAX_CONCURRENT = parseInt(process.env.MAX_CONCURRENT || '2', 10);
 const MAX_QUEUE_DEPTH = parseInt(process.env.MAX_QUEUE_DEPTH || '10', 10);
 
@@ -110,4 +123,4 @@ function listProviders() {
   }));
 }
 
-module.exports = { route, queue, listProviders, resolveProvider, providers };
+module.exports = { route, queue, listProviders, resolveProvider, providers, getAliases };

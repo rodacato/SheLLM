@@ -50,14 +50,26 @@ describe('server integration', () => {
     assert.strictEqual(typeof res.body.uptime_seconds, 'number');
   });
 
-  it('POST /completions with missing model returns error contract', async () => {
+  it('POST /v1/chat/completions with missing model returns OpenAI error', async () => {
     const res = await request(app)
-      .post('/completions')
-      .send({ prompt: 'hello' });
+      .post('/v1/chat/completions')
+      .send({ messages: [{ role: 'user', content: 'hello' }] });
 
     assert.strictEqual(res.status, 400);
-    assert.strictEqual(res.body.error, 'invalid_request');
-    assert.ok(res.body.message);
-    assert.ok('request_id' in res.body);
+    assert.strictEqual(res.body.error.type, 'invalid_request_error');
+    assert.ok(res.body.error.message);
+  });
+
+  it('legacy /completions returns 404', async () => {
+    const res = await request(app)
+      .post('/completions')
+      .send({ model: 'claude', prompt: 'hello' });
+
+    assert.strictEqual(res.status, 404);
+  });
+
+  it('legacy /providers returns 404', async () => {
+    const res = await request(app).get('/providers');
+    assert.strictEqual(res.status, 404);
   });
 });

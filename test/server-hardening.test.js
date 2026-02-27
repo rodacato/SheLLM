@@ -38,7 +38,7 @@ describe('server hardening (Phase 7)', () => {
 
   it('rejects POST without Content-Type application/json', async () => {
     const res = await request(app)
-      .post('/completions')
+      .post('/v1/chat/completions')
       .set('Content-Type', 'text/plain')
       .send('hello');
 
@@ -48,77 +48,42 @@ describe('server hardening (Phase 7)', () => {
   });
 
   it('rejects body exceeding 256kb limit', async () => {
-    const largeBody = { model: 'claude', prompt: 'x'.repeat(300000) };
-
     const res = await request(app)
-      .post('/completions')
-      .send(largeBody);
+      .post('/v1/chat/completions')
+      .send({ model: 'claude', messages: [{ role: 'user', content: 'x'.repeat(300000) }] });
 
     assert.strictEqual(res.status, 413);
   });
 
   it('successful completion includes X-Queue-Depth and X-Queue-Active headers', async () => {
     const res = await request(app)
-      .post('/completions')
-      .send({ model: 'claude', prompt: 'hello' });
+      .post('/v1/chat/completions')
+      .send({ model: 'claude', messages: [{ role: 'user', content: 'hello' }] });
 
     assert.strictEqual(res.status, 200);
     assert.ok('x-queue-depth' in res.headers);
     assert.ok('x-queue-active' in res.headers);
-    assert.strictEqual(typeof parseInt(res.headers['x-queue-depth']), 'number');
-  });
-
-  it('successful completion includes queued_ms in response', async () => {
-    const res = await request(app)
-      .post('/completions')
-      .send({ model: 'claude', prompt: 'hello' });
-
-    assert.strictEqual(res.status, 200);
-    assert.strictEqual(typeof res.body.queued_ms, 'number');
-    assert.ok(res.body.queued_ms >= 0);
-  });
-
-  it('error response includes duration_ms', async () => {
-    const res = await request(app)
-      .post('/completions')
-      .send({ model: 'cerebras', prompt: 'hello' });
-
-    // cerebras will fail (no real API key), but error should have duration_ms
-    if (res.status >= 400) {
-      assert.ok('request_id' in res.body);
-    }
   });
 
   it('gracefulShutdown export is a function', () => {
     assert.strictEqual(typeof app.gracefulShutdown, 'function');
   });
 
-  it('rejects prompt exceeding 50000 chars via validation middleware', async () => {
+  it('rejects prompt exceeding 50000 chars', async () => {
     const res = await request(app)
-      .post('/completions')
-      .send({ model: 'claude', prompt: 'a'.repeat(50001) });
+      .post('/v1/chat/completions')
+      .send({ model: 'claude', messages: [{ role: 'user', content: 'a'.repeat(50001) }] });
 
     assert.strictEqual(res.status, 400);
-    assert.match(res.body.message, /exceeds maximum length/);
+    assert.match(res.body.error.message, /exceeds maximum length/);
   });
 
-  it('rejects invalid max_tokens via validation middleware', async () => {
+  it('rejects invalid max_tokens', async () => {
     const res = await request(app)
-      .post('/completions')
-      .send({ model: 'claude', prompt: 'hello', max_tokens: -5 });
+      .post('/v1/chat/completions')
+      .send({ model: 'claude', messages: [{ role: 'user', content: 'hello' }], max_tokens: -5 });
 
     assert.strictEqual(res.status, 400);
-    assert.match(res.body.message, /max_tokens/);
-  });
-
-  it('sanitizes non-string system to empty string (sanitize runs before validate)', async () => {
-    // sanitizeInput converts non-string system to '' before validation
-    const res = await request(app)
-      .post('/completions')
-      .set('Content-Type', 'application/json')
-      .send(JSON.stringify({ model: 'claude', prompt: 'hello', system: 123 }));
-
-    // Should succeed because sanitizer converts 123 → ''
-    assert.strictEqual(res.status, 200);
+    assert.match(res.body.error.message, /max_tokens/);
   });
 });

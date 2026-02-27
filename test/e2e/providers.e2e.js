@@ -42,120 +42,104 @@ describe('e2e: health', () => {
   });
 });
 
-describe('e2e: providers', () => {
-  it('GET /providers lists all available providers', async () => {
-    const res = await request(app).get('/providers');
+describe('e2e: models', () => {
+  it('GET /v1/models lists all available models', async () => {
+    const res = await request(app).get('/v1/models');
     assert.strictEqual(res.status, 200);
-    assert.ok(Array.isArray(res.body.providers));
-    assert.ok(res.body.providers.length >= 4);
+    assert.strictEqual(res.body.object, 'list');
+    assert.ok(Array.isArray(res.body.data));
+    assert.ok(res.body.data.length >= 4);
+    for (const m of res.body.data) {
+      assert.strictEqual(m.object, 'model');
+      assert.strictEqual(m.owned_by, 'shellm');
+    }
   });
 });
 
+function chatBody(model, prompt, extra = {}) {
+  return { model, messages: [{ role: 'user', content: prompt }], ...extra };
+}
+
 describe('e2e: claude', { skip: !authenticated.claude && 'claude not authenticated' }, () => {
-  it('POST /completions with claude returns content', async () => {
+  it('POST /v1/chat/completions with claude returns OpenAI shape', async () => {
     const res = await request(app)
-      .post('/completions')
-      .send({
-        model: 'claude',
-        prompt: 'Respond with exactly one word: hello',
-        system: 'Reply in one word only.',
-        request_id: 'e2e-claude-001',
-      })
+      .post('/v1/chat/completions')
+      .send(chatBody('claude', 'Respond with exactly one word: hello', {
+        messages: [
+          { role: 'system', content: 'Reply in one word only.' },
+          { role: 'user', content: 'Respond with exactly one word: hello' },
+        ],
+      }))
       .timeout(120000);
 
     assert.strictEqual(res.status, 200);
-    assert.strictEqual(res.body.provider, 'claude');
-    assert.strictEqual(res.body.request_id, 'e2e-claude-001');
-    assert.strictEqual(typeof res.body.content, 'string');
-    assert.ok(res.body.content.length > 0, 'content should not be empty');
-    assert.strictEqual(typeof res.body.duration_ms, 'number');
-    console.log(`    claude replied: "${res.body.content}" (${res.body.duration_ms}ms)`);
+    assert.strictEqual(res.body.object, 'chat.completion');
+    assert.ok(res.body.choices[0].message.content.length > 0);
+    console.log(`    claude replied: "${res.body.choices[0].message.content}"`);
   });
 });
 
 describe('e2e: gemini', { skip: !authenticated.gemini && 'gemini not authenticated' }, () => {
-  it('POST /completions with gemini returns content', async () => {
+  it('POST /v1/chat/completions with gemini returns content', async () => {
     const res = await request(app)
-      .post('/completions')
-      .send({
-        model: 'gemini',
-        prompt: 'What is 2+2? Reply with just the number.',
-        request_id: 'e2e-gemini-001',
-      })
+      .post('/v1/chat/completions')
+      .send(chatBody('gemini', 'What is 2+2? Reply with just the number.'))
       .timeout(120000);
 
     assert.strictEqual(res.status, 200);
-    assert.strictEqual(res.body.provider, 'gemini');
-    assert.strictEqual(res.body.request_id, 'e2e-gemini-001');
-    assert.strictEqual(typeof res.body.content, 'string');
-    assert.ok(res.body.content.length > 0, 'content should not be empty');
-    assert.strictEqual(typeof res.body.duration_ms, 'number');
-    console.log(`    gemini replied: "${res.body.content.slice(0, 100)}" (${res.body.duration_ms}ms)`);
+    assert.strictEqual(res.body.object, 'chat.completion');
+    assert.ok(res.body.choices[0].message.content.length > 0);
+    console.log(`    gemini replied: "${res.body.choices[0].message.content.slice(0, 100)}"`);
   });
 });
 
 describe('e2e: codex', { skip: !authenticated.codex && 'codex not authenticated' }, () => {
-  it('POST /completions with codex returns content', async () => {
+  it('POST /v1/chat/completions with codex returns content', async () => {
     const res = await request(app)
-      .post('/completions')
-      .send({
-        model: 'codex',
-        prompt: 'Say hello in Spanish. One word only.',
-        request_id: 'e2e-codex-001',
-      })
+      .post('/v1/chat/completions')
+      .send(chatBody('codex', 'Say hello in Spanish. One word only.'))
       .timeout(120000);
 
     assert.strictEqual(res.status, 200);
-    assert.strictEqual(res.body.provider, 'codex');
-    assert.strictEqual(res.body.request_id, 'e2e-codex-001');
-    assert.strictEqual(typeof res.body.content, 'string');
-    assert.ok(res.body.content.length > 0, 'content should not be empty');
-    assert.strictEqual(typeof res.body.duration_ms, 'number');
-    console.log(`    codex replied: "${res.body.content.slice(0, 100)}" (${res.body.duration_ms}ms)`);
+    assert.strictEqual(res.body.object, 'chat.completion');
+    assert.ok(res.body.choices[0].message.content.length > 0);
+    console.log(`    codex replied: "${res.body.choices[0].message.content.slice(0, 100)}"`);
   });
 });
 
 describe('e2e: cerebras', { skip: !authenticated.cerebras && 'cerebras not authenticated' }, () => {
-  it('POST /completions with cerebras returns content', async () => {
+  it('POST /v1/chat/completions with cerebras returns content and usage', async () => {
     const res = await request(app)
-      .post('/completions')
-      .send({
-        model: 'cerebras',
-        prompt: 'What is 1+1? Reply with just the number.',
-        request_id: 'e2e-cerebras-001',
-      })
+      .post('/v1/chat/completions')
+      .send(chatBody('cerebras', 'What is 1+1? Reply with just the number.'))
       .timeout(30000);
 
     assert.strictEqual(res.status, 200);
-    assert.strictEqual(res.body.provider, 'cerebras');
-    assert.strictEqual(res.body.request_id, 'e2e-cerebras-001');
-    assert.strictEqual(typeof res.body.content, 'string');
-    assert.ok(res.body.content.length > 0, 'content should not be empty');
+    assert.strictEqual(res.body.object, 'chat.completion');
+    assert.ok(res.body.choices[0].message.content.length > 0);
     assert.ok(res.body.usage, 'cerebras should return usage');
-    assert.strictEqual(typeof res.body.duration_ms, 'number');
-    console.log(`    cerebras replied: "${res.body.content.slice(0, 100)}" (${res.body.duration_ms}ms)`);
+    console.log(`    cerebras replied: "${res.body.choices[0].message.content.slice(0, 100)}"`);
   });
 });
 
 describe('e2e: error contract', () => {
-  it('unknown model returns 400 with correct shape', async () => {
+  it('unknown model returns 400 with OpenAI error shape', async () => {
     const res = await request(app)
-      .post('/completions')
-      .send({ model: 'gpt-4', prompt: 'test', request_id: 'e2e-err-001' });
+      .post('/v1/chat/completions')
+      .send({ model: 'gpt-4', messages: [{ role: 'user', content: 'test' }] });
 
     assert.strictEqual(res.status, 400);
-    assert.strictEqual(res.body.error, 'invalid_request');
-    assert.ok(res.body.message);
-    assert.strictEqual(res.body.request_id, 'e2e-err-001');
+    assert.strictEqual(res.body.error.type, 'invalid_request_error');
+    assert.ok(res.body.error.message);
   });
 
-  it('missing prompt returns 400', async () => {
+  it('missing messages returns 400', async () => {
     const res = await request(app)
-      .post('/completions')
+      .post('/v1/chat/completions')
       .send({ model: 'claude' });
 
     assert.strictEqual(res.status, 400);
-    assert.strictEqual(res.body.error, 'invalid_request');
-    assert.match(res.body.message, /prompt/);
+    assert.strictEqual(res.body.error.type, 'invalid_request_error');
+    assert.match(res.body.error.message, /messages/);
   });
 });

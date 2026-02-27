@@ -49,6 +49,21 @@ function sendError(res, err, requestId) {
   res.status(err.status || 500).json(body);
 }
 
+// OpenAI-compatible error format for /v1/* endpoints
+const CODE_TO_TYPE = {
+  invalid_request: 'invalid_request_error',
+  auth_required: 'authentication_error',
+  rate_limited: 'rate_limit_error',
+};
+
+function sendOpenAIError(res, err) {
+  const type = CODE_TO_TYPE[err.code] || 'server_error';
+  if (err.retry_after) res.set('Retry-After', String(err.retry_after));
+  res.status(err.status || 500).json({
+    error: { message: err.message || 'Internal server error', type, code: err.code || 'internal_error', param: null },
+  });
+}
+
 module.exports = {
   invalidRequest,
   authRequired,
@@ -58,4 +73,5 @@ module.exports = {
   timeout,
   fromCatchable,
   sendError,
+  sendOpenAIError,
 };
