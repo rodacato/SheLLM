@@ -22,6 +22,7 @@ SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterpris
 | **8 — OpenAI Proxy** | `/v1/chat/completions`, `/v1/models`, model aliases | Replaced legacy `/completions` + `/providers`, 93 tests |
 | **9 — SQLite + Key Mgmt** | SQLite persistence, admin key CRUD, request logging | `src/db/`, `src/admin/keys.js`, `src/middleware/admin-auth.js`, 138 tests |
 | **10 — Admin Dashboard** | Browser dashboard, logs/stats endpoints, SPA | `src/admin/public/`, `src/admin/logs.js`, `src/admin/stats.js`, 156 tests |
+| **11a — Anthropic Messages** | `POST /v1/messages`, Anthropic error format | `src/v1/messages.js`, `src/errors.js`, 180 tests |
 
 **Key architectural decisions (phases 1–6, 9):**
 - CommonJS, three runtime dependencies (Express + dotenv + better-sqlite3), functional provider modules
@@ -84,31 +85,19 @@ Browser-based admin dashboard at `/admin/dashboard/`. Static HTML SPA served by 
 
 ---
 
-## Phase 11 — Additional Endpoints `PENDING`
+## Phase 11 — Additional Endpoints `IN PROGRESS`
 
-Expand API compatibility with Anthropic Messages format and embeddings.
+### 11a — `/v1/messages` (Anthropic Format) `COMPLETED`
 
-### 11a — `/v1/messages` (Anthropic Format)
+Drop-in replacement for the Anthropic Messages API. Claude Code, the Anthropic SDK, and any tool targeting the Anthropic format can route through SheLLM by setting the base URL.
 
-High value because Claude Code and the Anthropic SDK speak this format natively. Pure translation layer — no new provider logic.
+**Endpoint:** `POST /v1/messages` — accepts Anthropic request shape (`model`, `max_tokens` required, `messages[]` with string or content block arrays, top-level `system`), returns Anthropic response shape (`content[]`, `stop_reason: "end_turn"`, `usage`). Anthropic error format (`{ type: "error", error: { type, message } }`).
 
-| Task | Status | Files |
-|---|---|---|
-| `POST /v1/messages` endpoint | Pending | `src/v1/messages.js` |
-| Translate Anthropic request → internal format | Pending | `src/v1/messages.js` |
-| Return Anthropic response shape (`content[]`, `stop_reason`, `usage`) | Pending | `src/v1/messages.js` |
-| Unit tests | Pending | `test/v1/messages.test.js` |
+**Files:** `src/v1/messages.js`, `src/errors.js` (`sendAnthropicError`), `test/v1/messages.test.js` (24 tests). 180 total tests passing.
 
-### 11b — `/v1/embeddings`
+### 11b — `/v1/embeddings` `PENDING`
 
 Requires direct API access — CLIs don't expose embedding functionality. Needs at least one embedding-capable API provider.
-
-| Task | Status | Files |
-|---|---|---|
-| Embedding provider interface | Pending | `src/providers/embeddings/` |
-| OpenAI embeddings provider (API key) | Pending | `src/providers/embeddings/openai.js` |
-| `POST /v1/embeddings` endpoint | Pending | `src/v1/embeddings.js` |
-| Unit tests | Pending | `test/v1/embeddings.test.js` |
 
 **Note:** This is the first feature that cannot be served by CLI backends. It requires a direct API key (OpenAI, Cohere, or Vertex AI). Lower priority unless a consumer specifically needs it.
 
@@ -151,4 +140,5 @@ Requires direct API access — CLIs don't expose embedding functionality. Needs 
 | Dashboard | Static HTML + vanilla JS (Phase 10) | No React/Vue/build step; Express serves static files; no frontend dependencies |
 | Admin auth | Single admin via `SHELLM_ADMIN_PASSWORD` env var | Simple, no DB user table needed; one admin is sufficient for self-hosted |
 | OpenAI compatibility | `/v1/chat/completions` + `/v1/models` (Phase 8) | De facto standard; enables any OpenAI SDK client to use SheLLM |
+| Anthropic compatibility | `/v1/messages` (Phase 11a) | Enables Claude Code and Anthropic SDK to use SheLLM as base URL |
 | License | MIT | Open source, permissive, standard for Node.js ecosystem |
