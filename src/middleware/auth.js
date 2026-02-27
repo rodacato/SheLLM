@@ -149,4 +149,4 @@ function createAuthMiddleware() {
   };
 }
 
-module.exports = { createAuthMiddleware, loadClients };
+module.exports = { createAuthMiddleware };

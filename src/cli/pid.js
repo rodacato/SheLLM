@@ -29,4 +29,4 @@ function removePid() {
   try { fs.unlinkSync(PID_FILE); } catch { /* already gone */ }
 }
 
-module.exports = { isRunning, readPid, writePid, removePid };
+module.exports = { readPid, writePid, removePid };

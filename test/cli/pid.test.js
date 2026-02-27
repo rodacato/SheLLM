@@ -31,14 +31,6 @@ describe('cli pid', () => {
     try { fs.unlinkSync(TMP_PID); } catch { /* ok */ }
   });
 
-  it('isRunning returns true for current process', () => {
-    assert.strictEqual(pid.isRunning(process.pid), true);
-  });
-
-  it('isRunning returns false for non-existent PID', () => {
-    assert.strictEqual(pid.isRunning(999999), false);
-  });
-
   it('writePid and readPid round-trip correctly', () => {
     pid.writePid(process.pid);
     assert.strictEqual(pid.readPid(), process.pid);
