@@ -16,8 +16,7 @@
   "dependencies": {
     "better-sqlite3": "^12.6.2",
     "dotenv": "^17.3.1",
-    "express": "^5.1.0",
-    "sharp": "^0.34.5"
+    "express": "^5.1.0"
   },
   "devDependencies": {
     "supertest": "^7.1.0"
