@@ -22,6 +22,7 @@ info:
     - **Admin brute-force**: 5 failed attempts per IP triggers a 5-minute lockout
   license:
     name: MIT
+    identifier: MIT
 
 servers:
   - url: http://localhost:6100
@@ -504,6 +505,7 @@ paths:
   # --- Health ---
   /health:
     get:
+      operationId: getHealth
       tags: [Health]
       summary: Service health check
       description: Returns provider status, queue depth, and uptime. No authentication required.
@@ -515,10 +517,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   # --- Models ---
   /v1/models:
     get:
+      operationId: listModels
       tags: [Models]
       summary: List available models
       description: Returns all configured providers and model aliases.
@@ -537,6 +546,7 @@ paths:
   # --- Chat Completions ---
   /v1/chat/completions:
     post:
+      operationId: createChatCompletion
       tags: [Chat Completions]
       summary: Create a chat completion
       description: |
@@ -592,6 +602,7 @@ paths:
   # --- Anthropic Messages ---
   /v1/messages:
     post:
+      operationId: createMessage
       tags: [Messages]
       summary: Create a message
       description: |
@@ -648,6 +659,7 @@ paths:
   # --- Admin Keys ---
   /admin/keys:
     get:
+      operationId: listKeys
       tags: [Admin — Keys]
       summary: List all API keys
       security:
@@ -670,6 +682,7 @@ paths:
           $ref: '#/components/responses/RateLimited'
 
     post:
+      operationId: createKey
       tags: [Admin — Keys]
       summary: Create a new API key
       description: |
@@ -706,6 +719,7 @@ paths:
           type: integer
 
     patch:
+      operationId: updateKey
       tags: [Admin — Keys]
       summary: Update an API key
       security:
@@ -736,6 +750,7 @@ paths:
           $ref: '#/components/responses/RateLimited'
 
     delete:
+      operationId: deleteKey
       tags: [Admin — Keys]
       summary: Delete an API key
       security:
@@ -769,6 +784,7 @@ paths:
           type: integer
 
     post:
+      operationId: rotateKey
       tags: [Admin — Keys]
       summary: Rotate an API key
       description: Generates a new key value for an existing key. The old key stops working immediately.
@@ -793,6 +809,7 @@ paths:
   # --- Admin Logs ---
   /admin/logs:
     get:
+      operationId: listLogs
       tags: [Admin — Logs]
       summary: List request logs
       security:
@@ -852,6 +869,7 @@ paths:
   # --- Admin Stats ---
   /admin/stats:
     get:
+      operationId: getStats
       tags: [Admin — Stats]
       summary: Aggregated usage statistics
       security:
@@ -878,6 +896,7 @@ paths:
   # --- Admin Models ---
   /admin/models:
     get:
+      operationId: listModelsAdmin
       tags: [Models]
       summary: List models (admin)
       description: Same as `/v1/models` but uses Basic auth (for the admin dashboard).

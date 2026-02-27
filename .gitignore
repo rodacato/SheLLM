@@ -45,6 +45,9 @@ Thumbs.db
 *.sublime-project
 *.sublime-workspace
 
+# Docs build output
+docs/*.html
+
 # Build & artifacts
 *.tgz
 *.tar.gz
