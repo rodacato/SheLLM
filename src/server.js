@@ -8,7 +8,16 @@ const { modelsHandler } = require('./v1/models');
 const { requestLogger } = require('./middleware/logging');
 const { requestId } = require('./middleware/request-id');
 const { createAuthMiddleware } = require('./middleware/auth');
+const { createAdminAuth } = require('./middleware/admin-auth');
+const adminKeysRouter = require('./admin/keys');
+const adminLogsRouter = require('./admin/logs');
+const adminStatsRouter = require('./admin/stats');
+const { initDb } = require('./db');
 const { sendError, invalidRequest } = require('./errors');
+const path = require('node:path');
+
+// Initialize SQLite (skip if already initialized, e.g. in tests)
+initDb();
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '6000', 10);
@@ -19,9 +28,9 @@ app.use(express.json({ limit: '256kb' }));
 app.use(requestId);
 app.use(requestLogger);
 
-// Validate Content-Type on POST requests
+// Validate Content-Type on POST/PATCH requests with body
 app.use((req, res, next) => {
-  if (req.method === 'POST' && !req.is('json')) {
+  if ((req.method === 'POST' || req.method === 'PATCH') && req.headers['content-length'] > 0 && !req.is('json')) {
     return sendError(res, invalidRequest('Content-Type must be application/json'), req.requestId);
   }
   next();
@@ -42,6 +51,18 @@ app.get('/v1/models', auth, modelsHandler);
 
 // --- POST /v1/chat/completions (authenticated) ---
 app.post('/v1/chat/completions', auth, chatCompletionsHandler);
+
+// --- Admin routes (Basic auth via SHELLM_ADMIN_PASSWORD) ---
+const adminAuth = createAdminAuth();
+app.use('/admin', adminAuth, adminKeysRouter);
+app.use('/admin', adminAuth, adminLogsRouter);
+app.use('/admin', adminAuth, adminStatsRouter);
+
+// Admin models endpoint (avoids needing Bearer auth for dashboard)
+app.get('/admin/models', adminAuth, modelsHandler);
+
+// Static dashboard files
+app.use('/admin/dashboard', adminAuth, express.static(path.join(__dirname, 'admin/public')));
 
 // Graceful shutdown: drain in-flight requests before exiting
 function gracefulShutdown(server, signal) {
