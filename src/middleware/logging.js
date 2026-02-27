@@ -16,6 +16,8 @@ function requestLogger(req, res, next) {
       duration_ms: Date.now() - start,
       request_id: req.requestId || null,
       client: req.clientName || null,
+      provider: res.locals.provider || null,
+      model: res.locals.model || null,
     };
 
     if (res.statusCode >= 500) {

@@ -46,10 +46,14 @@ function startForeground(values) {
 
   const port = parseInt(process.env.PORT || '6000', 10);
   const app = require(SERVER_SCRIPT);
+  const { gracefulShutdown } = require(SERVER_SCRIPT);
 
-  app.listen(port, () => {
+  const server = app.listen(port, () => {
     console.log(`SheLLM running on http://127.0.0.1:${port} (Ctrl+C to stop)`);
   });
+
+  process.on('SIGTERM', () => gracefulShutdown(server, 'SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown(server, 'SIGINT'));
 }
 
 function startDaemon(values) {

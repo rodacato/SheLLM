@@ -44,6 +44,7 @@ function sendError(res, err, requestId) {
   };
   if (err.retry_after) {
     body.retry_after = err.retry_after;
+    res.set('Retry-After', String(err.retry_after));
   }
   res.status(err.status || 500).json(body);
 }

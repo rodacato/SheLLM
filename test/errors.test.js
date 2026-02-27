@@ -12,9 +12,10 @@ const {
 } = require('../src/errors');
 
 function mockRes() {
-  const res = { _status: null, _body: null };
+  const res = { _status: null, _body: null, _headers: {} };
   res.status = (code) => { res._status = code; return res; };
   res.json = (body) => { res._body = body; return res; };
+  res.set = (key, val) => { res._headers[key] = val; return res; };
   return res;
 }
 
@@ -94,5 +95,6 @@ describe('errors', () => {
     assert.strictEqual(res._status, 429);
     assert.strictEqual(res._body.retry_after, 15);
     assert.strictEqual(res._body.request_id, 'req-456');
+    assert.strictEqual(res._headers['Retry-After'], '15');
   });
 });

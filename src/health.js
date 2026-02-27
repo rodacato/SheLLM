@@ -17,7 +17,7 @@ async function checkCLI(name, command, testArgs, { timeout = 10000 } = {}) {
     if (stderr.includes('not authenticated') || stderr.includes('login') || stderr.includes('auth')) {
       return { installed: true, authenticated: false };
     }
-    return { installed: true, authenticated: false, error: stderr.slice(0, 200) };
+    return { installed: true, authenticated: false, error: stderr.replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]').slice(0, 200) };
   }
 }
 
@@ -62,4 +62,11 @@ async function getHealthStatus() {
   };
 }
 
-module.exports = { getHealthStatus };
+function getCachedProviderStatus(providerName) {
+  if (cache.data && Date.now() < cache.expires) {
+    return cache.data.providers[providerName] || null;
+  }
+  return null;
+}
+
+module.exports = { getHealthStatus, getCachedProviderStatus };

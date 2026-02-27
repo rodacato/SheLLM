@@ -39,6 +39,7 @@ describe('logging middleware', () => {
     const req = { method: 'GET', url, requestId: 'req-1', clientName: null };
     const res = new EventEmitter();
     res.statusCode = statusCode;
+    res.locals = { provider: null, model: null };
     const next = mock.fn();
     requestLogger(req, res, next);
     res.emit('finish');
@@ -92,6 +93,7 @@ describe('logging middleware', () => {
     const req = { method: 'POST', url: '/completions', requestId: 'req-2', clientName: 'myapp' };
     const res = new EventEmitter();
     res.statusCode = 200;
+    res.locals = { provider: null, model: null };
     requestLogger(req, res, mock.fn());
     res.emit('finish');
 
