@@ -37,6 +37,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// --- Public landing page ---
+app.use('/', express.static(path.join(__dirname, 'public')));
+
+// --- API docs (Redocly build output) ---
+app.use('/docs', express.static(path.join(__dirname, '..', 'docs')));
+
 // --- GET /health (unauthenticated — Docker healthcheck) ---
 app.get('/health', async (req, res) => {
   try {
