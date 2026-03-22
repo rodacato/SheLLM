@@ -1,12 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 72" role="img" aria-label="SheLLM">
-  <!-- Wordmark: >_ SheLLM — for dark backgrounds (transparent bg) -->
-  <!-- Option A: text elements, Space Grotesk via @import -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 64" role="img" aria-label="SheLLM">
   <defs>
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&amp;display=swap');
-    </style>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&amp;display=swap');</style>
   </defs>
-  <text x="4" y="54" font-size="52" font-weight="700" xml:space="preserve">
-    <tspan font-family="ui-monospace,'Cascadia Code','Fira Code',monospace" fill="#FFFFFF">&gt;_ </tspan><tspan font-family="'Space Grotesk',system-ui,sans-serif" letter-spacing="-1" fill="#FFFFFF">She</tspan><tspan font-family="'Space Grotesk',system-ui,sans-serif" letter-spacing="-1" fill="#03E3FF">LL</tspan><tspan font-family="'Space Grotesk',system-ui,sans-serif" letter-spacing="-1" fill="#FFFFFF">M</tspan>
-  </text>
+  <text x="2" y="48" font-size="46" font-weight="700" xml:space="preserve"><tspan font-family="ui-monospace,'Cascadia Code','Fira Code',monospace" fill="#FFFFFF">&gt;_ </tspan><tspan font-family="'Space Grotesk',system-ui,sans-serif" letter-spacing="-1" fill="#FFFFFF">She</tspan><tspan font-family="'Space Grotesk',system-ui,sans-serif" letter-spacing="-1" fill="#03E3FF">LL</tspan><tspan font-family="'Space Grotesk',system-ui,sans-serif" letter-spacing="-1" fill="#FFFFFF">M</tspan></text>
 </svg>

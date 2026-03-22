@@ -41,30 +41,29 @@
       padding: 2rem;
     }
 
-    .wordmark {
+    .logo {
       display: flex;
-      align-items: center;
+      align-items: baseline;
       justify-content: center;
-      gap: 0.5rem;
+      gap: 0.4rem;
       margin-bottom: 1rem;
     }
-
     .prompt {
-      font-family: 'Space Grotesk', system-ui, sans-serif;
+      font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
       font-size: 2.5rem;
-      font-weight: 900;
-      color: var(--primary-container);
+      font-weight: 700;
+      color: #FFFFFF;
       line-height: 1;
     }
-
-    h1 {
+    .wordmark {
       font-family: 'Space Grotesk', system-ui, sans-serif;
       font-size: 2.5rem;
-      font-weight: 900;
-      color: #fff;
+      font-weight: 700;
+      color: #FFFFFF;
       letter-spacing: -0.02em;
       line-height: 1;
     }
+    .accent { color: #03E3FF; }
 
     .tagline {
       font-size: 0.9375rem;
@@ -132,9 +131,9 @@
 </head>
 <body>
   <div class="container">
-    <div class="wordmark">
+    <div class="logo" aria-label="SheLLM">
       <span class="prompt">&gt;_</span>
-      <h1>SheLLM</h1>
+      <span class="wordmark">She<span class="accent">LL</span>M</span>
     </div>
     <p class="tagline">Your LLM services — unified as a REST API</p>
 
