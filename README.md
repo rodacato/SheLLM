@@ -42,10 +42,9 @@ Most LLM gateways assume you're paying per-token via API. SheLLM's primary use c
 ## Quick Start
 
 ```bash
-git clone git@github.com:rodacato/SheLLM.git && cd shellm
-npm install
-cp .env.example .env
-npm link
+git clone git@github.com:rodacato/SheLLM.git && cd SheLLM
+bash scripts/setup-dev.sh   # install deps, create .env, link CLI, show auth steps
+npm run check:env            # verify binaries, config, and node_modules
 shellm start
 ```
 
