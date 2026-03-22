@@ -53,36 +53,31 @@
 <body x-data="app()" x-init="init()" class="bg-surface text-on-surface min-h-screen flex font-body">
 
   <!-- Sidebar -->
-  <aside class="w-[224px] bg-[#1a1e21] min-h-screen flex flex-col shrink-0 fixed left-0 top-0 h-full z-50">
+  <aside class="w-64 bg-[#1a1e21] min-h-screen flex flex-col shrink-0 fixed left-0 top-0 h-full z-50">
     <!-- Brand -->
-    <div class="p-6 flex flex-col gap-1">
-      <div class="flex items-baseline gap-1.5">
-        <span class="font-mono font-bold text-2xl text-white">&gt;_</span>
-        <span class="font-headline font-black text-xl tracking-tighter text-white">She<span class="text-primary-container">LL</span>M</span>
-      </div>
-      <span class="font-headline tracking-widest text-[10px] font-bold text-outline uppercase ml-[30px]">ADMIN</span>
+    <div class="p-6">
+      <h1 class="text-2xl font-black text-primary-container font-headline uppercase tracking-tighter">SheLLM</h1>
+      <p class="font-headline uppercase tracking-[0.15em] text-[0.6875rem] text-outline mt-1">Admin Gateway</p>
     </div>
 
     <!-- Nav -->
-    <nav class="flex-1 mt-2">
+    <nav class="flex-1 mt-4">
       <template x-for="item in nav" :key="item.id">
         <button
           @click="navigate(item.id)"
           :class="page === item.id
-            ? 'text-primary-container bg-surface-container border-l-2 border-primary-container'
-            : 'text-outline hover:text-white hover:bg-surface-container-high border-l-2 border-transparent'"
-          class="w-full flex items-center px-6 py-3 text-left transition-colors duration-100">
-          <span class="material-symbols-outlined mr-3 text-[20px]"
-            x-text="item.id === 'overview' ? 'dashboard' : item.id === 'logs' ? 'terminal' : item.id === 'keys' ? 'vpn_key' : 'model_training'">
-          </span>
-          <span class="font-headline text-sm font-bold uppercase tracking-tight" x-text="item.label"></span>
+            ? 'text-primary-container bg-[#2e3b44] border-l-4 border-primary-container font-bold'
+            : 'text-outline hover:text-white hover:bg-[#2e3b44] border-l-4 border-transparent'"
+          class="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150 font-headline uppercase tracking-[0.15em] text-[0.6875rem]">
+          <span class="material-symbols-outlined text-[20px]" x-text="item.icon"></span>
+          <span x-text="item.label"></span>
         </button>
       </template>
     </nav>
 
     <!-- Uptime -->
-    <div class="p-6 border-t border-outline-variant/30">
-      <div class="flex items-center gap-2 text-outline text-[10px] font-mono tracking-wider">
+    <div class="mt-auto pb-6 border-t border-outline-variant/20 pt-4">
+      <div class="flex items-center gap-2 px-4 py-2 text-outline text-[10px] font-mono tracking-wider">
         <div x-show="health.uptime" class="w-1.5 h-1.5 bg-primary-container animate-pulse"></div>
         <span x-show="health.uptime" x-text="'UP ' + formatUptime(health.uptime).toUpperCase()"></span>
       </div>
@@ -90,23 +85,18 @@
   </aside>
 
   <!-- Main -->
-  <div class="ml-[224px] flex-1 flex flex-col min-h-screen">
-
-    <!-- Top bar -->
-    <header class="flex items-center justify-between h-14 px-8 bg-surface border-b border-surface-container-low shrink-0">
-      <h1 class="font-headline text-sm font-bold text-white uppercase tracking-tight"
-        x-text="nav.find(n => n.id === page)?.label || 'Overview'"></h1>
-      <button @click="fetchHealth()"
-        class="text-outline hover:text-primary-container transition-colors p-2 hover:bg-surface-container active:scale-95 duration-100">
-        <span class="material-symbols-outlined text-[20px]">refresh</span>
-      </button>
-    </header>
+  <div class="ml-64 flex-1 flex flex-col min-h-screen">
 
     <!-- Content -->
     <main class="flex-1 p-8 overflow-auto">
 
       <!-- OVERVIEW PAGE -->
       <div x-show="page === 'overview'" x-data="overviewPage()" x-effect="if (page === 'overview') { if (!stats) fetchStats(); if (providers.length === 0) fetchProviders(); }">
+
+        <header class="mb-10">
+          <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">OVERVIEW<span class="text-primary-container">_</span></h2>
+          <p class="text-on-surface-variant">System health, provider status, and request metrics at a glance.</p>
+        </header>
 
         <!-- Provider Cards -->
         <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase block mb-3">Providers</span>
@@ -219,8 +209,206 @@
         <p x-show="loading && !stats" class="text-outline text-sm font-mono">Loading stats...</p>
       </div>
 
+      <!-- PLAYGROUND PAGE -->
+      <div x-show="page === 'playground'" x-data="playgroundPage()" x-effect="if (page === 'playground' && providers.length === 0) init()">
+
+        <!-- Header -->
+        <header class="mb-10">
+          <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">PLAYGROUND<span class="text-primary-container">_</span></h2>
+          <p class="text-on-surface-variant">Direct model orchestration and response stream debugging.</p>
+        </header>
+
+        <!-- Controls bar -->
+        <section class="bg-surface-container p-6 mb-8 flex flex-wrap items-center gap-8 border-l-4 border-primary-container">
+          <!-- Provider -->
+          <div class="flex flex-col gap-2">
+            <label class="text-[0.6875rem] font-headline uppercase tracking-[0.15em] text-outline">Provider</label>
+            <select x-model="selectedProvider" @change="onProviderChange()"
+              class="bg-surface-container-lowest border border-outline-variant/40 text-on-surface py-2 px-4 focus:ring-1 focus:ring-primary-container outline-none appearance-none min-w-[160px] cursor-pointer text-sm font-body">
+              <template x-for="p in providers" :key="p.name">
+                <option :value="p.name" x-text="p.name" :disabled="!p.authenticated"></option>
+              </template>
+            </select>
+          </div>
+
+          <!-- Model -->
+          <div class="flex flex-col gap-2">
+            <label class="text-[0.6875rem] font-headline uppercase tracking-[0.15em] text-outline">Model</label>
+            <select x-model="selectedModel"
+              class="bg-surface-container-lowest border border-outline-variant/40 text-on-surface py-2 px-4 focus:ring-1 focus:ring-primary-container outline-none appearance-none min-w-[220px] cursor-pointer text-sm font-mono">
+              <template x-for="m in filteredModels" :key="m.id">
+                <option :value="m.id" x-text="m.id"></option>
+              </template>
+            </select>
+          </div>
+
+          <!-- Stream toggle -->
+          <div class="flex flex-col gap-2 ml-auto">
+            <label class="text-[0.6875rem] font-headline uppercase tracking-[0.15em] text-outline text-right">Streaming</label>
+            <div class="flex items-center gap-3">
+              <span class="text-[0.625rem] font-headline font-bold"
+                :class="streaming ? 'text-primary-container' : 'text-outline'"
+                x-text="streaming ? 'ON' : 'OFF'"></span>
+              <button @click="streaming = !streaming"
+                :class="streaming ? 'bg-primary-container' : 'bg-outline-variant'"
+                class="w-12 h-6 relative p-1 flex items-center transition-colors duration-150">
+                <div class="w-4 h-4 bg-surface transition-transform duration-150"
+                  :class="streaming ? 'translate-x-6' : 'translate-x-0'"></div>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- API Key -->
+        <section class="mb-8">
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+              <label class="text-[0.6875rem] font-headline uppercase tracking-[0.15em] text-outline flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">key</span>
+                API Key
+              </label>
+              <span class="text-[0.625rem] text-outline/50 font-mono">REQUIRED</span>
+            </div>
+            <input x-model="apiKey" type="password"
+              class="w-full bg-surface-container-lowest border border-outline-variant/40 py-2 px-4 font-mono text-sm text-on-surface focus:border-primary-container outline-none transition-colors"
+              placeholder="sk-...">
+          </div>
+          <div x-show="needsKey" class="mt-3 flex items-center gap-2 text-[0.75rem] text-error">
+            <span class="material-symbols-outlined text-sm">warning</span>
+            <span>An API key is required. <a href="#keys" @click.prevent="$root.navigate('keys')" class="text-primary-container hover:underline">Create one in API Keys</a></span>
+          </div>
+        </section>
+
+        <!-- Prompt area -->
+        <section class="space-y-6 mb-8">
+          <!-- System prompt -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="text-[0.6875rem] font-headline uppercase tracking-[0.15em] text-outline flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">terminal</span>
+                System Prompt
+              </label>
+              <span class="text-[0.625rem] text-outline/50 font-mono">OPTIONAL</span>
+            </div>
+            <textarea x-model="systemPrompt"
+              class="w-full h-24 bg-surface-container-lowest border border-outline-variant/20 p-4 font-mono text-sm text-[#acffa1] focus:border-primary-container outline-none resize-none transition-colors"
+              placeholder="You are a helpful assistant..."></textarea>
+          </div>
+
+          <!-- User prompt -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <label class="text-[0.6875rem] font-headline uppercase tracking-[0.15em] text-primary-container flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">person</span>
+                User Prompt
+              </label>
+              <span class="text-[0.625rem] text-outline/50 font-mono">MANDATORY</span>
+            </div>
+            <textarea x-model="userPrompt"
+              class="w-full h-48 bg-surface-container-lowest border border-outline-variant/40 p-4 font-mono text-sm text-on-surface focus:border-primary-container outline-none resize-none transition-colors"
+              placeholder="Enter your instruction here..."></textarea>
+          </div>
+        </section>
+
+        <!-- Action buttons -->
+        <section class="flex gap-4 mb-12">
+          <button x-show="!sending" @click="send()" :disabled="!userPrompt.trim() || needsKey"
+            class="bg-primary-container text-on-primary px-10 py-3 font-headline font-bold uppercase tracking-widest flex items-center gap-2 hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+            <span class="material-symbols-outlined text-lg">send</span>
+            Send Request
+          </button>
+          <button x-show="sending" @click="cancelRequest()"
+            class="bg-error text-on-error px-10 py-3 font-headline font-bold uppercase tracking-widest flex items-center gap-2 hover:brightness-110 transition-all">
+            <span class="material-symbols-outlined text-lg">stop</span>
+            Stop
+          </button>
+          <button @click="copyCurl()"
+            class="bg-surface-container-high text-on-surface border border-outline-variant/40 px-6 py-3 font-headline font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-surface-container-highest transition-colors">
+            <span class="material-symbols-outlined text-lg">code</span>
+            Copy as curl
+          </button>
+        </section>
+
+        <!-- Response panel -->
+        <section x-show="response" class="bg-surface-container border border-outline-variant/20">
+          <!-- Response header -->
+          <div class="border-b border-outline-variant/20 p-4 flex items-center justify-between bg-surface-container-high">
+            <div class="flex items-center gap-6">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2" :class="statusDot"></span>
+                <span class="text-[0.6875rem] font-mono font-bold" :class="statusClass"
+                  x-text="response?.status + ' ' + (response?.statusText || '')"></span>
+              </div>
+              <div class="flex items-center gap-4 text-[0.625rem] font-mono text-outline uppercase tracking-wider">
+                <span x-show="elapsedDisplay" class="text-primary-container"><span x-text="elapsedDisplay"></span></span>
+                <span x-show="response?.latency">TTFT: <span class="text-on-surface" x-text="response?.latency + 'ms'"></span></span>
+                <span x-show="response?.requestId">Req ID: <span class="text-on-surface" x-text="response?.requestId"></span></span>
+                <span x-show="response?.tokens">Tokens: <span class="text-on-surface" x-text="response?.tokens"></span></span>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <button @click="copyResponse()" class="p-1 hover:text-primary-container transition-colors text-outline">
+                <span class="material-symbols-outlined text-lg">content_copy</span>
+              </button>
+              <button @click="clearResponse()" class="p-1 hover:text-error transition-colors text-outline">
+                <span class="material-symbols-outlined text-lg">delete</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Response content -->
+          <div class="p-6 font-mono text-sm leading-relaxed terminal-scroll overflow-y-auto max-h-[500px] bg-surface-container-lowest">
+            <!-- Streaming indicator -->
+            <template x-if="streaming && response && !response.error">
+              <div class="flex gap-3 text-outline mb-4">
+                <span class="opacity-50">01</span>
+                <span class="text-primary-container">&gt;_ INITIALIZING STREAM...</span>
+              </div>
+            </template>
+
+            <!-- Error -->
+            <template x-if="response?.error">
+              <div class="text-error">
+                <span class="font-bold">Error:</span> <span x-text="response.error"></span>
+              </div>
+            </template>
+
+            <!-- Content -->
+            <template x-if="response?.content">
+              <div class="flex gap-3">
+                <span class="text-outline opacity-50" x-text="streaming ? '02' : '01'"></span>
+                <pre class="text-on-surface whitespace-pre-wrap break-words flex-1" x-text="response.content"></pre>
+              </div>
+            </template>
+
+            <!-- Streaming cursor -->
+            <template x-if="streamActive">
+              <div class="mt-4 flex items-center">
+                <span class="w-2 h-5 bg-primary-container animate-pulse"></span>
+              </div>
+            </template>
+          </div>
+
+          <!-- Response footer -->
+          <div class="bg-surface-container-lowest border-t border-outline-variant/10 px-4 py-2 flex justify-between items-center">
+            <div class="text-[0.625rem] font-mono text-outline flex gap-4">
+              <span>TYPE: <span x-text="response?.contentType || 'application/json'"></span></span>
+              <span>ENCODING: UTF-8</span>
+            </div>
+            <div class="text-[0.625rem] font-mono" :class="streamActive ? 'text-primary-container' : (sending ? 'text-primary-container/60' : 'text-outline/40')"
+              x-text="streamActive ? 'STREAMING... ' + (elapsedDisplay || '') : (sending ? 'WAITING... ' + (elapsedDisplay || '') : 'IDLE')"></div>
+          </div>
+        </section>
+
+      </div>
+
       <!-- LOGS PAGE -->
       <div x-show="page === 'logs'" x-data="logsPage()" x-effect="if (page === 'logs' && logs.length === 0 && loading) fetchLogs()">
+
+        <header class="mb-10">
+          <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">REQUEST LOGS<span class="text-primary-container">_</span></h2>
+          <p class="text-on-surface-variant">Paginated request history with filtering, status codes, and cost tracking.</p>
+        </header>
 
         <!-- Filters -->
         <div class="flex flex-wrap gap-4 mb-6 items-end">
@@ -244,10 +432,16 @@
             </select>
           </div>
           <div class="text-[11px] font-mono text-outline self-end pb-2" x-text="total + ' total'"></div>
-          <button x-show="total > 0" @click="clearLogs()"
-            class="ml-auto self-end px-4 py-2 text-xs font-headline font-bold uppercase text-error border border-error/40 hover:bg-error/10 transition-colors duration-100">
-            Clear All
-          </button>
+          <div class="ml-auto flex gap-2 self-end">
+            <button x-show="total > 0" @click="exportCSV()"
+              class="px-4 py-2 text-xs font-headline font-bold uppercase text-primary-container border border-primary-container/40 hover:bg-primary-container/10 transition-colors duration-100">
+              Export CSV
+            </button>
+            <button x-show="total > 0" @click="clearLogs()"
+              class="px-4 py-2 text-xs font-headline font-bold uppercase text-error border border-error/40 hover:bg-error/10 transition-colors duration-100">
+              Clear All
+            </button>
+          </div>
         </div>
 
         <!-- Table -->
@@ -311,6 +505,11 @@
 
       <!-- KEYS PAGE -->
       <div x-show="page === 'keys'" x-data="keysPage()" x-effect="if (page === 'keys' && keys.length === 0 && loading) fetchKeys()">
+
+        <header class="mb-10">
+          <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">API KEYS<span class="text-primary-container">_</span></h2>
+          <p class="text-on-surface-variant">Manage client credentials, rate limits, and model access controls.</p>
+        </header>
 
         <!-- New key banner -->
         <div x-show="newKeyResult" x-cloak class="bg-surface-container border-l-4 border-primary-container p-5 mb-6">
@@ -413,6 +612,11 @@
       <!-- MODELS PAGE -->
       <div x-show="page === 'models'" x-data="modelsPage()" x-effect="if (page === 'models' && models.length === 0 && loading) fetchModels()">
 
+        <header class="mb-10">
+          <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">MODELS<span class="text-primary-container">_</span></h2>
+          <p class="text-on-surface-variant">Available models and provider health status.</p>
+        </header>
+
         <!-- Provider status cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <template x-for="[name, info] in Object.entries($root.health?.providers || {})" :key="name">
@@ -468,6 +672,7 @@
 
   <script src="js/app.js"></script>
   <script src="js/overview.js"></script>
+  <script src="js/playground.js"></script>
   <script src="js/logs.js"></script>
   <script src="js/keys.js"></script>
   <script src="js/models.js"></script>

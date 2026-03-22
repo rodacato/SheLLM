@@ -48,17 +48,18 @@ function statusBadgeClass(status) {
   return 'badge-5xx';
 }
 
-const VALID_PAGES = ['overview', 'logs', 'keys', 'models'];
+const VALID_PAGES = ['overview', 'playground', 'logs', 'keys', 'models'];
 
 function app() {
   return {
     page: VALID_PAGES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview',
     health: { uptime: null, providers: {}, queue: {} },
     nav: [
-      { id: 'overview', label: 'Overview' },
-      { id: 'logs', label: 'Request Logs' },
-      { id: 'keys', label: 'API Keys' },
-      { id: 'models', label: 'Models' },
+      { id: 'overview', label: 'Overview', icon: 'dashboard' },
+      { id: 'playground', label: 'Playground', icon: 'terminal' },
+      { id: 'logs', label: 'Request Logs', icon: 'database' },
+      { id: 'keys', label: 'API Keys', icon: 'key' },
+      { id: 'models', label: 'Models', icon: 'memory' },
     ],
     navigate(pageId) {
       this.page = pageId;

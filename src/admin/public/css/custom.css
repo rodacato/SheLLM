@@ -44,5 +44,9 @@
   z-index: 50;
 }
 
+/* Terminal scroll area */
+.terminal-scroll::-webkit-scrollbar-track { background: #0b0f12; }
+.terminal-scroll::-webkit-scrollbar-thumb { background: #3b494c; }
+
 /* Select & input reset for dark bg */
 select option { background-color: #1c2023; }
