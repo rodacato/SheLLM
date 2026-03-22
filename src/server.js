@@ -84,7 +84,8 @@ function adminSecurityHeaders(req, res, next) {
     [
       "default-src 'none'",
       "script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval'",
-      "style-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self'",
       "connect-src 'self'",
       "frame-ancestors 'none'",
