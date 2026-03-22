@@ -114,7 +114,7 @@ async function messagesHandler(req, res) {
   const err = validate(req.body);
   if (err) return sendAnthropicError(res, err);
 
-  const { model, max_tokens } = req.body;
+  const { model, max_tokens, temperature } = req.body;
 
   // Enforce per-key model restrictions
   if (req.allowedModels && req.allowedModels.length > 0) {
@@ -151,7 +151,7 @@ async function messagesHandler(req, res) {
   res.locals.model = model;
 
   try {
-    const result = await route({ model, prompt, system, max_tokens, request_id: req.requestId });
+    const result = await route({ model, prompt, system, max_tokens, temperature, request_id: req.requestId });
     res.locals.provider = result.provider;
     res.locals.queued_ms = result.queued_ms ?? null;
     res.locals.cost_usd = result.cost_usd ?? null;

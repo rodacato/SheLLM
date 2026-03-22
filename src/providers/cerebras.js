@@ -33,9 +33,8 @@ async function chat({ prompt, system, max_tokens, model }) {
     messages,
   };
 
-  if (max_tokens) {
-    body.max_completion_tokens = max_tokens;
-  }
+  if (max_tokens) body.max_completion_tokens = max_tokens;
+  if (temperature !== undefined) body.temperature = temperature;
 
   const response = await fetch(API_URL, {
     method: 'POST',
@@ -66,7 +65,7 @@ async function chat({ prompt, system, max_tokens, model }) {
   };
 }
 
-async function* chatStream({ prompt, system, max_tokens, model, signal }) {
+async function* chatStream({ prompt, system, max_tokens, temperature, model, signal }) {
   const apiKey = process.env.CEREBRAS_API_KEY;
   if (!apiKey) {
     const err = new Error('CEREBRAS_API_KEY environment variable is required');
@@ -80,6 +79,7 @@ async function* chatStream({ prompt, system, max_tokens, model, signal }) {
 
   const body = { model: resolveModel(model || 'cerebras'), messages, stream: true };
   if (max_tokens) body.max_completion_tokens = max_tokens;
+  if (temperature !== undefined) body.temperature = temperature;
 
   const response = await fetch(API_URL, {
     method: 'POST',

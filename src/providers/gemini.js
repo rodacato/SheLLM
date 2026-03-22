@@ -2,7 +2,7 @@ const { execute } = require('./base');
 
 const VALID_MODELS = ['gemini', 'gemini-pro', 'gemini-flash', 'gemini-2.0-flash', 'gemini-2.5-pro'];
 
-function buildArgs({ prompt, system }) {
+function buildArgs({ prompt, system, temperature }) {
   // Gemini has no --system-prompt flag — prepend to prompt
   let fullPrompt = '';
   if (system) {
@@ -10,11 +10,13 @@ function buildArgs({ prompt, system }) {
   }
   fullPrompt += prompt;
 
-  return [
+  const args = [
     '--output-format', 'json',
     '--approval-mode', 'yolo',
-    '-p', fullPrompt,
   ];
+  if (temperature !== undefined) args.push('-t', String(temperature));
+  args.push('-p', fullPrompt);
+  return args;
 }
 
 function parseOutput(stdout) {
@@ -43,8 +45,8 @@ function parseOutput(stdout) {
   }
 }
 
-async function chat({ prompt, system }) {
-  const args = buildArgs({ prompt, system });
+async function chat({ prompt, system, temperature }) {
+  const args = buildArgs({ prompt, system, temperature });
   const result = await execute('gemini', args);
   return parseOutput(result.stdout);
 }

@@ -25,6 +25,8 @@ describe('server integration', () => {
       defaultExport: { config: () => {} },
     });
 
+    process.env.SHELLM_GLOBAL_RPM = '200';
+
     for (const key of Object.keys(require.cache)) {
       if (key.includes('/src/') || key.includes('dotenv')) {
         delete require.cache[key];
@@ -35,7 +37,7 @@ describe('server integration', () => {
     try { closeDb(); } catch { /* ignore */ }
     initDb(':memory:');
 
-    const client = createClient({ name: 'test-client' });
+    const client = createClient({ name: 'test-client', rpm: 100 });
     testKey = client.rawKey;
 
     request = require('supertest');

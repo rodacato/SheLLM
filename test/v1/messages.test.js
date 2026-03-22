@@ -1,10 +1,11 @@
-const { describe, it, mock, before } = require('node:test');
+const { describe, it, mock, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 
 describe('/v1/messages', () => {
   let request;
   let app;
+  let testKey;
 
   before(() => {
     mock.module(path.resolve(__dirname, '../../src/providers/base.js'), {
@@ -24,14 +25,27 @@ describe('/v1/messages', () => {
       defaultExport: { config: () => {} },
     });
 
+    process.env.SHELLM_GLOBAL_RPM = '200';
+
     for (const key of Object.keys(require.cache)) {
       if (key.includes('/src/') || key.includes('dotenv')) {
         delete require.cache[key];
       }
     }
 
+    const { initDb, closeDb, createClient } = require('../../src/db');
+    try { closeDb(); } catch { /* ignore */ }
+    initDb(':memory:');
+    const client = createClient({ name: 'test-client', rpm: 100 });
+    testKey = client.rawKey;
+
     request = require('supertest');
     app = require('../../src/server');
+  });
+
+  after(() => {
+    const { closeDb } = require('../../src/db');
+    try { closeDb(); } catch { /* ignore */ }
   });
 
   // --- Success cases ---
@@ -39,6 +53,7 @@ describe('/v1/messages', () => {
   it('returns Anthropic response shape for single user message', async () => {
     const res = await request(app)
       .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({ model: 'claude', max_tokens: 1024, messages: [{ role: 'user', content: 'hello' }] });
 
     assert.strictEqual(res.status, 200);
@@ -64,6 +79,7 @@ describe('/v1/messages', () => {
   it('handles system prompt (top-level) + user message', async () => {
     const res = await request(app)
       .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({
         model: 'claude',
         max_tokens: 1024,
@@ -79,6 +95,7 @@ describe('/v1/messages', () => {
   it('handles multi-turn conversation', async () => {
     const res = await request(app)
       .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({
         model: 'claude',
         max_tokens: 1024,
@@ -96,6 +113,7 @@ describe('/v1/messages', () => {
   it('handles content as array of text blocks', async () => {
     const res = await request(app)
       .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({
         model: 'claude',
         max_tokens: 1024,
@@ -115,6 +133,7 @@ describe('/v1/messages', () => {
   it('includes queue headers in response', async () => {
     const res = await request(app)
       .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({ model: 'claude', max_tokens: 1024, messages: [{ role: 'user', content: 'hello' }] });
 
     assert.strictEqual(res.status, 200);
@@ -127,6 +146,7 @@ describe('/v1/messages', () => {
   it('rejects missing model', async () => {
     const res = await request(app)
       .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({ max_tokens: 1024, messages: [{ role: 'user', content: 'hello' }] });
 
     assert.strictEqual(res.status, 400);
@@ -138,6 +158,7 @@ describe('/v1/messages', () => {
   it('rejects missing max_tokens', async () => {
     const res = await request(app)
       .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({ model: 'claude', messages: [{ role: 'user', content: 'hello' }] });
 
     assert.strictEqual(res.status, 400);
@@ -149,6 +170,7 @@ describe('/v1/messages', () => {
   it('rejects invalid max_tokens', async () => {
     const res = await request(app)
       .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({
         model: 'claude',
         max_tokens: -5,
@@ -162,6 +184,7 @@ describe('/v1/messages', () => {
   it('rejects missing messages', async () => {
     const res = await request(app)
       .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({ model: 'claude', max_tokens: 1024 });
 
     assert.strictEqual(res.status, 400);
@@ -171,6 +194,7 @@ describe('/v1/messages', () => {
   it('rejects empty messages array', async () => {
     const res = await request(app)
       .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({ model: 'claude', max_tokens: 1024, messages: [] });
 
     assert.strictEqual(res.status, 400);
@@ -180,6 +204,7 @@ describe('/v1/messages', () => {
   it('rejects messages without user role', async () => {
     const res = await request(app)
       .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({
         model: 'claude',
         max_tokens: 1024,
@@ -193,6 +218,7 @@ describe('/v1/messages', () => {
   it('rejects unknown model', async () => {
     const res = await request(app)
       .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({
         model: 'gpt-4',
         max_tokens: 1024,
@@ -206,6 +232,7 @@ describe('/v1/messages', () => {
   it('rejects stream: true', async () => {
     const res = await request(app)
       .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({
         model: 'claude',
         max_tokens: 1024,
@@ -220,6 +247,7 @@ describe('/v1/messages', () => {
   it('rejects non-text content block', async () => {
     const res = await request(app)
       .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({
         model: 'claude',
         max_tokens: 1024,
@@ -236,6 +264,7 @@ describe('/v1/messages', () => {
   it('rejects prompt exceeding 50000 chars', async () => {
     const res = await request(app)
       .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({
         model: 'claude',
         max_tokens: 1024,
@@ -251,6 +280,7 @@ describe('/v1/messages', () => {
   it('returns Anthropic error format for all errors', async () => {
     const res = await request(app)
       .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({ max_tokens: 1024, messages: [{ role: 'user', content: 'hello' }] });
 
     assert.strictEqual(res.body.type, 'error');

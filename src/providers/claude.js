@@ -7,7 +7,7 @@ const VALID_MODELS = [
   'claude-opus', 'claude-opus-4-6',
 ];
 
-function buildArgs({ prompt, system }) {
+function buildArgs({ prompt, system, temperature }) {
   const args = [
     '--print',
     '--dangerously-skip-permissions',
@@ -16,6 +16,9 @@ function buildArgs({ prompt, system }) {
 
   if (system) {
     args.push('--system-prompt', system);
+  }
+  if (temperature !== undefined) {
+    args.push('--temperature', String(temperature));
   }
 
   args.push('--', prompt);
@@ -46,8 +49,8 @@ function parseOutput(stdout, stderr) {
   return { content, cost_usd, usage };
 }
 
-async function chat({ prompt, system }) {
-  const args = buildArgs({ prompt, system });
+async function chat({ prompt, system, temperature }) {
+  const args = buildArgs({ prompt, system, temperature });
 
   // Exclude ANTHROPIC_API_KEY — the CLI uses its own stored credentials
   const env = { ...process.env };
@@ -57,10 +60,11 @@ async function chat({ prompt, system }) {
   return parseOutput(result.stdout, result.stderr);
 }
 
-async function* chatStream({ prompt, system, signal }) {
+async function* chatStream({ prompt, system, temperature, signal }) {
   // For streaming, use --print without --output-format json so tokens emit incrementally
   const args = ['--print', '--dangerously-skip-permissions'];
   if (system) args.push('--system-prompt', system);
+  if (temperature !== undefined) args.push('--temperature', String(temperature));
   args.push('--', prompt);
 
   const env = { ...process.env };

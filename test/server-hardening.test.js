@@ -1,10 +1,11 @@
-const { describe, it, mock, before } = require('node:test');
+const { describe, it, mock, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 
 describe('server hardening (Phase 7)', () => {
   let request;
   let app;
+  let testKey;
 
   before(() => {
     mock.module(path.resolve(__dirname, '../src/providers/base.js'), {
@@ -24,19 +25,33 @@ describe('server hardening (Phase 7)', () => {
       defaultExport: { config: () => {} },
     });
 
+    process.env.SHELLM_GLOBAL_RPM = '200';
+
     for (const key of Object.keys(require.cache)) {
       if (key.includes('/src/') || key.includes('dotenv')) {
         delete require.cache[key];
       }
     }
 
+    const { initDb, closeDb, createClient } = require('../src/db');
+    try { closeDb(); } catch { /* ignore */ }
+    initDb(':memory:');
+    const client = createClient({ name: 'test-client', rpm: 100 });
+    testKey = client.rawKey;
+
     request = require('supertest');
     app = require('../src/server');
+  });
+
+  after(() => {
+    const { closeDb } = require('../src/db');
+    try { closeDb(); } catch { /* ignore */ }
   });
 
   it('rejects POST without Content-Type application/json', async () => {
     const res = await request(app)
       .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${testKey}`)
       .set('Content-Type', 'text/plain')
       .send('hello');
 
@@ -48,6 +63,7 @@ describe('server hardening (Phase 7)', () => {
   it('rejects body exceeding 256kb limit', async () => {
     const res = await request(app)
       .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({ model: 'claude', messages: [{ role: 'user', content: 'x'.repeat(300000) }] });
 
     assert.strictEqual(res.status, 413);
@@ -56,6 +72,7 @@ describe('server hardening (Phase 7)', () => {
   it('successful completion includes X-Queue-Depth and X-Queue-Active headers', async () => {
     const res = await request(app)
       .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({ model: 'claude', messages: [{ role: 'user', content: 'hello' }] });
 
     assert.strictEqual(res.status, 200);
@@ -70,6 +87,7 @@ describe('server hardening (Phase 7)', () => {
   it('rejects prompt exceeding 50000 chars', async () => {
     const res = await request(app)
       .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({ model: 'claude', messages: [{ role: 'user', content: 'a'.repeat(50001) }] });
 
     assert.strictEqual(res.status, 400);
@@ -79,6 +97,7 @@ describe('server hardening (Phase 7)', () => {
   it('rejects invalid max_tokens', async () => {
     const res = await request(app)
       .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({ model: 'claude', messages: [{ role: 'user', content: 'hello' }], max_tokens: -5 });
 
     assert.strictEqual(res.status, 400);

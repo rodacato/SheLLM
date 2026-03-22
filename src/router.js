@@ -81,7 +81,7 @@ function resolveProvider(model) {
   return null;
 }
 
-async function route({ model, prompt, system, max_tokens, request_id }) {
+async function route({ model, prompt, system, max_tokens, temperature, request_id }) {
   const provider = resolveProvider(model);
   if (!provider) {
     throw invalidRequest(`Unknown provider: ${model}`);
@@ -106,7 +106,7 @@ async function route({ model, prompt, system, max_tokens, request_id }) {
 
   const result = await queue.enqueue(() => {
     const execStart = Date.now();
-    return provider.chat({ prompt, system, max_tokens, model })
+    return provider.chat({ prompt, system, max_tokens, temperature, model })
       .then((r) => ({ ...r, queued_ms: execStart - startTime }));
   });
 
