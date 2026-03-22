@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SheLLM — Your LLM services, unified as a REST API</title>
+  <meta name="description" content="SheLLM turns CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterprise) and API providers into a single HTTP endpoint. One interface, any provider.">
+  <meta property="og:title" content="SheLLM">
+  <meta property="og:description" content="Your LLM services — unified as a REST API">
+  <meta property="og:image" content="img/favicon-dark-512.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-dark-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-dark-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="img/favicon-dark-180.png">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --cyan:  #03E3FF;
+      --dark:  #1A1E21;
+      --slate: #2E3B44;
+      --muted: #4b5563;
+      --text:  #e5e7eb;
+      --text-dim: #9ca3af;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a { color: var(--cyan); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Layout ── */
+    .container { max-width: 860px; margin: 0 auto; padding: 0 2rem; }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 5rem 2rem 4rem;
+    }
+    .hero img.logo { width: 72px; height: 72px; margin-bottom: 1.5rem; }
+    .hero h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.75rem;
+    }
+    .hero .tagline {
+      font-size: 1.15rem;
+      color: var(--text-dim);
+      max-width: 480px;
+      margin: 0 auto 2.5rem;
+    }
+    .cta-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.75rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:hover { text-decoration: none; }
+    .btn-primary { background: var(--cyan); color: var(--dark); }
+    .btn-primary:hover { background: #02c8e0; }
+    .btn-secondary { background: var(--slate); color: #fff; }
+    .btn-secondary:hover { background: #3b4d59; }
+    .btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    /* ── Value prop ── */
+    .value {
+      border-top: 1px solid #2a3038;
+      padding: 3.5rem 0;
+      text-align: center;
+    }
+    .value p {
+      font-size: 1.05rem;
+      color: var(--text-dim);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .value strong { color: var(--cyan); }
+
+    /* ── Providers ── */
+    .providers {
+      border-top: 1px solid #2a3038;
+      padding: 3.5rem 0;
+    }
+    .providers h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center; }
+    .provider-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+    .provider-card {
+      background: var(--slate);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+    }
+    .provider-card .type {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 0.4rem;
+    }
+    .provider-card .name { font-weight: 600; font-size: 1rem; color: #fff; }
+    .provider-card .models { font-size: 0.8rem; color: var(--text-dim); margin-top: 0.35rem; }
+
+    /* ── Quick start ── */
+    .quickstart {
+      border-top: 1px solid #2a3038;
+      padding: 3.5rem 0;
+    }
+    .quickstart h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.25rem; text-align: center; }
+    pre {
+      background: #0d1117;
+      border: 1px solid #2a3038;
+      border-radius: 10px;
+      padding: 1.5rem;
+      overflow-x: auto;
+      font-size: 0.875rem;
+      line-height: 1.7;
+    }
+    .comment { color: var(--muted); }
+    .cmd { color: var(--text); }
+
+    /* ── Comparison ── */
+    .compare {
+      border-top: 1px solid #2a3038;
+      padding: 3.5rem 0;
+    }
+    .compare h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.25rem; text-align: center; }
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #2a3038; }
+    th { color: var(--text-dim); font-weight: 600; font-size: 0.8rem; letter-spacing: 0.05em; text-transform: uppercase; }
+    td:not(:first-child) { text-align: center; }
+    .yes { color: var(--cyan); }
+    .no  { color: var(--muted); }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid #2a3038;
+      padding: 2rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    footer a { color: var(--muted); }
+    footer a:hover { color: var(--cyan); }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <img src="img/logo-icon-color.png" alt="SheLLM" class="logo">
+      <h1>SheLLM</h1>
+      <p class="tagline">Your LLM services — unified as a REST API</p>
+      <div class="cta-group">
+        <a href="api/" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          API Docs
+        </a>
+        <a href="https://github.com/rodacato/SheLLM" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Value prop -->
+  <section class="value">
+    <div class="container">
+      <p>
+        Most LLM gateways assume you're paying per-token via API key.
+        SheLLM's primary use case is different: <strong>you already have CLI subscriptions</strong>
+        (Claude Max, Gemini AI Plus, OpenAI Enterprise) and want to expose them
+        as a regular HTTP API to your apps — without burning API quota.
+      </p>
+    </div>
+  </section>
+
+  <!-- Providers -->
+  <section class="providers">
+    <div class="container">
+      <h2>Supported Providers</h2>
+      <div class="provider-grid">
+        <div class="provider-card">
+          <div class="type">CLI</div>
+          <div class="name">Claude Code</div>
+          <div class="models">claude, claude-sonnet, claude-haiku, claude-opus</div>
+        </div>
+        <div class="provider-card">
+          <div class="type">CLI</div>
+          <div class="name">Gemini CLI</div>
+          <div class="models">gemini, gemini-pro, gemini-flash</div>
+        </div>
+        <div class="provider-card">
+          <div class="type">CLI</div>
+          <div class="name">Codex CLI</div>
+          <div class="models">codex</div>
+        </div>
+        <div class="provider-card">
+          <div class="type">API</div>
+          <div class="name">Cerebras</div>
+          <div class="models">cerebras, cerebras-8b, cerebras-120b, cerebras-qwen</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick start -->
+  <section class="quickstart">
+    <div class="container">
+      <h2>Quick Start</h2>
+      <pre><code><span class="comment"># Clone and install</span>
+<span class="cmd">git clone https://github.com/rodacato/SheLLM.git && cd SheLLM
+npm install && npm link</span>
+
+<span class="comment"># Configure and start</span>
+<span class="cmd">cp .env.example .env
+shellm start</span>
+
+<span class="comment"># Send a request</span>
+<span class="cmd">curl http://localhost:6100/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"claude","messages":[{"role":"user","content":"Hello"}]}'</span></code></pre>
+    </div>
+  </section>
+
+  <!-- Comparison -->
+  <section class="compare">
+    <div class="container">
+      <h2>How SheLLM compares</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>SheLLM</th>
+              <th>LiteLLM</th>
+              <th>OpenRouter</th>
+              <th>Portkey</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>CLI subscriptions as backends</td>
+              <td class="yes">✓</td>
+              <td class="no">✗</td>
+              <td class="no">✗</td>
+              <td class="no">✗</td>
+            </tr>
+            <tr>
+              <td>OpenAI-compatible endpoint</td>
+              <td class="yes">✓</td>
+              <td class="yes">✓</td>
+              <td class="yes">✓</td>
+              <td class="yes">✓</td>
+            </tr>
+            <tr>
+              <td>Anthropic-compatible endpoint</td>
+              <td class="yes">✓</td>
+              <td class="no">✗</td>
+              <td class="no">✗</td>
+              <td class="no">✗</td>
+            </tr>
+            <tr>
+              <td>Built-in admin dashboard</td>
+              <td class="yes">✓</td>
+              <td class="no">Partial</td>
+              <td class="no">✗</td>
+              <td class="yes">✓</td>
+            </tr>
+            <tr>
+              <td>Self-hosted, no external deps</td>
+              <td class="yes">✓</td>
+              <td class="yes">✓</td>
+              <td class="no">✗</td>
+              <td class="yes">✓</td>
+            </tr>
+            <tr>
+              <td>SQLite — no Redis / Postgres</td>
+              <td class="yes">✓</td>
+              <td class="no">✗</td>
+              <td class="no">—</td>
+              <td class="no">✗</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      v0.1.0 &nbsp;·&nbsp;
+      <a href="https://github.com/rodacato/SheLLM">GitHub</a> &nbsp;·&nbsp;
+      <a href="api/">API Docs</a> &nbsp;·&nbsp;
+      <a href="https://github.com/rodacato/SheLLM/blob/master/VERSIONS.md">Versions</a> &nbsp;·&nbsp;
+      <a href="https://github.com/rodacato/SheLLM/blob/master/CONTRIBUTING.md">Contributing</a> &nbsp;·&nbsp;
+      <a href="https://github.com/rodacato/SheLLM/blob/master/LICENSE">MIT License</a>
+    </div>
+  </footer>
+
+</body>
+</html>
