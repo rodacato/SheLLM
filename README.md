@@ -10,7 +10,20 @@
 
 SheLLM turns CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterprise) and API providers (Cerebras) into a single HTTP endpoint. One interface, any provider.
 
-> Existing solutions like LiteLLM assume API keys for everything. SheLLM supports **both** CLI-based and API-based providers.
+## Why SheLLM
+
+Most LLM gateways assume you're paying per-token via API. SheLLM's primary use case is the opposite: **you already have CLI subscriptions** (Claude Max, Gemini AI Plus, OpenAI Enterprise) and want to expose them as a regular HTTP API to your apps — without burning API quota.
+
+| | SheLLM | LiteLLM | OpenRouter | Portkey |
+|---|:---:|:---:|:---:|:---:|
+| CLI subscriptions as backends | ✅ | ❌ | ❌ | ❌ |
+| OpenAI-compatible endpoint | ✅ | ✅ | ✅ | ✅ |
+| Anthropic-compatible endpoint | ✅ | ❌ | ❌ | ❌ |
+| Built-in admin dashboard | ✅ | Partial | ❌ | ✅ |
+| Self-hosted, no external deps | ✅ | ✅ | ❌ | ✅ |
+| SQLite — no Redis / Postgres | ✅ | ❌ | — | ❌ |
+
+[ollama](https://ollama.com) and [Jan](https://jan.ai) are complementary, not competing — they run local models; SheLLM routes to hosted CLI subscriptions and APIs.
 
 ## Screenshots
 
