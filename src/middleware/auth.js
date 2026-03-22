@@ -38,20 +38,7 @@ function getOrCreateTimestamps(clientName) {
 }
 
 function createAuthMiddleware() {
-  // Check if DB has any active clients
-  const hasDbClients = () => {
-    const db = getDb();
-    if (!db) return false;
-    const row = db.prepare('SELECT COUNT(*) as count FROM clients WHERE active = 1').get();
-    return row.count > 0;
-  };
-
   return (req, res, next) => {
-    // If no DB clients, auth is disabled
-    if (!hasDbClients()) {
-      return next();
-    }
-
     const header = req.headers.authorization || '';
     const match = header.match(/^Bearer\s+(.+)$/i);
 

@@ -98,27 +98,41 @@ function adminSecurityHeaders(req, res, next) {
 app.use('/admin/dashboard', adminAuth, adminSecurityHeaders, express.static(path.join(__dirname, 'admin/public')));
 
 // Graceful shutdown: drain in-flight requests before exiting
+let shuttingDown = false;
 function gracefulShutdown(server, signal) {
+  if (shuttingDown) { process.exit(1); return; }
+  shuttingDown = true;
   logger.info({ event: 'shutdown', signal });
+  const { stopHealthPoller } = require('./health');
+  stopHealthPoller();
   server.close(() => {
     logger.info({ event: 'shutdown_complete' });
     process.exit(0);
   });
-  // Force exit after 30s if connections don't drain
-  setTimeout(() => process.exit(1), 30000).unref();
+  // Force exit after 5s if connections don't drain
+  setTimeout(() => process.exit(1), 5000).unref();
 }
 
 // Only start listening when run directly (not when required for testing)
 if (require.main === module) {
-  const server = app.listen(PORT, () => {
-    const db = getDb();
-    const hasClients = db && db.prepare('SELECT COUNT(*) as count FROM clients WHERE active = 1').get().count > 0;
-    const authStatus = hasClients ? 'enabled' : 'disabled';
-    logger.info({ event: 'server_start', port: PORT, auth: authStatus });
-  });
+  const { getHealthStatus, startHealthPoller } = require('./health');
 
-  process.on('SIGTERM', () => gracefulShutdown(server, 'SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown(server, 'SIGINT'));
+  // Startup health gate: warn about unhealthy providers, then proceed
+  getHealthStatus().then((health) => {
+    for (const [name, status] of Object.entries(health.providers || {})) {
+      if (!status.authenticated) {
+        logger.warn({ event: 'startup_provider_warning', provider: name, installed: status.installed, authenticated: false, error: status.error || null });
+      }
+    }
+
+    const server = app.listen(PORT, () => {
+      logger.info({ event: 'server_start', port: PORT });
+      startHealthPoller();
+    });
+
+    process.on('SIGTERM', () => gracefulShutdown(server, 'SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown(server, 'SIGINT'));
+  });
 }
 
 // Export app and gracefulShutdown for CLI foreground mode

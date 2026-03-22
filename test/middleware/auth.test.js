@@ -19,11 +19,11 @@ describe('auth middleware', () => {
     closeDb();
   });
 
-  it('auth disabled when no DB clients exist', () => {
+  it('rejects requests when no Bearer token is provided, even without DB clients', () => {
     const middleware = createAuthMiddleware();
-    const next = mock.fn();
-    middleware({}, {}, next);
-    assert.strictEqual(next.mock.callCount(), 1);
+    const res = mockRes();
+    middleware({ headers: {}, requestId: 'req-1' }, res, mock.fn());
+    assert.strictEqual(res._status, 401);
   });
 
   it('rejects missing and invalid Bearer tokens', () => {

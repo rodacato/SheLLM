@@ -1,13 +1,13 @@
-const { describe, it, mock, before } = require('node:test');
+const { describe, it, mock, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 
 describe('server integration', () => {
   let request;
   let app;
+  let testKey;
 
   before(() => {
-    // Mock base.execute before any provider loads
     mock.module(path.resolve(__dirname, '../src/providers/base.js'), {
       namedExports: {
         execute: mock.fn(async (cmd) => ({
@@ -20,8 +20,31 @@ describe('server integration', () => {
       },
     });
 
+    mock.module('dotenv', {
+      namedExports: { config: () => {} },
+      defaultExport: { config: () => {} },
+    });
+
+    for (const key of Object.keys(require.cache)) {
+      if (key.includes('/src/') || key.includes('dotenv')) {
+        delete require.cache[key];
+      }
+    }
+
+    const { initDb, closeDb, createClient } = require('../src/db');
+    try { closeDb(); } catch { /* ignore */ }
+    initDb(':memory:');
+
+    const client = createClient({ name: 'test-client' });
+    testKey = client.rawKey;
+
     request = require('supertest');
     app = require('../src/server');
+  });
+
+  after(() => {
+    const { closeDb } = require('../src/db');
+    closeDb();
   });
 
   it('GET /health returns 200 with correct shape', async () => {
@@ -33,9 +56,18 @@ describe('server integration', () => {
     assert.strictEqual(typeof res.body.uptime_seconds, 'number');
   });
 
-  it('POST /v1/chat/completions with missing model returns OpenAI error', async () => {
+  it('POST /v1/chat/completions without auth returns 401', async () => {
     const res = await request(app)
       .post('/v1/chat/completions')
+      .send({ messages: [{ role: 'user', content: 'hello' }] });
+
+    assert.strictEqual(res.status, 401);
+  });
+
+  it('POST /v1/chat/completions with auth but missing model returns 400', async () => {
+    const res = await request(app)
+      .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${testKey}`)
       .send({ messages: [{ role: 'user', content: 'hello' }] });
 
     assert.strictEqual(res.status, 400);
