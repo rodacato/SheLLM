@@ -66,9 +66,64 @@ async function chat({ prompt, system, max_tokens, model }) {
   };
 }
 
+async function* chatStream({ prompt, system, max_tokens, model, signal }) {
+  const apiKey = process.env.CEREBRAS_API_KEY;
+  if (!apiKey) {
+    const err = new Error('CEREBRAS_API_KEY environment variable is required');
+    err.provider_unavailable = true;
+    throw err;
+  }
+
+  const messages = [];
+  if (system) messages.push({ role: 'system', content: system });
+  messages.push({ role: 'user', content: prompt });
+
+  const body = { model: resolveModel(model || 'cerebras'), messages, stream: true };
+  if (max_tokens) body.max_completion_tokens = max_tokens;
+
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify(body),
+    signal,
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`Cerebras API error: ${response.status} ${errorBody}`);
+  }
+
+  // Parse SSE from the API response stream
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const payload = line.slice(6).trim();
+      if (payload === '[DONE]') break;
+      try {
+        const chunk = JSON.parse(payload);
+        const content = chunk.choices?.[0]?.delta?.content;
+        if (content) yield { type: 'delta', content };
+      } catch { /* skip */ }
+    }
+  }
+  yield { type: 'done' };
+}
+
 module.exports = {
   name: 'cerebras',
   chat,
+  chatStream,
   validModels: VALID_MODELS,
   capabilities: {
     supports_system_prompt: true,

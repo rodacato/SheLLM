@@ -1,4 +1,4 @@
-const { execute } = require('./base');
+const { execute, executeStream } = require('./base');
 
 const VALID_MODELS = [
   'claude',
@@ -57,9 +57,27 @@ async function chat({ prompt, system }) {
   return parseOutput(result.stdout, result.stderr);
 }
 
+async function* chatStream({ prompt, system, signal }) {
+  // For streaming, use --print without --output-format json so tokens emit incrementally
+  const args = ['--print', '--dangerously-skip-permissions'];
+  if (system) args.push('--system-prompt', system);
+  args.push('--', prompt);
+
+  const env = { ...process.env };
+  delete env.ANTHROPIC_API_KEY;
+
+  for await (const event of executeStream('claude', args, { env, signal })) {
+    if (event.type === 'chunk') {
+      yield { type: 'delta', content: event.data };
+    }
+  }
+  yield { type: 'done' };
+}
+
 module.exports = {
   name: 'claude',
   chat,
+  chatStream,
   buildArgs,
   parseOutput,
   validModels: VALID_MODELS,

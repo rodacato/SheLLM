@@ -1,4 +1,4 @@
-const { execute } = require('./base');
+const { execute, executeStream } = require('./base');
 
 const VALID_MODELS = ['codex', 'codex-mini'];
 
@@ -51,9 +51,33 @@ async function chat({ prompt, system }) {
   return parseOutput(result.stdout);
 }
 
+async function* chatStream({ prompt, system, signal }) {
+  const args = buildArgs({ prompt, system });
+  let buffer = '';
+
+  for await (const event of executeStream('codex', args, { signal })) {
+    if (event.type === 'chunk') {
+      buffer += event.data;
+      const lines = buffer.split('\n');
+      buffer = lines.pop(); // keep incomplete line in buffer
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const evt = JSON.parse(line);
+          if (evt.type === 'item.completed' && evt.item?.type === 'agent_message' && evt.item.text) {
+            yield { type: 'delta', content: evt.item.text };
+          }
+        } catch { /* skip non-JSON */ }
+      }
+    }
+  }
+  yield { type: 'done' };
+}
+
 module.exports = {
   name: 'codex',
   chat,
+  chatStream,
   buildArgs,
   parseOutput,
   validModels: VALID_MODELS,
