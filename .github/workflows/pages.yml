@@ -34,9 +34,14 @@ jobs:
           cp -r assets/favicon site/assets/favicon
           cp -r assets/logo site/assets/logo
 
-      # Build Redocly API docs into site/api/
+      # Bundle OpenAPI spec and copy API docs into site/api/
       - name: Build API docs
-        run: npx redocly build-docs docs/openapi.yaml --template docs/template.html -o site/api/index.html
+        run: |
+          npm run docs:build
+          mkdir -p site/api
+          cp docs/index.html site/api/index.html
+          cp docs/api/bundled.json site/api/bundled.json
+          cp docs/api/logo.svg site/api/logo.svg
 
       - uses: actions/configure-pages@v5
 
