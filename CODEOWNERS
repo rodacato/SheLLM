@@ -1,0 +1,29 @@
+# CODEOWNERS — auto-assign reviewers by path
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything not matched below
+* @rodacato
+
+# API contract — Contract + Consumer review required
+docs/openapi.yaml @rodacato
+src/v1/ @rodacato
+
+# Providers — CLI specialist review required
+src/providers/ @rodacato
+
+# Security-sensitive paths — SecEng review required
+src/middleware/auth.js @rodacato
+src/middleware/admin-auth.js @rodacato
+src/middleware/sanitize.js @rodacato
+scripts/pre-commit @rodacato
+
+# Infrastructure & deployment
+Dockerfile @rodacato
+docker-compose.yml @rodacato
+.github/ @rodacato
+scripts/setup-vps.sh @rodacato
+shellm.service @rodacato
+
+# Public-facing docs and site
+site/ @rodacato
+docs/ @rodacato
