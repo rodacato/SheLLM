@@ -27,9 +27,12 @@ jobs:
 
       - run: npm ci
 
-      # Copy runtime image assets into site/ so the landing page has its icons/logo
+      # Copy assets into site/ so the landing page has its icons/logo
       - name: Copy assets
-        run: cp -r src/public/img site/
+        run: |
+          mkdir -p site/assets
+          cp -r assets/favicon site/assets/favicon
+          cp -r assets/logo site/assets/logo
 
       # Build Redocly API docs into site/api/
       - name: Build API docs

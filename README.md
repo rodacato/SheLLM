@@ -1,8 +1,8 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="branding/assets/logo-color.png">
-    <source media="(prefers-color-scheme: light)" srcset="branding/assets/logo-mono.png">
-    <img alt="SheLLM" src="branding/assets/logo-color.png" width="400">
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo/logo-color.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/logo/logo-mono.png">
+    <img alt="SheLLM" src="assets/logo/logo-color.png" width="400">
   </picture>
 </p>
 
