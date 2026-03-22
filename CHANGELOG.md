@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-03-22
+
+### Added
+
+- **branding:** replace text wordmarks with inline SVG logo across all surfaces
+- **assets:** generate PNG favicons from SVG using sharp
+- **assets:** add SVG logos and favicon extracted from Stitch design
+- **runtime:** apply terminal_core tokens to server splash page
+- **admin:** redesign dashboard with terminal_core dark theme
+- **pages:** redesign GitHub Pages with terminal_core spec
+- **community:** add issue templates, PR template, CODEOWNERS, and README badges
+- **release:** adopt conventional commits and automate CHANGELOG + GitHub Releases
+- **dx:** add check:env script and setup-dev.sh onboarding guide
+- **docs:** add Redocly dark theme config and custom HTML template
+- **pages:** add GitHub Pages site with CI deploy workflow
+
+### Fixed
+
+- **admin:** fix favicon 404s and Alpine expression errors on dashboard
+- **assets:** tighten wordmark SVG viewBox to 264x64
+- **assets:** restore favicon PNG fallbacks with new filenames across all surfaces
+
+### Changed
+
+- **docs:** modularize OpenAPI spec into docs/api/ with client-side Redoc
+
+### Documentation
+
+- Add BACKLOG.md file to track upcoming changes
+- **redesign:** add BACKLOG.md and redesign implementation plan
+- **guides:** add branding.md — step-by-step design and branding guide
+- **guides:** add releasing.md — step-by-step release guide
+- expand expert panel with permanent/situational roles and add comparison section
+
+### Maintenance
+
+- **docs:** move EXPERTS.md and IDENTITY.md into docs/ and update AGENTS.md
+- update Material Symbols font URL parameters
+- **assets:** replace PNG favicons with icon-color SVG favicon
+- remove legacy branding/ directory
+- **assets:** migrate to assets/ structure — Phase 1 of redesign
+
+
 ## [0.1.0] - 2026-02-27
 
 First public release. SheLLM turns CLI subscriptions and API providers into a
@@ -58,5 +101,5 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/rodacato/SheLLM/releases/tag/v0.1.0
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/rodacato/SheLLM/compare/v0.1.0...v0.2.0
