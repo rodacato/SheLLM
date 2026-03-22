@@ -1,9 +1,10 @@
 const API_URL = 'https://api.cerebras.ai/v1/chat/completions';
 
 const MODEL_MAP = {
-  'cerebras': 'gpt-oss-120b',
+  'cerebras': 'llama-3.3-70b',
   'cerebras-8b': 'llama3.1-8b',
-  'cerebras-120b': 'gpt-oss-120b',
+  'cerebras-70b': 'llama-3.3-70b',
+  'cerebras-120b': 'llama-3.3-70b',
   'cerebras-qwen': 'qwen-3-235b-a22b-instruct-2507',
 };
 

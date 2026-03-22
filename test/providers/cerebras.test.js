@@ -26,9 +26,9 @@ describe('cerebras provider', () => {
       assert.ok(url.includes('cerebras.ai'));
       assert.ok(opts.headers.Authorization.includes('test-key-123'));
 
-      // Verify model mapping (cerebras -> gpt-oss-120b)
+      // Verify model mapping (cerebras -> llama-3.3-70b)
       const body = JSON.parse(opts.body);
-      assert.strictEqual(body.model, 'gpt-oss-120b');
+      assert.strictEqual(body.model, 'llama-3.3-70b');
 
       return {
         ok: true,

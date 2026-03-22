@@ -1,6 +1,11 @@
 const { execute } = require('./base');
 
-const VALID_MODELS = ['claude', 'claude-sonnet', 'claude-haiku', 'claude-opus'];
+const VALID_MODELS = [
+  'claude',
+  'claude-sonnet', 'claude-sonnet-4-6',
+  'claude-haiku', 'claude-haiku-4-5',
+  'claude-opus', 'claude-opus-4-6',
+];
 
 function buildArgs({ prompt, system }) {
   const args = [

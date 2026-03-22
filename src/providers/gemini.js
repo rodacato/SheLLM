@@ -1,6 +1,6 @@
 const { execute } = require('./base');
 
-const VALID_MODELS = ['gemini', 'gemini-pro', 'gemini-flash'];
+const VALID_MODELS = ['gemini', 'gemini-pro', 'gemini-flash', 'gemini-2.0-flash', 'gemini-2.5-pro'];
 
 function buildArgs({ prompt, system }) {
   // Gemini has no --system-prompt flag — prepend to prompt
