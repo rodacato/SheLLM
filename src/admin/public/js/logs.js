@@ -66,6 +66,14 @@ function logsPage() {
       return Math.max(1, Math.ceil(this.total / this.limit));
     },
 
+    exportCSV() {
+      const params = new URLSearchParams();
+      params.set('format', 'csv');
+      if (this.filterProvider) params.set('provider', this.filterProvider);
+      if (this.filterStatus) params.set('status', this.filterStatus);
+      window.location.href = `${API_BASE}/logs/export?${params}`;
+    },
+
     formatTime,
     formatDuration,
     formatCost,

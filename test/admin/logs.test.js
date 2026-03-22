@@ -150,4 +150,65 @@ describe('admin /admin/logs', () => {
       assert.ok('created_at' in log);
     }
   });
+
+  // --- Export CSV ---
+
+  it('GET /admin/logs/export returns CSV with correct headers', async () => {
+    const res = await request(app)
+      .get('/admin/logs/export')
+      .set('Authorization', `Basic ${adminCreds}`);
+
+    assert.strictEqual(res.status, 200);
+    assert.ok(res.headers['content-type'].includes('text/csv'));
+    assert.ok(res.headers['content-disposition'].startsWith('attachment; filename="shellm-logs-'));
+
+    const lines = res.text.trim().split('\n');
+    assert.strictEqual(lines[0], 'id,request_id,client_name,provider,model,status,duration_ms,queued_ms,tokens,cost_usd,created_at');
+    // 4 seeded rows + 1 header
+    assert.strictEqual(lines.length, 5);
+  });
+
+  it('export respects provider filter', async () => {
+    const res = await request(app)
+      .get('/admin/logs/export?provider=claude')
+      .set('Authorization', `Basic ${adminCreds}`);
+
+    const lines = res.text.trim().split('\n');
+    // header + 2 claude rows
+    assert.strictEqual(lines.length, 3);
+    for (const line of lines.slice(1)) {
+      assert.ok(line.includes('claude'));
+    }
+  });
+
+  it('export returns header-only CSV when no matching rows', async () => {
+    const res = await request(app)
+      .get('/admin/logs/export?provider=nonexistent')
+      .set('Authorization', `Basic ${adminCreds}`);
+
+    const lines = res.text.trim().split('\n');
+    assert.strictEqual(lines.length, 1);
+    assert.ok(lines[0].startsWith('id,'));
+  });
+
+  it('export escapes formula injection characters', async () => {
+    const { insertRequestLog } = require('../../src/db');
+    insertRequestLog({ request_id: '=CMD()', client_name: '+danger', provider: 'claude', model: 'claude', status: 200, duration_ms: 10, queued_ms: 0, tokens: 0, cost_usd: 0 });
+
+    const res = await request(app)
+      .get('/admin/logs/export?provider=claude')
+      .set('Authorization', `Basic ${adminCreds}`);
+
+    const lines = res.text.trim().split('\n');
+    // Newest row (formula-injected) is first data row (ORDER BY id DESC)
+    const firstDataRow = lines[1];
+    // Formula chars should be prefixed with '
+    assert.ok(firstDataRow.includes("'=CMD()"), 'should escape = prefix');
+    assert.ok(firstDataRow.includes("'+danger"), 'should escape + prefix');
+  });
+
+  it('export rejects unauthenticated request', async () => {
+    const res = await request(app).get('/admin/logs/export');
+    assert.strictEqual(res.status, 401);
+  });
 });
