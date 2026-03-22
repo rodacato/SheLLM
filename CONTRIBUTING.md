@@ -171,19 +171,69 @@ The script will create the `shellmer` user, install Node.js 22, CLI tools, clone
 
 ## Commit Messages
 
-Write clear, imperative commit messages:
+This project uses [Conventional Commits](https://www.conventionalcommits.org/). The format is machine-readable and drives the automated CHANGELOG and GitHub Releases.
+
+### Format
 
 ```
-Add Cerebras provider with model mapping
+<type>(<scope>): <description>
 
-Fix timeout handling for slow Claude responses
+[optional body]
 
-Update health check to verify Gemini auth status
+[optional footer]
 ```
 
-- First line: imperative mood, under 72 characters
-- Body (if needed): explain the "why", not the "what"
-- No emoji prefixes, no conventional commit tags required
+### Types
+
+| Type | When to use | Version bump |
+|---|---|---|
+| `feat` | New feature or capability | minor |
+| `fix` | Bug fix | patch |
+| `docs` | Documentation only | — |
+| `chore` | Deps, tooling, CI, config | — |
+| `refactor` | Code restructure, no behavior change | — |
+| `test` | Test additions or fixes | — |
+| `perf` | Performance improvement | patch |
+
+### Breaking changes
+
+Append `!` to the type or add a `BREAKING CHANGE:` footer. Triggers a **major** bump:
+
+```
+feat!: rename /v1/complete to /v1/chat/completions
+
+BREAKING CHANGE: the old endpoint path is removed
+```
+
+### Examples
+
+```
+feat(providers): add Mistral CLI provider
+
+fix(queue): prevent double-resolution when subprocess times out
+
+docs(contributing): add conventional commits section
+
+chore(deps): bump @google/gemini-cli to 0.31.0
+
+refactor(router): extract queue logic into separate module
+```
+
+### Scopes (optional but recommended)
+
+`providers`, `router`, `queue`, `auth`, `admin`, `cli`, `health`, `deps`, `ci`, `docs`
+
+### Release flow
+
+```bash
+# 1. Bump version, auto-generate CHANGELOG entry, create git tag
+npm version patch    # or: minor | major
+
+# 2. Push commit and tag
+git push && git push --tags
+
+# 3. CI detects the tag → runs tests → creates GitHub Release
+```
 
 ## Pull Requests
 

@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history needed to extract CHANGELOG entry
+
+      - name: Extract release notes from CHANGELOG
+        id: notes
+        run: |
+          # Extract the block for this tag version from CHANGELOG.md
+          VERSION="${GITHUB_REF_NAME#v}"
+          # Grab lines between ## [X.Y.Z] and the next ## [
+          NOTES=$(awk "/^## \[${VERSION}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
+          if [ -z "$NOTES" ]; then
+            NOTES="See [CHANGELOG.md](https://github.com/rodacato/SheLLM/blob/master/CHANGELOG.md) for details."
+          fi
+          # Write to a temp file to handle multiline correctly
+          echo "$NOTES" > /tmp/release-notes.md
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "SheLLM $GITHUB_REF_NAME" \
+            --notes-file /tmp/release-notes.md \
+            --verify-tag

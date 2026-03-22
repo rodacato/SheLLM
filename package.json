@@ -8,6 +8,7 @@
     "shellm": "src/cli.js"
   },
   "scripts": {
+    "version": "node scripts/changelog.js && git add CHANGELOG.md",
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "check:env": "node scripts/check-env.js",
