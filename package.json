@@ -17,7 +17,8 @@
     "smoke": "node test/smoke.mjs",
     "docs:build": "redocly build-docs docs/openapi.yaml --template docs/template.html -o docs/index.html",
     "docs:preview": "redocly preview docs/openapi.yaml",
-    "docs:lint": "redocly lint docs/openapi.yaml"
+    "docs:lint": "redocly lint docs/openapi.yaml",
+    "favicons": "node scripts/generate-favicons.js"
   },
   "dependencies": {
     "better-sqlite3": "^12.6.2",
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@redocly/cli": "^1.34.1",
+    "sharp": "^0.34.5",
     "supertest": "^7.1.0"
   },
   "engines": {
