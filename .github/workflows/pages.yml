@@ -33,7 +33,7 @@ jobs:
 
       # Build Redocly API docs into site/api/
       - name: Build API docs
-        run: npx redocly build-docs docs/openapi.yaml -o site/api/index.html
+        run: npx redocly build-docs docs/openapi.yaml --template docs/template.html -o site/api/index.html
 
       - uses: actions/configure-pages@v5
 

@@ -1,0 +1,94 @@
+apis:
+  main:
+    root: docs/openapi.yaml
+
+theme:
+  openapi:
+    htmlTemplate: docs/template.html
+    theme:
+      colors:
+        primary:
+          main: '#03E3FF'
+          light: '#39eeff'
+          dark: '#02c8e0'
+          contrastText: '#1A1E21'
+        success:
+          main: '#22C55E'
+          contrastText: '#fff'
+        warning:
+          main: '#FFB800'
+          contrastText: '#1A1E21'
+        error:
+          main: '#EF4444'
+          contrastText: '#fff'
+        border:
+          dark: '#2A3038'
+          light: '#2A3038'
+        text:
+          primary: '#FFFFFF'
+          secondary: '#9CA3AF'
+        responses:
+          success:
+            color: '#22C55E'
+            backgroundColor: '#052E16'
+            tabTextColor: '#22C55E'
+          error:
+            color: '#EF4444'
+            backgroundColor: '#3B0A0A'
+          redirect:
+            color: '#FFB800'
+            backgroundColor: '#3B2800'
+          info:
+            color: '#03E3FF'
+            backgroundColor: '#002a2e'
+        http:
+          get:     '#22C55E'
+          post:    '#03E3FF'
+          put:     '#FFB800'
+          patch:   '#a855f7'
+          delete:  '#EF4444'
+          head:    '#9CA3AF'
+          options: '#9CA3AF'
+
+      schema:
+        linesColor: '#2A3038'
+        typeNameColor: '#03E3FF'
+        typeTitleColor: '#E5E7EB'
+        requireLabelColor: '#EF4444'
+        nestedBackground: '#0D1117'
+        arrow:
+          color: '#9CA3AF'
+
+      typography:
+        fontSize: '15px'
+        lineHeight: '1.6'
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        headings:
+          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+          fontWeight: '600'
+        code:
+          fontSize: '0.875em'
+          fontFamily: 'ui-monospace, "SF Mono", "Fira Code", "Cascadia Code", monospace'
+          color: '#03E3FF'
+          backgroundColor: '#0D1117'
+        links:
+          color: '#03E3FF'
+          visited: '#02c8e0'
+          hover: '#39eeff'
+
+      sidebar:
+        width: '260px'
+        backgroundColor: '#1A1E21'
+        textColor: '#9CA3AF'
+        activeTextColor: '#FFFFFF'
+        rightLineColor: '#2A3038'
+
+      rightPanel:
+        backgroundColor: '#0D1117'
+        width: '38%'
+        textColor: '#E5E7EB'
+        panelBackgroundColor: '#0D1117'
+        panelControlsBackgroundColor: '#1A1E21'
+
+      codeBlock:
+        backgroundColor: '#0D1117'
