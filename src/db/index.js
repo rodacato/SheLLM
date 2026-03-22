@@ -53,6 +53,7 @@ function initDb(dbPath) {
       rpm        INTEGER NOT NULL DEFAULT 10,
       models     TEXT,
       active     INTEGER NOT NULL DEFAULT 1,
+      expires_at TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -111,19 +112,19 @@ function closeDb() {
 
 // --- Client CRUD ---
 
-function createClient({ name, rpm = 10, models = null }) {
+function createClient({ name, rpm = 10, models = null, expires_at = null }) {
   const rawKey = generateKey();
   const key_hash = hashKey(rawKey);
   const key_prefix = rawKey.slice(0, KEY_PREFIX_LEN);
   const modelsJson = models ? JSON.stringify(models) : null;
 
   const stmt = db.prepare(`
-    INSERT INTO clients (name, key_hash, key_prefix, rpm, models)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO clients (name, key_hash, key_prefix, rpm, models, expires_at)
+    VALUES (?, ?, ?, ?, ?, ?)
   `);
-  const info = stmt.run(name, key_hash, key_prefix, rpm, modelsJson);
+  const info = stmt.run(name, key_hash, key_prefix, rpm, modelsJson, expires_at);
 
-  const row = db.prepare('SELECT id, name, key_prefix, rpm, models, active, created_at FROM clients WHERE id = ?').get(info.lastInsertRowid);
+  const row = db.prepare('SELECT id, name, key_prefix, rpm, models, active, expires_at, created_at FROM clients WHERE id = ?').get(info.lastInsertRowid);
   return {
     ...row,
     models: row.models ? JSON.parse(row.models) : null,
@@ -132,7 +133,7 @@ function createClient({ name, rpm = 10, models = null }) {
 }
 
 function listClients() {
-  const rows = db.prepare('SELECT id, name, key_prefix, rpm, models, active, created_at FROM clients ORDER BY id').all();
+  const rows = db.prepare('SELECT id, name, key_prefix, rpm, models, active, expires_at, created_at FROM clients ORDER BY id').all();
   return rows.map((r) => ({
     ...r,
     models: r.models ? JSON.parse(r.models) : null,
@@ -140,7 +141,7 @@ function listClients() {
 }
 
 function updateClient(id, fields) {
-  const allowed = ['rpm', 'models', 'active'];
+  const allowed = ['rpm', 'models', 'active', 'expires_at'];
   const sets = [];
   const values = [];
 
@@ -161,7 +162,7 @@ function updateClient(id, fields) {
   values.push(id);
   db.prepare(`UPDATE clients SET ${sets.join(', ')} WHERE id = ?`).run(...values);
 
-  const row = db.prepare('SELECT id, name, key_prefix, rpm, models, active, created_at FROM clients WHERE id = ?').get(id);
+  const row = db.prepare('SELECT id, name, key_prefix, rpm, models, active, expires_at, created_at FROM clients WHERE id = ?').get(id);
   if (!row) return null;
   return { ...row, models: row.models ? JSON.parse(row.models) : null };
 }
@@ -186,8 +187,12 @@ function rotateClientKey(id) {
 
 function findClientByKey(rawKey) {
   const key_hash = hashKey(rawKey);
-  const row = db.prepare('SELECT id, name, rpm, models, active FROM clients WHERE key_hash = ?').get(key_hash);
+  const row = db.prepare('SELECT id, name, rpm, models, active, expires_at FROM clients WHERE key_hash = ?').get(key_hash);
   if (!row) return null;
+  // Check expiration
+  if (row.expires_at && new Date(row.expires_at + 'Z') < new Date()) {
+    return null;
+  }
   return { ...row, models: row.models ? JSON.parse(row.models) : null };
 }
 

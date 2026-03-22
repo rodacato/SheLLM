@@ -16,7 +16,7 @@ router.get('/keys', (req, res) => {
 
 // POST /admin/keys
 router.post('/keys', (req, res) => {
-  const { name, rpm, models } = req.body || {};
+  const { name, rpm, models, expires_at } = req.body || {};
 
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
     return sendError(res, invalidRequest('Missing required field: name'), req.requestId);
@@ -30,8 +30,14 @@ router.post('/keys', (req, res) => {
     return sendError(res, invalidRequest('Field "models" must be an array of model names'), req.requestId);
   }
 
+  if (expires_at !== undefined && expires_at !== null) {
+    if (typeof expires_at !== 'string' || isNaN(Date.parse(expires_at))) {
+      return sendError(res, invalidRequest('Field "expires_at" must be an ISO 8601 date string'), req.requestId);
+    }
+  }
+
   try {
-    const client = createClient({ name: name.trim(), rpm, models });
+    const client = createClient({ name: name.trim(), rpm, models, expires_at });
     res.status(201).json({
       key: {
         id: client.id,
@@ -40,6 +46,7 @@ router.post('/keys', (req, res) => {
         key_prefix: client.key_prefix,
         rpm: client.rpm,
         models: client.models,
+        expires_at: client.expires_at || null,
         created_at: client.created_at,
       },
     });
