@@ -8,14 +8,22 @@ services:
       - claude-auth:/home/node/.claude
       - gemini-auth:/home/node/.gemini
       - codex-auth:/home/node/.codex
+      - node_modules:/workspace/node_modules
     command: sleep infinity
     environment:
       NODE_ENV: development
       MAX_CONCURRENT: "2"
       TIMEOUT_MS: "120000"
       LOG_LEVEL: debug
+      NODE_OPTIONS: "--max-old-space-size=4096"
+    shm_size: "256m"
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
 
 volumes:
   claude-auth:
   gemini-auth:
   codex-auth:
+  node_modules:

@@ -33,6 +33,7 @@
     "NODE_ENV": "development",
     "MAX_CONCURRENT": "2",
     "TIMEOUT_MS": "120000",
-    "LOG_LEVEL": "debug"
+    "LOG_LEVEL": "debug",
+    "NODE_OPTIONS": "--max-old-space-size=4096"
   }
 }
