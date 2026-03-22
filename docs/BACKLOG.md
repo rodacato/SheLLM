@@ -10,6 +10,27 @@ real data instead of mock data.
 
 ---
 
+## Quick Reference
+
+| # | Feature | Summary | Status |
+|---|---|---|---|
+| 1 | [Models Page](#1-models-page--provider-discovery--setup) | Provider cards for Mistral/Ollama, setup flow, context window metadata, vendor/model ID format | 🟡 Backlog |
+| 2 | [Real-Time Terminal Log Feed](#2-overview--real-time-terminal-log-feed) | Live streaming log feed on Overview page via SSE | 🟡 Backlog |
+| 3 | [Quick Operations Panel](#3-overview--quick-operations-panel) | Export logs CSV, quick actions from Overview | 🟡 Partial |
+| 4 | [Security Alert Widget](#4-overview--security-alert-widget) | Anomaly detection and security alerts on Overview | 🔴 Deprioritized |
+| 5 | [CLI Auth Lifecycle](#5-cli-auth-lifecycle--session-monitoring-alerts--fallback) | Auth session monitoring, expiry alerts, provider fallback, circuit breaker | 🟡 Backlog |
+| 6 | [SSE Streaming](#6-sse-streaming--token-by-token-responses-via-server-sent-events) | Token-by-token streaming for `/v1/chat/completions` and `/v1/messages` | 🟡 Backlog |
+| 7 | [Mission Control Dashboard](#7-mission-control-dashboard--real-time-observability) | Sparklines, gauges, error rate breakdown, cost burn rate on Overview | 🟡 Backlog |
+| 8 | [Cost Intelligence](#8-cost-intelligence--per-client-budgets--spend-tracking) | Per-client cost breakdown, budget caps, spend alerts | 🟡 Backlog |
+| 9 | [Client Lifecycle](#9-client-lifecycle--expiration-metadata--audit) | Key expiration, client metadata, admin audit log | 🟡 Backlog |
+| 10 | [Smart Routing](#10-smart-routing--cost-aware--latency-aware-provider-selection) | Virtual models (`auto-cheap`, `auto-best`), latency-aware routing, priority queue | 🟡 Backlog |
+| 11 | [API Parameter Passthrough](#11-api-parameter-passthrough--temperature-response_format-stop) | `temperature`, `response_format`, `stop`, `top_p` forwarded to providers | 🟡 Backlog |
+| 12 | [Developer Experience](#12-developer-experience--linting-seeding--migrations) | ESLint, Prettier, seed data, migrations, pre-commit hooks | 🟡 Backlog |
+| 13 | [Security Hardening](#13-security-hardening--key-expiry-enforcement--input-validation) | Key expiry enforcement, input validation, IP allowlisting | 🟡 Backlog |
+| 14 | [Admin Playground](#14-admin-playground--interactive-api-testing-console) | Interactive console to test prompts, switch providers/models, see raw responses | 🟡 Backlog |
+
+---
+
 ## 1. Models Page — Provider Discovery & Setup
 
 **Screen:** `docs/screens/models_shellm_admin_dashboard/`
@@ -1065,6 +1086,110 @@ low-effort, high-impact security improvements that reduce the attack surface.
 
 ---
 
+## 14. Admin Playground — Interactive API Testing Console
+
+**Screen:** _No screen yet — new feature proposal_
+
+### Problem Statement
+
+When debugging a prompt, testing a new model, or verifying a provider integration, the developer currently has to leave the admin dashboard and use curl, Postman, or a script to hit the SheLLM API. This creates friction:
+
+- Switching contexts between the admin UI and a terminal/tool
+- Manually constructing auth headers and JSON bodies
+- No visibility into the raw error response alongside the admin's provider health view
+- No quick way to compare how two providers respond to the same prompt
+
+The goal is **not** to build a chat product. It's to give the admin a lightweight, built-in testing surface — like a Swagger "Try it out" button, but purpose-built for LLM prompts with provider/model selection front and center.
+
+### What the screen should show
+
+- A **provider selector** dropdown (only enabled/authenticated providers)
+- A **model selector** dropdown (filtered by selected provider)
+- A **system prompt** textarea (optional, collapsible)
+- A **user prompt** textarea (the main input)
+- A **Send** button that POSTs to `/v1/chat/completions` or `/v1/messages` using an admin-scoped API key
+- A **response panel** showing:
+  - The raw response body (formatted JSON)
+  - Status code, latency, `request_id`, token usage
+  - Error details if the request failed (the full error envelope)
+- An **API format toggle**: OpenAI (`/v1/chat/completions`) vs Anthropic (`/v1/messages`)
+- Optional **parameter overrides**: `temperature`, `max_tokens` (collapsible "Advanced" section)
+- A **Copy as curl** button that generates the equivalent curl command
+
+### What exists today
+
+| Feature | Status |
+|---|---|
+| Admin dashboard SPA (Alpine.js + Tailwind) | ✅ Real |
+| `/v1/chat/completions` endpoint | ✅ Real |
+| `/v1/messages` endpoint | ✅ Real |
+| `/v1/models` for model listing | ✅ Real |
+| `/admin/providers` for provider health | ✅ Real |
+| Admin API key management | ✅ Real |
+| Playground page in admin dashboard | ❌ Not implemented |
+| Admin-scoped internal API key | ❌ Not implemented (admin uses Basic Auth, not Bearer) |
+| Parameter passthrough (`temperature`) | ❌ Not implemented yet (Backlog #11) |
+
+### Expert Panel Review
+
+**Contract** — _Positive, with a constraint:_
+> The playground must use the exact same API contract as external consumers — same endpoints, same auth, same error shapes. If the playground needs special behavior, that's a signal the API is missing something. Do not create `/admin/playground/send` — use `/v1/chat/completions` directly. The only admin-specific piece should be a pre-provisioned internal API key.
+
+**SecEng** — _Requires attention:_
+> The playground will need a Bearer token to call `/v1/` endpoints. Options: (a) auto-provision an internal API key labeled `admin-playground` on first use, (b) let the admin pick an existing key. Option (a) is cleaner — the key should be rate-limited and flagged as internal. Never expose the key in the HTML source; fetch it via an authenticated `/admin/playground/key` endpoint. The playground must not bypass auth — if it works without a valid key, we have a hole.
+
+**SRE** — _Enthusiastic:_
+> This is an observability tool in disguise. Show `request_id`, latency, token count, and provider used in the response panel. If possible, link the `request_id` to the Logs page so the admin can click through and see the full log entry. This turns the playground into a debugging surface, not just a prompt tester.
+
+**QA** — _Minimal test surface:_
+> The playground is a UI feature — test the admin page JS logic (provider/model filtering, curl generation) with unit tests. The actual API call is already tested via the existing `/v1/` test suite. Don't duplicate those tests. One integration test: verify the playground page loads and the provider dropdown populates from `/admin/providers`.
+
+**CLI** — _Important consideration:_
+> The playground gives us a clean way to test CLI output changes without writing a script. When a CLI updates (e.g., Gemini changes its output format), the admin can immediately fire a test prompt through the playground to verify parsing. This is a debugging accelerator for upstream changes.
+
+**Consumer** — _Validates the approach:_
+> Stockerly developers currently use curl to test prompts before writing Ruby integration code. If the playground shows the raw request/response, it doubles as a "how to call this API" reference. The "Copy as curl" button alone justifies the feature.
+
+**DevRel** — _Strong support:_
+> A built-in playground is the single best onboarding tool. New developers can test the API without reading the docs first. If we ever expose SheLLM publicly, this is the first thing users expect. Make sure it works with zero configuration — open the admin, pick a provider, type a prompt, hit send.
+
+**Domain** — _Caution on scope:_
+> Keep it as a testing tool, not a chat interface. No conversation history, no multi-turn threading, no message persistence. The moment you add "save this conversation," it becomes a product feature competing with Stockerly's own AI UX. Single request in, single response out.
+
+### What needs to be built
+
+#### Phase 1 — Core Playground (Medium effort, High value)
+
+1. **Admin playground page** — New page in `index.html` with Alpine.js component (`playground.js`)
+2. **Provider/model selectors** — Fetch from `/admin/providers` and `/v1/models`, filter models by selected provider
+3. **Prompt form** — System prompt (collapsible) + user prompt + Send button
+4. **Response panel** — Formatted JSON response, status code, latency, `request_id`, token usage
+5. **API format toggle** — Switch between `/v1/chat/completions` (OpenAI) and `/v1/messages` (Anthropic) request format
+6. **Internal API key** — Auto-provision an `admin-playground` key on first playground use via `/admin/playground/key`
+
+#### Phase 2 — Power Features (Low effort, Medium value)
+
+7. **Copy as curl** — Generate curl command from current provider/model/prompt/params selection
+8. **Parameter overrides** — Collapsible "Advanced" section with `temperature`, `max_tokens` inputs
+9. **Request ID link** — Click `request_id` in response to navigate to the Logs page filtered by that ID
+10. **Error highlighting** — Red-styled response panel when status >= 400, with error message prominently displayed
+
+#### Phase 3 — Polish (Low effort, Low value)
+
+11. **Prompt presets** — A few built-in test prompts (e.g., "Hello world", "Explain recursion", "Return JSON") for quick testing
+12. **Response diff** — Side-by-side view to compare responses from two different providers/models for the same prompt
+13. **Request history** — In-memory (session only, not persisted) list of recent requests for quick re-send
+
+### Notes
+
+- The playground is an **admin-only** feature — no public access, no unauthenticated use
+- It uses the **existing API endpoints** — no new backend routes except the internal key provisioning
+- Alpine.js + Tailwind is sufficient — no need for a rich text editor or markdown renderer
+- If SSE streaming lands (Backlog #6), the playground should support streaming responses
+- Keep the UI consistent with the existing admin dashboard design language (Material 3 palette, Space Grotesk headers)
+
+---
+
 ## Priority Order
 
 | Feature | Effort | Value | Recommended | Backlog # |
@@ -1108,12 +1233,16 @@ low-effort, high-impact security improvements that reduce the attack surface.
 | Simple SQL migrations system | Medium | Medium | 🟡 Backlog | #12 |
 | IP allowlisting per client | Medium | Medium | 🟡 Backlog | #13 |
 | `stop` / `top_p` passthrough | Low | Low | 🟡 Backlog | #11 |
+| Admin Playground — core page + selectors + response panel | Medium | High | 🟡 Backlog | #14 |
 | Context window metadata | Low | Medium | 🟡 Backlog | #1 |
 | Mistral provider | Medium | Medium | 🟡 Backlog | #1 |
 | Real-time admin log stream (SSE) | High | Medium | 🟡 Backlog | #2 |
+| Playground — Copy as curl + parameter overrides | Low | Medium | 🟡 Backlog | #14 |
+| Playground — Request ID link to Logs | Low | Medium | 🟡 Backlog | #14 |
 | Provider configuration UI | High | Medium | 🟡 Backlog | #1 |
 | Cost burn rate + projected monthly widget | Low | Medium | 🟡 Backlog | #7 |
 | Dashboard auto-refresh (polling) | Low | Medium | 🟡 Backlog | #7 |
+| Playground — Prompt presets + response diff | Low | Low | 🟡 Backlog | #14 |
 | Prettier setup | Low | Low | 🟡 Backlog | #12 |
 | `npm run check:all` meta-script | Trivial | Low | 🟡 Backlog | #12 |
 | **Deprioritize** | | | | |
