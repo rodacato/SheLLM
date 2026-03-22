@@ -21,7 +21,7 @@ info:
     - **Per-client limit**: configurable per API key (default 10 RPM)
     - **Admin brute-force**: 5 failed attempts per IP triggers a 5-minute lockout
   x-logo:
-    url: api/logo.svg
+    url: logo.svg
     altText: SheLLM
     backgroundColor: transparent
   license:
