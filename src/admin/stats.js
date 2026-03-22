@@ -56,6 +56,42 @@ router.get('/stats', (req, res) => {
     by_status[String(row.status)] = row.count;
   }
 
+  // Error rate breakdown by class (2xx, 4xx, 5xx)
+  const errorRateRows = db.prepare(`
+    SELECT
+      CASE WHEN status >= 200 AND status < 300 THEN '2xx'
+           WHEN status >= 400 AND status < 500 THEN '4xx'
+           ELSE '5xx' END as class,
+      COUNT(*) as count
+    FROM request_logs
+    WHERE created_at >= datetime('now', ?)
+    GROUP BY class
+  `).all(interval);
+  const by_status_class = {};
+  for (const row of errorRateRows) {
+    by_status_class[row.class] = row.count;
+  }
+
+  const total = agg.total_requests || 1;
+  const error_rate = {
+    success_pct: Math.round(((by_status_class['2xx'] || 0) / total) * 1000) / 10,
+    client_error_pct: Math.round(((by_status_class['4xx'] || 0) / total) * 1000) / 10,
+    server_error_pct: Math.round(((by_status_class['5xx'] || 0) / total) * 1000) / 10,
+    by_class: by_status_class,
+  };
+
+  // Cost breakdown by provider
+  const costByProviderRows = db.prepare(`
+    SELECT provider, COALESCE(ROUND(SUM(cost_usd), 4), 0) as cost
+    FROM request_logs
+    WHERE created_at >= datetime('now', ?) AND provider IS NOT NULL
+    GROUP BY provider
+  `).all(interval);
+  const cost_by_provider = {};
+  for (const row of costByProviderRows) {
+    cost_by_provider[row.provider] = row.cost;
+  }
+
   const activeClients = db.prepare('SELECT COUNT(*) as count FROM clients WHERE active = 1').get();
 
   res.json({
@@ -66,6 +102,8 @@ router.get('/stats', (req, res) => {
     avg_duration_ms: agg.avg_duration_ms,
     by_provider,
     by_status,
+    error_rate,
+    cost_by_provider,
     active_clients: activeClients.count,
   });
 });
