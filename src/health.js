@@ -5,6 +5,7 @@ const logger = require('./lib/logger');
 const CACHE_TTL_MS = parseInt(process.env.HEALTH_CACHE_TTL_MS || '30000', 10);
 const POLL_INTERVAL_MS = parseInt(process.env.HEALTH_POLL_INTERVAL_MS || '300000', 10);
 const DEEP_CHECK_TIMEOUT = 15000;
+const ALERT_WEBHOOK_URL = process.env.SHELLM_ALERT_WEBHOOK_URL || null;
 
 let cache = { data: null, expires: 0 };
 let pollerInterval = null;
@@ -133,6 +134,24 @@ function getCachedProviderStatus(providerName) {
 
 // --- Background health poller ---
 
+function sendAlertWebhook(provider, from, to) {
+  if (!ALERT_WEBHOOK_URL) return;
+  const status = to.authenticated ? 'healthy' : 'unhealthy';
+  const payload = {
+    text: `[SheLLM] Provider \`${provider}\` is now **${status}**${to.error ? `: ${to.error}` : ''}`,
+    provider,
+    from: { authenticated: from.authenticated, installed: from.installed },
+    to: { authenticated: to.authenticated, installed: to.installed },
+    timestamp: new Date().toISOString(),
+  };
+  fetch(ALERT_WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(5000),
+  }).catch((err) => logger.error({ event: 'alert_webhook_error', error: err.message }));
+}
+
 async function pollAllProviders({ deep = false } = {}) {
   try {
     const check = deep ? checkCLIDeep : (name) => checkCLI(name, name, ['--version']);
@@ -157,6 +176,7 @@ async function pollAllProviders({ deep = false } = {}) {
 
       if (changed && prev) {
         logger.warn({ event: 'health_transition', provider: name, from: { authenticated: prev.authenticated, installed: prev.installed }, to: { authenticated: status.authenticated, installed: status.installed } });
+        sendAlertWebhook(name, prev, status);
       }
 
       logger.debug({ event: 'health_poll', provider: name, installed: status.installed, authenticated: status.authenticated, changed });
