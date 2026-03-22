@@ -11,22 +11,22 @@ theme:
           main: '#03E3FF'
           light: '#39eeff'
           dark: '#02c8e0'
-          contrastText: '#1A1E21'
+          contrastText: '#101417'
         success:
           main: '#22C55E'
           contrastText: '#fff'
         warning:
           main: '#FFB800'
-          contrastText: '#1A1E21'
+          contrastText: '#101417'
         error:
           main: '#EF4444'
           contrastText: '#fff'
         border:
-          dark: '#2A3038'
-          light: '#2A3038'
+          dark: '#3b494c'
+          light: '#3b494c'
         text:
           primary: '#FFFFFF'
-          secondary: '#9CA3AF'
+          secondary: '#849397'
         responses:
           success:
             color: '#22C55E'
@@ -47,48 +47,48 @@ theme:
           put:     '#FFB800'
           patch:   '#a855f7'
           delete:  '#EF4444'
-          head:    '#9CA3AF'
-          options: '#9CA3AF'
+          head:    '#849397'
+          options: '#849397'
 
       schema:
-        linesColor: '#2A3038'
+        linesColor: '#3b494c'
         typeNameColor: '#03E3FF'
-        typeTitleColor: '#E5E7EB'
-        requireLabelColor: '#EF4444'
-        nestedBackground: '#0D1117'
+        typeTitleColor: '#e0e3e7'
+        requireLabelColor: '#ffb4ab'
+        nestedBackground: '#0b0f12'
         arrow:
-          color: '#9CA3AF'
+          color: '#849397'
 
       typography:
         fontSize: '15px'
         lineHeight: '1.6'
-        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        fontFamily: '"Inter", system-ui, -apple-system, sans-serif'
         headings:
-          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+          fontFamily: '"Space Grotesk", system-ui, sans-serif'
           fontWeight: '600'
         code:
           fontSize: '0.875em'
-          fontFamily: 'ui-monospace, "SF Mono", "Fira Code", "Cascadia Code", monospace'
+          fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace'
           color: '#03E3FF'
-          backgroundColor: '#0D1117'
+          backgroundColor: '#0b0f12'
         links:
           color: '#03E3FF'
-          visited: '#02c8e0'
-          hover: '#39eeff'
+          visited: '#00daf5'
+          hover: '#a0efff'
 
       sidebar:
         width: '260px'
-        backgroundColor: '#1A1E21'
-        textColor: '#9CA3AF'
+        backgroundColor: '#101417'
+        textColor: '#849397'
         activeTextColor: '#FFFFFF'
-        rightLineColor: '#2A3038'
+        rightLineColor: '#3b494c'
 
       rightPanel:
-        backgroundColor: '#0D1117'
+        backgroundColor: '#0b0f12'
         width: '38%'
-        textColor: '#E5E7EB'
-        panelBackgroundColor: '#0D1117'
-        panelControlsBackgroundColor: '#1A1E21'
+        textColor: '#e0e3e7'
+        panelBackgroundColor: '#0b0f12'
+        panelControlsBackgroundColor: '#101417'
 
       codeBlock:
-        backgroundColor: '#0D1117'
+        backgroundColor: '#0b0f12'

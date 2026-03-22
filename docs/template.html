@@ -8,41 +8,52 @@
     <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon/favicon-dark-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="../assets/favicon/favicon-dark-16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="../assets/favicon/favicon-dark-180.png">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     {{{redocHead}}}
     <style>
-      /* ── Page background ── */
-      body, html { background: #1A1E21 !important; }
+      /* ── Fonts ── */
+      body, html { font-family: 'Inter', system-ui, sans-serif !important; }
+      h1, h2, h3, h4, h5 { font-family: 'Space Grotesk', system-ui, sans-serif !important; color: #FFFFFF !important; }
 
-      /* ── Main content panel background ── */
+      /* ── Page & panel backgrounds (terminal_core tokens) ── */
+      body, html { background: #101417 !important; }
       [role="main"],
       .sc-fzoLsD,
-      .menu-content + div { background: #1A1E21 !important; }
-
-      /* ── Section headings ── */
-      h1, h2, h3, h4, h5 { color: #FFFFFF !important; }
+      .menu-content + div { background: #101417 !important; }
 
       /* ── Operation path in endpoint blocks ── */
-      span[class*="path"] { color: #E5E7EB !important; }
+      span[class*="path"] { color: #e0e3e7 !important; }
 
       /* ── Tag group labels in sidebar ── */
-      li[class*="group"] > label { color: #4B5563 !important; font-size: 0.7rem !important; letter-spacing: 0.1em !important; text-transform: uppercase !important; }
+      li[class*="group"] > label {
+        color: #3b494c !important;
+        font-family: 'Space Grotesk', sans-serif !important;
+        font-size: 0.6875rem !important;
+        letter-spacing: 0.15em !important;
+        text-transform: uppercase !important;
+      }
 
-      /* ── Active sidebar item highlight ── */
+      /* ── Active sidebar item — no border-radius (terminal_core) ── */
       li[class*="active"] > a,
-      li[class*="active"] > label { color: #FFFFFF !important; background: #2E3B44 !important; border-radius: 6px !important; }
+      li[class*="active"] > label {
+        color: #FFFFFF !important;
+        background: #1c2023 !important;
+        border-radius: 0 !important;
+        border-left: 2px solid #03E3FF !important;
+      }
 
       /* ── Property tables ── */
-      tr { border-color: #2A3038 !important; }
-      td { color: #E5E7EB !important; }
+      tr { border-color: #3b494c !important; }
+      td { color: #e0e3e7 !important; }
 
       /* ── Required badge ── */
-      span[class*="required"] { color: #EF4444 !important; }
+      span[class*="required"] { color: #ffb4ab !important; }
 
       /* ── Scrollbar ── */
       ::-webkit-scrollbar { width: 6px; height: 6px; }
-      ::-webkit-scrollbar-track { background: #1A1E21; }
-      ::-webkit-scrollbar-thumb { background: #2E3B44; border-radius: 3px; }
-      ::-webkit-scrollbar-thumb:hover { background: #3b4d59; }
+      ::-webkit-scrollbar-track { background: #101417; }
+      ::-webkit-scrollbar-thumb { background: #1c2023; border-radius: 0; }
+      ::-webkit-scrollbar-thumb:hover { background: #262a2e; }
     </style>
   </head>
   <body>

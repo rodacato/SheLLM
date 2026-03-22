@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SheLLM — Your LLM services, unified as a REST API</title>
+  <title>SheLLM | Unified LLM REST API</title>
   <meta name="description" content="SheLLM turns CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterprise) and API providers into a single HTTP endpoint. One interface, any provider.">
   <meta property="og:title" content="SheLLM">
   <meta property="og:description" content="Your LLM services — unified as a REST API">
@@ -11,321 +11,300 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-dark-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-dark-16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/favicon-dark-180.png">
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface":                    "#101417",
+            "surface-dim":                "#101417",
+            "background":                 "#101417",
+            "surface-container-lowest":   "#0b0f12",
+            "surface-container-low":      "#181c1f",
+            "surface-container":          "#1c2023",
+            "surface-container-high":     "#262a2e",
+            "surface-container-highest":  "#313538",
+            "surface-variant":            "#313538",
+            "primary-container":          "#03e3ff",
+            "primary-fixed-dim":          "#00daf5",
+            "on-primary":                 "#00363e",
+            "on-primary-fixed":           "#001f25",
+            "on-surface":                 "#e0e3e7",
+            "on-surface-variant":         "#bac9cd",
+            "on-secondary-container":     "#b5b9bc",
+            "on-background":              "#e0e3e7",
+            "outline":                    "#849397",
+            "outline-variant":            "#3b494c",
+            "tertiary-container":         "#fec730",
+            "tertiary-fixed-dim":         "#00e639",
+            "on-tertiary":                "#3f2e00",
+            "error":                      "#ffb4ab",
+            "error-container":            "#93000a",
+          },
+          fontFamily: {
+            "headline": ["Space Grotesk", "sans-serif"],
+            "body":     ["Inter", "sans-serif"],
+            "label":    ["Space Grotesk", "sans-serif"],
+          },
+          borderRadius: { "DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "0px" },
+        },
+      },
+    }
+  </script>
   <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-    :root {
-      --cyan:  #03E3FF;
-      --dark:  #1A1E21;
-      --slate: #2E3B44;
-      --muted: #4b5563;
-      --text:  #e5e7eb;
-      --text-dim: #9ca3af;
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
     }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--dark);
-      color: var(--text);
-      line-height: 1.6;
-    }
-
-    a { color: var(--cyan); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    /* ── Layout ── */
-    .container { max-width: 860px; margin: 0 auto; padding: 0 2rem; }
-
-    /* ── Hero ── */
-    .hero {
-      text-align: center;
-      padding: 5rem 2rem 4rem;
-    }
-    .hero img.logo { width: 72px; height: 72px; margin-bottom: 1.5rem; }
-    .hero h1 {
-      font-size: 3rem;
-      font-weight: 700;
-      color: #fff;
-      letter-spacing: 0.04em;
-      margin-bottom: 0.75rem;
-    }
-    .hero .tagline {
-      font-size: 1.15rem;
-      color: var(--text-dim);
-      max-width: 480px;
-      margin: 0 auto 2.5rem;
-    }
-    .cta-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.75rem;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      transition: background 0.15s, transform 0.1s;
-    }
-    .btn:active { transform: scale(0.97); }
-    .btn:hover { text-decoration: none; }
-    .btn-primary { background: var(--cyan); color: var(--dark); }
-    .btn-primary:hover { background: #02c8e0; }
-    .btn-secondary { background: var(--slate); color: #fff; }
-    .btn-secondary:hover { background: #3b4d59; }
-    .btn svg { width: 18px; height: 18px; flex-shrink: 0; }
-
-    /* ── Value prop ── */
-    .value {
-      border-top: 1px solid #2a3038;
-      padding: 3.5rem 0;
-      text-align: center;
-    }
-    .value p {
-      font-size: 1.05rem;
-      color: var(--text-dim);
-      max-width: 600px;
-      margin: 0 auto;
-    }
-    .value strong { color: var(--cyan); }
-
-    /* ── Providers ── */
-    .providers {
-      border-top: 1px solid #2a3038;
-      padding: 3.5rem 0;
-    }
-    .providers h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; text-align: center; }
-    .provider-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
-    }
-    .provider-card {
-      background: var(--slate);
-      border-radius: 10px;
-      padding: 1.25rem 1.5rem;
-    }
-    .provider-card .type {
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--cyan);
-      margin-bottom: 0.4rem;
-    }
-    .provider-card .name { font-weight: 600; font-size: 1rem; color: #fff; }
-    .provider-card .models { font-size: 0.8rem; color: var(--text-dim); margin-top: 0.35rem; }
-
-    /* ── Quick start ── */
-    .quickstart {
-      border-top: 1px solid #2a3038;
-      padding: 3.5rem 0;
-    }
-    .quickstart h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.25rem; text-align: center; }
-    pre {
-      background: #0d1117;
-      border: 1px solid #2a3038;
-      border-radius: 10px;
-      padding: 1.5rem;
-      overflow-x: auto;
-      font-size: 0.875rem;
-      line-height: 1.7;
-    }
-    .comment { color: var(--muted); }
-    .cmd { color: var(--text); }
-
-    /* ── Comparison ── */
-    .compare {
-      border-top: 1px solid #2a3038;
-      padding: 3.5rem 0;
-    }
-    .compare h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.25rem; text-align: center; }
-    .table-wrap { overflow-x: auto; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9rem;
-    }
-    th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #2a3038; }
-    th { color: var(--text-dim); font-weight: 600; font-size: 0.8rem; letter-spacing: 0.05em; text-transform: uppercase; }
-    td:not(:first-child) { text-align: center; }
-    .yes { color: var(--cyan); }
-    .no  { color: var(--muted); }
-
-    /* ── Footer ── */
-    footer {
-      border-top: 1px solid #2a3038;
-      padding: 2rem;
-      text-align: center;
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-    footer a { color: var(--muted); }
-    footer a:hover { color: var(--cyan); }
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3, h4, nav { font-family: 'Space Grotesk', sans-serif; }
+    .diamond-node { clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); }
   </style>
 </head>
-<body>
 
-  <!-- Hero -->
-  <section class="hero">
-    <div class="container">
-      <img src="assets/logo/logo-icon-color.png" alt="SheLLM" class="logo">
-      <h1>SheLLM</h1>
-      <p class="tagline">Your LLM services — unified as a REST API</p>
-      <div class="cta-group">
-        <a href="api/" class="btn btn-primary">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <line x1="16" y1="13" x2="8" y2="13"/>
-            <line x1="16" y1="17" x2="8" y2="17"/>
-          </svg>
-          API Docs
-        </a>
-        <a href="https://github.com/rodacato/SheLLM" class="btn btn-secondary">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
-          </svg>
-          GitHub
-        </a>
+<body class="bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary">
+
+<!-- Nav -->
+<nav class="bg-surface text-on-surface font-headline sticky top-0 z-50 border-b border-outline-variant/20 flex justify-between items-center w-full px-6 py-4">
+  <div class="text-xl font-bold uppercase tracking-widest flex items-center gap-2">
+    <span class="text-white">She</span><span class="text-primary-container">LLM</span>
+  </div>
+  <div class="hidden md:flex gap-8 items-center text-sm">
+    <a href="api/" class="text-primary-container border-b border-primary-container pb-0.5">API Docs</a>
+    <a href="https://github.com/rodacato/SheLLM#supported-providers" class="text-outline hover:text-white transition-colors">Providers</a>
+    <a href="https://github.com/rodacato/SheLLM/blob/master/VERSIONS.md" class="text-outline hover:text-white transition-colors">Versions</a>
+    <a href="https://github.com/rodacato/SheLLM/blob/master/CONTRIBUTING.md" class="text-outline hover:text-white transition-colors">Contributing</a>
+  </div>
+  <a href="https://github.com/rodacato/SheLLM" class="bg-primary-container text-on-primary px-5 py-1.5 font-bold uppercase tracking-wider text-sm hover:bg-white transition-colors">
+    GitHub
+  </a>
+</nav>
+
+<!-- Hero -->
+<section class="min-h-screen flex flex-col items-center justify-center text-center px-6 relative overflow-hidden bg-surface-container-lowest">
+  <!-- Structural background -->
+  <div class="absolute inset-0 opacity-5 pointer-events-none">
+    <div class="absolute top-0 left-0 w-full h-full border-[20vw] border-surface-container-high rotate-45 translate-y-1/2"></div>
+  </div>
+  <div class="z-10 flex flex-col items-center">
+    <!-- Diamond prompt logo -->
+    <div class="flex items-center gap-3 mb-8">
+      <div class="w-12 h-12 flex items-center justify-center border-2 border-primary-container relative">
+        <div class="diamond-node bg-primary-container w-4 h-4 animate-pulse"></div>
+        <div class="absolute -right-6 font-mono text-2xl text-primary-container font-bold">&gt;_</div>
       </div>
     </div>
-  </section>
-
-  <!-- Value prop -->
-  <section class="value">
-    <div class="container">
-      <p>
-        Most LLM gateways assume you're paying per-token via API key.
-        SheLLM's primary use case is different: <strong>you already have CLI subscriptions</strong>
-        (Claude Max, Gemini AI Plus, OpenAI Enterprise) and want to expose them
-        as a regular HTTP API to your apps — without burning API quota.
-      </p>
+    <h1 class="text-6xl md:text-8xl font-black text-white uppercase tracking-[0.04em] leading-tight mb-4">
+      She<span class="text-primary-container">LLM</span>
+    </h1>
+    <p class="text-on-secondary-container text-lg md:text-xl max-w-2xl font-light mb-12 tracking-wide">
+      Your LLM services — unified as a REST API
+    </p>
+    <div class="flex flex-col md:flex-row gap-6">
+      <a href="api/" class="bg-primary-container text-on-primary px-10 py-4 font-bold uppercase tracking-widest hover:bg-white transition-colors active:scale-95">
+        API Docs
+      </a>
+      <a href="https://github.com/rodacato/SheLLM" class="bg-surface-container-high text-white px-10 py-4 font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-surface-variant transition-colors active:scale-95">
+        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        GitHub
+      </a>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Providers -->
-  <section class="providers">
-    <div class="container">
-      <h2>Supported Providers</h2>
-      <div class="provider-grid">
-        <div class="provider-card">
-          <div class="type">CLI</div>
-          <div class="name">Claude Code</div>
-          <div class="models">claude, claude-sonnet, claude-haiku, claude-opus</div>
+<!-- Value prop -->
+<section class="py-32 px-6 bg-surface">
+  <div class="max-w-4xl mx-auto text-center">
+    <h2 class="text-3xl font-bold mb-8 text-white uppercase tracking-tighter">Unified Infrastructure</h2>
+    <p class="text-xl md:text-2xl text-on-surface-variant leading-relaxed font-light">
+      Most LLM gateways assume you're paying per-token via API key. SheLLM's primary use case is the opposite: you already have <span class="text-primary-container font-medium">CLI subscriptions</span> (Claude Max, Gemini AI Plus, OpenAI Enterprise) and want to expose them as a regular HTTP API to your apps — without burning API quota.
+    </p>
+  </div>
+</section>
+
+<!-- Providers -->
+<section class="py-24 px-6 bg-surface-container-low">
+  <div class="max-w-7xl mx-auto">
+    <div class="flex items-end justify-between mb-16">
+      <div>
+        <div class="text-primary-container text-xs font-bold tracking-[0.3em] uppercase mb-2">Supported Backends</div>
+        <h2 class="text-4xl font-bold text-white uppercase tracking-tighter">Native Connectivity</h2>
+      </div>
+      <div class="hidden md:block h-px flex-grow mx-12 bg-outline-variant opacity-20"></div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0">
+      <div class="bg-surface p-10 border border-outline-variant/10 hover:bg-surface-container-high transition-colors group">
+        <div class="flex justify-between items-start mb-12">
+          <span class="bg-primary-container text-on-primary text-[10px] font-bold px-2 py-0.5 tracking-widest">CLI</span>
+          <span class="material-symbols-outlined text-outline group-hover:text-primary-container transition-colors">terminal</span>
         </div>
-        <div class="provider-card">
-          <div class="type">CLI</div>
-          <div class="name">Gemini CLI</div>
-          <div class="models">gemini, gemini-pro, gemini-flash</div>
+        <h3 class="text-xl font-bold text-white mb-2">Claude Code</h3>
+        <p class="text-sm text-on-secondary-container mb-6">Local execution bridge for Anthropic's power tools.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="text-[10px] font-mono border border-outline-variant/40 px-2 py-0.5 uppercase text-outline">claude</span>
+          <span class="text-[10px] font-mono border border-outline-variant/40 px-2 py-0.5 uppercase text-outline">claude-sonnet</span>
+          <span class="text-[10px] font-mono border border-outline-variant/40 px-2 py-0.5 uppercase text-outline">claude-opus</span>
         </div>
-        <div class="provider-card">
-          <div class="type">CLI</div>
-          <div class="name">Codex CLI</div>
-          <div class="models">codex</div>
+      </div>
+      <div class="bg-surface p-10 border border-outline-variant/10 hover:bg-surface-container-high transition-colors group">
+        <div class="flex justify-between items-start mb-12">
+          <span class="bg-primary-container text-on-primary text-[10px] font-bold px-2 py-0.5 tracking-widest">CLI</span>
+          <span class="material-symbols-outlined text-outline group-hover:text-primary-container transition-colors">google</span>
         </div>
-        <div class="provider-card">
-          <div class="type">API</div>
-          <div class="name">Cerebras</div>
-          <div class="models">cerebras, cerebras-8b, cerebras-120b, cerebras-qwen</div>
+        <h3 class="text-xl font-bold text-white mb-2">Gemini CLI</h3>
+        <p class="text-sm text-on-secondary-container mb-6">Seamless integration with Google's command line suite.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="text-[10px] font-mono border border-outline-variant/40 px-2 py-0.5 uppercase text-outline">gemini</span>
+          <span class="text-[10px] font-mono border border-outline-variant/40 px-2 py-0.5 uppercase text-outline">gemini-pro</span>
+          <span class="text-[10px] font-mono border border-outline-variant/40 px-2 py-0.5 uppercase text-outline">gemini-flash</span>
+        </div>
+      </div>
+      <div class="bg-surface p-10 border border-outline-variant/10 hover:bg-surface-container-high transition-colors group">
+        <div class="flex justify-between items-start mb-12">
+          <span class="bg-primary-container text-on-primary text-[10px] font-bold px-2 py-0.5 tracking-widest">CLI</span>
+          <span class="material-symbols-outlined text-outline group-hover:text-primary-container transition-colors">code</span>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Codex CLI</h3>
+        <p class="text-sm text-on-secondary-container mb-6">OpenAI's enterprise code generation command line.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="text-[10px] font-mono border border-outline-variant/40 px-2 py-0.5 uppercase text-outline">codex</span>
+        </div>
+      </div>
+      <div class="bg-surface p-10 border border-outline-variant/10 hover:bg-surface-container-high transition-colors group">
+        <div class="flex justify-between items-start mb-12">
+          <span class="bg-tertiary-container text-on-tertiary text-[10px] font-bold px-2 py-0.5 tracking-widest">API</span>
+          <span class="material-symbols-outlined text-outline group-hover:text-primary-container transition-colors">bolt</span>
+        </div>
+        <h3 class="text-xl font-bold text-white mb-2">Cerebras</h3>
+        <p class="text-sm text-on-secondary-container mb-6">Extreme throughput for large-scale inference tasks.</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="text-[10px] font-mono border border-outline-variant/40 px-2 py-0.5 uppercase text-outline">cerebras-8b</span>
+          <span class="text-[10px] font-mono border border-outline-variant/40 px-2 py-0.5 uppercase text-outline">cerebras-120b</span>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Quick start -->
-  <section class="quickstart">
-    <div class="container">
-      <h2>Quick Start</h2>
-      <pre><code><span class="comment"># Clone and install</span>
-<span class="cmd">git clone https://github.com/rodacato/SheLLM.git && cd SheLLM
-npm install && npm link</span>
-
-<span class="comment"># Configure and start</span>
-<span class="cmd">cp .env.example .env
-shellm start</span>
-
-<span class="comment"># Send a request</span>
-<span class="cmd">curl http://localhost:6100/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model":"claude","messages":[{"role":"user","content":"Hello"}]}'</span></code></pre>
-    </div>
-  </section>
-
-  <!-- Comparison -->
-  <section class="compare">
-    <div class="container">
-      <h2>How SheLLM compares</h2>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Feature</th>
-              <th>SheLLM</th>
-              <th>LiteLLM</th>
-              <th>OpenRouter</th>
-              <th>Portkey</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>CLI subscriptions as backends</td>
-              <td class="yes">✓</td>
-              <td class="no">✗</td>
-              <td class="no">✗</td>
-              <td class="no">✗</td>
-            </tr>
-            <tr>
-              <td>OpenAI-compatible endpoint</td>
-              <td class="yes">✓</td>
-              <td class="yes">✓</td>
-              <td class="yes">✓</td>
-              <td class="yes">✓</td>
-            </tr>
-            <tr>
-              <td>Anthropic-compatible endpoint</td>
-              <td class="yes">✓</td>
-              <td class="no">✗</td>
-              <td class="no">✗</td>
-              <td class="no">✗</td>
-            </tr>
-            <tr>
-              <td>Built-in admin dashboard</td>
-              <td class="yes">✓</td>
-              <td class="no">Partial</td>
-              <td class="no">✗</td>
-              <td class="yes">✓</td>
-            </tr>
-            <tr>
-              <td>Self-hosted, no external deps</td>
-              <td class="yes">✓</td>
-              <td class="yes">✓</td>
-              <td class="no">✗</td>
-              <td class="yes">✓</td>
-            </tr>
-            <tr>
-              <td>SQLite — no Redis / Postgres</td>
-              <td class="yes">✓</td>
-              <td class="no">✗</td>
-              <td class="no">—</td>
-              <td class="no">✗</td>
-            </tr>
-          </tbody>
-        </table>
+<!-- Quick start -->
+<section class="py-24 px-6 bg-surface-container">
+  <div class="max-w-5xl mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-16">
+      <div class="lg:col-span-2">
+        <h2 class="text-4xl font-bold text-white uppercase tracking-tighter mb-6">Quick<br>Deployment</h2>
+        <p class="text-on-secondary-container font-light leading-relaxed">
+          Start your gateway in seconds. SheLLM handles the routing, you handle the queries.
+        </p>
+      </div>
+      <div class="lg:col-span-3 bg-surface-container-lowest border border-outline-variant/20 p-8 font-mono text-sm relative">
+        <div class="absolute top-4 right-4 flex gap-2">
+          <div class="w-3 h-3 bg-error opacity-50"></div>
+          <div class="w-3 h-3 bg-tertiary-container opacity-50"></div>
+          <div class="w-3 h-3 bg-primary-container opacity-50"></div>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <p class="text-outline mb-1"># Clone and install</p>
+            <p class="text-white"><span class="text-primary-container mr-3">$</span>git clone https://github.com/rodacato/SheLLM.git && cd SheLLM</p>
+            <p class="text-white"><span class="text-primary-container mr-3">$</span>bash scripts/setup-dev.sh</p>
+          </div>
+          <div>
+            <p class="text-outline mb-1"># Verify environment</p>
+            <p class="text-white"><span class="text-primary-container mr-3">$</span>npm run check:env</p>
+          </div>
+          <div>
+            <p class="text-outline mb-1"># Start the gateway</p>
+            <p class="text-white"><span class="text-primary-container mr-3">$</span>shellm start</p>
+          </div>
+          <div>
+            <p class="text-outline mb-1"># Send a request</p>
+            <p class="text-white"><span class="text-primary-container mr-3">$</span>curl http://localhost:6100/v1/chat/completions \</p>
+            <p class="text-white ml-6">-d '{"model":"claude","messages":[{"role":"user","content":"Hello"}]}'</p>
+          </div>
+        </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Footer -->
-  <footer>
-    <div class="container">
-      v0.1.0 &nbsp;·&nbsp;
-      <a href="https://github.com/rodacato/SheLLM">GitHub</a> &nbsp;·&nbsp;
-      <a href="api/">API Docs</a> &nbsp;·&nbsp;
-      <a href="https://github.com/rodacato/SheLLM/blob/master/VERSIONS.md">Versions</a> &nbsp;·&nbsp;
-      <a href="https://github.com/rodacato/SheLLM/blob/master/CONTRIBUTING.md">Contributing</a> &nbsp;·&nbsp;
-      <a href="https://github.com/rodacato/SheLLM/blob/master/LICENSE">MIT License</a>
+<!-- Comparison -->
+<section class="py-24 px-6 bg-surface">
+  <div class="max-w-5xl mx-auto">
+    <h2 class="text-3xl font-bold text-white uppercase tracking-tighter mb-16 text-center">How SheLLM compares</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-outline-variant/30">
+            <th class="py-6 px-4 text-xs font-bold uppercase tracking-widest text-outline">Feature</th>
+            <th class="py-6 px-4 text-xs font-bold uppercase tracking-widest text-primary-container bg-surface-container-low">SheLLM</th>
+            <th class="py-6 px-4 text-xs font-bold uppercase tracking-widest text-outline">LiteLLM</th>
+            <th class="py-6 px-4 text-xs font-bold uppercase tracking-widest text-outline">OpenRouter</th>
+            <th class="py-6 px-4 text-xs font-bold uppercase tracking-widest text-outline">Portkey</th>
+          </tr>
+        </thead>
+        <tbody class="text-sm font-mono">
+          <tr class="border-b border-outline-variant/10">
+            <td class="py-6 px-4 text-white">CLI subscriptions as backends</td>
+            <td class="py-6 px-4 bg-surface-container-low text-primary-container font-bold">✓</td>
+            <td class="py-6 px-4 text-outline">✗</td>
+            <td class="py-6 px-4 text-outline">✗</td>
+            <td class="py-6 px-4 text-outline">✗</td>
+          </tr>
+          <tr class="border-b border-outline-variant/10">
+            <td class="py-6 px-4 text-white">OpenAI-compatible endpoint</td>
+            <td class="py-6 px-4 bg-surface-container-low text-primary-container font-bold">✓</td>
+            <td class="py-6 px-4 text-primary-container">✓</td>
+            <td class="py-6 px-4 text-primary-container">✓</td>
+            <td class="py-6 px-4 text-primary-container">✓</td>
+          </tr>
+          <tr class="border-b border-outline-variant/10">
+            <td class="py-6 px-4 text-white">Anthropic-compatible endpoint</td>
+            <td class="py-6 px-4 bg-surface-container-low text-primary-container font-bold">✓</td>
+            <td class="py-6 px-4 text-outline">✗</td>
+            <td class="py-6 px-4 text-outline">✗</td>
+            <td class="py-6 px-4 text-outline">✗</td>
+          </tr>
+          <tr class="border-b border-outline-variant/10">
+            <td class="py-6 px-4 text-white">Built-in admin dashboard</td>
+            <td class="py-6 px-4 bg-surface-container-low text-primary-container font-bold">✓</td>
+            <td class="py-6 px-4 text-outline">✗</td>
+            <td class="py-6 px-4 text-outline">✗</td>
+            <td class="py-6 px-4 text-primary-container">✓</td>
+          </tr>
+          <tr class="border-b border-outline-variant/10">
+            <td class="py-6 px-4 text-white">Self-hosted, SQLite only</td>
+            <td class="py-6 px-4 bg-surface-container-low text-primary-container font-bold">✓</td>
+            <td class="py-6 px-4 text-outline">✗</td>
+            <td class="py-6 px-4 text-outline">✗</td>
+            <td class="py-6 px-4 text-outline">✗</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-  </footer>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-surface-container-lowest text-xs font-mono uppercase tracking-wider border-t border-outline-variant/20 w-full flex justify-between items-center px-6 py-3">
+  <div class="flex items-center gap-4">
+    <span class="text-outline">v0.1.0</span>
+    <div class="h-3 w-px bg-outline-variant"></div>
+    <a href="https://github.com/rodacato/SheLLM" class="text-outline hover:text-primary-container transition-colors">GitHub</a>
+    <a href="api/" class="text-outline hover:text-primary-container transition-colors">API Docs</a>
+  </div>
+  <div class="hidden md:block text-primary-container font-headline font-bold">SheLLM</div>
+  <div class="flex items-center gap-4">
+    <a href="https://github.com/rodacato/SheLLM/blob/master/VERSIONS.md" class="text-outline hover:text-primary-container transition-colors">Versions</a>
+    <a href="https://github.com/rodacato/SheLLM/blob/master/CONTRIBUTING.md" class="text-outline hover:text-primary-container transition-colors">Contributing</a>
+    <a href="https://github.com/rodacato/SheLLM/blob/master/LICENSE" class="text-outline hover:text-primary-container transition-colors">MIT License</a>
+  </div>
+</footer>
 
 </body>
 </html>
