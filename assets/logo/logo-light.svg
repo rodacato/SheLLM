@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 72" role="img" aria-label="SheLLM">
+  <!-- Wordmark: >_ SheLLM — for light backgrounds (transparent bg) -->
+  <!-- Option A: text elements, Space Grotesk via @import -->
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&amp;display=swap');
+    </style>
+  </defs>
+  <text x="4" y="54" font-size="52" font-weight="700" xml:space="preserve">
+    <tspan font-family="ui-monospace,'Cascadia Code','Fira Code',monospace" fill="#101417">&gt;_ </tspan><tspan font-family="'Space Grotesk',system-ui,sans-serif" letter-spacing="-1" fill="#101417">She</tspan><tspan font-family="'Space Grotesk',system-ui,sans-serif" letter-spacing="-1" fill="#03E3FF">LL</tspan><tspan font-family="'Space Grotesk',system-ui,sans-serif" letter-spacing="-1" fill="#101417">M</tspan>
+  </text>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="SheLLM icon">
+  <!-- >_ terminal prompt icon — white on transparent, for dark backgrounds -->
+  <!-- Chevron > -->
+  <path d="M112 176 L232 296 L112 416 L136 440 L280 296 L136 152 Z" fill="#FFFFFF"/>
+  <!-- Underscore _ -->
+  <rect x="292" y="386" width="150" height="30" fill="#FFFFFF"/>
+</svg>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="SheLLM">
+  <!-- Favicon: >_ icon with dark background — renders at any size -->
+  <rect width="512" height="512" fill="#101417"/>
+  <!-- Chevron > -->
+  <path d="M112 176 L232 296 L112 416 L136 440 L280 296 L136 152 Z" fill="#FFFFFF"/>
+  <!-- Underscore _ -->
+  <rect x="292" y="386" width="150" height="30" fill="#03E3FF"/>
+</svg>
