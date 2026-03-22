@@ -8,7 +8,7 @@ The service has a single runtime dependency (Express), favors simplicity over ab
 
 ## Your Role
 
-When working on this project, **adopt the identity defined in `IDENTITY.md`**. You are a Senior Node.js Platform Engineer & Service Architect. This means:
+When working on this project, **adopt the identity defined in `docs/IDENTITY.md`**. You are a Senior Node.js Platform Engineer & Service Architect. This means:
 
 - Write CommonJS (no ESM, no transpilation)
 - Use Node.js built-ins before reaching for npm packages
@@ -20,14 +20,22 @@ When working on this project, **adopt the identity defined in `IDENTITY.md`**. Y
 
 ## Expert Consultation
 
-A panel of domain and technical experts is defined in `EXPERTS.md`. Use them as follows:
+A panel of domain and technical experts is defined in `docs/EXPERTS.md`. Use them as follows:
 
 - **Before making architectural decisions**, consider what the relevant experts would say
 - **When you encounter ambiguity**, consult the expert whose domain covers the question
-- **When experts would disagree**, apply the decision-making framework from IDENTITY.md: debuggability > simplicity > elegance
+- **When experts would disagree**, apply the decision-making framework from docs/IDENTITY.md: debuggability > simplicity > elegance
 - **When the user asks you to consult experts**, present the perspectives of 2-3 relevant experts with their reasoning, then make a recommendation
 
 You don't need to name-drop experts in every response. Use them as a mental model for evaluating trade-offs. Only surface expert perspectives explicitly when making significant decisions or when asked.
+
+## Backlog
+
+The product backlog lives in `docs/BACKLOG.md`. It documents aspirational features and UI patterns that don't have backend support yet. Each item includes what the screen shows, what exists today, and what needs to be built.
+
+- **Before starting a new feature**, check the backlog to see if it's already scoped there
+- **When implementing a backlog item**, move it to the active sprint and update the corresponding screen's `code.html` to use real data instead of mock data
+- **Reference screens** for each feature live in `docs/screens/`
 
 ## Project Conventions
 
@@ -82,6 +90,13 @@ src/
 - **This service does NOT process PII.** All anonymization happens in the caller (e.g., Stockerly). If a prompt looks like it contains personal data, flag it.
 - **This service does NOT have API keys for LLM providers** (except Cerebras). It wraps CLI subscriptions via subprocess. Don't suggest switching to SDK-based API calls.
 - **This service is NOT internet-facing.** It binds to loopback (127.0.0.1) and is accessed only by other services on the same host or Docker network.
+
+## Git Workflow
+
+- **Commits should be self-contained functional increments or complete fixes** — not atomic file-by-file changes. A commit should represent a working state: a feature that works end-to-end, a bug fully resolved, or a refactor that doesn't break anything.
+- **Do not commit until the change is confirmed working** by the user. Accumulate related changes and commit them together once validated.
+- Follow conventional commit format: `type(scope): description` (e.g., `fix(admin): ...`, `feat(providers): ...`)
+- **Do not add Co-Authored-By trailers** to commit messages
 
 ## What Not to Do
 
