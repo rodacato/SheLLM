@@ -1,0 +1,26 @@
+type: object
+properties:
+  id:
+    type: string
+    example: shellm-abc123
+  object:
+    type: string
+    enum: [chat.completion]
+  created:
+    type: integer
+  model:
+    type: string
+  choices:
+    type: array
+    items:
+      type: object
+      properties:
+        index:
+          type: integer
+        message:
+          $ref: "./ChatMessage.yaml"
+        finish_reason:
+          type: string
+          enum: [stop]
+  usage:
+    $ref: "./Usage.yaml"

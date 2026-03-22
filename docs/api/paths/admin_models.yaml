@@ -1,0 +1,18 @@
+get:
+  operationId: listModelsAdmin
+  tags: [Models]
+  summary: List models (admin)
+  description: Same as `/v1/models` but uses Basic auth (for the admin dashboard).
+  security:
+    - BasicAuth: []
+  responses:
+    '200':
+      description: Model list
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/ModelList.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+    '429':
+      $ref: "../responses/RateLimited.yaml"

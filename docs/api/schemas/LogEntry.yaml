@@ -1,0 +1,25 @@
+type: object
+properties:
+  id:
+    type: integer
+  request_id:
+    type: string
+  client_name:
+    type: string
+  provider:
+    type: string
+  model:
+    type: string
+  status:
+    type: integer
+  duration_ms:
+    type: integer
+  queued_ms:
+    type: integer
+  tokens:
+    type: integer
+  cost_usd:
+    type: number
+  created_at:
+    type: string
+    format: date-time

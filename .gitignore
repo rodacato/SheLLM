@@ -45,9 +45,8 @@ Thumbs.db
 *.sublime-project
 *.sublime-workspace
 
-# Docs build output (template.html is source, not output)
-docs/index.html
-!docs/template.html
+# Docs build output
+docs/api/bundled.json
 
 # Build & artifacts
 *.tgz

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SheLLM API Reference</title>
+    <meta name="description" content="SheLLM REST API — OpenAI and Anthropic compatible endpoints for unified LLM access.">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      /* ── Fonts ── */
+      body, html { font-family: 'Inter', system-ui, sans-serif !important; margin: 0; padding: 0; }
+      h1, h2, h3, h4, h5 { font-family: 'Space Grotesk', system-ui, sans-serif !important; color: #FFFFFF !important; }
+
+      /* ── Page & panel backgrounds (terminal_core tokens) ── */
+      body, html { background: #101417 !important; }
+      [role="main"],
+      .sc-fzoLsD,
+      .menu-content + div { background: #101417 !important; }
+
+      /* ── Operation path in endpoint blocks ── */
+      span[class*="path"] { color: #e0e3e7 !important; }
+
+      /* ── Tag group labels in sidebar ── */
+      li[class*="group"] > label {
+        color: #3b494c !important;
+        font-family: 'Space Grotesk', sans-serif !important;
+        font-size: 0.6875rem !important;
+        letter-spacing: 0.15em !important;
+        text-transform: uppercase !important;
+      }
+
+      /* ── Active sidebar item — no border-radius (terminal_core) ── */
+      li[class*="active"] > a,
+      li[class*="active"] > label {
+        color: #FFFFFF !important;
+        background: #1c2023 !important;
+        border-radius: 0 !important;
+        border-left: 2px solid #03E3FF !important;
+      }
+
+      /* ── Property tables ── */
+      tr { border-color: #3b494c !important; }
+      td { color: #e0e3e7 !important; }
+
+      /* ── Required badge ── */
+      span[class*="required"] { color: #ffb4ab !important; }
+
+      /* ── Scrollbar ── */
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: #101417; }
+      ::-webkit-scrollbar-thumb { background: #1c2023; border-radius: 0; }
+      ::-webkit-scrollbar-thumb:hover { background: #262a2e; }
+    </style>
+  </head>
+  <body>
+    <div id="redoc-container"></div>
+    <script src="https://cdn.redocly.com/redoc/v2.5.0/bundles/redoc.standalone.js"></script>
+    <script>
+      Redoc.init('api/bundled.json', {
+        theme: {
+          colors: {
+            primary: { main: '#03E3FF' },
+            success: { main: '#22c55e' },
+            error: { main: '#ffb4ab' },
+            text: { primary: '#e0e3e7', secondary: '#849397' },
+            border: { dark: '#3b494c', light: '#262a2e' },
+            http: {
+              get: '#03E3FF',
+              post: '#22c55e',
+              put: '#ffb800',
+              delete: '#ffb4ab',
+              patch: '#c4a6ff'
+            }
+          },
+          sidebar: {
+            backgroundColor: '#0b0f12',
+            textColor: '#849397',
+            activeTextColor: '#FFFFFF'
+          },
+          rightPanel: {
+            backgroundColor: '#0b0f12'
+          },
+          typography: {
+            fontFamily: 'Inter, system-ui, sans-serif',
+            headings: { fontFamily: 'Space Grotesk, system-ui, sans-serif' },
+            code: { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', backgroundColor: '#181c1f' }
+          },
+          schema: {
+            nestedBackground: '#0b0f12',
+            requireLabelColor: '#ffb4ab'
+          }
+        },
+        hideDownloadButton: false,
+        nativeScrollbars: true
+      }, document.getElementById('redoc-container'));
+    </script>
+  </body>
+</html>

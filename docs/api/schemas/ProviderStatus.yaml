@@ -1,0 +1,8 @@
+type: object
+properties:
+  installed:
+    type: boolean
+  authenticated:
+    type: boolean
+  error:
+    type: string

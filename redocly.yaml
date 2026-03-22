@@ -1,6 +1,6 @@
 apis:
   main:
-    root: docs/openapi.yaml
+    root: docs/api/openapi.yaml
 
 theme:
   openapi:

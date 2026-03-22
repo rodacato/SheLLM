@@ -1,0 +1,12 @@
+type: object
+properties:
+  logs:
+    type: array
+    items:
+      $ref: "./LogEntry.yaml"
+  total:
+    type: integer
+  limit:
+    type: integer
+  offset:
+    type: integer

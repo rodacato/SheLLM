@@ -1,0 +1,14 @@
+type: object
+properties:
+  error:
+    type: object
+    properties:
+      message:
+        type: string
+      type:
+        type: string
+        enum: [invalid_request_error, authentication_error, rate_limit_error, server_error]
+      code:
+        type: string
+      param:
+        type: ['null']

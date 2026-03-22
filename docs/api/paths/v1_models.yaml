@@ -1,0 +1,16 @@
+get:
+  operationId: listModels
+  tags: [Models]
+  summary: List available models
+  description: Returns all configured providers and model aliases.
+  security:
+    - BearerAuth: []
+  responses:
+    '200':
+      description: Model list
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/ModelList.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"

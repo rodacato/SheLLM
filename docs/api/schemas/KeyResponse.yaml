@@ -1,0 +1,21 @@
+type: object
+properties:
+  id:
+    type: integer
+  name:
+    type: string
+  key_prefix:
+    type: string
+    example: shellm-a1
+  rpm:
+    type: integer
+  models:
+    type: [array, 'null']
+    items:
+      type: string
+  active:
+    type: integer
+    enum: [0, 1]
+  created_at:
+    type: string
+    format: date-time

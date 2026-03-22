@@ -1,0 +1,51 @@
+get:
+  operationId: listKeys
+  tags: [Keys]
+  summary: List all API keys
+  security:
+    - BasicAuth: []
+  responses:
+    '200':
+      description: Key list
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              keys:
+                type: array
+                items:
+                  $ref: "../schemas/KeyResponse.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+    '429':
+      $ref: "../responses/RateLimited.yaml"
+
+post:
+  operationId: createKey
+  tags: [Keys]
+  summary: Create a new API key
+  description: |
+    Returns the full `raw_key` in the response. This is the only time
+    the full key is shown — store it securely.
+  security:
+    - BasicAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/KeyCreate.yaml"
+  responses:
+    '201':
+      description: Key created
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/KeyCreateResponse.yaml"
+    '400':
+      $ref: "../responses/BadRequest.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+    '429':
+      $ref: "../responses/RateLimited.yaml"

@@ -1,0 +1,163 @@
+openapi: 3.1.0
+info:
+  title: SheLLM API
+  version: 0.1.0
+  description: |
+    SheLLM exposes local LLM CLI tools (Claude Code, Gemini CLI, Codex CLI, Cerebras)
+    as a unified REST API compatible with both the OpenAI and Anthropic formats.
+
+    ## Authentication
+
+    **Client endpoints** (`/v1/*`) use Bearer token authentication.
+    Tokens are managed via the Admin API.
+
+    **Admin endpoints** (`/admin/*`) use HTTP Basic authentication.
+    The password is set via the `SHELLM_ADMIN_PASSWORD` environment variable.
+
+    ## Rate Limiting
+
+    When rate-limited, responses include a `Retry-After` header (seconds).
+    - **Global limit**: configurable via `SHELLM_GLOBAL_RPM` (default 30 RPM)
+    - **Per-client limit**: configurable per API key (default 10 RPM)
+    - **Admin brute-force**: 5 failed attempts per IP triggers a 5-minute lockout
+  x-logo:
+    url: api/logo.svg
+    altText: SheLLM
+    backgroundColor: transparent
+  license:
+    name: MIT
+    identifier: MIT
+
+servers:
+  - url: http://localhost:6100
+    description: Local development
+
+tags:
+  - name: Health
+    description: Service health check
+  - name: Chat Completions
+    description: OpenAI-compatible chat completions
+  - name: Messages
+    description: Anthropic-compatible Messages API
+  - name: Models
+    description: List available models
+  - name: Keys
+    description: API key management
+  - name: Logs
+    description: Request log inspection
+  - name: Stats
+    description: Aggregated usage statistics
+
+x-tagGroups:
+  - name: API
+    tags:
+      - Health
+      - Chat Completions
+      - Messages
+      - Models
+  - name: Admin
+    tags:
+      - Keys
+      - Logs
+      - Stats
+
+paths:
+  /health:
+    $ref: "./paths/health.yaml"
+  /v1/models:
+    $ref: "./paths/v1_models.yaml"
+  /v1/chat/completions:
+    $ref: "./paths/v1_chat_completions.yaml"
+  /v1/messages:
+    $ref: "./paths/v1_messages.yaml"
+  /admin/keys:
+    $ref: "./paths/admin_keys.yaml"
+  /admin/keys/{id}:
+    $ref: "./paths/admin_keys_{id}.yaml"
+  /admin/keys/{id}/rotate:
+    $ref: "./paths/admin_keys_{id}_rotate.yaml"
+  /admin/logs:
+    $ref: "./paths/admin_logs.yaml"
+  /admin/stats:
+    $ref: "./paths/admin_stats.yaml"
+  /admin/models:
+    $ref: "./paths/admin_models.yaml"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: Client API key (e.g. `shellm-a1b2c3…`)
+    BasicAuth:
+      type: http
+      scheme: basic
+      description: Admin password via `SHELLM_ADMIN_PASSWORD`
+
+  schemas:
+    HealthResponse:
+      $ref: "./schemas/HealthResponse.yaml"
+    ProviderStatus:
+      $ref: "./schemas/ProviderStatus.yaml"
+    ModelList:
+      $ref: "./schemas/ModelList.yaml"
+    Model:
+      $ref: "./schemas/Model.yaml"
+    ChatCompletionRequest:
+      $ref: "./schemas/ChatCompletionRequest.yaml"
+    ChatMessage:
+      $ref: "./schemas/ChatMessage.yaml"
+    ChatCompletionResponse:
+      $ref: "./schemas/ChatCompletionResponse.yaml"
+    Usage:
+      $ref: "./schemas/Usage.yaml"
+    MessagesRequest:
+      $ref: "./schemas/MessagesRequest.yaml"
+    AnthropicMessage:
+      $ref: "./schemas/AnthropicMessage.yaml"
+    ContentBlock:
+      $ref: "./schemas/ContentBlock.yaml"
+    MessagesResponse:
+      $ref: "./schemas/MessagesResponse.yaml"
+    KeyCreate:
+      $ref: "./schemas/KeyCreate.yaml"
+    KeyUpdate:
+      $ref: "./schemas/KeyUpdate.yaml"
+    KeyResponse:
+      $ref: "./schemas/KeyResponse.yaml"
+    KeyCreateResponse:
+      $ref: "./schemas/KeyCreateResponse.yaml"
+    KeyRotateResponse:
+      $ref: "./schemas/KeyRotateResponse.yaml"
+    LogEntry:
+      $ref: "./schemas/LogEntry.yaml"
+    LogsResponse:
+      $ref: "./schemas/LogsResponse.yaml"
+    StatsResponse:
+      $ref: "./schemas/StatsResponse.yaml"
+    Error:
+      $ref: "./schemas/Error.yaml"
+    OpenAIError:
+      $ref: "./schemas/OpenAIError.yaml"
+    AnthropicError:
+      $ref: "./schemas/AnthropicError.yaml"
+
+  parameters:
+    KeyId:
+      $ref: "./parameters/KeyId.yaml"
+    Limit:
+      $ref: "./parameters/Limit.yaml"
+    Offset:
+      $ref: "./parameters/Offset.yaml"
+    Period:
+      $ref: "./parameters/Period.yaml"
+
+  responses:
+    Unauthorized:
+      $ref: "./responses/Unauthorized.yaml"
+    RateLimited:
+      $ref: "./responses/RateLimited.yaml"
+    BadRequest:
+      $ref: "./responses/BadRequest.yaml"
+    NotFound:
+      $ref: "./responses/NotFound.yaml"

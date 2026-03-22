@@ -1,0 +1,12 @@
+type: object
+required: [role, content]
+properties:
+  role:
+    type: string
+    enum: [user, assistant]
+  content:
+    oneOf:
+      - type: string
+      - type: array
+        items:
+          $ref: "./ContentBlock.yaml"

@@ -1,0 +1,9 @@
+type: object
+properties:
+  object:
+    type: string
+    enum: [list]
+  data:
+    type: array
+    items:
+      $ref: "./Model.yaml"

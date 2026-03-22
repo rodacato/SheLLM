@@ -1,0 +1,12 @@
+type: object
+properties:
+  rpm:
+    type: integer
+    minimum: 1
+  models:
+    type: [array, 'null']
+    items:
+      type: string
+  active:
+    type: integer
+    enum: [0, 1]

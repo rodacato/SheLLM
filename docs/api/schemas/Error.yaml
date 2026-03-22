@@ -1,0 +1,11 @@
+type: object
+properties:
+  error:
+    type: string
+  message:
+    type: string
+  request_id:
+    type: [string, 'null']
+  retry_after:
+    type: integer
+    description: Present only on 429 responses

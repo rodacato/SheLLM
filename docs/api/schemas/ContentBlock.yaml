@@ -1,0 +1,8 @@
+type: object
+required: [type, text]
+properties:
+  type:
+    type: string
+    enum: [text]
+  text:
+    type: string

@@ -1,0 +1,69 @@
+get:
+  operationId: listLogs
+  tags: [Logs]
+  summary: List request logs
+  security:
+    - BasicAuth: []
+  parameters:
+    - $ref: "../parameters/Limit.yaml"
+    - $ref: "../parameters/Offset.yaml"
+    - name: provider
+      in: query
+      schema:
+        type: string
+      description: Filter by provider name
+    - name: client
+      in: query
+      schema:
+        type: string
+      description: Filter by client name
+    - name: status
+      in: query
+      schema:
+        type: string
+      description: Status class (2–5) or exact code (e.g. 200, 429)
+    - name: from
+      in: query
+      schema:
+        type: string
+        format: date-time
+      description: Start date (ISO 8601)
+    - name: to
+      in: query
+      schema:
+        type: string
+        format: date-time
+      description: End date (ISO 8601)
+  responses:
+    '200':
+      description: Paginated logs
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/LogsResponse.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+    '429':
+      $ref: "../responses/RateLimited.yaml"
+
+delete:
+  operationId: clearLogs
+  tags: [Logs]
+  summary: Delete all request logs
+  security:
+    - BasicAuth: []
+  responses:
+    '200':
+      description: Logs deleted
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              deleted:
+                type: integer
+                description: Number of log entries deleted
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+    '429':
+      $ref: "../responses/RateLimited.yaml"

@@ -1,0 +1,29 @@
+type: object
+properties:
+  id:
+    type: string
+    example: msg_shellm-abc123
+  type:
+    type: string
+    enum: [message]
+  role:
+    type: string
+    enum: [assistant]
+  content:
+    type: array
+    items:
+      $ref: "./ContentBlock.yaml"
+  model:
+    type: string
+  stop_reason:
+    type: string
+    enum: [end_turn]
+  stop_sequence:
+    type: ['null']
+  usage:
+    type: object
+    properties:
+      input_tokens:
+        type: integer
+      output_tokens:
+        type: integer

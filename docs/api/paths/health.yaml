@@ -1,0 +1,19 @@
+get:
+  operationId: getHealth
+  tags: [Health]
+  summary: Service health check
+  description: Returns provider status, queue depth, and uptime. No authentication required.
+  security: []
+  responses:
+    '200':
+      description: Health status
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/HealthResponse.yaml"
+    '500':
+      description: Internal error
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/Error.yaml"

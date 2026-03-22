@@ -1,0 +1,11 @@
+type: object
+properties:
+  key:
+    allOf:
+      - $ref: "./KeyResponse.yaml"
+      - type: object
+        properties:
+          raw_key:
+            type: string
+            description: Full API key (shown only once)
+            example: shellm-a1b2c3d4e5f6…

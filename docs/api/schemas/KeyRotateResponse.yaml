@@ -1,0 +1,11 @@
+type: object
+properties:
+  key:
+    type: object
+    properties:
+      id:
+        type: integer
+      raw_key:
+        type: string
+      key_prefix:
+        type: string

@@ -1,0 +1,54 @@
+post:
+  operationId: createMessage
+  tags: [Messages]
+  summary: Create a message
+  description: |
+    Anthropic-compatible endpoint. Sends the prompt to the requested provider
+    CLI and returns the response in Anthropic Messages format.
+    Streaming is not supported (`stream` must be `false` or omitted).
+  security:
+    - BearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/MessagesRequest.yaml"
+  responses:
+    '200':
+      description: Message response
+      headers:
+        X-Queue-Depth:
+          schema:
+            type: integer
+        X-Queue-Active:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/MessagesResponse.yaml"
+    '400':
+      $ref: "../responses/BadRequest.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+    '429':
+      $ref: "../responses/RateLimited.yaml"
+    '502':
+      description: Provider CLI failed
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/AnthropicError.yaml"
+    '503':
+      description: Provider unavailable
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/AnthropicError.yaml"
+    '504':
+      description: Provider timeout
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/AnthropicError.yaml"

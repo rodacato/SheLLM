@@ -1,0 +1,19 @@
+get:
+  operationId: getStats
+  tags: [Stats]
+  summary: Aggregated usage statistics
+  security:
+    - BasicAuth: []
+  parameters:
+    - $ref: "../parameters/Period.yaml"
+  responses:
+    '200':
+      description: Statistics
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/StatsResponse.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+    '429':
+      $ref: "../responses/RateLimited.yaml"

@@ -1,0 +1,9 @@
+description: Rate limit exceeded
+headers:
+  Retry-After:
+    schema:
+      type: integer
+content:
+  application/json:
+    schema:
+      $ref: "../schemas/Error.yaml"

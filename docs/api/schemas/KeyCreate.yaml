@@ -1,0 +1,16 @@
+type: object
+required: [name]
+properties:
+  name:
+    type: string
+    description: Unique client name
+    example: my-app
+  rpm:
+    type: integer
+    minimum: 1
+    description: Requests per minute (default 10)
+  models:
+    type: array
+    items:
+      type: string
+    description: Restrict key to specific models

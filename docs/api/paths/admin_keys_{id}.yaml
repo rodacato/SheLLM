@@ -1,0 +1,59 @@
+parameters:
+  - $ref: "../parameters/KeyId.yaml"
+
+patch:
+  operationId: updateKey
+  tags: [Keys]
+  summary: Update an API key
+  security:
+    - BasicAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/KeyUpdate.yaml"
+  responses:
+    '200':
+      description: Key updated
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              key:
+                $ref: "../schemas/KeyResponse.yaml"
+    '400':
+      $ref: "../responses/BadRequest.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+    '404':
+      $ref: "../responses/NotFound.yaml"
+    '429':
+      $ref: "../responses/RateLimited.yaml"
+
+delete:
+  operationId: deleteKey
+  tags: [Keys]
+  summary: Delete an API key
+  security:
+    - BasicAuth: []
+  responses:
+    '200':
+      description: Key deleted
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              deleted:
+                type: boolean
+                example: true
+    '400':
+      $ref: "../responses/BadRequest.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+    '404':
+      $ref: "../responses/NotFound.yaml"
+    '429':
+      $ref: "../responses/RateLimited.yaml"

@@ -1,0 +1,23 @@
+type: object
+properties:
+  period:
+    type: string
+    enum: ['24h', '7d', '30d']
+  total_requests:
+    type: integer
+  total_tokens:
+    type: integer
+  total_cost_usd:
+    type: number
+  avg_duration_ms:
+    type: integer
+  by_provider:
+    type: object
+    additionalProperties:
+      type: integer
+  by_status:
+    type: object
+    additionalProperties:
+      type: integer
+  active_clients:
+    type: integer

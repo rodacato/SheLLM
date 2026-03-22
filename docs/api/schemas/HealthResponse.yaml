@@ -1,0 +1,20 @@
+type: object
+properties:
+  status:
+    type: string
+    example: ok
+  providers:
+    type: object
+    additionalProperties:
+      $ref: "./ProviderStatus.yaml"
+  queue:
+    type: object
+    properties:
+      pending:
+        type: integer
+      active:
+        type: integer
+      max_concurrent:
+        type: integer
+  uptime_seconds:
+    type: integer

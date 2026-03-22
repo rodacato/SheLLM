@@ -1,0 +1,25 @@
+parameters:
+  - $ref: "../parameters/KeyId.yaml"
+
+post:
+  operationId: rotateKey
+  tags: [Keys]
+  summary: Rotate an API key
+  description: Generates a new key value for an existing key. The old key stops working immediately.
+  security:
+    - BasicAuth: []
+  responses:
+    '200':
+      description: Key rotated
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/KeyRotateResponse.yaml"
+    '400':
+      $ref: "../responses/BadRequest.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+    '404':
+      $ref: "../responses/NotFound.yaml"
+    '429':
+      $ref: "../responses/RateLimited.yaml"

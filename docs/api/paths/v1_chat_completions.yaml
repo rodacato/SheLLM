@@ -1,0 +1,53 @@
+post:
+  operationId: createChatCompletion
+  tags: [Chat Completions]
+  summary: Create a chat completion
+  description: |
+    OpenAI-compatible endpoint. Sends the prompt to the requested provider
+    CLI and returns the response in OpenAI format.
+  security:
+    - BearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/ChatCompletionRequest.yaml"
+  responses:
+    '200':
+      description: Chat completion
+      headers:
+        X-Queue-Depth:
+          schema:
+            type: integer
+        X-Queue-Active:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/ChatCompletionResponse.yaml"
+    '400':
+      $ref: "../responses/BadRequest.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+    '429':
+      $ref: "../responses/RateLimited.yaml"
+    '502':
+      description: Provider CLI failed
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/OpenAIError.yaml"
+    '503':
+      description: Provider unavailable
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/OpenAIError.yaml"
+    '504':
+      description: Provider timeout
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/OpenAIError.yaml"

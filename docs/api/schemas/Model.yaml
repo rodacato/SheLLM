@@ -1,0 +1,14 @@
+type: object
+properties:
+  id:
+    type: string
+    example: claude
+  object:
+    type: string
+    enum: [model]
+  created:
+    type: integer
+    example: 0
+  owned_by:
+    type: string
+    example: shellm
