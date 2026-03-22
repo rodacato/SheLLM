@@ -18,7 +18,8 @@
     "docs:build": "redocly bundle docs/api/openapi.yaml --output docs/api/bundled.json --ext json",
     "docs:preview": "redocly preview docs/api/openapi.yaml",
     "docs:lint": "redocly lint docs/api/openapi.yaml",
-    "favicons": "node scripts/generate-favicons.js"
+    "favicons": "node scripts/generate-favicons.js",
+    "screenshots": "node scripts/screenshots.js"
   },
   "dependencies": {
     "better-sqlite3": "^12.6.2",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@redocly/cli": "^2.24.1",
+    "puppeteer": "^24.40.0",
     "sharp": "^0.34.5",
     "supertest": "^7.1.0"
   },
