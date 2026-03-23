@@ -319,11 +319,8 @@
               <span class="text-[0.625rem] font-headline font-bold"
                 :class="streaming ? 'text-primary-container' : 'text-outline'"
                 x-text="streaming ? 'ON' : 'OFF'"></span>
-              <button @click="streaming = !streaming"
-                :class="streaming ? 'bg-primary-container' : 'bg-outline-variant'"
-                class="w-12 h-6 relative p-1 flex items-center transition-colors duration-150">
-                <div class="w-4 h-4 bg-surface transition-transform duration-150"
-                  :class="streaming ? 'translate-x-6' : 'translate-x-0'"></div>
+              <button @click="streaming = !streaming" class="toggle-track" :class="{ 'active': streaming }">
+                <div class="toggle-knob"></div>
               </button>
             </div>
           </div>
@@ -913,10 +910,9 @@
                 <span class="text-[10px] font-mono uppercase"
                   :class="prov.enabled ? 'text-slate-400' : 'text-red-400'"
                   x-text="prov.enabled ? 'Enabled' : 'Disabled'"></span>
-                <button @click="toggleProvider(prov.name, !prov.enabled)"
-                  class="text-[10px] font-headline font-bold uppercase tracking-widest transition-colors"
-                  :class="prov.enabled ? 'text-outline hover:text-red-400' : 'text-primary-container hover:text-white'"
-                  x-text="prov.enabled ? 'Disable' : 'Enable'"></button>
+                <button @click="toggleProvider(prov.name, !prov.enabled)" class="toggle-track" :class="{ 'active': prov.enabled }">
+                  <div class="toggle-knob"></div>
+                </button>
               </div>
             </div>
           </template>
