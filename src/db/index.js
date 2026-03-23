@@ -33,7 +33,13 @@ function runMigrations(database, dbPath) {
   for (const file of files) {
     if (applied.has(file)) continue;
     const sql = readFileSync(path.join(migrationsDir, file), 'utf-8');
-    database.exec(sql);
+    try {
+      database.exec(sql);
+    } catch (err) {
+      // Ignore "duplicate column" errors for idempotent ALTER TABLE migrations
+      if (err.message && err.message.includes('duplicate column')) { /* ok */ }
+      else throw err;
+    }
     database.prepare('INSERT INTO _migrations (name) VALUES (?)').run(file);
   }
 }

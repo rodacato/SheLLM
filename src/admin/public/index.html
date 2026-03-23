@@ -187,18 +187,18 @@
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div class="bg-surface-container p-4">
                   <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Request Volume</p>
-                  <canvas x-ref="sparkRequests" height="60"></canvas>
+                  <div class="h-[60px]"><canvas x-ref="sparkRequests"></canvas></div>
                 </div>
                 <div class="bg-surface-container p-4">
                   <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Errors</p>
-                  <canvas x-ref="sparkErrors" height="60"></canvas>
+                  <div class="h-[60px]"><canvas x-ref="sparkErrors"></canvas></div>
                 </div>
                 <div class="bg-surface-container p-4">
                   <div class="flex items-center justify-between mb-2">
                     <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Cost Trend</p>
                     <span class="text-xs font-mono text-primary-container" x-text="'$' + stats.cost_burn_rate + '/hr'"></span>
                   </div>
-                  <canvas x-ref="sparkCost" height="60"></canvas>
+                  <div class="h-[60px]"><canvas x-ref="sparkCost"></canvas></div>
                 </div>
               </div>
             </template>
