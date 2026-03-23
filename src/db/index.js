@@ -40,7 +40,7 @@ function runMigrations(database, dbPath) {
       if (err.message && err.message.includes('duplicate column')) { /* ok */ }
       else throw err;
     }
-    database.prepare('INSERT INTO _migrations (name) VALUES (?)').run(file);
+    database.prepare('INSERT OR IGNORE INTO _migrations (name) VALUES (?)').run(file);
   }
 }
 
