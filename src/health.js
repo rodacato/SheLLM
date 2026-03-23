@@ -83,7 +83,12 @@ function parseCheckError(err) {
   if (lower.includes('yolo') || lower.includes('approval') || lower.includes('auto-approv')) {
     return { installed: true, authenticated: true };
   }
-  return { installed: true, authenticated: false, error: stderr.replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]').slice(0, 200) };
+  const redacted = stderr
+    .replace(/(sk-|csk-|key-|shellm-)[A-Za-z0-9_-]{10,}/gi, '[REDACTED]')
+    .replace(/Bearer\s+[A-Za-z0-9._-]+/gi, 'Bearer [REDACTED]')
+    .replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]')
+    .slice(0, 200);
+  return { installed: true, authenticated: false, error: redacted };
 }
 
 // --- Health status ---

@@ -96,6 +96,35 @@ describe('health parseCheckError', () => {
     assert.strictEqual(result.authenticated, true);
   });
 
+  it('redacts short API keys with known prefixes', () => {
+    const result = parseCheckError({ code: 1, stderr: 'Invalid key: sk-abc123def456xyz' });
+    assert.ok(result.error.includes('[REDACTED]'));
+    assert.ok(!result.error.includes('sk-abc123'));
+  });
+
+  it('redacts Cerebras keys', () => {
+    const result = parseCheckError({ code: 1, stderr: 'Auth failed: csk-abcdef1234567890' });
+    assert.ok(result.error.includes('[REDACTED]'));
+    assert.ok(!result.error.includes('csk-abcdef'));
+  });
+
+  it('redacts SheLLM keys', () => {
+    const result = parseCheckError({ code: 1, stderr: 'Key: shellm-8da5176b9c89d4264bfbd37c' });
+    assert.ok(result.error.includes('[REDACTED]'));
+    assert.ok(!result.error.includes('shellm-8da5'));
+  });
+
+  it('redacts Bearer tokens', () => {
+    const result = parseCheckError({ code: 1, stderr: 'Authorization: Bearer eyJhbGciOi.payload.sig' });
+    assert.ok(result.error.includes('Bearer [REDACTED]'));
+    assert.ok(!result.error.includes('eyJhbGciOi'));
+  });
+
+  it('does not redact short strings without known prefixes', () => {
+    const result = parseCheckError({ code: 1, stderr: 'Error code: 42' });
+    assert.strictEqual(result.error, 'Error code: 42');
+  });
+
   it('unknown error returns installed but not authenticated', () => {
     const result = parseCheckError({ code: 1, stderr: 'some random error' });
     assert.strictEqual(result.installed, true);
