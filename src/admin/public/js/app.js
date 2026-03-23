@@ -61,7 +61,7 @@ function statusBadgeClass(status) {
   return 'badge-5xx';
 }
 
-const VALID_PAGES = ['overview', 'playground', 'logs', 'keys', 'models'];
+const VALID_PAGES = ['overview', 'playground', 'live', 'logs', 'keys', 'models'];
 
 function app() {
   return {
@@ -70,6 +70,7 @@ function app() {
     nav: [
       { id: 'overview', label: 'Overview', icon: 'dashboard' },
       { id: 'playground', label: 'Playground', icon: 'terminal' },
+      { id: 'live', label: 'Live Logs', icon: 'stream' },
       { id: 'logs', label: 'Request Logs', icon: 'database' },
       { id: 'keys', label: 'API Keys', icon: 'key' },
       { id: 'models', label: 'Models', icon: 'memory' },

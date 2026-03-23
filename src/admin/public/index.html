@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SheLLM Admin</title>
+  <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-dark-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-dark-16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="img/favicon-dark-180.png">
@@ -57,8 +58,8 @@
   <aside class="w-64 bg-[#1a1e21] min-h-screen flex flex-col shrink-0 fixed left-0 top-0 h-full z-50">
     <!-- Brand -->
     <div class="p-6">
-      <h1 class="text-2xl font-black text-primary-container font-headline uppercase tracking-tighter">SheLLM</h1>
-      <p class="font-headline uppercase tracking-[0.15em] text-[0.6875rem] text-outline mt-1">Admin Gateway</p>
+      <img src="img/logo-dark.svg" alt="SheLLM" class="h-8 w-auto">
+      <p class="font-headline uppercase tracking-[0.15em] text-[0.6875rem] text-outline mt-2">Admin Gateway</p>
     </div>
 
     <!-- Nav -->
@@ -469,6 +470,55 @@
               x-text="streamActive ? 'STREAMING... ' + (elapsedDisplay || '') : (sending ? 'WAITING... ' + (elapsedDisplay || '') : 'IDLE')"></div>
           </div>
         </section>
+
+      </div>
+
+      <!-- LIVE LOGS PAGE -->
+      <div x-show="page === 'live'" x-data="livePage()" x-effect="if (page === 'live') { connect(); } else { disconnect(); }">
+
+        <header class="mb-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">LIVE LOGS<span class="text-primary-container">_</span></h2>
+              <p class="text-on-surface-variant">Real-time request stream.</p>
+            </div>
+            <button @click="toggleConnection()"
+              :class="connected ? 'border-[#22c55e] text-[#22c55e]' : 'border-outline-variant text-outline'"
+              class="px-5 py-2.5 border font-headline font-bold uppercase text-xs tracking-widest flex items-center gap-2 transition-colors">
+              <span class="w-2 h-2" :class="connected ? 'bg-[#22c55e] animate-pulse' : 'bg-outline-variant'"></span>
+              <span x-text="connected ? 'CONNECTED' : 'DISCONNECTED'"></span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Terminal panel -->
+        <div class="bg-surface-container-lowest border-t-2 border-primary-container">
+          <div class="px-6 py-3 bg-surface-container-high flex items-center justify-between">
+            <span class="font-mono text-[10px] font-bold text-outline uppercase tracking-widest">TERMINAL_OUTPUT_STDOUT</span>
+            <span class="font-mono text-[10px] text-outline" x-text="logs.length + ' entries'"></span>
+          </div>
+          <div class="p-6 font-mono text-[12px] text-on-surface-variant leading-6 overflow-y-auto terminal-scroll" style="max-height: calc(100vh - 280px);">
+            <template x-if="logs.length === 0 && !connected">
+              <p class="text-outline">No logs. Click DISCONNECTED to connect.</p>
+            </template>
+            <template x-if="logs.length === 0 && connected">
+              <p class="text-outline">Waiting for requests...</p>
+            </template>
+            <template x-for="log in [...logs].reverse()" :key="log.request_id || log.id">
+              <p>
+                <span class="text-primary-container" x-text="'[' + formatTs(log.created_at) + ']'"></span>
+                <span :class="statusColor(log.status)" class="font-bold" x-text="log.status"></span>
+                <span class="text-outline" x-text="log.provider || '-'"></span>
+                <span class="text-on-surface-variant" x-text="log.model || '-'"></span>
+                <span class="text-outline" x-text="formatDuration(log.duration_ms)"></span>
+                <span class="text-on-surface-variant/50" x-text="log.client_name || 'anonymous'"></span>
+              </p>
+            </template>
+            <template x-if="connected">
+              <p class="animate-pulse mt-2"><span class="text-primary-container">&gt;</span> <span class="bg-primary-container text-on-primary text-[10px]">_</span></p>
+            </template>
+          </div>
+        </div>
 
       </div>
 
@@ -908,6 +958,7 @@
   <script src="js/app.js"></script>
   <script src="js/overview.js"></script>
   <script src="js/playground.js"></script>
+  <script src="js/live.js"></script>
   <script src="js/logs.js"></script>
   <script src="js/keys.js"></script>
   <script src="js/models.js"></script>
