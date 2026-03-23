@@ -800,50 +800,99 @@
 
         <header class="mb-10">
           <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">MODELS<span class="text-primary-container">_</span></h2>
-          <p class="text-on-surface-variant">Available models and provider health status.</p>
+          <p class="text-on-surface-variant font-mono text-xs flex items-center gap-2">
+            <span class="text-primary-container">&gt;</span> Discover and configure connected LLM providers
+          </p>
         </header>
 
         <!-- Provider status cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
           <template x-for="[name, info] in Object.entries($root.health?.providers || {})" :key="name">
-            <div class="bg-surface-container p-5">
-              <div class="flex items-center gap-2 mb-3">
-                <span class="w-2 h-2 inline-block"
-                  :class="info.installed && info.authenticated ? 'dot-green' : (info.installed ? 'dot-red' : 'dot-gray')"></span>
-                <h3 class="font-headline font-bold text-white" x-text="name"></h3>
+            <div class="bg-[#2e3b44] p-6 flex flex-col gap-5 border border-transparent hover:border-primary-container/30 transition-all"
+              :class="{ 'opacity-60': !info.installed }">
+              <!-- Header: name + status badge -->
+              <div class="flex justify-between items-start">
+                <div class="flex items-center gap-3">
+                  <span class="w-2.5 h-2.5 inline-block rounded-full"
+                    :class="info.installed && info.authenticated ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : (info.installed ? 'bg-red-500' : 'bg-slate-500')"></span>
+                  <h3 class="font-headline font-bold text-white text-lg uppercase tracking-tight" x-text="name"></h3>
+                </div>
+                <span class="font-mono text-[10px] uppercase tracking-widest px-2 py-1"
+                  :class="info.installed && info.authenticated
+                    ? 'text-green-400 bg-green-400/10'
+                    : (info.installed ? 'text-red-400 bg-red-400/10' : 'text-slate-400 bg-slate-400/10')"
+                  x-text="info.installed && info.authenticated ? 'Authenticated' : (info.installed ? (info.error || 'Not authenticated') : 'Not installed')"></span>
               </div>
-              <p class="text-xs text-outline font-mono mb-4"
-                x-text="info.installed && info.authenticated ? 'Authenticated' : (info.installed ? (info.error || 'Not authenticated') : 'Not installed')"></p>
-              <div class="flex flex-wrap gap-1.5">
+              <!-- Model tags -->
+              <div class="flex flex-wrap gap-2">
                 <template x-for="m in models.filter(m => m.id.startsWith(name) || m.id === name)" :key="m.id">
-                  <span class="bg-surface-container-lowest border border-outline-variant/40 text-primary-container px-2 py-0.5 text-xs font-mono" x-text="m.id"></span>
+                  <span class="font-mono text-[10px] bg-surface-container-lowest border border-outline-variant/40 px-2 py-1"
+                    :class="info.installed && info.authenticated ? 'text-on-surface-variant' : 'text-outline/50'"
+                    x-text="'[' + m.id + ']'"></span>
                 </template>
+                <span x-show="models.filter(m => m.id.startsWith(name) || m.id === name).length === 0"
+                  class="text-outline/40 font-mono text-[10px]">No models available</span>
+              </div>
+              <!-- Footer: enabled toggle -->
+              <div class="mt-auto pt-4 border-t border-white/5 flex justify-between items-center">
+                <span class="text-[10px] font-mono uppercase"
+                  :class="info.enabled !== false ? 'text-slate-400' : 'text-red-400'"
+                  x-text="info.enabled !== false ? 'Enabled' : 'Disabled'"></span>
+                <button @click="toggleProvider(name, info.enabled === false)"
+                  class="text-[10px] font-headline font-bold uppercase tracking-widest transition-colors"
+                  :class="info.enabled !== false ? 'text-outline hover:text-red-400' : 'text-primary-container hover:text-white'"
+                  x-text="info.enabled !== false ? 'Disable' : 'Enable'"></button>
               </div>
             </div>
           </template>
         </div>
 
-        <!-- All models table -->
-        <div class="bg-surface-container overflow-x-auto">
+        <!-- Full Model Registry -->
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-headline text-xl font-bold uppercase tracking-tight text-white">Full Model Registry</h3>
+          <span class="font-mono text-[10px] text-outline uppercase tracking-widest"
+            x-text="'Total Models: ' + models.length"></span>
+        </div>
+
+        <div class="bg-[#2e3b44] overflow-x-auto">
           <table class="w-full text-sm">
-            <thead class="bg-surface-container-lowest">
-              <tr>
-                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Model ID</th>
-                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Owned By</th>
+            <thead>
+              <tr class="border-b border-white/5 bg-surface-container-lowest">
+                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-primary-container">Model ID</th>
+                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-primary-container">Provider</th>
+                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-primary-container">Status</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-white/5">
               <tr x-show="loading && models.length === 0">
-                <td colspan="2" class="px-4 py-10 text-center text-outline font-mono text-sm">Loading...</td>
+                <td colspan="3" class="px-4 py-10 text-center text-outline font-mono text-sm">Loading...</td>
+              </tr>
+              <tr x-show="!loading && models.length === 0">
+                <td colspan="3" class="px-4 py-10 text-center text-outline font-mono text-sm">No models found</td>
               </tr>
               <template x-for="model in models" :key="model.id">
-                <tr class="border-t border-outline-variant/20 hover:bg-surface-container-high transition-colors duration-100">
-                  <td class="px-4 py-3 font-mono text-primary-container text-xs" x-text="model.id"></td>
-                  <td class="px-4 py-3 text-outline text-xs font-mono" x-text="model.owned_by"></td>
+                <tr class="hover:bg-surface-container-lowest/50 transition-colors duration-100 group">
+                  <td class="px-4 py-3 font-mono text-sm text-white" x-text="model.id"></td>
+                  <td class="px-4 py-3 flex items-center gap-2 text-xs text-outline">
+                    <span class="w-1.5 h-1.5 rounded-full"
+                      :class="providerStatus(model.id)?.authenticated ? 'bg-green-500' : 'bg-red-500'"></span>
+                    <span x-text="resolveProvider(model.id)"></span>
+                  </td>
+                  <td class="px-4 py-3 text-xs font-mono"
+                    :class="providerStatus(model.id)?.authenticated ? 'text-green-400/70' : 'text-red-400/70'"
+                    x-text="providerStatus(model.id)?.authenticated ? 'Ready' : 'Unavailable'"></td>
                 </tr>
               </template>
             </tbody>
           </table>
+        </div>
+
+        <!-- Terminal footer -->
+        <div class="bg-surface-container-lowest p-3 border-l-2 border-primary-container mt-0">
+          <p class="text-[10px] font-mono text-outline/60 flex items-center gap-3">
+            <span class="animate-pulse">_</span>
+            <span x-text="'PROVIDERS: ' + Object.keys($root.health?.providers || {}).length + ' | MODELS: ' + models.length + ' | SYNC: 30S'"></span>
+          </p>
         </div>
       </div>
 
