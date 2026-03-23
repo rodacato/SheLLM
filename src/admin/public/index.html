@@ -199,6 +199,54 @@
               </div>
             </template>
 
+            <!-- Error rate breakdown -->
+            <template x-if="stats.error_rate">
+              <div class="bg-surface-container p-5 mb-4">
+                <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-4">Error Rates</p>
+                <div class="space-y-3">
+                  <div class="flex items-center gap-3">
+                    <span class="text-xs font-mono text-on-surface-variant w-20">2xx</span>
+                    <div class="flex-1 bg-surface-container-lowest h-1.5">
+                      <div class="bg-[#22c55e] h-1.5" :style="'width:' + stats.error_rate.success_pct + '%'"></div>
+                    </div>
+                    <span class="text-xs font-mono text-outline w-14 text-right" x-text="stats.error_rate.success_pct + '%'"></span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="text-xs font-mono text-on-surface-variant w-20">4xx</span>
+                    <div class="flex-1 bg-surface-container-lowest h-1.5">
+                      <div class="bg-[#ffb800] h-1.5" :style="'width:' + stats.error_rate.client_error_pct + '%'"></div>
+                    </div>
+                    <span class="text-xs font-mono text-outline w-14 text-right" x-text="stats.error_rate.client_error_pct + '%'"></span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="text-xs font-mono text-on-surface-variant w-20">5xx</span>
+                    <div class="flex-1 bg-surface-container-lowest h-1.5">
+                      <div class="bg-[#ef4444] h-1.5" :style="'width:' + stats.error_rate.server_error_pct + '%'"></div>
+                    </div>
+                    <span class="text-xs font-mono text-outline w-14 text-right" x-text="stats.error_rate.server_error_pct + '%'"></span>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- Cost by provider -->
+            <template x-if="stats.cost_by_provider && Object.keys(stats.cost_by_provider).length > 0">
+              <div class="bg-surface-container p-5 mb-4">
+                <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-4">Cost by Provider</p>
+                <div class="space-y-3">
+                  <template x-for="[prov, cost] in Object.entries(stats.cost_by_provider)" :key="prov">
+                    <div class="flex items-center gap-3">
+                      <span class="text-xs font-mono text-on-surface-variant w-20" x-text="prov"></span>
+                      <div class="flex-1 bg-surface-container-lowest h-1.5">
+                        <div class="bar-brand h-1.5" :style="'width:' + (stats.total_cost_usd > 0 ? Math.round(cost / stats.total_cost_usd * 100) : 0) + '%'"></div>
+                      </div>
+                      <span class="text-xs font-mono text-outline w-16 text-right" x-text="formatCost(cost)"></span>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+
             <!-- Active clients -->
             <div class="bg-surface-container p-5">
               <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Active Clients</p>
