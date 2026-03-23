@@ -1,4 +1,4 @@
-const { route, resolveProvider, queue } = require('../router');
+const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../router');
 const { sanitize } = require('../middleware/sanitize');
 const { invalidRequest, fromCatchable, sendOpenAIError } = require('../errors');
 const { initSSE, sendSSEChunk, sendSSEDone, sendSSEError } = require('../lib/sse');
@@ -131,7 +131,8 @@ async function chatCompletionsHandler(req, res) {
   res.locals.model = model;
 
   try {
-    const result = await route({ model, prompt, system, max_tokens, temperature, request_id: req.requestId });
+    const allowFallback = req.headers['x-shellm-allow-fallback'] === 'true' || undefined;
+    const result = await route({ model, prompt, system, max_tokens, temperature, request_id: req.requestId, allowFallback });
     res.locals.provider = result.provider;
     res.locals.queued_ms = result.queued_ms ?? null;
     res.locals.cost_usd = result.cost_usd ?? null;
@@ -139,6 +140,9 @@ async function chatCompletionsHandler(req, res) {
 
     res.set('X-Queue-Depth', String(queue.stats.pending));
     res.set('X-Queue-Active', String(queue.stats.active));
+    if (result.original_provider) {
+      res.set('X-SheLLM-Fallback-Provider', result.provider);
+    }
 
     res.json({
       id: `shellm-${req.requestId}`,
@@ -171,28 +175,29 @@ async function chatCompletionsHandler(req, res) {
  */
 async function handleStream(req, res, { model, max_tokens, temperature, prompt, system }) {
   const logger = require('../lib/logger');
-  const provider = resolveProvider(model);
-  res.locals.provider = provider?.name || null;
+  const { recordSuccess, recordFailure } = require('../circuit-breaker');
+
+  let provider;
+  try {
+    provider = selectProvider(model);
+  } catch (err) {
+    logger.debug({ event: 'stream_blocked', reason: err.message, model });
+    return sendOpenAIError(res, err);
+  }
+
+  res.locals.provider = provider.name;
   res.locals.model = model;
 
-  logger.debug({ event: 'stream_start', provider: provider?.name, model, request_id: req.requestId });
+  logger.debug({ event: 'stream_start', provider: provider.name, model, request_id: req.requestId });
 
-  // Fail-fast checks (same as router.route())
-  const { getProviderSetting } = require('../db');
-  const { getCachedProviderStatus } = require('../health');
-  const { providerUnavailable } = require('../errors');
-
-  const setting = getProviderSetting(provider.name);
-  if (setting && !setting.enabled) {
-    logger.debug({ event: 'stream_blocked', reason: 'disabled', provider: provider.name });
-    return sendOpenAIError(res, providerUnavailable(`${provider.name} is disabled`));
-  }
-  const healthStatus = getCachedProviderStatus(provider.name);
-  if (healthStatus && healthStatus.authenticated === false) {
-    logger.debug({ event: 'stream_blocked', reason: 'unauthenticated', provider: provider.name });
-    return sendOpenAIError(res, providerUnavailable(`${provider.name} is not authenticated`));
+  // Stream concurrency check
+  if (!acquireStreamSlot()) {
+    const { rateLimited } = require('../errors');
+    return sendOpenAIError(res, rateLimited('Too many concurrent streams, try again later'));
   }
 
+  const streamStart = Date.now();
+  let ttftMs = null;
   const ac = new AbortController();
   initSSE(res);
 
@@ -226,7 +231,10 @@ async function handleStream(req, res, { model, max_tokens, temperature, prompt, 
           if (ac.signal.aborted) { logger.debug({ event: 'stream_aborted', chunkCount }); break; }
           if (event.type === 'delta') {
             chunkCount++;
-            if (chunkCount === 1) logger.debug({ event: 'stream_first_token', request_id: req.requestId });
+            if (chunkCount === 1) {
+              ttftMs = Date.now() - streamStart;
+              logger.debug({ event: 'stream_first_token', ttft_ms: ttftMs, request_id: req.requestId });
+            }
             if (!sentRole) {
               sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model, choices: [{ index: 0, delta: { role: 'assistant', content: event.content }, finish_reason: null }] });
               sentRole = true;
@@ -243,11 +251,13 @@ async function handleStream(req, res, { model, max_tokens, temperature, prompt, 
         sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model, choices: [{ index: 0, delta: { role: 'assistant', content: result.content }, finish_reason: null }] });
       }
 
-      // Final chunk with finish_reason
+      // Final chunk with finish_reason + TTFT metric
       if (!ac.signal.aborted) {
-        sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model, choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] });
+        const finalChunk = { id, object: 'chat.completion.chunk', created, model, choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] };
+        if (ttftMs != null) finalChunk.shellm = { ttft_ms: ttftMs };
+        sendSSEChunk(res, finalChunk);
         sendSSEDone(res);
-        logger.debug({ event: 'stream_complete', request_id: req.requestId });
+        logger.debug({ event: 'stream_complete', ttft_ms: ttftMs, request_id: req.requestId });
       }
     });
   } catch (err) {
@@ -255,6 +265,8 @@ async function handleStream(req, res, { model, max_tokens, temperature, prompt, 
     if (!ac.signal.aborted && !res.writableEnded) {
       sendSSEError(res, err);
     }
+  } finally {
+    releaseStreamSlot();
   }
 }
 

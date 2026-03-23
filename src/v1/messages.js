@@ -1,6 +1,11 @@
-const { route, resolveProvider, queue } = require('../router');
+const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../router');
 const { sanitize } = require('../middleware/sanitize');
 const { invalidRequest, fromCatchable, sendAnthropicError } = require('../errors');
+const { initSSE } = require('../lib/sse');
+const {
+  sendMessageStart, sendContentBlockStart, sendContentBlockDelta,
+  sendContentBlockStop, sendMessageDelta, sendMessageStop, sendStreamError,
+} = require('../lib/sse-anthropic');
 
 const MAX_PROMPT_LENGTH = 50000;
 
@@ -63,14 +68,10 @@ function extractPrompt(messages, system) {
  * Returns null if valid, or an error object if invalid.
  */
 function validate(body) {
-  const { model, messages, max_tokens, stream } = body;
+  const { model, messages, max_tokens } = body;
 
   if (!model) {
     return invalidRequest('Missing required field: model');
-  }
-
-  if (stream === true) {
-    return invalidRequest('Streaming is not supported. Set stream to false or omit it.');
   }
 
   if (max_tokens === undefined || max_tokens === null) {
@@ -110,48 +111,64 @@ function validate(body) {
 /**
  * POST /v1/messages handler (Anthropic Messages API format)
  */
-async function messagesHandler(req, res) {
+/**
+ * Common pre-flight for /v1/messages: validate, enforce model restrictions,
+ * extract and sanitize content.
+ * Returns params object or sends error and returns null.
+ */
+function preflight(req, res) {
   const err = validate(req.body);
-  if (err) return sendAnthropicError(res, err);
+  if (err) { sendAnthropicError(res, err); return null; }
 
   const { model, max_tokens, temperature } = req.body;
 
-  // Enforce per-key model restrictions
   if (req.allowedModels && req.allowedModels.length > 0) {
     const providerObj = resolveProvider(model);
     const providerName = providerObj ? providerObj.name : null;
     if (!req.allowedModels.includes(model) && (!providerName || !req.allowedModels.includes(providerName))) {
-      return sendAnthropicError(res, invalidRequest(
+      sendAnthropicError(res, invalidRequest(
         `Model "${model}" is not allowed for this API key. Allowed: ${req.allowedModels.join(', ')}`
       ));
+      return null;
     }
   }
 
-  // Extract and normalize content
   const extracted = extractPrompt(req.body.messages, req.body.system);
   if (extracted.error) {
-    return sendAnthropicError(res, invalidRequest(extracted.error));
+    sendAnthropicError(res, invalidRequest(extracted.error));
+    return null;
   }
 
   let { prompt, system } = extracted;
-
-  // Sanitize extracted text
   prompt = sanitize(prompt);
   if (system) system = sanitize(system);
 
-  // Check prompt length after sanitization
   if (prompt.length > MAX_PROMPT_LENGTH) {
-    return sendAnthropicError(res, invalidRequest(
+    sendAnthropicError(res, invalidRequest(
       `Prompt exceeds maximum length of ${MAX_PROMPT_LENGTH} characters (got ${prompt.length})`
     ));
+    return null;
   }
 
+  return { model, max_tokens, temperature, prompt, system };
+}
+
+async function messagesHandler(req, res) {
+  const params = preflight(req, res);
+  if (!params) return;
+
+  if (req.body.stream === true) {
+    return handleAnthropicStream(req, res, params);
+  }
+
+  const { model, max_tokens, temperature, prompt, system } = params;
   const startTime = Date.now();
   res.locals.provider = null;
   res.locals.model = model;
 
   try {
-    const result = await route({ model, prompt, system, max_tokens, temperature, request_id: req.requestId });
+    const allowFallback = req.headers['x-shellm-allow-fallback'] === 'true' || undefined;
+    const result = await route({ model, prompt, system, max_tokens, temperature, request_id: req.requestId, allowFallback });
     res.locals.provider = result.provider;
     res.locals.queued_ms = result.queued_ms ?? null;
     res.locals.cost_usd = result.cost_usd ?? null;
@@ -159,6 +176,9 @@ async function messagesHandler(req, res) {
 
     res.set('X-Queue-Depth', String(queue.stats.pending));
     res.set('X-Queue-Active', String(queue.stats.active));
+    if (result.original_provider) {
+      res.set('X-SheLLM-Fallback-Provider', result.provider);
+    }
 
     res.json({
       id: `msg_shellm-${req.requestId}`,
@@ -177,6 +197,97 @@ async function messagesHandler(req, res) {
     const errObj = fromCatchable(catchErr, model);
     errObj.duration_ms = Date.now() - startTime;
     sendAnthropicError(res, errObj);
+  }
+}
+
+/**
+ * Handle streaming response for /v1/messages (Anthropic SSE format).
+ */
+async function handleAnthropicStream(req, res, { model, max_tokens, temperature, prompt, system }) {
+  const logger = require('../lib/logger');
+  const { recordSuccess, recordFailure } = require('../circuit-breaker');
+
+  let provider;
+  try {
+    provider = selectProvider(model);
+  } catch (err) {
+    logger.debug({ event: 'stream_blocked', reason: err.message, model });
+    return sendAnthropicError(res, err);
+  }
+
+  res.locals.provider = provider.name;
+  res.locals.model = model;
+
+  logger.debug({ event: 'stream_start', format: 'anthropic', provider: provider.name, model, request_id: req.requestId });
+
+  // Stream concurrency check
+  if (!acquireStreamSlot()) {
+    const { rateLimited } = require('../errors');
+    return sendAnthropicError(res, rateLimited('Too many concurrent streams, try again later'));
+  }
+
+  const streamStart = Date.now();
+  let ttftMs = null;
+  const ac = new AbortController();
+  initSSE(res);
+
+  // Client disconnect detection
+  const disconnectCheck = setInterval(() => {
+    if (req.socket?.destroyed) {
+      logger.debug({ event: 'stream_client_disconnect', request_id: req.requestId });
+      ac.abort();
+      clearInterval(disconnectCheck);
+    }
+  }, 1000);
+  res.on('finish', () => clearInterval(disconnectCheck));
+
+  const id = `msg_shellm-${req.requestId}`;
+
+  try {
+    await queue.enqueue(async () => {
+      // Send message_start and content_block_start
+      sendMessageStart(res, id, model);
+      sendContentBlockStart(res, 0);
+
+      const streamFn = provider.chatStream;
+      let chunkCount = 0;
+
+      if (streamFn) {
+        logger.debug({ event: 'stream_calling_provider', format: 'anthropic', provider: provider.name, hasChatStream: true });
+        for await (const event of streamFn({ prompt, system, max_tokens, temperature, model, signal: ac.signal })) {
+          if (ac.signal.aborted) { logger.debug({ event: 'stream_aborted', chunkCount }); break; }
+          if (event.type === 'delta') {
+            chunkCount++;
+            if (chunkCount === 1) {
+              ttftMs = Date.now() - streamStart;
+              logger.debug({ event: 'stream_first_token', ttft_ms: ttftMs, request_id: req.requestId });
+            }
+            sendContentBlockDelta(res, 0, event.content);
+          }
+        }
+        recordSuccess(provider.name);
+      } else {
+        logger.debug({ event: 'stream_fallback', format: 'anthropic', provider: provider.name });
+        const result = await provider.chat({ prompt, system, max_tokens, temperature, model });
+        sendContentBlockDelta(res, 0, result.content);
+        recordSuccess(provider.name);
+      }
+
+      if (!ac.signal.aborted) {
+        sendContentBlockStop(res, 0);
+        sendMessageDelta(res, 'end_turn', 0, ttftMs);
+        sendMessageStop(res);
+        logger.debug({ event: 'stream_complete', format: 'anthropic', ttft_ms: ttftMs, request_id: req.requestId });
+      }
+    });
+  } catch (err) {
+    recordFailure(provider.name);
+    logger.debug({ event: 'stream_error', format: 'anthropic', error: err.message, request_id: req.requestId });
+    if (!ac.signal.aborted && !res.writableEnded) {
+      sendStreamError(res, err);
+    }
+  } finally {
+    releaseStreamSlot();
   }
 }
 

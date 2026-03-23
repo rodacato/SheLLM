@@ -18,8 +18,8 @@ real data instead of mock data.
 | 2 | [Real-Time Terminal Log Feed](#2-overview--real-time-terminal-log-feed) | Live streaming log feed on Overview page via SSE | 🟡 Backlog |
 | 3 | [Quick Operations Panel](#3-overview--quick-operations-panel) | Export logs CSV, quick actions from Overview | ✅ Done |
 | 4 | [Security Alert Widget](#4-overview--security-alert-widget) | Anomaly detection and security alerts on Overview | 🔴 Deprioritized |
-| 5 | [CLI Auth Lifecycle](#5-cli-auth-lifecycle--session-monitoring-alerts--fallback) | Auth session monitoring, expiry alerts, provider fallback, circuit breaker | 🟡 Partial |
-| 6 | [SSE Streaming](#6-sse-streaming--token-by-token-responses-via-server-sent-events) | Token-by-token streaming for `/v1/chat/completions` and `/v1/messages` | 🟡 Partial |
+| 5 | [CLI Auth Lifecycle](#5-cli-auth-lifecycle--session-monitoring-alerts--fallback) | Auth session monitoring, expiry alerts, provider fallback, circuit breaker | ✅ Done |
+| 6 | [SSE Streaming](#6-sse-streaming--token-by-token-responses-via-server-sent-events) | Token-by-token streaming for `/v1/chat/completions` and `/v1/messages` | ✅ Done |
 | 7 | [Mission Control Dashboard](#7-mission-control-dashboard--real-time-observability) | Sparklines, gauges, error rate breakdown, cost burn rate on Overview | 🟡 Partial |
 | 8 | [Cost Intelligence](#8-cost-intelligence--per-client-budgets--spend-tracking) | Per-client cost breakdown, budget caps, spend alerts | 🟡 Backlog |
 | 9 | [Client Lifecycle](#9-client-lifecycle--expiration-metadata--audit) | Key expiration, client metadata, admin audit log | 🟡 Partial |
@@ -161,12 +161,14 @@ and no fallback.
 |---|---|
 | Auth detection via stderr string matching | ✅ Fragile — regex for `"not authenticated"`, `"login"`, `"auth"` |
 | Health cache (30s TTL) | ✅ Real — lazy, only checked on request |
-| Fail-fast routing (skip unauthenticated providers) | ✅ Real — but no fallback, just 503 |
+| Fail-fast routing (skip unauthenticated providers) | ✅ Real — with fallback and circuit breaker |
 | Admin provider toggle (manual disable) | ✅ Real |
 | Background health polling | ✅ Implemented |
-| Alerting on auth failure (webhook / email / Slack) | ✅ Implemented |
-| Automatic provider fallback | ❌ Not implemented |
-| Circuit breaker pattern | ❌ Not implemented |
+| Alerting on auth failure (webhook) | ✅ Implemented — `SHELLM_ALERT_WEBHOOK_URL` env var |
+| Automatic provider fallback | ✅ Implemented — opt-in via `SHELLM_FALLBACK_ENABLED` or `X-SheLLM-Allow-Fallback` header |
+| Circuit breaker pattern | ✅ Implemented — 3-state (closed/open/half_open), per-provider, configurable threshold |
+| Consumer error enrichment | ✅ Implemented — `available_providers` in 503 responses |
+| Degraded health status | ✅ Implemented — `/health` returns `ok`, `degraded`, or `down` |
 | Re-authentication mechanism | ❌ Not implemented (may not be possible for all CLIs) |
 
 ### Expert Panel Review
@@ -278,13 +280,16 @@ responses; SheLLM should too, for SDK compatibility and better UX.
 | Feature | Status |
 |---|---|
 | `POST /v1/chat/completions` (full response) | ✅ Real |
-| `POST /v1/messages` (full response) | ✅ Real — explicitly rejects `stream: true` |
+| `POST /v1/messages` (full response) | ✅ Real |
 | Subprocess stdout piped via `spawn` | ✅ Real — chunks arrive via `.on('data')` |
 | Chunk buffering in `base.js` | ✅ Real — concatenates all chunks, resolves on exit |
-| `stream: true` support on any endpoint | ✅ Implemented (OpenAI format on /v1/chat/completions) |
+| `stream: true` on `/v1/chat/completions` | ✅ Implemented — OpenAI SSE format |
+| `stream: true` on `/v1/messages` | ✅ Implemented — Anthropic SSE format (message_start → content_block_delta → message_stop) |
 | SSE response format (`text/event-stream`) | ✅ Implemented |
 | Streaming-aware provider interface | ✅ Implemented |
-| Streaming-aware queue/concurrency tracking | ✅ Implemented (uses existing queue) |
+| Streaming-aware queue/concurrency tracking | ✅ Implemented — shared queue + `MAX_STREAM_CONCURRENT` limit |
+| TTFT metric | ✅ Implemented — `shellm.ttft_ms` in final SSE chunk/event |
+| Gemini buffer-and-flush fallback | ✅ Implemented — both OpenAI and Anthropic formats |
 
 ### Provider Streaming Readiness
 
@@ -1104,12 +1109,12 @@ Implemented in `feat(admin): add Playground page`. Alpine.js SPA page with provi
 | `response_format` (JSON mode) passthrough | Medium | High | 🟡 Next after sprint | #11 |
 | `npm run seed` (demo data) | Medium | Medium | 🟡 Next after sprint | #12 |
 | **Backlog** | | | | |
-| Provider fallback in router | High | High | 🟡 Backlog | #5 |
-| Circuit breaker per provider | High | High | 🟡 Backlog | #5 |
+| Provider fallback in router | High | High | ✅ Done | #5 |
+| Circuit breaker per provider | High | High | ✅ Done | #5 |
 | Mission Control dashboard panels (sparklines, gauges) | Medium | High | 🟡 Backlog | #7 |
-| SSE streaming — `/v1/messages` stream | Medium | Medium | 🟡 Backlog | #6 |
-| SSE streaming — TTFT metric + stream concurrency | Low | Medium | 🟡 Backlog | #6 |
-| Consumer error enrichment (available_providers) | Medium | Medium | 🟡 Backlog | #5 |
+| SSE streaming — `/v1/messages` stream | Medium | Medium | ✅ Done | #6 |
+| SSE streaming — TTFT metric + stream concurrency | Low | Medium | ✅ Done | #6 |
+| Consumer error enrichment (available_providers) | Medium | Medium | ✅ Done | #5 |
 | `auto-fast` latency-aware routing | Medium | Medium | 🟡 Backlog | #10 |
 | Request priority queue (`X-Priority`) | Medium | Medium | 🟡 Backlog | #10 |
 | Client metadata (description, owner, tags) | Low | Medium | 🟡 Backlog | #9 |

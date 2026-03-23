@@ -229,7 +229,7 @@ describe('/v1/messages', () => {
     assert.match(res.body.error.message, /Unknown model/);
   });
 
-  it('rejects stream: true', async () => {
+  it('accepts stream: true and returns SSE content-type', async () => {
     const res = await request(app)
       .post('/v1/messages')
       .set('Authorization', `Bearer ${testKey}`)
@@ -240,8 +240,9 @@ describe('/v1/messages', () => {
         messages: [{ role: 'user', content: 'hello' }],
       });
 
-    assert.strictEqual(res.status, 400);
-    assert.match(res.body.error.message, /[Ss]treaming/);
+    // Stream is accepted (not rejected); response uses SSE
+    assert.strictEqual(res.status, 200);
+    assert.ok(res.headers['content-type'].includes('text/event-stream'));
   });
 
   it('rejects non-text content block', async () => {

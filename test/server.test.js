@@ -52,7 +52,7 @@ describe('server integration', () => {
   it('GET /health returns 200 with correct shape', async () => {
     const res = await request(app).get('/health');
     assert.strictEqual(res.status, 200);
-    assert.strictEqual(res.body.status, 'ok');
+    assert.ok(['ok', 'degraded', 'down'].includes(res.body.status), `unexpected status: ${res.body.status}`);
     assert.ok(res.body.providers);
     assert.ok(res.body.queue);
     assert.strictEqual(typeof res.body.uptime_seconds, 'number');

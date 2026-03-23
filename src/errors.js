@@ -18,8 +18,8 @@ function cliFailed(provider, stderr) {
   return appError(502, 'cli_failed', `${provider}: ${stderr}`.slice(0, 500));
 }
 
-function providerUnavailable(message) {
-  return appError(503, 'provider_unavailable', message);
+function providerUnavailable(message, extra) {
+  return appError(503, 'provider_unavailable', message, extra);
 }
 
 function timeout(provider) {
@@ -46,6 +46,7 @@ function sendError(res, err, requestId) {
     body.retry_after = err.retry_after;
     res.set('Retry-After', String(err.retry_after));
   }
+  if (err.available_providers) body.available_providers = err.available_providers;
   res.status(err.status || 500).json(body);
 }
 
@@ -59,9 +60,11 @@ const CODE_TO_TYPE = {
 function sendOpenAIError(res, err) {
   const type = CODE_TO_TYPE[err.code] || 'server_error';
   if (err.retry_after) res.set('Retry-After', String(err.retry_after));
-  res.status(err.status || 500).json({
+  const body = {
     error: { message: err.message || 'Internal server error', type, code: err.code || 'internal_error', param: null },
-  });
+  };
+  if (err.available_providers) body.available_providers = err.available_providers;
+  res.status(err.status || 500).json(body);
 }
 
 // Anthropic-compatible error format for /v1/messages endpoint
@@ -74,10 +77,12 @@ const CODE_TO_ANTHROPIC_TYPE = {
 function sendAnthropicError(res, err) {
   const type = CODE_TO_ANTHROPIC_TYPE[err.code] || 'api_error';
   if (err.retry_after) res.set('Retry-After', String(err.retry_after));
-  res.status(err.status || 500).json({
+  const body = {
     type: 'error',
     error: { type, message: err.message || 'Internal server error' },
-  });
+  };
+  if (err.available_providers) body.available_providers = err.available_providers;
+  res.status(err.status || 500).json(body);
 }
 
 module.exports = {

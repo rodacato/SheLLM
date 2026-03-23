@@ -1,5 +1,6 @@
 const { execute } = require('./providers/base');
 const { queue } = require('./router');
+const { getAllCircuitStates, resetCircuit } = require('./circuit-breaker');
 const logger = require('./lib/logger');
 
 const CACHE_TTL_MS = parseInt(process.env.HEALTH_CACHE_TTL_MS || '30000', 10);
@@ -101,10 +102,12 @@ async function getHealthStatus() {
   ]);
 
   const providers = mergeEnabledStatus({ claude: claudeStatus, gemini: geminiStatus, codex: codexStatus, cerebras: cerebrasStatus });
-  cache = { data: { status: 'ok', providers }, expires: now + CACHE_TTL_MS };
+  const status = computeHealthStatus(providers);
+  cache = { data: { status, providers }, expires: now + CACHE_TTL_MS };
 
   return {
     ...cache.data,
+    circuit_breakers: getAllCircuitStates(),
     queue: queue.stats,
     uptime_seconds: Math.floor(process.uptime()),
   };
@@ -123,6 +126,16 @@ function mergeEnabledStatus(providerStatuses) {
     result[name] = { ...status, enabled: enabledMap[name] ?? true };
   }
   return result;
+}
+
+function computeHealthStatus(providers) {
+  const entries = Object.values(providers);
+  const enabled = entries.filter((p) => p.enabled !== false);
+  if (enabled.length === 0) return 'ok';
+  const healthy = enabled.filter((p) => p.authenticated !== false);
+  if (healthy.length === 0) return 'down';
+  if (healthy.length < enabled.length) return 'degraded';
+  return 'ok';
 }
 
 function getCachedProviderStatus(providerName) {
@@ -177,6 +190,10 @@ async function pollAllProviders({ deep = false } = {}) {
       if (changed && prev) {
         logger.warn({ event: 'health_transition', provider: name, from: { authenticated: prev.authenticated, installed: prev.installed }, to: { authenticated: status.authenticated, installed: status.installed } });
         sendAlertWebhook(name, prev, status);
+        // Reset circuit breaker when provider recovers
+        if (status.authenticated && !prev.authenticated) {
+          resetCircuit(name);
+        }
       }
 
       logger.debug({ event: 'health_poll', provider: name, installed: status.installed, authenticated: status.authenticated, changed });
