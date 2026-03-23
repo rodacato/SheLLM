@@ -541,13 +541,14 @@
                 <th class="px-4 py-3 text-center text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">RPM</th>
                 <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Models</th>
                 <th class="px-4 py-3 text-center text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Status</th>
+                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Expires</th>
                 <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Created</th>
                 <th class="px-4 py-3 text-right text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr x-show="keys.length === 0">
-                <td colspan="7" class="px-4 py-10 text-center text-outline font-mono text-sm" x-text="loading ? 'Loading...' : 'No keys created yet'"></td>
+                <td colspan="8" class="px-4 py-10 text-center text-outline font-mono text-sm" x-text="loading ? 'Loading...' : 'No keys created yet'"></td>
               </tr>
               <template x-for="key in keys" :key="key.id">
                 <tr class="border-t border-outline-variant/20 hover:bg-surface-container-high transition-colors duration-100">
@@ -561,6 +562,9 @@
                       class="px-2.5 py-0.5 text-xs font-bold font-headline uppercase cursor-pointer"
                       x-text="key.active ? 'Active' : 'Inactive'"></button>
                   </td>
+                  <td class="px-4 py-3 text-xs font-mono whitespace-nowrap"
+                    :class="isExpired(key) ? 'text-error' : isExpiringSoon(key) ? 'text-[#ffb800]' : 'text-outline'"
+                    x-text="formatExpiry(key)"></td>
                   <td class="px-4 py-3 text-outline text-xs font-mono whitespace-nowrap" x-text="formatTime(key.created_at)"></td>
                   <td class="px-4 py-3 text-right whitespace-nowrap">
                     <button @click="rotateKey(key)" class="link-brand text-xs font-headline font-bold uppercase mr-3">Rotate</button>
@@ -594,6 +598,11 @@
                 <input type="text" x-model="createForm.models"
                   class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"
                   placeholder="claude, gemini">
+              </div>
+              <div>
+                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Expires At (optional)</label>
+                <input type="datetime-local" x-model="createForm.expires_at"
+                  class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container">
               </div>
             </div>
             <div class="flex justify-end gap-3 mt-8">

@@ -65,7 +65,7 @@ router.patch('/keys/:id', (req, res) => {
     return sendError(res, invalidRequest('Invalid key id'), req.requestId);
   }
 
-  const { rpm, models, active } = req.body || {};
+  const { rpm, models, active, expires_at } = req.body || {};
 
   if (rpm !== undefined && (typeof rpm !== 'number' || !Number.isInteger(rpm) || rpm < 1)) {
     return sendError(res, invalidRequest('Field "rpm" must be a positive integer'), req.requestId);
@@ -79,7 +79,13 @@ router.patch('/keys/:id', (req, res) => {
     return sendError(res, invalidRequest('Field "active" must be 0 or 1'), req.requestId);
   }
 
-  const updated = updateClient(id, { rpm, models, active });
+  if (expires_at !== undefined && expires_at !== null) {
+    if (typeof expires_at !== 'string' || isNaN(Date.parse(expires_at))) {
+      return sendError(res, invalidRequest('Field "expires_at" must be an ISO 8601 date string'), req.requestId);
+    }
+  }
+
+  const updated = updateClient(id, { rpm, models, active, expires_at });
   if (!updated) {
     return sendError(res, { status: 404, code: 'not_found', message: `Key id ${id} not found` }, req.requestId);
   }

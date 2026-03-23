@@ -4,7 +4,7 @@ function keysPage() {
     loading: true,
     showCreateModal: false,
     newKeyResult: null,
-    createForm: { name: '', rpm: 10, models: '' },
+    createForm: { name: '', rpm: 10, models: '', expires_at: '' },
 
     async fetchKeys() {
       this.loading = true;
@@ -26,6 +26,9 @@ function keysPage() {
       if (this.createForm.models.trim()) {
         body.models = this.createForm.models.split(',').map((m) => m.trim()).filter(Boolean);
       }
+      if (this.createForm.expires_at) {
+        body.expires_at = new Date(this.createForm.expires_at).toISOString();
+      }
 
       try {
         const res = await apiFetch(`${API_BASE}/keys`, {
@@ -35,7 +38,7 @@ function keysPage() {
         if (res.ok) {
           const data = await res.json();
           this.newKeyResult = data.key;
-          this.createForm = { name: '', rpm: 10, models: '' };
+          this.createForm = { name: '', rpm: 10, models: '', expires_at: '' };
           this.showCreateModal = false;
           await this.fetchKeys();
         } else {
@@ -74,6 +77,22 @@ function keysPage() {
         await apiFetch(`${API_BASE}/keys/${key.id}`, { method: 'DELETE' });
         await this.fetchKeys();
       } catch { /* ignore */ }
+    },
+
+    isExpired(key) {
+      return key.expires_at && new Date(key.expires_at + 'Z') < new Date();
+    },
+
+    isExpiringSoon(key) {
+      if (!key.expires_at) return false;
+      const exp = new Date(key.expires_at + 'Z');
+      const now = new Date();
+      return exp > now && (exp - now) < 7 * 24 * 60 * 60 * 1000;
+    },
+
+    formatExpiry(key) {
+      if (!key.expires_at) return 'Never';
+      return formatTime(key.expires_at);
     },
 
     formatTime,
