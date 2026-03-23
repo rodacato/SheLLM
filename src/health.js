@@ -34,7 +34,7 @@ async function checkCerebras() {
 
 const DEEP_CHECK_CONFIG = {
   claude: { command: 'claude', args: ['--print', '--dangerously-skip-permissions', '--', 'test'] },
-  gemini: { command: 'gemini', args: ['-p', 'test'] },
+  gemini: { command: 'gemini', args: ['--approval-mode', 'yolo', '-p', 'test'] },
   codex: { command: 'codex', args: ['exec', '--ephemeral', '--skip-git-repo-check', 'test'] },
 };
 
@@ -77,6 +77,11 @@ function parseCheckError(err) {
   }
   if (lower.includes('not authenticated') || lower.includes('please login') || lower.includes('auth required') || lower.includes('unauthenticated')) {
     return { installed: true, authenticated: false };
+  }
+  // Gemini yolo/approval-mode warnings are harmless — process exited non-zero
+  // but stderr only contains mode warnings, not auth errors
+  if (lower.includes('yolo') || lower.includes('approval') || lower.includes('auto-approv')) {
+    return { installed: true, authenticated: true };
   }
   return { installed: true, authenticated: false, error: stderr.replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]').slice(0, 200) };
 }

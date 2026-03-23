@@ -78,6 +78,24 @@ describe('health parseCheckError', () => {
     assert.ok(result.error.length <= 200);
   });
 
+  it('treats yolo/approval-mode warnings as authenticated', () => {
+    const result = parseCheckError({
+      code: 1,
+      stderr: 'Warning: Running in yolo mode, all actions will be auto-approved',
+    });
+    assert.strictEqual(result.installed, true);
+    assert.strictEqual(result.authenticated, true);
+  });
+
+  it('treats approval-mode stderr as authenticated', () => {
+    const result = parseCheckError({
+      code: 1,
+      stderr: 'approval mode set to auto-approve',
+    });
+    assert.strictEqual(result.installed, true);
+    assert.strictEqual(result.authenticated, true);
+  });
+
   it('unknown error returns installed but not authenticated', () => {
     const result = parseCheckError({ code: 1, stderr: 'some random error' });
     assert.strictEqual(result.installed, true);
