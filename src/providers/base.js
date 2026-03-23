@@ -1,6 +1,13 @@
 const { spawn } = require('node:child_process');
 
-const TIMEOUT_MS = parseInt(process.env.TIMEOUT_MS || '120000', 10);
+function getTimeoutMs() {
+  try {
+    const { getSetting } = require('../db/settings');
+    return getSetting('timeout_ms');
+  } catch {
+    return parseInt(process.env.TIMEOUT_MS || '120000', 10);
+  }
+}
 const MAX_OUTPUT = 1024 * 1024; // 1MB cap on stdout/stderr
 
 /**
@@ -30,7 +37,7 @@ function buildSafeEnv(providerEnv) {
  * Execute a CLI command as a subprocess with timeout.
  * Stdin is ignored to prevent hanging on interactive prompts.
  */
-function execute(command, args, { timeout = TIMEOUT_MS, cwd, env } = {}) {
+function execute(command, args, { timeout = getTimeoutMs(), cwd, env } = {}) {
   return new Promise((resolve, reject) => {
     let settled = false;
     const startTime = Date.now();
@@ -115,7 +122,7 @@ function execute(command, args, { timeout = TIMEOUT_MS, cwd, env } = {}) {
  * Execute a CLI command and yield stdout chunks as they arrive.
  * Accepts an AbortSignal for client disconnect cleanup.
  */
-async function* executeStream(command, args, { timeout = TIMEOUT_MS, cwd, env, signal } = {}) {
+async function* executeStream(command, args, { timeout = getTimeoutMs(), cwd, env, signal } = {}) {
   const proc = spawn(command, args, {
     stdio: ['ignore', 'pipe', 'pipe'],
     cwd: cwd || undefined,

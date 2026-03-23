@@ -2,7 +2,15 @@ const { sendError, authRequired, rateLimited } = require('../errors');
 const { findClientByKey, listClients } = require('../db');
 const logger = require('../lib/logger');
 
-const GLOBAL_RPM = parseInt(process.env.SHELLM_GLOBAL_RPM || '30', 10);
+// Dynamic: reads from DB > env > default (30)
+function getGlobalRpm() {
+  try {
+    const { getSetting } = require('../db/settings');
+    return getSetting('global_rpm');
+  } catch {
+    return parseInt(process.env.SHELLM_GLOBAL_RPM || '30', 10);
+  }
+}
 const WINDOW_MS = 60_000;
 const REQUIRE_AUTH = process.env.SHELLM_REQUIRE_AUTH !== 'false';
 const AUTH_ALERT_THRESHOLD = parseInt(process.env.SHELLM_AUTH_ALERT_THRESHOLD || '10', 10);
@@ -116,7 +124,7 @@ function createAuthMiddleware() {
     const clientRpm = dbClient.rpm;
 
     // Check global rate limit
-    const globalRetry = checkRateLimit(globalTimestamps, GLOBAL_RPM);
+    const globalRetry = checkRateLimit(globalTimestamps, getGlobalRpm());
     if (globalRetry > 0) {
       return sendError(
         res,
