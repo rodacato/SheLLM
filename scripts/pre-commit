@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
-# Pre-commit hook: block secrets from being committed
-# Install: cp scripts/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+# Pre-commit hook: lint code and block secrets from being committed
+# Auto-installed via: npm run prepare (sets core.hooksPath to scripts/)
 
 set -euo pipefail
+
+# --- Lint check ---
+if ! npm run lint --silent 2>/dev/null; then
+  echo ""
+  echo "Lint failed. Fix errors before committing."
+  echo "Run: npm run lint:fix"
+  exit 1
+fi
 
 PATTERNS=(
   'sk-[a-zA-Z0-9_-]{10,}'     # SheLLM client keys

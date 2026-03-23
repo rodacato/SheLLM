@@ -11,6 +11,8 @@
     "version": "node scripts/changelog.js && git add CHANGELOG.md",
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
+    "prepare": "git config core.hooksPath scripts 2>/dev/null || true",
+    "seed": "node scripts/seed.js",
     "check:env": "node scripts/check-env.js",
     "lint": "eslint src/ test/",
     "lint:fix": "eslint --fix src/ test/",
