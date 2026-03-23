@@ -44,8 +44,16 @@ app.use('/', express.static(path.join(__dirname, 'public')));
 // --- API docs (Redocly build output) ---
 app.use('/docs', express.static(path.join(__dirname, '..', 'docs')));
 
-// --- GET /health (unauthenticated — Docker healthcheck) ---
-app.get('/health', async (req, res) => {
+// --- Admin auth (created early for /health/detailed) ---
+const adminAuth = createAdminAuth();
+
+// --- GET /health (minimal, unauthenticated — Docker healthcheck) ---
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// --- GET /health/detailed (full diagnostics, admin auth required) ---
+app.get('/health/detailed', adminAuth, async (req, res) => {
   try {
     const status = await getHealthStatus();
     res.json(status);
@@ -54,17 +62,24 @@ app.get('/health', async (req, res) => {
   }
 });
 
+// Safety level response header (per-client)
+function safetyHeader(req, res, next) {
+  const level = req.safetyLevel || 'strict';
+  const label = level === 'strict' ? 'full' : level === 'standard' ? 'standard' : 'reduced';
+  res.set('X-SheLLM-Safety', label);
+  next();
+}
+
 // --- GET /v1/models (authenticated) ---
-app.get('/v1/models', auth, modelsHandler);
+app.get('/v1/models', auth, safetyHeader, modelsHandler);
 
 // --- POST /v1/chat/completions (authenticated) ---
-app.post('/v1/chat/completions', auth, chatCompletionsHandler);
+app.post('/v1/chat/completions', auth, safetyHeader, chatCompletionsHandler);
 
 // --- POST /v1/messages (authenticated — Anthropic Messages API format) ---
-app.post('/v1/messages', auth, messagesHandler);
+app.post('/v1/messages', auth, safetyHeader, messagesHandler);
 
 // --- Admin routes (Basic auth via SHELLM_ADMIN_PASSWORD) ---
-const adminAuth = createAdminAuth();
 app.use('/admin', adminAuth, adminKeysRouter);
 app.use('/admin', adminAuth, adminLogsRouter);
 app.use('/admin', adminAuth, adminStatsRouter);

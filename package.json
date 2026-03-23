@@ -15,6 +15,7 @@
     "seed": "node scripts/seed.js",
     "migrate": "node -e \"require('./src/db').initDb()\"",
     "check:env": "node scripts/check-env.js",
+    "audit:security": "npm audit --audit-level=high",
     "lint": "eslint src/ test/",
     "lint:fix": "eslint --fix src/ test/",
     "test": "node --experimental-test-module-mocks --test 'test/*.test.js' 'test/**/*.test.js'",

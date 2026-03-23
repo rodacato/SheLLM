@@ -49,7 +49,9 @@ async function chat({ prompt, system, max_tokens, temperature, top_p, response_f
 
   if (!response.ok) {
     const errorBody = await response.text();
-    const err = new Error(`Cerebras API error: ${response.status} ${errorBody}`);
+    const logger = require('../lib/logger');
+    logger.error({ event: 'cerebras_api_error', status: response.status, body: errorBody.slice(0, 500) });
+    const err = new Error(`Provider returned an error (HTTP ${response.status})`);
     err.status = response.status;
     throw err;
   }
@@ -94,7 +96,9 @@ async function* chatStream({ prompt, system, max_tokens, temperature, top_p, res
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new Error(`Cerebras API error: ${response.status} ${errorBody}`);
+    const logger = require('../lib/logger');
+    logger.error({ event: 'cerebras_api_error', status: response.status, body: errorBody.slice(0, 500) });
+    throw new Error(`Provider returned an error (HTTP ${response.status})`);
   }
 
   // Parse SSE from the API response stream

@@ -17,6 +17,7 @@ describe('server integration', () => {
           stderr: '',
           duration_ms: 10,
         })),
+        stripNonPrintable: (t) => t,
       },
     });
 
@@ -49,13 +50,14 @@ describe('server integration', () => {
     closeDb();
   });
 
-  it('GET /health returns 200 with correct shape', async () => {
+  it('GET /health returns minimal status (no internal details)', async () => {
     const res = await request(app).get('/health');
     assert.strictEqual(res.status, 200);
-    assert.ok(['ok', 'degraded', 'down'].includes(res.body.status), `unexpected status: ${res.body.status}`);
-    assert.ok(res.body.providers);
-    assert.ok(res.body.queue);
-    assert.strictEqual(typeof res.body.uptime_seconds, 'number');
+    assert.strictEqual(res.body.status, 'ok');
+    // Should NOT expose internal details
+    assert.strictEqual(res.body.providers, undefined);
+    assert.strictEqual(res.body.queue, undefined);
+    assert.strictEqual(res.body.uptime_seconds, undefined);
   });
 
   it('POST /v1/chat/completions without auth returns 401', async () => {

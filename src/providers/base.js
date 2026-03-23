@@ -43,7 +43,13 @@ function execute(command, args, { timeout = TIMEOUT_MS, cwd, env } = {}) {
       stdio: ['ignore', 'pipe', 'pipe'],
       cwd: cwd || undefined,
       env: buildSafeEnv(env),
+      detached: true,
     });
+
+    // Helper: kill entire process group (handles grandchild processes)
+    function killGroup(signal) {
+      try { process.kill(-proc.pid, signal); } catch { /* already exited */ }
+    }
 
     proc.stdout.on('data', (chunk) => {
       if (stdout.length < MAX_OUTPUT) {
@@ -64,9 +70,9 @@ function execute(command, args, { timeout = TIMEOUT_MS, cwd, env } = {}) {
     const timer = setTimeout(() => {
       if (settled) return;
       // Graceful: SIGTERM first, then SIGKILL after 5s
-      proc.kill('SIGTERM');
+      killGroup('SIGTERM');
       setTimeout(() => {
-        if (!proc.killed) proc.kill('SIGKILL');
+        killGroup('SIGKILL');
       }, 5000).unref();
       settled = true;
       reject({
@@ -114,7 +120,12 @@ async function* executeStream(command, args, { timeout = TIMEOUT_MS, cwd, env, s
     stdio: ['ignore', 'pipe', 'pipe'],
     cwd: cwd || undefined,
     env: buildSafeEnv(env),
+    detached: true,
   });
+
+  function killGroup(sig) {
+    try { process.kill(-proc.pid, sig); } catch { /* already exited */ }
+  }
 
   let stderr = '';
   proc.stderr.on('data', (chunk) => {
@@ -123,15 +134,15 @@ async function* executeStream(command, args, { timeout = TIMEOUT_MS, cwd, env, s
 
   // Kill subprocess on abort (client disconnect)
   if (signal) {
-    const onAbort = () => { proc.kill('SIGTERM'); };
+    const onAbort = () => { killGroup('SIGTERM'); };
     signal.addEventListener('abort', onAbort, { once: true });
     proc.on('close', () => signal.removeEventListener('abort', onAbort));
   }
 
   // Timeout safety net
   const timer = setTimeout(() => {
-    proc.kill('SIGTERM');
-    setTimeout(() => { if (!proc.killed) proc.kill('SIGKILL'); }, 5000).unref();
+    killGroup('SIGTERM');
+    setTimeout(() => { killGroup('SIGKILL'); }, 5000).unref();
   }, timeout);
 
   // Convert stdout events to an async iterable via a queue
@@ -183,4 +194,16 @@ async function* executeStream(command, args, { timeout = TIMEOUT_MS, cwd, env, s
   yield { type: 'done', stderr: stderr.trim() };
 }
 
-module.exports = { execute, executeStream, buildSafeEnv };
+/**
+ * Strip ANSI escape codes and control characters from CLI output.
+ * Preserves newlines (\n) and tabs (\t) for readability.
+ */
+function stripNonPrintable(text) {
+  if (typeof text !== 'string') return text;
+  return text
+    .replace(/\x1B\[[0-9;]*[A-Za-z]/g, '')         // ANSI escape sequences
+    .replace(/\x1B\][^\x07]*\x07/g, '')             // OSC sequences
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, ''); // control chars (keep \t=0x09, \n=0x0A, \r=0x0D)
+}
+
+module.exports = { execute, executeStream, buildSafeEnv, stripNonPrintable };
