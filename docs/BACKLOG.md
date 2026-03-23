@@ -14,7 +14,7 @@ real data instead of mock data.
 
 | # | Feature | Summary | Status |
 |---|---|---|---|
-| 1 | [Models Page](#1-models-page--provider-discovery--setup) | Provider cards for Mistral/Ollama, setup flow, context window metadata, vendor/model ID format | 🟡 Backlog |
+| 1 | [Models Page](#1-models-page--provider-discovery--setup) | UI redesigned; remaining: Ollama provider, context window metadata, provider config UI | 🟢 Partial |
 | 2 | [Real-Time Terminal Log Feed](#2-overview--real-time-terminal-log-feed) | Live streaming log feed on Overview page via SSE | 🟡 Backlog |
 | 3 | [Quick Operations Panel](#3-overview--quick-operations-panel) | Export logs CSV, quick actions from Overview | ✅ Done |
 | 4 | [Security Alert Widget](#4-overview--security-alert-widget) | Anomaly detection and security alerts on Overview | 🔴 Deprioritized |
@@ -37,39 +37,91 @@ real data instead of mock data.
 
 ### What the screen shows
 
-- Provider cards for **Mistral AI** and **Ollama Local** in an "unconnected" state
-- A **"Setup"** button on unconnected provider cards that presumably launches a configuration flow
-- A **"Configure"** button on connected providers to edit settings
-- A **Context Window** column in the Full Model Registry table (e.g., `200K`, `32K`)
-- Provider IDs in `vendor/model-name` format (e.g., `anthropic/claude-3-opus-20240229`, `mistral/mistral-large-latest`)
+- Provider cards with status badges (Authenticated / Not authenticated / Not installed)
+- Model tags per provider in `[model-name]` bracket format
+- Enable/Disable toggle per provider
+- Full Model Registry table with Provider and Status columns
+- Terminal-style footer with sync info
 
 ### What exists today
 
 | Feature | Status |
 |---|---|
-| claude, gemini, codex, cerebras provider cards | ✅ Real |
-| Provider enabled/disabled toggle | ✅ Real |
+| Provider cards with status badges and glow indicators | ✅ Real |
+| Provider enabled/disabled toggle on Models page | ✅ Real |
 | Auth status (authenticated / not installed) | ✅ Real |
-| Model tags per provider | ✅ Real |
-| Mistral AI provider | ❌ Not implemented |
+| Model tags per provider (bracket format) | ✅ Real |
+| Full Model Registry table (Model ID, Provider, Status) | ✅ Real |
+| Total model count | ✅ Real |
+| Terminal footer with provider/model stats | ✅ Real |
 | Ollama Local provider | ❌ Not implemented |
-| "Setup" / "Configure" UI flow | ❌ Not implemented |
+| Mistral AI provider | ❌ Not implemented — deprioritized (see expert review) |
 | Context window metadata per model | ❌ Not tracked in backend |
-| `vendor/model-name` ID format | ❌ Current format is flat (e.g., `claude-sonnet`) |
+| Provider configuration UI (API key, base URL modal) | ❌ Not implemented |
+| `vendor/model-name` ID format | ❌ Deprioritized — breaking change (see expert review) |
+
+### Expert Panel Review
+
+**Contract ("API Design"):**
+> The `vendor/model-name` format (e.g. `anthropic/claude-sonnet`) would be a **breaking
+> change** for every existing consumer. Stockerly sends `claude-sonnet` today. Changing
+> model IDs requires a versioned migration: support both formats for a transition period,
+> or add a `provider` field to `GET /v1/models` response without changing `id`. The latter
+> is cheaper and non-breaking. **Recommendation:** Add `provider` field to model response,
+> keep flat IDs.
+
+**Domain ("Fintech Advisor"):**
+> Ollama is the higher-value provider to add next. Local inference means zero API cost
+> for batch workloads — Stockerly could offload low-stakes tasks (summary formatting,
+> template filling) to a local Llama model. Mistral is just another API provider with
+> costs similar to Claude; it doesn't expand our capability envelope. Prioritize Ollama
+> over Mistral.
+
+**SRE ("Reliability"):**
+> Context window metadata is operationally important. If a consumer sends a 100K prompt to
+> a provider with 8K context, the request fails with a cryptic error. Exposing
+> `context_window` in the model list lets consumers route intelligently — and enables
+> future `auto-best` routing to factor in prompt size. Low effort, high reliability payoff.
+
+**Consumer ("Rails Integration"):**
+> Provider configuration UI is nice-to-have but not critical. Stockerly deploys via Kamal
+> with env vars baked in — we'd never configure providers via a web form in production.
+> This is more useful for local development and onboarding. Deprioritize behind Ollama
+> and context window.
 
 ### What needs to be built
 
-1. **Mistral provider** (`src/providers/mistral.js`) — API-based, similar to Cerebras
-2. **Ollama provider** (`src/providers/ollama.js`) — HTTP to local Ollama instance (`http://localhost:11434`)
-3. **Provider configuration UI** — A form/modal to set provider-specific config (API key, base URL). Currently all config is via `.env`.
-4. **Context window metadata** — Add `context_window` field to the provider contract and surface it in `GET /v1/models`
-5. **Admin API endpoint** — `POST /admin/providers/:name/configure` to update provider settings without restarting
+#### Phase 1 — Expand Provider Coverage (Medium effort, High value)
+
+1. **Ollama provider** (`src/providers/ollama.js`) — HTTP calls to local Ollama instance
+   (`http://localhost:11434/api/generate`). Env var `OLLAMA_HOST` for base URL override.
+   Health check: `GET /api/tags` to list available models. Support streaming via Ollama's
+   native NDJSON stream format
+2. **Context window metadata** — Add `context_window` field to the provider contract
+   (`module.exports = { ..., contextWindows: { 'claude-sonnet': 200000, ... } }`).
+   Surface in `GET /v1/models` response as `context_window` per model entry. Low effort:
+   static map per provider, no runtime detection needed
+
+#### Phase 2 — Provider Management (High effort, Medium value)
+
+3. **Provider configuration UI** — Admin modal to set provider-specific config (API key,
+   base URL). Store in `provider_settings` table (already has `enabled` column — extend
+   with `config JSON`). `PATCH /admin/providers/:name` already exists for toggle; extend
+   for config updates. Not critical for production (env vars suffice) but improves DX
+4. **Mistral provider** (`src/providers/mistral.js`) — API-based, similar to Cerebras.
+   Lower priority than Ollama unless a specific use case demands it
+
+#### Deprioritized
+
+5. **`vendor/model-name` ID format** — Breaking change with no clear benefit. The registry
+   table already shows provider as a separate column. If needed later, add as an alias
+   layer rather than changing canonical IDs
 
 ### Design reference
 
-`docs/screens/models_shellm_admin_dashboard/code.html` — use as layout reference for
-the cards grid + registry table. Strip Mistral/Ollama cards and "Setup" buttons until
-those providers are implemented.
+`docs/screens/models_shellm_admin_dashboard/code.html` — layout reference. The current
+implementation follows this design for cards grid + registry table, adapted to use real
+data from the health and models endpoints.
 
 ---
 
@@ -373,7 +425,7 @@ Implemented in `feat(admin): add Playground page`. Alpine.js SPA page with provi
 |---|---|---|---|---|
 | **Immediate / Next Sprint** | | | | |
 | Export Logs CSV | Low | High | ✅ Done | #3 |
-| Ollama provider | Medium | High | ✅ Next sprint | #1 |
+| Ollama provider | Medium | High | 🟡 Next sprint | #1 |
 | Background health poller + deeper auth checks | Medium | High | ✅ Done | #5 |
 | Webhook alerting (Slack/Discord/Uptime Kuma) | Medium | High | ✅ Done | #5 |
 | Error rate breakdown in `/admin/stats` | Low | High | ✅ Done | #7 |
@@ -398,27 +450,27 @@ Implemented in `feat(admin): add Playground page`. Alpine.js SPA page with provi
 | **Backlog** | | | | |
 | Provider fallback in router | High | High | ✅ Done | #5 |
 | Circuit breaker per provider | High | High | ✅ Done | #5 |
-| Mission Control dashboard panels (sparklines, gauges) | Medium | High | 🟡 Backlog | #7 |
+| Mission Control dashboard panels (sparklines, gauges) | Medium | High | ✅ Done | #7 |
 | SSE streaming — `/v1/messages` stream | Medium | Medium | ✅ Done | #6 |
 | SSE streaming — TTFT metric + stream concurrency | Low | Medium | ✅ Done | #6 |
 | Consumer error enrichment (available_providers) | Medium | Medium | ✅ Done | #5 |
 | `auto-fast` latency-aware routing | Medium | Medium | 🟡 Backlog | #10 |
 | Request priority queue (`X-Priority`) | Medium | Medium | 🟡 Backlog | #10 |
-| Client metadata (description, owner, tags) | Low | Medium | 🟡 Backlog | #9 |
-| Admin action audit log | Medium | Medium | 🟡 Backlog | #9 |
+| Client metadata (description, owner, tags) | Low | Medium | ✅ Done | #9 |
+| Admin action audit log | Medium | Medium | ✅ Done | #9 |
 | Budget warning + cost anomaly alerts | Medium | Medium | 🟡 Backlog | #8 |
-| Simple SQL migrations system | Medium | Medium | 🟡 Backlog | #12 |
+| Simple SQL migrations system | Medium | Medium | ✅ Done | #12 |
 | IP allowlisting per client | Medium | Medium | 🔴 Deprioritize | #13 |
 | `stop` sequences passthrough | Low | Low | 🔴 Deprioritize | #11 |
 | Admin Playground — core page + selectors + response panel | Medium | High | ✅ Done | #14 |
-| Context window metadata | Low | Medium | 🟡 Backlog | #1 |
-| Mistral provider | Medium | Medium | 🟡 Backlog | #1 |
+| Context window metadata | Low | High | 🟡 Next sprint | #1 |
+| Mistral provider | Medium | Low | 🔴 Deprioritize | #1 |
 | Real-time admin log stream (SSE) | High | Medium | 🟡 Backlog | #2 |
 | Playground — Copy as curl | Low | Medium | ✅ Done | #14 |
 | Playground — Request ID link to Logs | Low | Medium | 🟡 Backlog | #14 |
 | Provider configuration UI | High | Medium | 🟡 Backlog | #1 |
-| Cost burn rate + projected monthly widget | Low | Medium | 🟡 Backlog | #7 |
-| Dashboard auto-refresh (polling) | Low | Medium | 🟡 Backlog | #7 |
+| Cost burn rate + projected monthly widget | Low | Medium | ✅ Done | #7 |
+| Dashboard auto-refresh (polling) | Low | Medium | ✅ Done | #7 |
 | Playground — Prompt presets + response diff | Low | Low | 🟡 Backlog | #14 |
 | Prettier setup | Low | Low | 🟡 Backlog | #12 |
 | `npm run check:all` meta-script | Trivial | Low | 🟡 Backlog | #12 |
