@@ -102,17 +102,6 @@ function overviewPage() {
       } catch { /* ignore */ }
     },
 
-    async toggleProvider(name, currentEnabled) {
-      try {
-        await apiFetch(`${API_BASE}/providers/${name}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ enabled: currentEnabled ? 0 : 1 }),
-        });
-        await this.fetchProviders();
-        if (this.$root && this.$root.fetchHealth) await this.$root.fetchHealth();
-      } catch { /* ignore */ }
-    },
-
     async changePeriod(p) {
       this.period = p;
       await this.fetchStats();

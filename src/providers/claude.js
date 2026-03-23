@@ -1,12 +1,5 @@
 const { execute, executeStream, stripNonPrintable } = require('./base');
 
-const VALID_MODELS = [
-  'claude',
-  'claude-sonnet', 'claude-sonnet-4-6',
-  'claude-haiku', 'claude-haiku-4-5',
-  'claude-opus', 'claude-opus-4-6',
-];
-
 const SKIP_PERMISSIONS = process.env.SHELLM_CLAUDE_SKIP_PERMISSIONS !== 'false';
 
 function buildArgs({ prompt, system, temperature, response_format }) {
@@ -94,11 +87,4 @@ module.exports = {
   chatStream,
   buildArgs,
   parseOutput,
-  validModels: VALID_MODELS,
-  capabilities: {
-    supports_system_prompt: true,
-    supports_json_output: true,
-    supports_max_tokens: false,
-    cli_command: 'claude --print',
-  },
 };

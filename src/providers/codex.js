@@ -1,7 +1,5 @@
 const { execute, executeStream } = require('./base');
 
-const VALID_MODELS = ['codex', 'codex-mini'];
-
 // Codex CLI needs config/data paths for auth tokens
 const CODEX_ENV = {
   XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME,
@@ -91,11 +89,4 @@ module.exports = {
   chatStream,
   buildArgs,
   parseOutput,
-  validModels: VALID_MODELS,
-  capabilities: {
-    supports_system_prompt: false,
-    supports_json_output: true,
-    supports_max_tokens: false,
-    cli_command: 'codex exec',
-  },
 };

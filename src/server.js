@@ -14,12 +14,18 @@ const adminKeysRouter = require('./admin/keys');
 const adminLogsRouter = require('./admin/logs');
 const adminStatsRouter = require('./admin/stats');
 const adminProvidersRouter = require('./admin/providers');
+const adminSettingsRouter = require('./admin/settings');
 const { initDb } = require('./db');
 const { sendError, invalidRequest } = require('./errors');
 const path = require('node:path');
 
 // Initialize SQLite (skip if already initialized, e.g. in tests)
 initDb();
+
+// Build model map from DB and seed env aliases
+const { buildModelMap, seedAliasesFromEnv } = require('./router');
+buildModelMap();
+seedAliasesFromEnv();
 
 const app = express();
 const PORT = parseInt(process.env.PORT || '6100', 10);
@@ -84,6 +90,7 @@ app.use('/admin', adminAuth, adminKeysRouter);
 app.use('/admin', adminAuth, adminLogsRouter);
 app.use('/admin', adminAuth, adminStatsRouter);
 app.use('/admin', adminAuth, adminProvidersRouter);
+app.use('/admin', adminAuth, adminSettingsRouter);
 
 // Admin models endpoint (avoids needing Bearer auth for dashboard)
 app.get('/admin/models', adminAuth, modelsHandler);

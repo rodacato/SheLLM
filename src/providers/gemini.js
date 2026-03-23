@@ -1,7 +1,5 @@
 const { execute } = require('./base');
 
-const VALID_MODELS = ['gemini', 'gemini-pro', 'gemini-flash', 'gemini-2.0-flash', 'gemini-2.5-pro'];
-
 // Gemini CLI needs config paths for auth tokens
 const GEMINI_ENV = {
   XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME,
@@ -68,11 +66,4 @@ module.exports = {
   chat,
   buildArgs,
   parseOutput,
-  validModels: VALID_MODELS,
-  capabilities: {
-    supports_system_prompt: false,
-    supports_json_output: false,
-    supports_max_tokens: false,
-    cli_command: 'gemini -p',
-  },
 };

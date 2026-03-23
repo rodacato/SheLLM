@@ -1,39 +1,50 @@
 function modelsPage() {
   return {
     models: [],
+    providers: [],
     loading: true,
 
     async fetchModels() {
       this.loading = true;
       try {
-        const res = await apiFetch(`${API_BASE}/models`);
-        if (res.ok) {
-          const data = await res.json();
-          this.models = data.data || [];
+        // Fetch providers (includes models, type, capabilities, health)
+        const provRes = await apiFetch(`${API_BASE}/providers`);
+        if (provRes.ok) {
+          const data = await provRes.json();
+          this.providers = data.providers || [];
+          // Flatten all models with provider info
+          this.models = [];
+          for (const prov of this.providers) {
+            for (const m of prov.models || []) {
+              this.models.push({
+                id: m.name,
+                provider: prov.name,
+                upstream_model: m.upstream_model,
+                is_alias: m.is_alias,
+                authenticated: prov.authenticated,
+                installed: prov.installed,
+                enabled: prov.enabled,
+              });
+            }
+          }
         }
       } catch { /* ignore */ }
       this.loading = false;
     },
 
-    resolveProvider(modelId) {
-      const providers = Object.keys(this.$root.health?.providers || {});
-      for (const p of providers) {
-        if (modelId.startsWith(p) || modelId === p) return p;
-      }
-      return 'unknown';
-    },
-
-    providerStatus(modelId) {
-      const name = this.resolveProvider(modelId);
-      return this.$root.health?.providers?.[name] || null;
+    providerStatus(providerName) {
+      return this.providers.find((p) => p.name === providerName) || null;
     },
 
     async toggleProvider(name, enable) {
+      const action = enable ? 'Enable' : 'Disable';
+      if (!confirm(`${action} provider "${name}"? ${enable ? 'It will start receiving requests.' : 'Active requests to this provider will fail.'}`)) return;
       try {
         await apiFetch(`${API_BASE}/providers/${name}`, {
           method: 'PATCH',
           body: JSON.stringify({ enabled: enable ? 1 : 0 }),
         });
+        await this.fetchModels();
         if (this.$root?.fetchHealth) await this.$root.fetchHealth();
       } catch { /* ignore */ }
     },

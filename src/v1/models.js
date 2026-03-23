@@ -1,4 +1,4 @@
-const { listProviders, getAliases } = require('../router');
+const { listProviders } = require('../router');
 
 /**
  * GET /v1/models — OpenAI-compatible model list
@@ -8,7 +8,6 @@ function modelsHandler(_req, res) {
   const seen = new Set();
   const data = [];
 
-  // Add all provider models
   for (const provider of providers) {
     for (const modelId of provider.models) {
       if (!seen.has(modelId)) {
@@ -20,20 +19,6 @@ function modelsHandler(_req, res) {
           owned_by: 'shellm',
         });
       }
-    }
-  }
-
-  // Add user-defined aliases
-  const aliases = getAliases();
-  for (const alias of Object.keys(aliases)) {
-    if (!seen.has(alias)) {
-      seen.add(alias);
-      data.push({
-        id: alias,
-        object: 'model',
-        created: 0,
-        owned_by: 'shellm',
-      });
     }
   }
 

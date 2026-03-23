@@ -1,17 +1,12 @@
 const API_URL = 'https://api.cerebras.ai/v1/chat/completions';
 
-const MODEL_MAP = {
-  'cerebras': 'llama-3.3-70b',
-  'cerebras-8b': 'llama3.1-8b',
-  'cerebras-70b': 'llama-3.3-70b',
-  'cerebras-120b': 'llama-3.3-70b',
-  'cerebras-qwen': 'qwen-3-235b-a22b-instruct-2507',
-};
-
-const VALID_MODELS = Object.keys(MODEL_MAP);
-
 function resolveModel(model) {
-  return MODEL_MAP[model] || model;
+  try {
+    const { getModelByName } = require('../db');
+    const row = getModelByName(model);
+    if (row && row.upstream_model) return row.upstream_model;
+  } catch { /* DB not available */ }
+  return model;
 }
 
 async function chat({ prompt, system, max_tokens, temperature, top_p, response_format, model }) {
@@ -132,11 +127,4 @@ module.exports = {
   name: 'cerebras',
   chat,
   chatStream,
-  validModels: VALID_MODELS,
-  capabilities: {
-    supports_system_prompt: true,
-    supports_json_output: false,
-    supports_max_tokens: true,
-    cli_command: null,
-  },
 };

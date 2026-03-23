@@ -25,7 +25,8 @@ describe('db layer', () => {
     const names = tables.map((t) => t.name);
     assert.ok(names.includes('clients'));
     assert.ok(names.includes('request_logs'));
-    assert.ok(names.includes('provider_settings'));
+    assert.ok(names.includes('providers'));
+    assert.ok(names.includes('models'));
   });
 
   it('getDb returns the cached connection', () => {

@@ -52,7 +52,7 @@ function playgroundPage() {
       if (!this.selectedProvider) return this.models;
       const prov = this.providers.find(p => p.name === this.selectedProvider);
       if (!prov || !prov.models) return this.models;
-      return prov.models.map(id => ({ id }));
+      return prov.models.map(m => ({ id: typeof m === 'string' ? m : m.name }));
     },
 
     filterModels() {

@@ -6,33 +6,79 @@ const { invalidRequest, rateLimited, providerUnavailable } = require('./errors')
 const { canSendTraffic, recordSuccess, recordFailure } = require('./circuit-breaker');
 const logger = require('./lib/logger');
 
-const providers = { claude, gemini, codex, cerebras };
+// Execution engines — keyed by provider name for chat/chatStream dispatch
+const engines = { claude, gemini, codex, cerebras };
 
-// Also register model aliases so "claude-opus" resolves to the claude provider
-const modelToProvider = {};
-for (const [name, provider] of Object.entries(providers)) {
-  for (const model of provider.validModels) {
-    modelToProvider[model] = name;
+// Model-to-provider map — built from DB, rebuilt on invalidation
+let modelToProvider = {};
+let _modelCacheBuilt = false;
+
+function buildModelMap() {
+  try {
+    const { getAllModels, getDb } = require('./db');
+    if (!getDb()) throw new Error('DB not initialized');
+    const models = getAllModels();
+    const map = {};
+    for (const m of models) {
+      map[m.name] = m.provider_name;
+    }
+    modelToProvider = map;
+    _modelCacheBuilt = true;
+  } catch {
+    // DB not initialized yet (tests, early boot) — fall back to engine validModels
+    if (!_modelCacheBuilt) {
+      const map = {};
+      for (const [name, engine] of Object.entries(engines)) {
+        if (engine.validModels) {
+          for (const model of engine.validModels) {
+            map[model] = name;
+          }
+        }
+      }
+      modelToProvider = map;
+    }
   }
 }
 
-// User-defined aliases via SHELLM_ALIASES env var (JSON { alias: target })
-const userAliases = (() => {
-  try { return JSON.parse(process.env.SHELLM_ALIASES || '{}'); } catch { return {}; }
-})();
-for (const [alias, target] of Object.entries(userAliases)) {
-  const providerName = providers[target] ? target : modelToProvider[target];
-  if (providerName) modelToProvider[alias] = providerName;
+function invalidateModelCache() {
+  _modelCacheBuilt = false;
+  buildModelMap();
 }
 
 function getAliases() {
-  return { ...userAliases };
+  const aliases = {};
+  try {
+    const { getAllModels } = require('./db');
+    const models = getAllModels();
+    for (const m of models) {
+      if (m.is_alias) aliases[m.name] = m.alias_for || m.provider_name;
+    }
+  } catch { /* ignore */ }
+  return aliases;
+}
+
+// Seed SHELLM_ALIASES env var into DB on first boot
+function seedAliasesFromEnv() {
+  try {
+    const raw = process.env.SHELLM_ALIASES;
+    if (!raw) return;
+    const aliases = JSON.parse(raw);
+    const { getModelByName, upsertModel } = require('./db');
+    for (const [alias, target] of Object.entries(aliases)) {
+      if (!getModelByName(alias)) {
+        const providerName = engines[target] ? target : modelToProvider[target];
+        if (providerName) {
+          upsertModel({ name: alias, provider_name: providerName, is_alias: 1, alias_for: target });
+        }
+      }
+    }
+  } catch { /* ignore */ }
 }
 
 const MAX_CONCURRENT = parseInt(process.env.MAX_CONCURRENT || '2', 10);
 const MAX_QUEUE_DEPTH = parseInt(process.env.MAX_QUEUE_DEPTH || '10', 10);
 const FALLBACK_ENABLED = (process.env.SHELLM_FALLBACK_ENABLED || 'false') === 'true';
-const FALLBACK_ORDER = (process.env.SHELLM_FALLBACK_ORDER || 'claude,cerebras,gemini,codex').split(',').map((s) => s.trim());
+const FALLBACK_ORDER_ENV = process.env.SHELLM_FALLBACK_ORDER || null;
 const MAX_STREAM_CONCURRENT = parseInt(process.env.MAX_STREAM_CONCURRENT || String(MAX_CONCURRENT), 10);
 
 let activeStreams = 0;
@@ -81,11 +127,12 @@ class RequestQueue {
 const queue = new RequestQueue();
 
 function resolveProvider(model) {
-  // Direct name match
-  if (providers[model]) return providers[model];
-  // Model alias match
+  if (!_modelCacheBuilt) buildModelMap();
+  // Direct engine name match
+  if (engines[model]) return engines[model];
+  // Model-to-provider map (from DB)
   const providerName = modelToProvider[model];
-  if (providerName) return providers[providerName];
+  if (providerName && engines[providerName]) return engines[providerName];
   return null;
 }
 
@@ -132,7 +179,7 @@ function selectProvider(model) {
  * Get list of currently available provider names.
  */
 function getAvailableProviders() {
-  return Object.values(providers)
+  return Object.values(engines)
     .filter((p) => !checkProviderAvailability(p))
     .map((p) => p.name);
 }
@@ -177,11 +224,22 @@ async function routeWithFallback({ model, prompt, system, max_tokens, temperatur
     throw invalidRequest(`Unknown provider: ${model}`);
   }
 
-  // Build candidate list: primary first, then fallback order (excluding primary)
+  // Build candidate list: primary first, then by priority (from DB or env)
   const candidates = [primary];
-  for (const name of FALLBACK_ORDER) {
-    if (providers[name] && providers[name].name !== primary.name) {
-      candidates.push(providers[name]);
+  let fallbackNames;
+  if (FALLBACK_ORDER_ENV) {
+    fallbackNames = FALLBACK_ORDER_ENV.split(',').map((s) => s.trim());
+  } else {
+    try {
+      const { getProviders } = require('./db');
+      fallbackNames = getProviders().map((p) => p.name);
+    } catch {
+      fallbackNames = Object.keys(engines);
+    }
+  }
+  for (const name of fallbackNames) {
+    if (engines[name] && engines[name].name !== primary.name) {
+      candidates.push(engines[name]);
     }
   }
 
@@ -237,21 +295,29 @@ async function routeWithFallback({ model, prompt, system, max_tokens, temperatur
 }
 
 function listProviders({ includeDisabled = true } = {}) {
-  const { getProviderSettings } = require('./db');
-  const settingsMap = {};
   try {
-    const rows = getProviderSettings();
-    for (const row of rows) settingsMap[row.name] = row;
-  } catch { /* DB might not be initialized in tests */ }
-
-  return Object.values(providers)
-    .filter((p) => includeDisabled || !settingsMap[p.name] || settingsMap[p.name].enabled)
-    .map((p) => ({
+    const { getProviders, getModelsForProvider, getDb } = require('./db');
+    if (!getDb()) throw new Error('DB not initialized');
+    const dbProviders = getProviders();
+    return dbProviders
+      .filter((p) => includeDisabled || p.enabled)
+      .map((p) => ({
+        name: p.name,
+        type: p.type,
+        models: getModelsForProvider(p.name).map((m) => m.name),
+        ...p.capabilities,
+        enabled: !!p.enabled,
+        priority: p.priority,
+      }));
+  } catch {
+    // DB not initialized (tests) — fall back to engines
+    return Object.values(engines).map((p) => ({
       name: p.name,
-      models: p.validModels,
-      ...p.capabilities,
-      enabled: settingsMap[p.name] ? !!settingsMap[p.name].enabled : true,
+      models: p.validModels || [],
+      ...(p.capabilities || {}),
+      enabled: true,
     }));
+  }
 }
 
 function acquireStreamSlot() {
@@ -264,4 +330,4 @@ function releaseStreamSlot() {
   if (activeStreams > 0) activeStreams--;
 }
 
-module.exports = { route, queue, listProviders, resolveProvider, selectProvider, providers, getAliases, getAvailableProviders, acquireStreamSlot, releaseStreamSlot };
+module.exports = { route, queue, listProviders, resolveProvider, selectProvider, providers: engines, engines, getAliases, getAvailableProviders, acquireStreamSlot, releaseStreamSlot, buildModelMap, invalidateModelCache, seedAliasesFromEnv };

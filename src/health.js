@@ -12,49 +12,67 @@ let cache = { data: null, expires: 0 };
 let pollerInterval = null;
 let previousStatus = {};
 
-// --- Shallow checks (fast, used by lazy health endpoint) ---
+// --- Provider list from DB (with fallback) ---
 
-async function checkCLI(name, command, testArgs, { timeout = 10000 } = {}) {
+function getProviderList() {
   try {
-    await execute(command, testArgs, { timeout });
+    const { getProviders, getDb } = require('./db');
+    if (!getDb()) throw new Error('DB not initialized');
+    return getProviders();
+  } catch {
+    // Fallback for tests/early boot — hardcoded defaults
+    return [
+      { name: 'claude', type: 'subprocess', enabled: 1, health_check: { command: 'claude', args: ['--print', '--dangerously-skip-permissions', '--', 'test'] } },
+      { name: 'gemini', type: 'subprocess', enabled: 1, health_check: { command: 'gemini', args: ['--approval-mode', 'yolo', '-p', 'test'] } },
+      { name: 'codex', type: 'subprocess', enabled: 1, health_check: { command: 'codex', args: ['exec', '--ephemeral', '--skip-git-repo-check', 'test'] } },
+      { name: 'cerebras', type: 'http', enabled: 1, health_check: { url: 'https://api.cerebras.ai/v1/models', auth_env: 'CEREBRAS_API_KEY' } },
+    ];
+  }
+}
+
+// --- Checks by provider type ---
+
+async function checkSubprocess(name, { timeout = 10000 } = {}) {
+  try {
+    await execute(name, ['--version'], { timeout });
     return { installed: true, authenticated: true };
   } catch (err) {
     return parseCheckError(err);
   }
 }
 
-async function checkCerebras() {
-  if (!process.env.CEREBRAS_API_KEY) {
-    return { installed: true, authenticated: false, error: 'CEREBRAS_API_KEY not set' };
+async function checkSubprocessDeep(provider) {
+  const hc = provider.health_check || {};
+  if (!hc.command) return checkSubprocess(provider.name);
+  try {
+    await execute(hc.command, hc.args || [], { timeout: DEEP_CHECK_TIMEOUT });
+    return { installed: true, authenticated: true };
+  } catch (err) {
+    return parseCheckError(err);
+  }
+}
+
+async function checkHttp(provider) {
+  const hc = provider.health_check || {};
+  const envKey = hc.auth_env;
+  if (envKey && !process.env[envKey]) {
+    return { installed: true, authenticated: false, error: `${envKey} not set` };
   }
   return { installed: true, authenticated: true };
 }
 
-// --- Deep checks (slower, used by poller to detect session-level auth expiry) ---
-
-const DEEP_CHECK_CONFIG = {
-  claude: { command: 'claude', args: ['--print', '--dangerously-skip-permissions', '--', 'test'] },
-  gemini: { command: 'gemini', args: ['--approval-mode', 'yolo', '-p', 'test'] },
-  codex: { command: 'codex', args: ['exec', '--ephemeral', '--skip-git-repo-check', 'test'] },
-};
-
-async function checkCLIDeep(name) {
-  const config = DEEP_CHECK_CONFIG[name];
-  if (!config) return checkCLI(name, name, ['--version']);
-  try {
-    await execute(config.command, config.args, { timeout: DEEP_CHECK_TIMEOUT });
-    return { installed: true, authenticated: true };
-  } catch (err) {
-    return parseCheckError(err);
+async function checkHttpDeep(provider) {
+  const hc = provider.health_check || {};
+  const envKey = hc.auth_env;
+  const key = envKey ? process.env[envKey] : null;
+  if (envKey && !key) {
+    return { installed: true, authenticated: false, error: `${envKey} not set` };
   }
-}
-
-async function checkCerebrasDeep() {
-  const key = process.env.CEREBRAS_API_KEY;
-  if (!key) return { installed: true, authenticated: false, error: 'CEREBRAS_API_KEY not set' };
+  if (!hc.url) return { installed: true, authenticated: !!key };
   try {
-    const res = await fetch('https://api.cerebras.ai/v1/models', {
-      headers: { Authorization: `Bearer ${key}` },
+    const headers = key ? { Authorization: `Bearer ${key}` } : {};
+    const res = await fetch(hc.url, {
+      headers,
       signal: AbortSignal.timeout(DEEP_CHECK_TIMEOUT),
     });
     if (res.ok) return { installed: true, authenticated: true };
@@ -62,6 +80,15 @@ async function checkCerebrasDeep() {
   } catch {
     return { installed: true, authenticated: false, error: 'API unreachable' };
   }
+}
+
+// Check a single provider (shallow or deep)
+async function checkProvider(provider, { deep = false } = {}) {
+  if (provider.type === 'http') {
+    return deep ? checkHttpDeep(provider) : checkHttp(provider);
+  }
+  // Default: subprocess
+  return deep ? checkSubprocessDeep(provider) : checkSubprocess(provider.name);
 }
 
 function parseCheckError(err) {
@@ -104,14 +131,17 @@ async function getHealthStatus() {
     };
   }
 
-  const [claudeStatus, geminiStatus, codexStatus, cerebrasStatus] = await Promise.all([
-    checkCLI('claude', 'claude', ['--version']),
-    checkCLI('gemini', 'gemini', ['--version']),
-    checkCLI('codex', 'codex', ['--version']),
-    checkCerebras(),
-  ]);
+  const providerList = getProviderList();
+  const results = await Promise.all(
+    providerList.map((p) => checkProvider(p, { deep: false }))
+  );
 
-  const providers = mergeEnabledStatus({ claude: claudeStatus, gemini: geminiStatus, codex: codexStatus, cerebras: cerebrasStatus });
+  const providers = {};
+  for (let i = 0; i < providerList.length; i++) {
+    const p = providerList[i];
+    providers[p.name] = { ...results[i], enabled: !!p.enabled };
+  }
+
   const status = computeHealthStatus(providers);
   cache = { data: { status, providers }, expires: now + CACHE_TTL_MS };
 
@@ -121,21 +151,6 @@ async function getHealthStatus() {
     queue: queue.stats,
     uptime_seconds: Math.floor(process.uptime()),
   };
-}
-
-function mergeEnabledStatus(providerStatuses) {
-  const { getProviderSettings } = require('./db');
-  const enabledMap = {};
-  try {
-    const rows = getProviderSettings();
-    for (const row of rows) enabledMap[row.name] = !!row.enabled;
-  } catch { /* DB might not be initialized */ }
-
-  const result = {};
-  for (const [name, status] of Object.entries(providerStatuses)) {
-    result[name] = { ...status, enabled: enabledMap[name] ?? true };
-  }
-  return result;
 }
 
 function computeHealthStatus(providers) {
@@ -177,19 +192,14 @@ function sendAlertWebhook(provider, from, to) {
 
 async function pollAllProviders({ deep = false } = {}) {
   try {
-    const check = deep ? checkCLIDeep : (name) => checkCLI(name, name, ['--version']);
-    const results = await Promise.allSettled([
-      check('claude'),
-      check('gemini'),
-      check('codex'),
-      deep ? checkCerebrasDeep() : checkCerebras(),
-    ]);
+    const providerList = getProviderList();
+    const results = await Promise.allSettled(
+      providerList.map((p) => checkProvider(p, { deep }))
+    );
 
-    const names = ['claude', 'gemini', 'codex', 'cerebras'];
     const statuses = {};
-
-    for (let i = 0; i < names.length; i++) {
-      const name = names[i];
+    for (let i = 0; i < providerList.length; i++) {
+      const name = providerList[i].name;
       const result = results[i];
       const status = result.status === 'fulfilled' ? result.value : { installed: false, authenticated: false, error: String(result.reason) };
       statuses[name] = status;
@@ -211,7 +221,12 @@ async function pollAllProviders({ deep = false } = {}) {
 
     previousStatus = { ...statuses };
 
-    const providers = mergeEnabledStatus(statuses);
+    // Merge enabled status from DB
+    const providers = {};
+    for (let i = 0; i < providerList.length; i++) {
+      const p = providerList[i];
+      providers[p.name] = { ...statuses[p.name], enabled: !!p.enabled };
+    }
     cache = { data: { status: 'ok', providers }, expires: Date.now() + POLL_INTERVAL_MS + 5000 };
   } catch (err) {
     logger.error({ event: 'health_poll_error', error: err.message });

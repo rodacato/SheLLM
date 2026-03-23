@@ -248,27 +248,76 @@ function pruneExpiredKeys() {
   db.prepare("UPDATE clients SET active = 0 WHERE expires_at IS NOT NULL AND expires_at < datetime('now') AND active = 1").run();
 }
 
-// --- Provider Settings ---
+// --- Providers ---
 
+function parseProviderRow(row) {
+  if (!row) return null;
+  return {
+    ...row,
+    capabilities: row.capabilities ? JSON.parse(row.capabilities) : {},
+    health_check: row.health_check ? JSON.parse(row.health_check) : {},
+  };
+}
+
+function getProviders() {
+  if (!db) return [];
+  const rows = db.prepare('SELECT * FROM providers ORDER BY priority ASC, name ASC').all();
+  return rows.map(parseProviderRow);
+}
+
+function getProvider(name) {
+  if (!db) return null;
+  const row = db.prepare('SELECT * FROM providers WHERE name = ?').get(name);
+  return parseProviderRow(row);
+}
+
+// Backwards-compatible aliases for existing callers
 function getProviderSettings() {
   if (!db) return [];
-  return db.prepare('SELECT name, enabled, updated_at FROM provider_settings ORDER BY name').all();
+  return db.prepare('SELECT name, enabled, updated_at FROM providers ORDER BY name').all();
 }
 
 function getProviderSetting(name) {
   if (!db) return null;
-  return db.prepare('SELECT name, enabled, updated_at FROM provider_settings WHERE name = ?').get(name) || null;
+  return db.prepare('SELECT name, enabled, updated_at FROM providers WHERE name = ?').get(name) || null;
 }
 
 function setProviderEnabled(name, enabled) {
   const result = db.prepare(
-    "UPDATE provider_settings SET enabled = ?, updated_at = datetime('now') WHERE name = ?"
+    "UPDATE providers SET enabled = ?, updated_at = datetime('now') WHERE name = ?"
   ).run(enabled ? 1 : 0, name);
   if (result.changes === 0) return null;
-  return db.prepare('SELECT name, enabled, updated_at FROM provider_settings WHERE name = ?').get(name);
+  return db.prepare('SELECT name, enabled, updated_at FROM providers WHERE name = ?').get(name);
+}
+
+function updateProvider(name, fields) {
+  const allowed = ['enabled', 'capabilities', 'health_check', 'priority'];
+  const sets = [];
+  const values = [];
+
+  for (const key of allowed) {
+    if (fields[key] !== undefined) {
+      if (key === 'capabilities' || key === 'health_check') {
+        sets.push(`${key} = ?`);
+        values.push(typeof fields[key] === 'string' ? fields[key] : JSON.stringify(fields[key]));
+      } else {
+        sets.push(`${key} = ?`);
+        values.push(fields[key]);
+      }
+    }
+  }
+
+  if (sets.length === 0) return null;
+  sets.push("updated_at = datetime('now')");
+
+  values.push(name);
+  db.prepare(`UPDATE providers SET ${sets.join(', ')} WHERE name = ?`).run(...values);
+
+  return getProvider(name);
 }
 
 function getProviderLastUsage() {
+  if (!db) return [];
   return db.prepare(`
     SELECT provider,
            MAX(created_at) as last_used_at,
@@ -279,6 +328,41 @@ function getProviderLastUsage() {
     WHERE provider IS NOT NULL
     GROUP BY provider
   `).all();
+}
+
+// --- Models ---
+
+function getAllModels() {
+  if (!db) return [];
+  return db.prepare('SELECT * FROM models WHERE enabled = 1 ORDER BY provider_name, name').all();
+}
+
+function getModelsForProvider(providerName) {
+  if (!db) return [];
+  return db.prepare('SELECT * FROM models WHERE provider_name = ? ORDER BY name').all(providerName);
+}
+
+function getModelByName(name) {
+  if (!db) return null;
+  return db.prepare('SELECT * FROM models WHERE name = ?').get(name) || null;
+}
+
+function upsertModel({ name, provider_name, upstream_model = null, is_alias = 0, alias_for = null }) {
+  db.prepare(`
+    INSERT INTO models (name, provider_name, upstream_model, is_alias, alias_for)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(name) DO UPDATE SET
+      provider_name = excluded.provider_name,
+      upstream_model = excluded.upstream_model,
+      is_alias = excluded.is_alias,
+      alias_for = excluded.alias_for
+  `).run(name, provider_name, upstream_model, is_alias ? 1 : 0, alias_for);
+  return getModelByName(name);
+}
+
+function deleteModel(name) {
+  const info = db.prepare('DELETE FROM models WHERE name = ?').run(name);
+  return info.changes > 0;
 }
 
 // --- Audit Log ---
@@ -313,7 +397,15 @@ module.exports = {
   getProviderSettings,
   getProviderSetting,
   setProviderEnabled,
+  getProviders,
+  getProvider,
+  updateProvider,
   getProviderLastUsage,
+  getAllModels,
+  getModelsForProvider,
+  getModelByName,
+  upsertModel,
+  deleteModel,
   insertAuditLog,
   getAuditLogs,
   // Exposed for testing
