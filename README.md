@@ -67,13 +67,31 @@ Most LLM gateways assume you're paying per-token via API. SheLLM's primary use c
 
 </details>
 
-## Quick Start
+## Getting Started
+
+### Local development
 
 ```bash
 git clone git@github.com:rodacato/SheLLM.git && cd SheLLM
-bash scripts/setup-dev.sh   # install deps, create .env, link CLI, show auth steps
-npm run check:env            # verify binaries, config, and node_modules
-shellm start
+bash scripts/setup-dev.sh   # install deps, create .env, link CLI
+```
+
+The setup script checks for CLI tools but **does not authenticate them**. You must authenticate each provider you plan to use:
+
+```bash
+claude auth login    # Opens browser → Anthropic login
+gemini auth login    # Opens browser → Google OAuth
+codex auth login     # Opens browser → OpenAI login
+```
+
+> You only need to auth the providers you'll use. SheLLM marks the rest as `unhealthy` — they won't break anything.
+
+Then verify and start:
+
+```bash
+npm run check:env            # verify binaries, config, node_modules
+npm run seed                 # (optional) load demo clients + sample logs
+shellm start                 # start the server
 ```
 
 Verify it's running:
@@ -81,6 +99,18 @@ Verify it's running:
 ```bash
 curl http://127.0.0.1:6100/health
 ```
+
+Open the admin dashboard at `http://localhost:6100/admin/dashboard/` (requires `SHELLM_ADMIN_PASSWORD` in `.env`). Go to the **Playground** tab to send your first prompt interactively.
+
+### Deploy to a VPS
+
+For production deployment with systemd and cloudflared (zero-trust tunnel, no open ports), see the **[VPS Deployment Guide](docs/guides/deployment.md)**. It covers:
+
+- Full server provisioning (`scripts/setup-vps.sh`)
+- CLI authentication on headless servers
+- Database migrations and seed data
+- cloudflared tunnel setup with your custom domain
+- Production hardening (Cloudflare Access, firewall, monitoring)
 
 ## Usage
 
@@ -262,21 +292,14 @@ shellm version                 Show version
 
 ## Deployment
 
-SheLLM runs on a VPS with systemd and cloudflared. See the full deployment guide:
+SheLLM runs on a VPS with systemd and cloudflared — no open ports, TLS handled by Cloudflare.
 
 ```bash
 # On the VPS as root
 bash scripts/setup-vps.sh
 ```
 
-This creates a `shellmer` user, installs Node.js 22, CLI tools, configures systemd, and sets up cloudflared. After setup, authenticate each CLI and start the service:
-
-```bash
-sudo -iu shellmer
-claude auth login && gemini auth login && codex auth login
-exit
-sudo systemctl start shellm
-```
+See the complete **[VPS Deployment Guide](docs/guides/deployment.md)** for the full walkthrough — from provisioning to your first Playground prompt.
 
 ## Contributing
 
