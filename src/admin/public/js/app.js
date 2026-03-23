@@ -25,6 +25,14 @@ function formatUptime(seconds) {
   return `${m}m`;
 }
 
+function formatCompactNumber(n) {
+  if (n == null) return '-';
+  if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return String(n);
+}
+
 function formatDuration(ms) {
   if (ms == null) return '-';
   if (ms < 1000) return `${ms}ms`;
@@ -39,7 +47,12 @@ function formatCost(usd) {
 function formatTime(isoString) {
   if (!isoString) return '-';
   const d = new Date(isoString + 'Z');
-  return d.toLocaleString();
+  const mon = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  return `${mon}/${day} ${hh}:${mm}:${ss}`;
 }
 
 function statusBadgeClass(status) {

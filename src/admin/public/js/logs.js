@@ -2,11 +2,12 @@ function logsPage() {
   return {
     logs: [],
     total: 0,
-    limit: 50,
+    limit: 25,
     offset: 0,
     filterProvider: '',
     filterStatus: '',
     loading: true,
+    stats: null,
 
     async fetchLogs() {
       this.loading = true;
@@ -27,6 +28,15 @@ function logsPage() {
       this.loading = false;
     },
 
+    async fetchStats() {
+      try {
+        const res = await apiFetch(`${API_BASE}/stats?period=24h`);
+        if (res.ok) {
+          this.stats = await res.json();
+        }
+      } catch { /* ignore */ }
+    },
+
     async clearLogs() {
       if (!confirm('Delete all request logs? This cannot be undone.')) return;
       try {
@@ -41,6 +51,18 @@ function logsPage() {
 
     async applyFilters() {
       this.offset = 0;
+      await this.fetchLogs();
+    },
+
+    async changeLimit(newLimit) {
+      this.limit = parseInt(newLimit, 10);
+      this.offset = 0;
+      await this.fetchLogs();
+    },
+
+    async goToPage(page) {
+      const p = Math.max(1, Math.min(page, this.totalPages));
+      this.offset = (p - 1) * this.limit;
       await this.fetchLogs();
     },
 
@@ -66,6 +88,21 @@ function logsPage() {
       return Math.max(1, Math.ceil(this.total / this.limit));
     },
 
+    get visiblePages() {
+      const current = this.currentPage;
+      const total = this.totalPages;
+      const pages = [];
+      let start = Math.max(1, current - 2);
+      let end = Math.min(total, current + 2);
+      // Ensure we show at least 5 pages when possible
+      if (end - start < 4) {
+        if (start === 1) end = Math.min(total, start + 4);
+        else if (end === total) start = Math.max(1, end - 4);
+      }
+      for (let i = start; i <= end; i++) pages.push(i);
+      return pages;
+    },
+
     exportCSV() {
       const params = new URLSearchParams();
       params.set('format', 'csv');
@@ -77,6 +114,7 @@ function logsPage() {
     formatTime,
     formatDuration,
     formatCost,
+    formatCompactNumber,
     statusBadgeClass,
   };
 }

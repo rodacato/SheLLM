@@ -473,19 +473,19 @@
       </div>
 
       <!-- LOGS PAGE -->
-      <div x-show="page === 'logs'" x-data="logsPage()" x-effect="if (page === 'logs' && logs.length === 0 && loading) fetchLogs()">
+      <div x-show="page === 'logs'" x-data="logsPage()" x-effect="if (page === 'logs') { if (logs.length === 0 && loading) fetchLogs(); fetchStats(); }">
 
-        <header class="mb-10">
-          <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">REQUEST LOGS<span class="text-primary-container">_</span></h2>
-          <p class="text-on-surface-variant">Paginated request history with filtering, status codes, and cost tracking.</p>
+        <header class="mb-8 flex items-center gap-4">
+          <h2 class="text-3xl font-bold font-headline tracking-tight text-on-surface">Request Logs</h2>
+          <span class="px-2.5 py-1 bg-surface-container-high text-outline text-[10px] uppercase tracking-widest font-headline font-bold">Live Feed</span>
         </header>
 
         <!-- Filters -->
         <div class="flex flex-wrap gap-4 mb-6 items-end">
           <div>
             <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Provider</label>
-            <select x-model="filterProvider" @change="applyFilters()" class="bg-surface-container border border-outline-variant/40 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
-              <option value="">All</option>
+            <select x-model="filterProvider" @change="applyFilters()" class="bg-[#2e3b44] border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container rounded-lg">
+              <option value="">All Providers</option>
               <option value="claude">claude</option>
               <option value="gemini">gemini</option>
               <option value="codex">codex</option>
@@ -494,82 +494,159 @@
           </div>
           <div>
             <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Status</label>
-            <select x-model="filterStatus" @change="applyFilters()" class="bg-surface-container border border-outline-variant/40 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
-              <option value="">All</option>
-              <option value="2">2xx</option>
-              <option value="4">4xx</option>
-              <option value="5">5xx</option>
+            <select x-model="filterStatus" @change="applyFilters()" class="bg-[#2e3b44] border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container rounded-lg">
+              <option value="">All Status</option>
+              <option value="2">2xx (Success)</option>
+              <option value="4">4xx (Client Err)</option>
+              <option value="5">5xx (Server Err)</option>
             </select>
           </div>
-          <div class="text-[11px] font-mono text-outline self-end pb-2" x-text="total + ' total'"></div>
+          <div class="text-[11px] font-mono text-outline/70 italic self-end pb-2" x-text="total + ' total logs found'"></div>
           <div class="ml-auto flex gap-2 self-end">
             <button x-show="total > 0" @click="exportCSV()"
               class="px-4 py-2 text-xs font-headline font-bold uppercase text-primary-container border border-primary-container/40 hover:bg-primary-container/10 transition-colors duration-100">
               Export CSV
             </button>
             <button x-show="total > 0" @click="clearLogs()"
-              class="px-4 py-2 text-xs font-headline font-bold uppercase text-error border border-error/40 hover:bg-error/10 transition-colors duration-100">
+              class="px-4 py-2.5 text-xs font-headline font-bold uppercase tracking-widest text-[#ef4444] bg-[#3b1a1a] hover:bg-[#4a2020] transition-colors duration-100 flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm">filter_list_off</span>
               Clear All
             </button>
           </div>
         </div>
 
         <!-- Table -->
-        <div class="bg-surface-container overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="bg-surface-container-lowest">
-              <tr>
-                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Time</th>
-                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Status</th>
-                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Client</th>
-                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Provider</th>
-                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Model</th>
-                <th class="px-4 py-3 text-right text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Duration</th>
-                <th class="px-4 py-3 text-right text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Tokens</th>
-                <th class="px-4 py-3 text-right text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Cost</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr x-show="logs.length === 0">
-                <td colspan="8" class="px-4 py-10 text-center text-outline font-mono text-sm" x-text="loading ? 'Loading...' : 'No logs found'"></td>
-              </tr>
-              <template x-for="log in logs" :key="log.id">
-                <tr class="border-t border-outline-variant/20 hover:bg-surface-container-high transition-colors duration-100">
-                  <td class="px-4 py-3 text-outline font-mono text-xs whitespace-nowrap" x-text="formatTime(log.created_at)"></td>
-                  <td class="px-4 py-3">
-                    <span class="px-2 py-0.5 text-xs font-bold font-mono"
-                      :class="statusBadgeClass(log.status)" x-text="log.status"></span>
-                  </td>
-                  <td class="px-4 py-3 text-on-surface text-xs font-mono" x-text="log.client_name || '-'"></td>
-                  <td class="px-4 py-3 text-on-surface text-xs font-mono" x-text="log.provider || '-'"></td>
-                  <td class="px-4 py-3 text-on-surface text-xs font-mono" x-text="log.model || '-'"></td>
-                  <td class="px-4 py-3 text-right text-on-surface-variant text-xs font-mono">
-                    <span x-text="formatDuration(log.duration_ms)"></span>
-                    <span x-show="log.queued_ms" class="text-[10px] text-[#fec730] ml-1" x-text="'(' + formatDuration(log.queued_ms) + ' queued)'"></span>
-                  </td>
-                  <td class="px-4 py-3 text-right text-on-surface-variant text-xs font-mono" x-text="log.tokens != null ? log.tokens.toLocaleString() : '-'"></td>
-                  <td class="px-4 py-3 text-right text-on-surface-variant text-xs font-mono" x-text="formatCost(log.cost_usd)"></td>
+        <div class="bg-[#2e3b44] rounded-[10px] overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-[#1a1e21]">
+                <tr>
+                  <th class="px-6 py-4 text-left text-[0.7rem] font-headline font-bold uppercase tracking-[0.08em] text-outline">Time</th>
+                  <th class="px-6 py-4 text-left text-[0.7rem] font-headline font-bold uppercase tracking-[0.08em] text-outline">Status</th>
+                  <th class="px-6 py-4 text-left text-[0.7rem] font-headline font-bold uppercase tracking-[0.08em] text-outline">Client</th>
+                  <th class="px-6 py-4 text-left text-[0.7rem] font-headline font-bold uppercase tracking-[0.08em] text-outline">Provider</th>
+                  <th class="px-6 py-4 text-left text-[0.7rem] font-headline font-bold uppercase tracking-[0.08em] text-outline">Model</th>
+                  <th class="px-6 py-4 text-left text-[0.7rem] font-headline font-bold uppercase tracking-[0.08em] text-outline">Duration</th>
+                  <th class="px-6 py-4 text-left text-[0.7rem] font-headline font-bold uppercase tracking-[0.08em] text-outline">Tokens</th>
+                  <th class="px-6 py-4 text-left text-[0.7rem] font-headline font-bold uppercase tracking-[0.08em] text-outline">Cost</th>
                 </tr>
+              </thead>
+              <tbody class="divide-y divide-[#2a3038]">
+                <tr x-show="logs.length === 0">
+                  <td colspan="8" class="px-6 py-10 text-center text-outline font-mono text-sm" x-text="loading ? 'Loading...' : 'No logs found'"></td>
+                </tr>
+                <template x-for="log in logs" :key="log.id">
+                  <tr class="hover:bg-[#1a1e21] transition-colors duration-100">
+                    <td class="px-6 py-4 text-on-surface font-mono text-sm whitespace-nowrap" x-text="formatTime(log.created_at)"></td>
+                    <td class="px-6 py-4">
+                      <span class="px-2 py-0.5 text-[10px] font-bold font-mono"
+                        :class="statusBadgeClass(log.status)" x-text="log.status"></span>
+                    </td>
+                    <td class="px-6 py-4 text-on-surface text-sm font-medium" x-text="log.client_name || '-'"></td>
+                    <td class="px-6 py-4 text-outline text-sm" x-text="log.provider || '-'"></td>
+                    <td class="px-6 py-4 text-sm font-headline text-primary-container" x-text="log.model || '-'"></td>
+                    <td class="px-6 py-4 font-mono text-sm">
+                      <span class="text-white" x-text="formatDuration(log.duration_ms)"></span>
+                      <span x-show="log.queued_ms" class="text-[10px] text-[#ffb800] block" x-text="'(' + formatDuration(log.queued_ms) + ' queued)'"></span>
+                    </td>
+                    <td class="px-6 py-4 text-on-surface font-mono text-sm" x-text="log.tokens != null ? log.tokens.toLocaleString() : '-'"></td>
+                    <td class="px-6 py-4 font-mono text-sm font-bold"
+                      :class="log.cost_usd > 0 ? 'text-primary-container' : 'text-outline'"
+                      x-text="formatCost(log.cost_usd)"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination (inside table container) -->
+          <div class="px-6 py-4 bg-[#1a1e21]/50 flex items-center justify-between border-t border-[#2a3038]">
+            <!-- Page size selector -->
+            <div class="flex items-center gap-2">
+              <span class="text-outline text-[10px] uppercase tracking-wider font-headline">Show</span>
+              <select @change="changeLimit($event.target.value)" :value="limit"
+                class="bg-[#2e3b44] border border-outline-variant/30 text-on-surface text-xs font-mono px-2 py-1 focus:outline-none focus:border-primary-container rounded">
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+
+            <!-- Page navigation -->
+            <div class="flex items-center gap-1">
+              <!-- First -->
+              <button @click="goToPage(1)" :disabled="currentPage <= 1"
+                :class="currentPage <= 1 ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:bg-surface-container-high hover:text-on-surface'"
+                class="w-8 h-8 flex items-center justify-center text-xs transition-colors duration-100"
+                title="First page">
+                <span class="material-symbols-outlined text-[16px]">first_page</span>
+              </button>
+              <!-- Prev -->
+              <button @click="prevPage()" :disabled="offset <= 0"
+                :class="offset <= 0 ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:bg-surface-container-high hover:text-on-surface'"
+                class="w-8 h-8 flex items-center justify-center text-xs transition-colors duration-100"
+                title="Previous page">
+                <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+              </button>
+              <!-- Page numbers -->
+              <template x-for="p in visiblePages" :key="p">
+                <button @click="goToPage(p)"
+                  :class="p === currentPage ? 'bg-primary-container text-on-primary font-bold' : 'text-outline hover:bg-surface-container-high hover:text-on-surface'"
+                  class="w-8 h-8 flex items-center justify-center text-xs font-mono transition-colors duration-100"
+                  x-text="p">
+                </button>
               </template>
-            </tbody>
-          </table>
+              <!-- Next -->
+              <button @click="nextPage()" :disabled="offset + limit >= total"
+                :class="offset + limit >= total ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:bg-surface-container-high hover:text-on-surface'"
+                class="w-8 h-8 flex items-center justify-center text-xs transition-colors duration-100"
+                title="Next page">
+                <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+              </button>
+              <!-- Last -->
+              <button @click="goToPage(totalPages)" :disabled="currentPage >= totalPages"
+                :class="currentPage >= totalPages ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:bg-surface-container-high hover:text-on-surface'"
+                class="w-8 h-8 flex items-center justify-center text-xs transition-colors duration-100"
+                title="Last page">
+                <span class="material-symbols-outlined text-[16px]">last_page</span>
+              </button>
+            </div>
+
+            <!-- Page info -->
+            <span class="text-outline text-xs font-mono tracking-wider">
+              Page <span class="text-white font-bold" x-text="currentPage"></span> of <span x-text="totalPages"></span>
+            </span>
+          </div>
         </div>
 
-        <!-- Pagination -->
-        <div class="flex items-center justify-between mt-4">
-          <button @click="prevPage()" :disabled="offset <= 0"
-            :class="offset <= 0 ? 'text-outline/40 cursor-not-allowed' : 'text-on-surface hover:bg-surface-container'"
-            class="px-4 py-2 text-xs font-headline font-bold uppercase border border-outline-variant/40 transition-colors duration-100">
-            Previous
-          </button>
-          <span class="text-[11px] font-mono text-outline">
-            Page <span x-text="currentPage"></span> of <span x-text="totalPages"></span>
-          </span>
-          <button @click="nextPage()" :disabled="offset + limit >= total"
-            :class="offset + limit >= total ? 'text-outline/40 cursor-not-allowed' : 'text-on-surface hover:bg-surface-container'"
-            class="px-4 py-2 text-xs font-headline font-bold uppercase border border-outline-variant/40 transition-colors duration-100">
-            Next
-          </button>
+        <!-- Stats Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-6">
+          <div class="md:col-span-2 bg-surface-container-low p-6 border-l-4 border-primary-container">
+            <p class="text-[10px] text-outline uppercase tracking-widest mb-2 font-headline">Error Rate (Last 60m)</p>
+            <div class="flex items-end gap-4">
+              <h2 class="text-4xl font-headline font-bold text-white" x-text="stats ? (stats.error_rate.client_error_pct + stats.error_rate.server_error_pct).toFixed(1) + '%' : '-'"></h2>
+              <div class="flex-1 h-12 bg-surface-container-lowest relative overflow-hidden">
+                <div class="absolute inset-0 flex items-end gap-0.5 px-1" x-show="stats && stats.timeline">
+                  <template x-for="(bucket, i) in (stats ? stats.timeline.slice(-15) : [])" :key="i">
+                    <div class="flex-1 min-w-[3px]"
+                      :class="bucket.errors > 0 ? 'bg-[#ef4444]' : 'bg-outline/20'"
+                      :style="'height: ' + Math.max(8, Math.min(100, (bucket.requests / Math.max(...(stats.timeline.slice(-15).map(b => b.requests || 1)))) * 100)) + '%'">
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="md:col-span-3 bg-surface-container-low p-6 flex justify-between items-center">
+            <div>
+              <p class="text-[10px] text-outline uppercase tracking-widest mb-2 font-headline">Total Tokens (Today)</p>
+              <h2 class="text-4xl font-headline font-bold text-primary-container" x-text="stats ? formatCompactNumber(stats.total_tokens) : '-'"></h2>
+            </div>
+            <div class="text-right">
+              <p class="text-[10px] text-outline uppercase tracking-widest mb-2 font-headline">Estimated Cost</p>
+              <h2 class="text-2xl font-headline font-bold text-white" x-text="stats ? '$' + stats.total_cost_usd.toFixed(2) : '-'"></h2>
+            </div>
+          </div>
         </div>
       </div>
 
