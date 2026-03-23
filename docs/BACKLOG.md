@@ -20,13 +20,13 @@ real data instead of mock data.
 | 4 | [Security Alert Widget](#4-overview--security-alert-widget) | Anomaly detection and security alerts on Overview | 🔴 Deprioritized |
 | 5 | [CLI Auth Lifecycle](#5-cli-auth-lifecycle--session-monitoring-alerts--fallback) | Auth session monitoring, expiry alerts, provider fallback, circuit breaker | 🟡 Partial |
 | 6 | [SSE Streaming](#6-sse-streaming--token-by-token-responses-via-server-sent-events) | Token-by-token streaming for `/v1/chat/completions` and `/v1/messages` | 🟡 Partial |
-| 7 | [Mission Control Dashboard](#7-mission-control-dashboard--real-time-observability) | Sparklines, gauges, error rate breakdown, cost burn rate on Overview | 🟡 Backlog |
+| 7 | [Mission Control Dashboard](#7-mission-control-dashboard--real-time-observability) | Sparklines, gauges, error rate breakdown, cost burn rate on Overview | 🟡 Partial |
 | 8 | [Cost Intelligence](#8-cost-intelligence--per-client-budgets--spend-tracking) | Per-client cost breakdown, budget caps, spend alerts | 🟡 Backlog |
-| 9 | [Client Lifecycle](#9-client-lifecycle--expiration-metadata--audit) | Key expiration, client metadata, admin audit log | 🟡 Backlog |
+| 9 | [Client Lifecycle](#9-client-lifecycle--expiration-metadata--audit) | Key expiration, client metadata, admin audit log | 🟡 Partial |
 | 10 | [Smart Routing](#10-smart-routing--cost-aware--latency-aware-provider-selection) | Virtual models (`auto-cheap`, `auto-best`), latency-aware routing, priority queue | 🟡 Backlog |
-| 11 | [API Parameter Passthrough](#11-api-parameter-passthrough--temperature-response_format-stop) | `temperature`, `response_format`, `stop`, `top_p` forwarded to providers | 🟡 Backlog |
-| 12 | [Developer Experience](#12-developer-experience--linting-seeding--migrations) | ESLint, Prettier, seed data, migrations, pre-commit hooks | 🟡 Backlog |
-| 13 | [Security Hardening](#13-security-hardening--key-expiry-enforcement--input-validation) | Key expiry enforcement, input validation, IP allowlisting | 🟡 Backlog |
+| 11 | [API Parameter Passthrough](#11-api-parameter-passthrough--temperature-response_format-stop) | `temperature`, `response_format`, `stop`, `top_p` forwarded to providers | 🟡 Partial |
+| 12 | [Developer Experience](#12-developer-experience--linting-seeding--migrations) | ESLint, Prettier, seed data, migrations, pre-commit hooks | 🟡 Partial |
+| 13 | [Security Hardening](#13-security-hardening--key-expiry-enforcement--input-validation) | Key expiry enforcement, input validation, IP allowlisting | 🟡 Partial |
 | 14 | [Admin Playground](#14-admin-playground--interactive-api-testing-console) | Interactive console to test prompts, switch providers/models, see raw responses | ✅ Done |
 
 ---
@@ -164,7 +164,7 @@ and no fallback.
 | Fail-fast routing (skip unauthenticated providers) | ✅ Real — but no fallback, just 503 |
 | Admin provider toggle (manual disable) | ✅ Real |
 | Background health polling | ✅ Implemented |
-| Alerting on auth failure (webhook / email / Slack) | ❌ Not implemented |
+| Alerting on auth failure (webhook / email / Slack) | ✅ Implemented |
 | Automatic provider fallback | ❌ Not implemented |
 | Circuit breaker pattern | ❌ Not implemented |
 | Re-authentication mechanism | ❌ Not implemented (may not be possible for all CLIs) |
@@ -499,7 +499,7 @@ Today, critical signals are buried in JSON logs or response headers that nobody 
 | Metrics by period (24h/7d/30d) — total requests, tokens, cost | ✅ Real |
 | Queue stats in response headers (`X-Queue-Depth`, `X-Queue-Active`) | ✅ Real — but invisible to operators |
 | Request logs table (paginated) | ✅ Real |
-| Error rate breakdown (4xx vs 5xx vs by type) | ❌ Not implemented |
+| Error rate breakdown (4xx vs 5xx vs by type) | ✅ Implemented |
 | Per-provider latency percentiles (p50/p95/p99) | ❌ Not implemented |
 | Live request feed | ❌ Not implemented (see backlog #2) |
 | Cost burn rate / projection | ❌ Not implemented |
@@ -685,7 +685,7 @@ admin actions are operational and security risks.
 | SHA-256 hashed key storage | ✅ Real |
 | Per-client RPM rate limit | ✅ Real |
 | Per-client model restrictions | ✅ Real |
-| Key expiration / TTL | ❌ Not implemented |
+| Key expiration / TTL | ✅ Implemented |
 | Client metadata (description, owner, tags) | ❌ Not implemented |
 | Admin action audit log | ❌ Not implemented |
 | Bulk import/export of clients | ❌ Not implemented |
@@ -837,7 +837,7 @@ and Anthropic APIs that SheLLM silently ignores today.
 
 | Feature | Status |
 |---|---|
-| `temperature` parameter | ❌ Ignored — not passed to providers |
+| `temperature` parameter | ✅ Implemented |
 | `top_p` parameter | ❌ Ignored |
 | `stop` sequences | ❌ Ignored |
 | `response_format: { type: "json_object" }` | ❌ Ignored — providers report `supports_json_output` but it's never used |
@@ -926,7 +926,7 @@ SQL because there's no migration system.
 | `npm run dev` — watch mode with auto-restart | ✅ Real |
 | `setup-dev.sh` — interactive onboarding | ✅ Real |
 | `check-env.js` — pre-flight validation | ✅ Real |
-| ESLint / Prettier | ❌ Not configured |
+| ESLint / Prettier | ✅ ESLint configured (Prettier still pending) |
 | Pre-commit hook auto-installation | ❌ `scripts/pre-commit` exists but not linked |
 | Seed data for development | ❌ Not implemented |
 | Database migrations | ❌ Schema hardcoded in `initDb()` |
@@ -1019,9 +1019,9 @@ low-effort, high-impact security improvements that reduce the attack surface.
 | Timing-safe password comparison | ✅ Real |
 | Request body size limit (256KB global) | ✅ Real — not configurable |
 | Secret redaction in health errors | ✅ Fragile — regex `[A-Za-z0-9_-]{32,}` only |
-| Key expiration | ❌ Not implemented |
+| Key expiration | ✅ Implemented |
 | IP allowlisting | ❌ Not implemented |
-| `npm audit` in CI | ❌ Not configured |
+| `npm audit` in CI | ✅ Implemented |
 | Configurable body size per client | ❌ Not implemented |
 
 ### Expert Panel Review
@@ -1083,13 +1083,13 @@ Implemented in `feat(admin): add Playground page`. Alpine.js SPA page with provi
 | Export Logs CSV | Low | High | ✅ Done | #3 |
 | Ollama provider | Medium | High | ✅ Next sprint | #1 |
 | Background health poller + deeper auth checks | Medium | High | ✅ Done | #5 |
-| Webhook alerting (Slack/Discord/Uptime Kuma) | Medium | High | ✅ Next sprint | #5 |
-| Error rate breakdown in `/admin/stats` | Low | High | ✅ Next sprint | #7 |
+| Webhook alerting (Slack/Discord/Uptime Kuma) | Medium | High | ✅ Done | #5 |
+| Error rate breakdown in `/admin/stats` | Low | High | ✅ Done | #7 |
 | Cost breakdown by client + provider | Low | High | ✅ Next sprint | #8 |
-| Key expiration (`expires_at`) | Low | High | ✅ Next sprint | #9 |
-| `npm audit` in CI | Trivial | High | ✅ Next sprint | #13 |
-| ESLint setup + CI integration | Low | High | ✅ Next sprint | #12 |
-| `temperature` passthrough to providers | Low | High | ✅ Next sprint | #11 |
+| Key expiration (`expires_at`) | Low | High | ✅ Done | #9 |
+| `npm audit` in CI | Trivial | High | ✅ Done | #13 |
+| ESLint setup + CI integration | Low | High | ✅ Done | #12 |
+| `temperature` passthrough to providers | Low | High | ✅ Done | #11 |
 | Startup health gate | Low | Medium | ✅ Done | #5 |
 | Admin dashboard auth alert banner | Low | Medium | ✅ Next sprint | #5 |
 | Pre-commit hook auto-install | Trivial | Medium | ✅ Next sprint | #12 |

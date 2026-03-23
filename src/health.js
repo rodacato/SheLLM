@@ -112,7 +112,7 @@ async function getHealthStatus() {
 
 function mergeEnabledStatus(providerStatuses) {
   const { getProviderSettings } = require('./db');
-  let enabledMap = {};
+  const enabledMap = {};
   try {
     const rows = getProviderSettings();
     for (const row of rows) enabledMap[row.name] = !!row.enabled;

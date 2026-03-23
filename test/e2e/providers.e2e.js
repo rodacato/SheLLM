@@ -10,7 +10,7 @@ const assert = require('node:assert/strict');
 const request = require('supertest');
 
 let app;
-let authenticated = {};
+const authenticated = {};
 
 before(async () => {
   app = require('../../src/server');

@@ -124,7 +124,7 @@ async function route({ model, prompt, system, max_tokens, temperature, request_i
 
 function listProviders({ includeDisabled = true } = {}) {
   const { getProviderSettings } = require('./db');
-  let settingsMap = {};
+  const settingsMap = {};
   try {
     const rows = getProviderSettings();
     for (const row of rows) settingsMap[row.name] = row;

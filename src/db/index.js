@@ -207,7 +207,7 @@ function insertRequestLog({ request_id, client_name, provider, model, status, du
 
 function pruneOldLogs(days = 30) {
   if (!db) return;
-  db.prepare(`DELETE FROM request_logs WHERE created_at < datetime('now', ?)`).run(`-${days} days`);
+  db.prepare('DELETE FROM request_logs WHERE created_at < datetime(\'now\', ?)').run(`-${days} days`);
 }
 
 // --- Provider Settings ---
