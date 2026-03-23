@@ -33,6 +33,7 @@ router.get('/providers', async (req, res) => {
     type: p.type,
     enabled: !!p.enabled,
     capabilities: p.capabilities,
+    health_check: p.type === 'http' ? p.health_check : undefined,
     priority: p.priority,
     installed: healthData[p.name]?.installed ?? null,
     authenticated: healthData[p.name]?.authenticated ?? null,

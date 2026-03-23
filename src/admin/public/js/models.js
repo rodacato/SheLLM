@@ -8,6 +8,14 @@ function modelsPage() {
     newModelUpstream: '',
     addingProvider: false,
     newProvider: { name: '', chat_url: '', auth_env: '' },
+    providerTemplates: [
+      { label: 'Custom', name: '', chat_url: '', auth_env: '' },
+      { label: 'Cerebras', name: 'cerebras', chat_url: 'https://api.cerebras.ai/v1/chat/completions', auth_env: 'CEREBRAS_API_KEY' },
+      { label: 'Groq', name: 'groq', chat_url: 'https://api.groq.com/openai/v1/chat/completions', auth_env: 'GROQ_API_KEY' },
+      { label: 'OpenRouter', name: 'openrouter', chat_url: 'https://openrouter.ai/api/v1/chat/completions', auth_env: 'OPENROUTER_API_KEY' },
+      { label: 'Together', name: 'together', chat_url: 'https://api.together.xyz/v1/chat/completions', auth_env: 'TOGETHER_API_KEY' },
+      { label: 'Fireworks', name: 'fireworks', chat_url: 'https://api.fireworks.ai/inference/v1/chat/completions', auth_env: 'FIREWORKS_API_KEY' },
+    ],
 
     async fetchModels() {
       this.loading = true;
@@ -35,6 +43,14 @@ function modelsPage() {
         }
       } catch { /* ignore */ }
       this.loading = false;
+    },
+
+    get cliProviders() {
+      return this.providers.filter((p) => p.type === 'subprocess');
+    },
+
+    get httpProviders() {
+      return this.providers.filter((p) => p.type === 'http');
     },
 
     providerStatus(providerName) {
@@ -103,6 +119,12 @@ function modelsPage() {
     startAddProvider() {
       this.addingProvider = true;
       this.newProvider = { name: '', chat_url: '', auth_env: '' };
+    },
+
+    applyTemplate(tpl) {
+      this.newProvider.name = tpl.name;
+      this.newProvider.chat_url = tpl.chat_url;
+      this.newProvider.auth_env = tpl.auth_env;
     },
 
     cancelAddProvider() {

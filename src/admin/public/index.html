@@ -874,64 +874,117 @@
           </p>
         </header>
 
-        <!-- Provider status cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
-          <template x-for="prov in providers" :key="prov.name">
-            <div class="bg-[#2e3b44] p-6 flex flex-col gap-5 border border-transparent hover:border-primary-container/30 transition-all"
+        <!-- CLI PROVIDERS (built-in, subprocess) -->
+        <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase block mb-3">CLI Providers</span>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+          <template x-for="prov in cliProviders" :key="prov.name">
+            <div class="bg-[#2e3b44] p-5 flex flex-col gap-4 border border-transparent hover:border-primary-container/30 transition-all"
               :class="{ 'opacity-60': !prov.installed || !prov.enabled }">
-              <!-- Header: name + type badge + status -->
+              <!-- Header -->
+              <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 inline-block rounded-full"
+                    :class="!prov.enabled ? 'bg-slate-500' : (prov.installed && prov.authenticated ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]' : (prov.installed ? 'bg-red-500' : 'bg-slate-500'))"></span>
+                  <h3 class="font-headline font-bold text-white text-sm uppercase tracking-tight" x-text="prov.name"></h3>
+                </div>
+                <span class="font-mono text-[9px] uppercase tracking-widest px-1.5 py-0.5"
+                  :class="!prov.enabled ? 'text-slate-400 bg-slate-400/10'
+                    : (prov.installed && prov.authenticated ? 'text-green-400 bg-green-400/10'
+                    : 'text-red-400 bg-red-400/10')"
+                  x-text="!prov.enabled ? 'Off' : (prov.installed && prov.authenticated ? 'Ready' : (prov.health_error || 'Error'))"></span>
+              </div>
+              <!-- Model tags -->
+              <div class="flex flex-wrap gap-1.5 items-center">
+                <template x-for="m in prov.models" :key="m.name">
+                  <span class="font-mono text-[9px] bg-surface-container-lowest border border-outline-variant/40 px-1.5 py-0.5 inline-flex items-center gap-1 group/tag"
+                    :class="prov.enabled && prov.authenticated ? 'text-on-surface-variant' : 'text-outline/50'">
+                    <span x-text="m.name"></span>
+                    <button @click="removeModel(prov.name, m.name)"
+                      class="hidden group-hover/tag:inline text-outline/40 hover:text-red-400 transition-colors leading-none">&times;</button>
+                  </span>
+                </template>
+                <button @click="startAddModel(prov.name)"
+                  class="font-mono text-[9px] border border-dashed border-outline-variant/30 px-2 py-1 text-outline/40 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center gap-1">
+                  <span class="text-xs leading-none">+</span> Add Model</button>
+              </div>
+              <!-- Inline add model form -->
+              <div x-show="addingModelProvider === prov.name" class="flex items-center gap-2">
+                <input type="text" x-model="newModelName" placeholder="model-name"
+                  @keydown.enter="addModel(prov.name)" @keydown.escape="cancelAddModel()"
+                  class="bg-surface border border-primary-container/30 text-white font-mono text-[10px] px-2 py-1 flex-1 focus:outline-none focus:border-primary-container">
+                <button @click="addModel(prov.name)" class="text-[10px] font-bold text-green-400">ADD</button>
+                <button @click="cancelAddModel()" class="text-[10px] font-bold text-outline">ESC</button>
+              </div>
+              <!-- Footer -->
+              <div class="mt-auto pt-3 border-t border-white/5 flex justify-between items-center">
+                <span class="text-[10px] font-mono uppercase"
+                  :class="prov.enabled ? 'text-slate-400' : 'text-red-400'"
+                  x-text="prov.enabled ? 'Enabled' : 'Disabled'"></span>
+                <button @click="toggleProvider(prov.name, !prov.enabled)" class="toggle-track" :class="{ 'active': prov.enabled }">
+                  <div class="toggle-knob"></div>
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- API PROVIDERS (dynamic, HTTP) -->
+        <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase block mb-3">API Providers</span>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+          <template x-for="prov in httpProviders" :key="prov.name">
+            <div class="bg-[#2e3b44] p-6 flex flex-col gap-5 border border-transparent hover:border-primary-container/30 transition-all"
+              :class="{ 'opacity-60': !prov.enabled }">
+              <!-- Header -->
               <div class="flex justify-between items-start">
                 <div class="flex items-center gap-3">
                   <span class="w-2.5 h-2.5 inline-block rounded-full"
-                    :class="!prov.enabled ? 'bg-slate-500' : (prov.installed && prov.authenticated ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : (prov.installed ? 'bg-red-500' : 'bg-slate-500'))"></span>
+                    :class="!prov.enabled ? 'bg-slate-500' : (prov.authenticated ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500')"></span>
                   <h3 class="font-headline font-bold text-white text-lg uppercase tracking-tight" x-text="prov.name"></h3>
-                  <span class="text-[9px] font-mono px-1.5 py-0.5 tracking-widest uppercase"
-                    :class="prov.type === 'http' ? 'text-blue-400 bg-blue-400/10' : 'text-amber-400 bg-amber-400/10'"
-                    x-text="prov.type"></span>
                 </div>
                 <span class="font-mono text-[10px] uppercase tracking-widest px-2 py-1"
                   :class="!prov.enabled ? 'text-slate-400 bg-slate-400/10'
-                    : (prov.installed && prov.authenticated ? 'text-green-400 bg-green-400/10'
-                    : (prov.installed ? 'text-red-400 bg-red-400/10' : 'text-slate-400 bg-slate-400/10'))"
-                  x-text="!prov.enabled ? 'Disabled' : (prov.installed && prov.authenticated ? 'Authenticated' : (prov.installed ? (prov.health_error || 'Not authenticated') : 'Not installed'))"></span>
+                    : (prov.authenticated ? 'text-green-400 bg-green-400/10' : 'text-red-400 bg-red-400/10')"
+                  x-text="!prov.enabled ? 'Disabled' : (prov.authenticated ? 'Connected' : (prov.health_error || 'Not configured'))"></span>
+              </div>
+              <!-- Connection info -->
+              <div class="text-[10px] font-mono text-outline/60 space-y-1" x-show="prov.capabilities">
+                <div x-show="prov.health_check?.chat_url" class="truncate" x-text="prov.health_check?.chat_url"></div>
+                <div x-show="prov.health_check?.auth_env" x-text="'env: ' + (prov.health_check?.auth_env || '')"></div>
               </div>
               <!-- Model tags -->
               <div class="flex flex-wrap gap-2 items-center">
                 <template x-for="m in prov.models" :key="m.name">
                   <span class="font-mono text-[10px] bg-surface-container-lowest border border-outline-variant/40 px-2 py-1 inline-flex items-center gap-1.5 group/tag"
-                    :class="prov.enabled && prov.installed && prov.authenticated ? 'text-on-surface-variant' : 'text-outline/50'">
-                    <span x-text="'[' + m.name + ']'"></span>
+                    :class="prov.enabled && prov.authenticated ? 'text-on-surface-variant' : 'text-outline/50'">
+                    <span x-text="m.name"></span>
+                    <span x-show="m.upstream_model" class="text-outline/30" x-text="'→ ' + m.upstream_model"></span>
                     <button @click="removeModel(prov.name, m.name)"
-                      class="hidden group-hover/tag:inline text-outline/40 hover:text-red-400 transition-colors leading-none"
-                      title="Remove model">&times;</button>
+                      class="hidden group-hover/tag:inline text-outline/40 hover:text-red-400 transition-colors leading-none">&times;</button>
                   </span>
                 </template>
-                <!-- Add model button -->
                 <button @click="startAddModel(prov.name)"
                   class="font-mono text-[10px] border border-dashed border-outline-variant/30 px-3 py-1.5 text-outline/50 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center gap-1.5">
                   <span class="text-sm leading-none">+</span> Add Model
                 </button>
-                <span x-show="!prov.models || prov.models.length === 0"
-                  class="text-outline/40 font-mono text-[10px]">No models</span>
               </div>
               <!-- Inline add model form -->
-              <div x-show="addingModelProvider === prov.name" class="flex items-center gap-2 mt-2">
+              <div x-show="addingModelProvider === prov.name" class="flex items-center gap-2">
                 <input type="text" x-model="newModelName" placeholder="model-name"
                   @keydown.enter="addModel(prov.name)" @keydown.escape="cancelAddModel()"
                   class="bg-surface border border-primary-container/30 text-white font-mono text-[10px] px-2 py-1 w-36 focus:outline-none focus:border-primary-container">
-                <input type="text" x-model="newModelUpstream" placeholder="upstream (optional)"
+                <input type="text" x-model="newModelUpstream" placeholder="upstream model"
                   @keydown.enter="addModel(prov.name)" @keydown.escape="cancelAddModel()"
                   class="bg-surface border border-outline-variant/30 text-white font-mono text-[10px] px-2 py-1 w-36 focus:outline-none focus:border-primary-container">
-                <button @click="addModel(prov.name)" class="text-[10px] font-bold text-green-400 hover:text-green-300">ADD</button>
-                <button @click="cancelAddModel()" class="text-[10px] font-bold text-outline hover:text-white">ESC</button>
+                <button @click="addModel(prov.name)" class="text-[10px] font-bold text-green-400">ADD</button>
+                <button @click="cancelAddModel()" class="text-[10px] font-bold text-outline">ESC</button>
               </div>
-              <!-- Footer: enabled toggle -->
+              <!-- Footer -->
               <div class="mt-auto pt-4 border-t border-white/5 flex justify-between items-center">
                 <div class="flex items-center gap-3">
                   <span class="text-[10px] font-mono uppercase"
                     :class="prov.enabled ? 'text-slate-400' : 'text-red-400'"
                     x-text="prov.enabled ? 'Enabled' : 'Disabled'"></span>
-                  <button x-show="prov.type === 'http'" @click="deleteProvider(prov.name)"
+                  <button @click="deleteProvider(prov.name)"
                     class="text-[10px] font-headline font-bold uppercase tracking-widest text-outline/30 hover:text-red-400 transition-colors">Delete</button>
                 </div>
                 <button @click="toggleProvider(prov.name, !prov.enabled)" class="toggle-track" :class="{ 'active': prov.enabled }">
@@ -943,14 +996,26 @@
 
           <!-- Add HTTP Provider card -->
           <div x-show="!addingProvider" @click="startAddProvider()"
-            class="bg-[#2e3b44]/50 p-6 flex flex-col items-center justify-center gap-3 border border-dashed border-outline-variant/30 hover:border-primary-container/40 cursor-pointer transition-colors min-h-[180px]">
+            class="bg-[#2e3b44]/50 p-6 flex flex-col items-center justify-center gap-3 border border-dashed border-outline-variant/30 hover:border-primary-container/40 cursor-pointer transition-colors min-h-[200px]">
             <span class="text-2xl text-outline/40">+</span>
-            <span class="text-[10px] font-headline font-bold uppercase tracking-widest text-outline/50">Add HTTP Provider</span>
+            <span class="text-[10px] font-headline font-bold uppercase tracking-widest text-outline/50">Add API Provider</span>
+            <span class="text-[9px] font-mono text-outline/30">OpenAI-compatible endpoint</span>
           </div>
 
           <!-- Add provider form card -->
           <div x-show="addingProvider" class="bg-[#2e3b44] p-6 flex flex-col gap-4 border border-primary-container/30">
-            <h3 class="font-headline font-bold text-white text-sm uppercase tracking-tight">New HTTP Provider</h3>
+            <h3 class="font-headline font-bold text-white text-sm uppercase tracking-tight">New API Provider</h3>
+            <!-- Template selector -->
+            <div class="flex flex-wrap gap-1.5">
+              <template x-for="tpl in providerTemplates" :key="tpl.label">
+                <button @click="applyTemplate(tpl)"
+                  class="text-[9px] font-mono px-2 py-1 border transition-colors"
+                  :class="newProvider.name === tpl.name && newProvider.chat_url === tpl.chat_url
+                    ? 'border-primary-container/50 text-primary-container bg-primary-container/10'
+                    : 'border-outline-variant/30 text-outline/60 hover:text-white hover:border-outline-variant/60'"
+                  x-text="tpl.label"></button>
+              </template>
+            </div>
             <input type="text" x-model="newProvider.name" placeholder="provider-name"
               class="bg-surface border border-outline-variant/30 text-white font-mono text-xs px-3 py-2 w-full focus:outline-none focus:border-primary-container">
             <input type="text" x-model="newProvider.chat_url" placeholder="https://api.example.com/v1/chat/completions"
