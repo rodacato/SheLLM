@@ -66,6 +66,86 @@
     body { font-family: 'Inter', sans-serif; }
     h1, h2, h3, h4, nav { font-family: 'Space Grotesk', sans-serif; }
     .diamond-node { clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); }
+
+    /* Scroll-triggered fade-in */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+    }
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Hero glow behind logo */
+    .hero-glow {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(3,227,255,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      animation: glow-breathe 4s ease-in-out infinite;
+    }
+    @keyframes glow-breathe {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
+
+    /* Typing cursor blink */
+    .cursor-blink::after {
+      content: '_';
+      color: #03e3ff;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* Scan line — subtle terminal feel */
+    .scan-line {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(3,227,255,0.15), transparent);
+      animation: scan 6s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes scan {
+      0% { top: 0; }
+      100% { top: 100%; }
+    }
+
+    /* Provider card border glow on hover */
+    .card-glow {
+      transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+    .card-glow:hover {
+      box-shadow: 0 0 20px rgba(3,227,255,0.08);
+      border-color: rgba(3,227,255,0.2) !important;
+    }
+
+    /* Floating grid dots */
+    .grid-dots {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: radial-gradient(circle, rgba(3,227,255,0.06) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: drift 20s linear infinite;
+    }
+    @keyframes drift {
+      0% { background-position: 0 0; }
+      100% { background-position: 40px 40px; }
+    }
+
+    /* Code block typing effect */
+    .code-line {
+      opacity: 0;
+      animation: type-in 0.4s ease-out forwards;
+    }
   </style>
 </head>
 
@@ -90,11 +170,15 @@
 
 <!-- Hero -->
 <section class="min-h-screen flex flex-col items-center justify-center text-center px-6 relative overflow-hidden bg-surface-container-lowest">
-  <!-- Structural background -->
+  <!-- Animated backgrounds -->
+  <div class="grid-dots"></div>
+  <div class="scan-line"></div>
   <div class="absolute inset-0 opacity-5 pointer-events-none">
     <div class="absolute top-0 left-0 w-full h-full border-[20vw] border-surface-container-high rotate-45 translate-y-1/2"></div>
   </div>
-  <div class="z-10 flex flex-col items-center">
+  <div class="z-10 flex flex-col items-center relative">
+    <!-- Glow behind logo -->
+    <div class="hero-glow"></div>
     <!-- Diamond prompt logo -->
     <div class="flex items-center gap-3 mb-8">
       <div class="w-12 h-12 flex items-center justify-center border-2 border-primary-container relative">
@@ -105,7 +189,7 @@
     <h1 class="text-6xl md:text-8xl font-black text-white uppercase tracking-[0.04em] leading-tight mb-4">
       She<span class="text-primary-container">LL</span>M
     </h1>
-    <p class="text-on-secondary-container text-lg md:text-xl max-w-2xl font-light mb-12 tracking-wide">
+    <p class="text-on-secondary-container text-lg md:text-xl max-w-2xl font-light mb-12 tracking-wide cursor-blink">
       Your LLM services — unified as a REST API
     </p>
     <div class="flex flex-col md:flex-row gap-6">
@@ -122,7 +206,7 @@
 
 <!-- Value prop -->
 <section class="py-32 px-6 bg-surface">
-  <div class="max-w-4xl mx-auto text-center">
+  <div class="max-w-4xl mx-auto text-center fade-up">
     <h2 class="text-3xl md:text-4xl font-bold mb-8 text-white uppercase tracking-tight">Unified Infrastructure</h2>
     <p class="text-xl md:text-2xl text-on-surface-variant leading-relaxed font-light">
       Most LLM gateways assume you're paying per-token via API key. SheLLM's primary use case is the opposite: you already have <span class="text-primary-container font-medium">CLI subscriptions</span> (Claude Max, Gemini AI Plus, OpenAI Enterprise) and want to expose them as a regular HTTP API to your apps — without burning API quota.
@@ -135,13 +219,13 @@
   <div class="max-w-7xl mx-auto">
     <div class="flex items-end justify-between mb-16">
       <div>
-        <div class="text-primary-container text-xs font-bold tracking-[0.3em] uppercase mb-2">Supported Backends</div>
-        <h2 class="text-3xl md:text-4xl font-bold text-white uppercase tracking-tight">Native Connectivity</h2>
+        <div class="text-primary-container text-xs font-bold tracking-[0.3em] uppercase mb-2 fade-up">Supported Backends</div>
+        <h2 class="text-3xl md:text-4xl font-bold text-white uppercase tracking-tight fade-up">Native Connectivity</h2>
       </div>
       <div class="hidden md:block h-px flex-grow mx-12 bg-outline-variant opacity-20"></div>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0">
-      <div class="bg-surface p-10 border border-outline-variant/10 hover:bg-surface-container-high transition-colors group">
+      <div class="bg-surface p-10 border border-outline-variant/10 hover:bg-surface-container-high transition-colors group card-glow fade-up">
         <div class="flex justify-between items-start mb-12">
           <span class="bg-primary-container text-on-primary text-[10px] font-bold px-2 py-0.5 tracking-widest">CLI</span>
           <span class="material-symbols-outlined text-outline group-hover:text-primary-container transition-colors">terminal</span>
@@ -154,7 +238,7 @@
           <span class="text-[10px] font-mono border border-outline-variant/40 px-2 py-0.5 uppercase text-outline">claude-opus</span>
         </div>
       </div>
-      <div class="bg-surface p-10 border border-outline-variant/10 hover:bg-surface-container-high transition-colors group">
+      <div class="bg-surface p-10 border border-outline-variant/10 hover:bg-surface-container-high transition-colors group card-glow fade-up">
         <div class="flex justify-between items-start mb-12">
           <span class="bg-primary-container text-on-primary text-[10px] font-bold px-2 py-0.5 tracking-widest">CLI</span>
           <span class="material-symbols-outlined text-outline group-hover:text-primary-container transition-colors">google</span>
@@ -167,7 +251,7 @@
           <span class="text-[10px] font-mono border border-outline-variant/40 px-2 py-0.5 uppercase text-outline">gemini-flash</span>
         </div>
       </div>
-      <div class="bg-surface p-10 border border-outline-variant/10 hover:bg-surface-container-high transition-colors group">
+      <div class="bg-surface p-10 border border-outline-variant/10 hover:bg-surface-container-high transition-colors group card-glow fade-up">
         <div class="flex justify-between items-start mb-12">
           <span class="bg-primary-container text-on-primary text-[10px] font-bold px-2 py-0.5 tracking-widest">CLI</span>
           <span class="material-symbols-outlined text-outline group-hover:text-primary-container transition-colors">code</span>
@@ -178,7 +262,7 @@
           <span class="text-[10px] font-mono border border-outline-variant/40 px-2 py-0.5 uppercase text-outline">codex</span>
         </div>
       </div>
-      <div class="bg-surface p-10 border border-outline-variant/10 hover:bg-surface-container-high transition-colors group">
+      <div class="bg-surface p-10 border border-outline-variant/10 hover:bg-surface-container-high transition-colors group card-glow fade-up">
         <div class="flex justify-between items-start mb-12">
           <span class="bg-tertiary-container text-on-tertiary text-[10px] font-bold px-2 py-0.5 tracking-widest">API</span>
           <span class="material-symbols-outlined text-outline group-hover:text-primary-container transition-colors">bolt</span>
@@ -199,7 +283,7 @@
   <div class="max-w-5xl mx-auto">
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-16">
       <div class="lg:col-span-2">
-        <h2 class="text-4xl font-bold text-white uppercase tracking-tighter mb-6">Quick<br>Deployment</h2>
+        <h2 class="text-4xl font-bold text-white uppercase tracking-tighter mb-6 fade-up">Quick<br>Deployment</h2>
         <p class="text-on-secondary-container font-light leading-relaxed">
           Start your gateway in seconds. SheLLM handles the routing, you handle the queries.
         </p>
@@ -238,7 +322,7 @@
 <!-- Comparison -->
 <section class="py-24 px-6 bg-surface">
   <div class="max-w-5xl mx-auto">
-    <h2 class="text-3xl font-bold text-white uppercase tracking-tighter mb-16 text-center">How SheLLM compares</h2>
+    <h2 class="text-3xl font-bold text-white uppercase tracking-tighter mb-16 text-center fade-up">How SheLLM compares</h2>
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse">
         <thead>
@@ -311,5 +395,23 @@
   </div>
 </footer>
 
+<script>
+// Scroll-triggered fade-in using IntersectionObserver
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      // Stagger siblings slightly
+      const delay = entry.target.dataset.delay || 0;
+      setTimeout(() => entry.target.classList.add('visible'), delay);
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.fade-up').forEach((el, i) => {
+  el.dataset.delay = (i % 4) * 100; // stagger within groups
+  observer.observe(el);
+});
+</script>
 </body>
 </html>
