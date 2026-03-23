@@ -2,7 +2,6 @@
 
 const logger = require('../lib/logger');
 const { getDb, insertRequestLog } = require('../db');
-const { emitLog } = require('../lib/log-emitter');
 
 const QUIET_PATHS = ['/health'];
 
@@ -48,7 +47,6 @@ function requestLogger(req, res, next) {
         cost_usd: res.locals.cost_usd || null,
       };
       insertRequestLog(logEntry);
-      emitLog({ ...logEntry, created_at: new Date().toISOString() });
     }
   });
 

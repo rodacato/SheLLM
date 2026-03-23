@@ -119,14 +119,7 @@ router.get('/logs/stream', (req, res) => {
   activeStreams++;
   initSSE(res);
 
-  // Send last 50 logs as initial batch
-  const db = getDb();
-  if (db) {
-    const recent = db.prepare(`SELECT ${LOG_COLUMNS} FROM request_logs ORDER BY id DESC LIMIT 50`).all();
-    sendSSEChunk(res, { type: 'init', logs: recent.reverse() });
-  }
-
-  // Subscribe to new logs
+  // Subscribe to all logger output (stdout/stderr)
   const onLogs = (entries) => {
     if (!res.writableEnded) {
       sendSSEChunk(res, { type: 'batch', logs: entries });

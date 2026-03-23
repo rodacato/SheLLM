@@ -473,14 +473,14 @@
 
       </div>
 
-      <!-- LIVE LOGS PAGE -->
-      <div x-show="page === 'live'" x-data="livePage()" x-effect="if (page === 'live') { connect(); } else { disconnect(); }">
+      <!-- TERMINAL PAGE -->
+      <div x-show="page === 'live'" x-data="livePage()" x-effect="if (page === 'live' && !paused) { connect(); } else if (page !== 'live') { disconnect(); }">
 
         <header class="mb-6">
           <div class="flex items-center justify-between">
             <div>
-              <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">LIVE LOGS<span class="text-primary-container">_</span></h2>
-              <p class="text-on-surface-variant">Real-time request stream.</p>
+              <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">TERMINAL<span class="text-primary-container">_</span></h2>
+              <p class="text-on-surface-variant">Live server output stream.</p>
             </div>
             <div class="flex items-center gap-3">
               <span class="text-[10px] font-mono" :class="connected ? 'text-[#22c55e]' : 'text-outline/50'">
@@ -496,27 +496,41 @@
           </div>
         </header>
 
+        <!-- Filters -->
+        <div class="flex items-center gap-4 mb-4">
+          <div class="flex gap-1">
+            <template x-for="lvl in ['debug', 'info', 'warn', 'error']" :key="lvl">
+              <button @click="toggleLevel(lvl)"
+                :class="filterLevels[lvl]
+                  ? (lvl === 'error' ? 'bg-error/20 text-error' : lvl === 'warn' ? 'bg-[#ffb800]/20 text-[#ffb800]' : lvl === 'debug' ? 'bg-outline/20 text-outline' : 'bg-[#22c55e]/20 text-[#22c55e]')
+                  : 'bg-surface-container text-outline/30'"
+                class="px-3 py-1 text-[10px] font-headline font-bold uppercase tracking-wider transition-colors"
+                x-text="lvl"></button>
+            </template>
+          </div>
+          <input type="text" x-model="filterText"
+            class="flex-1 bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container"
+            placeholder="Filter logs...">
+          <span class="text-[10px] font-mono text-outline" x-text="filteredLogs.length + '/' + logs.length"></span>
+        </div>
+
         <!-- Terminal panel -->
         <div class="bg-surface-container-lowest border-t-2 border-primary-container">
           <div class="px-6 py-3 bg-surface-container-high flex items-center justify-between">
             <span class="font-mono text-[10px] font-bold text-outline uppercase tracking-widest">TERMINAL_OUTPUT_STDOUT</span>
-            <span class="font-mono text-[10px] text-outline" x-text="logs.length + ' entries'"></span>
           </div>
-          <div class="p-6 font-mono text-[12px] text-on-surface-variant leading-6 overflow-y-auto terminal-scroll" style="max-height: calc(100vh - 280px);">
-            <template x-if="logs.length === 0 && !connected">
-              <p class="text-outline">No logs. Click DISCONNECTED to connect.</p>
+          <div class="p-6 font-mono text-[12px] text-on-surface-variant leading-6 overflow-y-auto terminal-scroll" style="max-height: calc(100vh - 330px);">
+            <template x-if="filteredLogs.length === 0 && !connected">
+              <p class="text-outline">Press play to connect.</p>
             </template>
-            <template x-if="logs.length === 0 && connected">
-              <p class="text-outline">Waiting for requests...</p>
+            <template x-if="filteredLogs.length === 0 && connected">
+              <p class="text-outline">Waiting for output...</p>
             </template>
-            <template x-for="log in [...logs].reverse()" :key="log.request_id || log.id">
+            <template x-for="(log, i) in filteredLogs" :key="i">
               <p>
-                <span class="text-primary-container" x-text="'[' + formatTs(log.created_at) + ']'"></span>
-                <span :class="statusColor(log.status)" class="font-bold" x-text="log.status"></span>
-                <span class="text-outline" x-text="log.provider || '-'"></span>
-                <span class="text-on-surface-variant" x-text="log.model || '-'"></span>
-                <span class="text-outline" x-text="formatDuration(log.duration_ms)"></span>
-                <span class="text-on-surface-variant/50" x-text="log.client_name || 'anonymous'"></span>
+                <span class="text-primary-container" x-text="'[' + formatTs(log.ts) + ']'"></span>
+                <span :class="levelColor(log.level)" x-text="log.level?.toUpperCase()"></span>
+                <span class="text-on-surface" x-text="formatLogMessage(log)"></span>
               </p>
             </template>
             <template x-if="connected">

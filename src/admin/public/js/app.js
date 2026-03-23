@@ -70,7 +70,7 @@ function app() {
     nav: [
       { id: 'overview', label: 'Overview', icon: 'dashboard' },
       { id: 'playground', label: 'Playground', icon: 'terminal' },
-      { id: 'live', label: 'Live Logs', icon: 'stream' },
+      { id: 'live', label: 'Terminal', icon: 'stream' },
       { id: 'logs', label: 'Request Logs', icon: 'database' },
       { id: 'keys', label: 'API Keys', icon: 'key' },
       { id: 'models', label: 'Models', icon: 'memory' },

@@ -48,5 +48,23 @@
 .terminal-scroll::-webkit-scrollbar-track { background: #0b0f12; }
 .terminal-scroll::-webkit-scrollbar-thumb { background: #3b494c; }
 
+/* Toggle switch (square, matches brutalist theme) */
+.toggle-track {
+  width: 28px; height: 14px;
+  background: #3b494c;
+  transition: background-color 150ms;
+  cursor: pointer;
+  position: relative;
+}
+.toggle-track.active { background: #03e3ff; }
+.toggle-knob {
+  width: 10px; height: 10px;
+  background: #e0e3e7;
+  position: absolute;
+  top: 2px; left: 2px;
+  transition: transform 150ms;
+}
+.toggle-track.active .toggle-knob { transform: translateX(14px); background: #00363e; }
+
 /* Select & input reset for dark bg */
 select option { background-color: #1c2023; }
