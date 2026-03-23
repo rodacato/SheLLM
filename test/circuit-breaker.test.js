@@ -48,13 +48,8 @@ describe('circuit-breaker', () => {
       for (let i = 0; i < 3; i++) cb.recordFailure('claude');
       assert.strictEqual(cb.getCircuitState('claude').state, 'open');
 
-      // Manipulate lastTransitionAt to simulate time passage
-      const state = cb.getCircuitState('claude');
-      // We need to access internal state — use a workaround:
-      // Record failure sets lastTransitionAt, so we override via env
-      // Instead, let's just set CIRCUIT_BREAKER_RESET_MS=0 for test
-      // Actually, let's test with the default and accept we can't fast-forward
-      // For unit test, we test the logic by reloading with env override
+      // Circuit is open — can't fast-forward lastTransitionAt in unit test
+      // so we just verify traffic is blocked
 
       assert.strictEqual(cb.canSendTraffic('claude'), false);
     });

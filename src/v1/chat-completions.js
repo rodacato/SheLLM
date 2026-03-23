@@ -187,8 +187,6 @@ async function chatCompletionsHandler(req, res) {
  */
 async function handleStream(req, res, { model, max_tokens, temperature, top_p, response_format, prompt, system }) {
   const logger = require('../lib/logger');
-  const { recordSuccess, recordFailure } = require('../circuit-breaker');
-
   let provider;
   try {
     provider = selectProvider(model);

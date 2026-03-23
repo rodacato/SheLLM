@@ -17,7 +17,7 @@ function generateKey() {
   return 'shellm-' + randomBytes(16).toString('hex');
 }
 
-function runMigrations(database, dbPath) {
+function runMigrations(database, _dbPath) {
   database.exec('CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT (datetime(\'now\')))');
 
   const applied = new Set(database.prepare('SELECT name FROM _migrations').all().map(r => r.name));

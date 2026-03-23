@@ -71,7 +71,9 @@ module.exports = [
         formatDuration: 'readonly',
         formatCost: 'readonly',
         formatTime: 'readonly',
+        formatCompactNumber: 'readonly',
         statusBadgeClass: 'readonly',
+        Chart: 'readonly',
       },
     },
     rules: {

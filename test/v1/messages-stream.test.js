@@ -17,7 +17,7 @@ describe('/v1/messages streaming', () => {
           stderr: '',
           duration_ms: 10,
         })),
-        executeStream: mock.fn(async function* (cmd, args, { signal } = {}) {
+        executeStream: mock.fn(async function* (cmd, args, { signal: _signal } = {}) {
           yield { type: 'chunk', data: 'Hello' };
           yield { type: 'chunk', data: ' world' };
           yield { type: 'done', stderr: '' };
