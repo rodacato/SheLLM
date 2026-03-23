@@ -159,4 +159,22 @@ describe('/v1/messages streaming', () => {
     assert.strictEqual(res.body.type, 'message');
     assert.ok(res.headers['content-type'].includes('application/json'));
   });
+
+  it('message_delta includes non-zero output_tokens estimate', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'claude',
+        max_tokens: 1024,
+        stream: true,
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+
+    assert.strictEqual(res.status, 200);
+    const events = parseSSE(res.text);
+    const msgDelta = events.find((e) => e.event === 'message_delta');
+    assert.ok(msgDelta, 'should have message_delta event');
+    assert.ok(msgDelta.data.usage.output_tokens > 0, 'output_tokens should be > 0');
+  });
 });

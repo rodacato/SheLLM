@@ -1,5 +1,6 @@
-const { describe, it } = require('node:test');
+const { describe, it, mock, before, after } = require('node:test');
 const assert = require('node:assert/strict');
+const path = require('node:path');
 
 // --- Unit tests for SSE helpers ---
 
@@ -258,5 +259,138 @@ describe('provider chatStream contracts', () => {
     assert.strictEqual(events.length, 2);
     assert.strictEqual(events[0].content, 'Hi');
     assert.strictEqual(events[1].content, ' there');
+  });
+});
+
+// --- Integration tests for /v1/chat/completions?stream=true ---
+
+describe('/v1/chat/completions streaming integration', () => {
+  let request;
+  let app;
+  let testKey;
+
+  before(() => {
+    mock.module(path.resolve(__dirname, '../../src/providers/base.js'), {
+      namedExports: {
+        execute: mock.fn(async (cmd) => ({
+          stdout: cmd === 'claude'
+            ? JSON.stringify({ result: 'test reply', cost_usd: 0.001 })
+            : 'test reply',
+          stderr: '',
+          duration_ms: 10,
+        })),
+        executeStream: mock.fn(async function* () {
+          yield { type: 'chunk', data: 'Hello' };
+          yield { type: 'chunk', data: ' world' };
+          yield { type: 'done', stderr: '' };
+        }),
+        stripNonPrintable: (t) => t,
+      },
+    });
+
+    mock.module('dotenv', {
+      namedExports: { config: () => {} },
+      defaultExport: { config: () => {} },
+    });
+
+    process.env.SHELLM_GLOBAL_RPM = '200';
+
+    for (const key of Object.keys(require.cache)) {
+      if (key.includes('/src/') || key.includes('dotenv')) {
+        delete require.cache[key];
+      }
+    }
+
+    const { initDb, closeDb, createClient } = require('../../src/db');
+    try { closeDb(); } catch { /* ignore */ }
+    initDb(':memory:');
+    const client = createClient({ name: 'test-client', rpm: 100 });
+    testKey = client.rawKey;
+
+    request = require('supertest');
+    app = require('../../src/server');
+  });
+
+  after(() => {
+    const { closeDb } = require('../../src/db');
+    try { closeDb(); } catch { /* ignore */ }
+  });
+
+  function parseSSE(text) {
+    return text
+      .split('\n\n')
+      .filter((s) => s.trim())
+      .map((block) => {
+        const line = block.replace(/^data: /, '');
+        if (line === '[DONE]') return { done: true };
+        try { return JSON.parse(line); } catch { return { raw: line }; }
+      });
+  }
+
+  it('returns full OpenAI SSE event sequence', async () => {
+    const res = await request(app)
+      .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'claude',
+        stream: true,
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+
+    assert.strictEqual(res.status, 200);
+    assert.ok(res.headers['content-type'].includes('text/event-stream'));
+
+    const events = parseSSE(res.text);
+
+    // First chunk: role + content
+    assert.strictEqual(events[0].object, 'chat.completion.chunk');
+    assert.strictEqual(events[0].choices[0].delta.role, 'assistant');
+    assert.strictEqual(typeof events[0].choices[0].delta.content, 'string');
+    assert.strictEqual(events[0].choices[0].finish_reason, null);
+    assert.ok(events[0].id.startsWith('shellm-'));
+
+    // Find final chunk with finish_reason
+    const finalChunk = events.find((e) => e.choices && e.choices[0].finish_reason === 'stop');
+    assert.ok(finalChunk, 'should have a chunk with finish_reason stop');
+    assert.deepStrictEqual(finalChunk.choices[0].delta, {});
+
+    // Last event is [DONE]
+    assert.strictEqual(events[events.length - 1].done, true);
+  });
+
+  it('stream: false returns regular JSON response', async () => {
+    const res = await request(app)
+      .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'claude',
+        stream: false,
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.object, 'chat.completion');
+    assert.ok(res.headers['content-type'].includes('application/json'));
+  });
+
+  it('works with buffer-and-flush for non-streaming provider', async () => {
+    const res = await request(app)
+      .post('/v1/chat/completions')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'gemini',
+        stream: true,
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+
+    assert.strictEqual(res.status, 200);
+    assert.ok(res.headers['content-type'].includes('text/event-stream'));
+
+    const events = parseSSE(res.text);
+    // Should have at least one content chunk + finish chunk + [DONE]
+    assert.ok(events.length >= 3, 'should have content, finish, and DONE events');
+    const finalChunk = events.find((e) => e.choices && e.choices[0].finish_reason === 'stop');
+    assert.ok(finalChunk);
+    assert.strictEqual(events[events.length - 1].done, true);
   });
 });

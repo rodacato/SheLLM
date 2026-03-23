@@ -105,6 +105,29 @@ function validate(body) {
     return invalidRequest(`Unknown model: ${model}. Use GET /v1/models for available models.`);
   }
 
+  if (body.temperature !== undefined) {
+    if (typeof body.temperature !== 'number' || body.temperature < 0 || body.temperature > 1) {
+      return invalidRequest('Field "temperature" must be a number between 0 and 1');
+    }
+  }
+
+  if (body.top_p !== undefined) {
+    if (typeof body.top_p !== 'number' || body.top_p < 0 || body.top_p > 1) {
+      return invalidRequest('Field "top_p" must be a number between 0 and 1');
+    }
+  }
+
+  if (body.stop_sequences !== undefined) {
+    if (!Array.isArray(body.stop_sequences)) {
+      return invalidRequest('Field "stop_sequences" must be an array of strings');
+    }
+    for (const s of body.stop_sequences) {
+      if (typeof s !== 'string') {
+        return invalidRequest('Field "stop_sequences" elements must be strings');
+      }
+    }
+  }
+
   return null;
 }
 
@@ -133,7 +156,27 @@ function preflight(req, res) {
     }
   }
 
-  const extracted = extractPrompt(req.body.messages, req.body.system);
+  // Normalize system prompt (string or array of text blocks)
+  let systemParam = req.body.system || null;
+  if (Array.isArray(systemParam)) {
+    const parts = [];
+    for (let i = 0; i < systemParam.length; i++) {
+      const block = systemParam[i];
+      if (!block || block.type !== 'text' || typeof block.text !== 'string') {
+        sendAnthropicError(res, invalidRequest(
+          `system[${i}] must be a text block with "type": "text" and string "text" field`
+        ));
+        return null;
+      }
+      parts.push(block.text);
+    }
+    systemParam = parts.join('\n');
+  } else if (systemParam !== null && typeof systemParam !== 'string') {
+    sendAnthropicError(res, invalidRequest('Field "system" must be a string or array of text blocks'));
+    return null;
+  }
+
+  const extracted = extractPrompt(req.body.messages, systemParam);
   if (extracted.error) {
     sendAnthropicError(res, invalidRequest(extracted.error));
     return null;
@@ -258,6 +301,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
 
       const streamFn = provider.chatStream;
       let chunkCount = 0;
+      let totalChars = 0;
 
       if (streamFn) {
         logger.debug({ event: 'stream_calling_provider', format: 'anthropic', provider: provider.name, hasChatStream: true });
@@ -265,6 +309,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
           if (ac.signal.aborted) { logger.debug({ event: 'stream_aborted', chunkCount }); break; }
           if (event.type === 'delta') {
             chunkCount++;
+            totalChars += event.content.length;
             if (chunkCount === 1) {
               ttftMs = Date.now() - streamStart;
               logger.debug({ event: 'stream_first_token', ttft_ms: ttftMs, request_id: req.requestId });
@@ -276,13 +321,15 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
       } else {
         logger.debug({ event: 'stream_fallback', format: 'anthropic', provider: provider.name });
         const result = await provider.chat({ prompt, system, max_tokens, temperature, top_p, model });
+        totalChars += result.content.length;
         sendContentBlockDelta(res, 0, result.content);
         recordSuccess(provider.name);
       }
 
       if (!ac.signal.aborted) {
+        const estimatedOutputTokens = Math.ceil(totalChars / 4);
         sendContentBlockStop(res, 0);
-        sendMessageDelta(res, 'end_turn', 0, ttftMs);
+        sendMessageDelta(res, 'end_turn', estimatedOutputTokens, ttftMs);
         sendMessageStop(res);
         logger.debug({ event: 'stream_complete', format: 'anthropic', ttft_ms: ttftMs, request_id: req.requestId });
       }

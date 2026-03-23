@@ -172,7 +172,7 @@ describe('/v1/chat/completions', () => {
   it('rejects messages with invalid shape', async () => {
     const res = await post({ model: 'claude', messages: [{ role: 'user' }] });
     assert.strictEqual(res.status, 400);
-    assert.match(res.body.error.message, /role.*content/);
+    assert.match(res.body.error.message, /content/);
   });
 
   it('rejects unknown model', async () => {
@@ -198,6 +198,158 @@ describe('/v1/chat/completions', () => {
     });
     assert.strictEqual(res.status, 400);
     assert.match(res.body.error.message, /exceeds maximum length/);
+  });
+
+  // --- Content as array (OpenAI content parts) ---
+
+  it('accepts content as array of text objects', async () => {
+    const res = await post({
+      model: 'claude',
+      messages: [{ role: 'user', content: [{ type: 'text', text: 'hello' }] }],
+    });
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.object, 'chat.completion');
+  });
+
+  it('accepts content as array with multiple text blocks', async () => {
+    const res = await post({
+      model: 'claude',
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: 'Hello' },
+          { type: 'text', text: 'World' },
+        ],
+      }],
+    });
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.object, 'chat.completion');
+  });
+
+  it('rejects content array with non-text block type', async () => {
+    const res = await post({
+      model: 'claude',
+      messages: [{
+        role: 'user',
+        content: [{ type: 'image_url', image_url: { url: 'http://example.com/img.png' } }],
+      }],
+    });
+    assert.strictEqual(res.status, 400);
+    assert.match(res.body.error.message, /content/);
+  });
+
+  it('rejects content array with missing text field', async () => {
+    const res = await post({
+      model: 'claude',
+      messages: [{ role: 'user', content: [{ type: 'text' }] }],
+    });
+    assert.strictEqual(res.status, 400);
+    assert.match(res.body.error.message, /content/);
+  });
+
+  // --- Extra fields passthrough (Postel's principle) ---
+
+  it('ignores n field', async () => {
+    const res = await post({
+      model: 'claude',
+      messages: [{ role: 'user', content: 'hello' }],
+      n: 2,
+    });
+    assert.strictEqual(res.status, 200);
+  });
+
+  it('ignores seed field', async () => {
+    const res = await post({
+      model: 'claude',
+      messages: [{ role: 'user', content: 'hello' }],
+      seed: 42,
+    });
+    assert.strictEqual(res.status, 200);
+  });
+
+  it('ignores user field', async () => {
+    const res = await post({
+      model: 'claude',
+      messages: [{ role: 'user', content: 'hello' }],
+      user: 'test-user',
+    });
+    assert.strictEqual(res.status, 200);
+  });
+
+  it('ignores frequency_penalty field', async () => {
+    const res = await post({
+      model: 'claude',
+      messages: [{ role: 'user', content: 'hello' }],
+      frequency_penalty: 0.5,
+    });
+    assert.strictEqual(res.status, 200);
+  });
+
+  it('ignores presence_penalty field', async () => {
+    const res = await post({
+      model: 'claude',
+      messages: [{ role: 'user', content: 'hello' }],
+      presence_penalty: 0.5,
+    });
+    assert.strictEqual(res.status, 200);
+  });
+
+  it('ignores logprobs field', async () => {
+    const res = await post({
+      model: 'claude',
+      messages: [{ role: 'user', content: 'hello' }],
+      logprobs: true,
+    });
+    assert.strictEqual(res.status, 200);
+  });
+
+  it('ignores tools field', async () => {
+    const res = await post({
+      model: 'claude',
+      messages: [{ role: 'user', content: 'hello' }],
+      tools: [{ type: 'function', function: { name: 'f', parameters: {} } }],
+    });
+    assert.strictEqual(res.status, 200);
+  });
+
+  // --- stop field validation ---
+
+  it('accepts stop as string', async () => {
+    const res = await post({
+      model: 'claude',
+      messages: [{ role: 'user', content: 'hello' }],
+      stop: '\n',
+    });
+    assert.strictEqual(res.status, 200);
+  });
+
+  it('accepts stop as array of strings', async () => {
+    const res = await post({
+      model: 'claude',
+      messages: [{ role: 'user', content: 'hello' }],
+      stop: ['END', 'STOP'],
+    });
+    assert.strictEqual(res.status, 200);
+  });
+
+  it('rejects stop array with more than 4 elements', async () => {
+    const res = await post({
+      model: 'claude',
+      messages: [{ role: 'user', content: 'hello' }],
+      stop: ['a', 'b', 'c', 'd', 'e'],
+    });
+    assert.strictEqual(res.status, 400);
+    assert.match(res.body.error.message, /stop/);
+  });
+
+  it('rejects stop with non-string element', async () => {
+    const res = await post({
+      model: 'claude',
+      messages: [{ role: 'user', content: 'hello' }],
+      stop: [123],
+    });
+    assert.strictEqual(res.status, 400);
+    assert.match(res.body.error.message, /stop/);
   });
 });
 

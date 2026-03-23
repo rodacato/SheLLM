@@ -277,6 +277,207 @@ describe('/v1/messages', () => {
     assert.match(res.body.error.message, /exceeds maximum length/);
   });
 
+  // --- Temperature / top_p validation ---
+
+  it('rejects temperature above 1', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'claude',
+        max_tokens: 1024,
+        temperature: 1.5,
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+    assert.strictEqual(res.status, 400);
+    assert.match(res.body.error.message, /temperature/);
+  });
+
+  it('rejects negative temperature', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'claude',
+        max_tokens: 1024,
+        temperature: -0.1,
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+    assert.strictEqual(res.status, 400);
+    assert.match(res.body.error.message, /temperature/);
+  });
+
+  it('accepts valid temperature', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'claude',
+        max_tokens: 1024,
+        temperature: 0.7,
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+    assert.strictEqual(res.status, 200);
+  });
+
+  it('rejects top_p above 1', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'claude',
+        max_tokens: 1024,
+        top_p: 1.5,
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+    assert.strictEqual(res.status, 400);
+    assert.match(res.body.error.message, /top_p/);
+  });
+
+  it('accepts valid top_p', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'claude',
+        max_tokens: 1024,
+        top_p: 0.9,
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+    assert.strictEqual(res.status, 200);
+  });
+
+  // --- System as array of text blocks ---
+
+  it('accepts system as array of text blocks', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'claude',
+        max_tokens: 1024,
+        system: [{ type: 'text', text: 'Be helpful.' }],
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.type, 'message');
+  });
+
+  it('accepts system as array with multiple blocks', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'claude',
+        max_tokens: 1024,
+        system: [
+          { type: 'text', text: 'Be helpful.' },
+          { type: 'text', text: 'Be concise.' },
+        ],
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.type, 'message');
+  });
+
+  it('rejects system array with non-text block', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'claude',
+        max_tokens: 1024,
+        system: [{ type: 'image', source: {} }],
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+    assert.strictEqual(res.status, 400);
+    assert.match(res.body.error.message, /system/);
+  });
+
+  // --- Extra fields passthrough ---
+
+  it('ignores metadata field', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'claude',
+        max_tokens: 1024,
+        metadata: { user_id: 'abc' },
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+    assert.strictEqual(res.status, 200);
+  });
+
+  it('ignores top_k field', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'claude',
+        max_tokens: 1024,
+        top_k: 10,
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+    assert.strictEqual(res.status, 200);
+  });
+
+  it('ignores tools field', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'claude',
+        max_tokens: 1024,
+        tools: [{ name: 'get_weather', description: 'Get weather', input_schema: { type: 'object' } }],
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+    assert.strictEqual(res.status, 200);
+  });
+
+  // --- stop_sequences validation ---
+
+  it('accepts stop_sequences as array of strings', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'claude',
+        max_tokens: 1024,
+        stop_sequences: ['END', 'STOP'],
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+    assert.strictEqual(res.status, 200);
+  });
+
+  it('rejects stop_sequences as non-array', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'claude',
+        max_tokens: 1024,
+        stop_sequences: 'END',
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+    assert.strictEqual(res.status, 400);
+    assert.match(res.body.error.message, /stop_sequences/);
+  });
+
+  it('rejects stop_sequences with non-string element', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({
+        model: 'claude',
+        max_tokens: 1024,
+        stop_sequences: [123],
+        messages: [{ role: 'user', content: 'hello' }],
+      });
+    assert.strictEqual(res.status, 400);
+    assert.match(res.body.error.message, /stop_sequences/);
+  });
+
   // --- All errors use Anthropic format ---
 
   it('returns Anthropic error format for all errors', async () => {

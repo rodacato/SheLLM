@@ -6,6 +6,28 @@ const { initSSE, sendSSEChunk, sendSSEDone, sendSSEError } = require('../lib/sse
 const MAX_PROMPT_LENGTH = 50000;
 
 /**
+ * Normalize message content to a plain string.
+ * Accepts a string (returned as-is) or an array of content parts
+ * (OpenAI format: [{ type: "text", text: "..." }]).
+ * Returns null if the content is invalid.
+ */
+function normalizeContent(content) {
+  if (typeof content === 'string') return content;
+
+  if (!Array.isArray(content)) return null;
+
+  const parts = [];
+  for (let i = 0; i < content.length; i++) {
+    const block = content[i];
+    if (!block || typeof block !== 'object') return null;
+    if (block.type !== 'text') return null;
+    if (typeof block.text !== 'string') return null;
+    parts.push(block.text);
+  }
+  return parts.join('\n');
+}
+
+/**
  * Extract system prompt and user prompt from OpenAI messages array.
  * - First message with role "system" becomes the system prompt
  * - Single user message: content used directly as prompt
@@ -50,9 +72,14 @@ function validate(body) {
 
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i];
-    if (!msg || typeof msg.role !== 'string' || typeof msg.content !== 'string') {
-      return invalidRequest(`messages[${i}] must have string "role" and "content" fields`);
+    if (!msg || typeof msg.role !== 'string') {
+      return invalidRequest(`messages[${i}] must have a string "role" field`);
     }
+    const normalized = normalizeContent(msg.content);
+    if (normalized === null) {
+      return invalidRequest(`messages[${i}].content must be a string or array of text objects`);
+    }
+    msg.content = normalized;
   }
 
   const hasUser = messages.some((m) => m.role === 'user');
@@ -85,6 +112,22 @@ function validate(body) {
   if (body.response_format !== undefined) {
     if (!body.response_format || typeof body.response_format !== 'object' || !['json_object', 'text'].includes(body.response_format.type)) {
       return invalidRequest('Field "response_format" must be an object with type "json_object" or "text"');
+    }
+  }
+
+  if (body.stop !== undefined && body.stop !== null) {
+    if (typeof body.stop !== 'string' && !Array.isArray(body.stop)) {
+      return invalidRequest('Field "stop" must be a string or array of strings');
+    }
+    if (Array.isArray(body.stop)) {
+      if (body.stop.length > 4) {
+        return invalidRequest('Field "stop" array must have at most 4 elements');
+      }
+      for (const s of body.stop) {
+        if (typeof s !== 'string') {
+          return invalidRequest('Field "stop" array elements must be strings');
+        }
+      }
     }
   }
 
