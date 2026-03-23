@@ -9,7 +9,11 @@
  * Requires: playwright (devDependency)
  * Outputs:  docs/screenshots/landing.png
  *           docs/screenshots/dashboard-overview.png
+ *           docs/screenshots/dashboard-playground.png
+ *           docs/screenshots/dashboard-terminal.png
  *           docs/screenshots/dashboard-logs.png
+ *           docs/screenshots/dashboard-keys.png
+ *           docs/screenshots/dashboard-models.png
  */
 
 const path = require('path');
@@ -41,8 +45,36 @@ const PAGES = [
     delay: 1500, // wait for Alpine + API data
   },
   {
+    name: 'dashboard-playground',
+    url: '/admin/dashboard/#playground',
+    auth: true,
+    waitFor: 'networkidle',
+    delay: 1500,
+  },
+  {
+    name: 'dashboard-terminal',
+    url: '/admin/dashboard/#live',
+    auth: true,
+    waitFor: 'domcontentloaded', // SSE keeps connection open, networkidle never fires
+    delay: 3000,
+  },
+  {
     name: 'dashboard-logs',
     url: '/admin/dashboard/#logs',
+    auth: true,
+    waitFor: 'networkidle',
+    delay: 1500,
+  },
+  {
+    name: 'dashboard-keys',
+    url: '/admin/dashboard/#keys',
+    auth: true,
+    waitFor: 'networkidle',
+    delay: 1500,
+  },
+  {
+    name: 'dashboard-models',
+    url: '/admin/dashboard/#models',
     auth: true,
     waitFor: 'networkidle',
     delay: 1500,

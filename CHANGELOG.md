@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-03-23
+
+### Added
+
+- **admin:** add Terminal page with live server output stream
+- **admin:** add Live Logs page with terminal-style real-time feed
+- **admin:** add live log stream endpoint with event emitter
+- **admin:** redesign models page to match design mockup
+- **admin:** redesign request logs page with stats summary and improved UX
+- **admin:** add sparkline charts, auto-refresh, and cost burn rate to overview
+- **admin:** add client description, audit log with UI activity panel
+- **dx:** add SQL migrations system and architecture diagram
+- **api:** add response_format and top_p parameter passthrough
+- **dx:** add pre-commit lint hook and npm run seed for demo data
+- **admin:** add error rate and cost-by-provider widgets to overview dashboard
+- **admin:** add expires_at display and input to keys UI
+- **resilience,streaming:** complete backlog items 5 & 6
+- **dx:** add ESLint with flat config, npm audit in CI, fix all lint errors
+- **admin:** add error rate breakdown and cost by provider to /admin/stats
+- **health:** add webhook alerting on provider health transitions
+- **auth:** add key expiration with expires_at field
+- **api:** add temperature parameter passthrough to all providers
+- **admin:** add Playground page with streaming, redesigned sidebar, and page headers
+- **streaming:** add SSE streaming for /v1/chat/completions with client disconnect handling
+- **health:** add startup health gate, background poller, and Gemini keychain fix
+- **admin:** add CSV log export with filtering and formula injection protection
+
+### Fixed
+
+- **admin:** replace text logo with SVG assets and add SVG favicon
+- **db:** replace non-sequential 001b migration with idempotent 004
+- **db:** handle pre-existing DBs in migration runner, fix sparkline height
+- **security:** improve secret redaction to catch short API key patterns
+- **health:** add --approval-mode yolo to Gemini deep check and handle yolo stderr warnings
+- **auth:** always require Bearer token, update tests, backlog, and CLAUDE.md
+- **screenshots:** replace Puppeteer with Playwright and fix font loading
+- **readme:** use SVG logos and add screenshot generation script
+- **docs:** fix API docs paths for GitHub Pages and update landing page
+- **ci:** update Pages workflow to use modular OpenAPI spec and client-side Redoc
+
+### Documentation
+
+- **backlog:** update #1 Models Page with expert review and current status
+- **backlog:** mark #7, #9, #12 as Done
+- **backlog:** update status for expires_at UI, dashboard widgets, response_format, seed, redaction
+- **backlog:** update status for temperature, key expiry, webhook, error rate, ESLint, npm audit
+- **backlog:** add Admin Playground (#14) and quick reference table
+
+
 ## [0.2.0] - 2026-03-22
 
 ### Added
@@ -101,5 +150,5 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/rodacato/SheLLM/compare/v0.1.0...v0.2.0
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/rodacato/SheLLM/compare/v0.2.0...v0.3.0
