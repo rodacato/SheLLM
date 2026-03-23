@@ -13,6 +13,7 @@ describe('router fail-fast on unauthenticated provider', () => {
           stderr: '',
           duration_ms: 10,
         })),
+        stripNonPrintable: (t) => t,
       },
     });
 

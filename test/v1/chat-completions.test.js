@@ -17,6 +17,7 @@ describe('/v1/chat/completions', () => {
           stderr: '',
           duration_ms: 10,
         })),
+        stripNonPrintable: (t) => t,
       },
     });
 

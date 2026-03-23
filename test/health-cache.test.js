@@ -14,6 +14,7 @@ describe('getCachedProviderStatus', () => {
           stderr: '',
           duration_ms: 10,
         })),
+        stripNonPrintable: (t) => t,
       },
     });
 

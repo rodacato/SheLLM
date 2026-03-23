@@ -1,6 +1,6 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
-const { execute } = require('../../src/providers/base');
+const { execute, stripNonPrintable } = require('../../src/providers/base');
 
 describe('base execute', () => {
   it('resolves with stdout/stderr/duration_ms on success', async () => {
@@ -69,5 +69,30 @@ describe('base execute', () => {
       'process.stdout.write(process.env.NO_COLOR || "")',
     ]);
     assert.strictEqual(result.stdout, '1');
+  });
+});
+
+describe('stripNonPrintable', () => {
+  it('strips ANSI color codes', () => {
+    assert.strictEqual(stripNonPrintable('\x1B[31mred\x1B[0m'), 'red');
+    assert.strictEqual(stripNonPrintable('\x1B[1;32mbold green\x1B[0m'), 'bold green');
+  });
+
+  it('preserves newlines and tabs', () => {
+    assert.strictEqual(stripNonPrintable('line1\nline2\ttab'), 'line1\nline2\ttab');
+  });
+
+  it('strips null bytes and control chars', () => {
+    assert.strictEqual(stripNonPrintable('he\x00llo\x01'), 'hello');
+    assert.strictEqual(stripNonPrintable('abc\x07def'), 'abcdef');
+  });
+
+  it('handles non-string input', () => {
+    assert.strictEqual(stripNonPrintable(null), null);
+    assert.strictEqual(stripNonPrintable(123), 123);
+  });
+
+  it('handles empty string', () => {
+    assert.strictEqual(stripNonPrintable(''), '');
   });
 });

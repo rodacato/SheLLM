@@ -5,6 +5,10 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:6100:6100"
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+      - /home/node/.shellm:size=32m
     volumes:
       - claude-auth:/home/node/.claude
       - gemini-auth:/home/node/.gemini

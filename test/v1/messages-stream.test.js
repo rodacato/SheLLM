@@ -22,6 +22,7 @@ describe('/v1/messages streaming', () => {
           yield { type: 'chunk', data: ' world' };
           yield { type: 'done', stderr: '' };
         }),
+        stripNonPrintable: (t) => t,
       },
     });
 

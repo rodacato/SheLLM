@@ -15,6 +15,7 @@ describe('/v1/models', () => {
           stderr: '',
           duration_ms: 10,
         })),
+        stripNonPrintable: (t) => t,
       },
     });
 

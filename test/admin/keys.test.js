@@ -16,6 +16,7 @@ describe('admin /admin/keys', () => {
           stderr: '',
           duration_ms: 10,
         })),
+        stripNonPrintable: (t) => t,
       },
     });
 

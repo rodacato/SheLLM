@@ -20,6 +20,7 @@ describe('router fallback', () => {
           yield { type: 'chunk', data: 'test' };
           yield { type: 'done', stderr: '' };
         }),
+        stripNonPrintable: (t) => t,
       },
     });
 

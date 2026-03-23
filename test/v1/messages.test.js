@@ -17,6 +17,7 @@ describe('/v1/messages', () => {
           stderr: '',
           duration_ms: 10,
         })),
+        stripNonPrintable: (t) => t,
       },
     });
 

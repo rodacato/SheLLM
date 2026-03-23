@@ -69,7 +69,14 @@ function createAdminAuth() {
     for (const msg of warnings) {
       logger.warn({ event: 'admin_password_weak', message: msg });
     }
+    // F-04: Refuse to start with weak password in production
+    if (process.env.NODE_ENV === 'production' && warnings.length > 0) {
+      throw new Error(`Refusing to start: admin password is too weak. ${warnings.join('; ')}`);
+    }
   }
+
+  // F-03: Remove password from process.env after reading into closure
+  delete process.env.SHELLM_ADMIN_PASSWORD;
 
   if (!password) {
     return (req, res, _next) => {

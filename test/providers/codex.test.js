@@ -49,7 +49,7 @@ describe('codex provider', () => {
     }));
 
     mock.module(path.resolve(__dirname, '../../src/providers/base.js'), {
-      namedExports: { execute: mockExecute },
+      namedExports: { execute: mockExecute, stripNonPrintable: (t) => t },
     });
 
     delete require.cache[require.resolve('../../src/providers/codex')];

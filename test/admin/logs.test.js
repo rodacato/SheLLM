@@ -13,6 +13,7 @@ describe('admin /admin/logs', () => {
         execute: mock.fn(async () => ({
           stdout: 'v1.0.0', stderr: '', duration_ms: 10,
         })),
+        stripNonPrintable: (t) => t,
       },
     });
 

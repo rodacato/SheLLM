@@ -9,6 +9,7 @@ describe('health parseCheckError', () => {
     mock.module(path.resolve(__dirname, '../src/providers/base.js'), {
       namedExports: {
         execute: async () => ({ stdout: '', stderr: '', duration_ms: 0 }),
+        stripNonPrintable: (t) => t,
       },
     });
 

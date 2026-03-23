@@ -14,7 +14,7 @@ describe('health', () => {
     }));
 
     mock.module(path.resolve(__dirname, '../src/providers/base.js'), {
-      namedExports: { execute: mockExecute },
+      namedExports: { execute: mockExecute, stripNonPrintable: (t) => t },
     });
 
     // Set CEREBRAS_API_KEY so cerebras shows as authenticated

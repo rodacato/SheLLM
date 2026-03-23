@@ -5,6 +5,16 @@ const { emitLog } = require('./log-emitter');
 const LEVELS = { debug: 0, info: 1, warn: 2, error: 3 };
 const currentLevel = LEVELS[process.env.LOG_LEVEL || 'info'] ?? LEVELS.info;
 
+// Warn if debug logging is enabled in production (may expose sensitive data)
+if (process.env.NODE_ENV === 'production' && currentLevel === LEVELS.debug) {
+  process.stderr.write(JSON.stringify({
+    ts: new Date().toISOString(),
+    level: 'warn',
+    event: 'debug_log_level_production',
+    message: 'LOG_LEVEL=debug in production may expose sensitive data in logs',
+  }) + '\n');
+}
+
 function log(level, data) {
   if (LEVELS[level] < currentLevel) return;
 

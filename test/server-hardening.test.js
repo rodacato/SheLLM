@@ -17,6 +17,7 @@ describe('server hardening (Phase 7)', () => {
           stderr: '',
           duration_ms: 10,
         })),
+        stripNonPrintable: (t) => t,
       },
     });
 
