@@ -120,7 +120,7 @@ function preflight(req, res) {
   const err = validate(req.body);
   if (err) { sendAnthropicError(res, err); return null; }
 
-  const { model, max_tokens, temperature } = req.body;
+  const { model, max_tokens, temperature, top_p } = req.body;
 
   if (req.allowedModels && req.allowedModels.length > 0) {
     const providerObj = resolveProvider(model);
@@ -150,7 +150,7 @@ function preflight(req, res) {
     return null;
   }
 
-  return { model, max_tokens, temperature, prompt, system };
+  return { model, max_tokens, temperature, top_p, prompt, system };
 }
 
 async function messagesHandler(req, res) {
@@ -161,14 +161,14 @@ async function messagesHandler(req, res) {
     return handleAnthropicStream(req, res, params);
   }
 
-  const { model, max_tokens, temperature, prompt, system } = params;
+  const { model, max_tokens, temperature, top_p, prompt, system } = params;
   const startTime = Date.now();
   res.locals.provider = null;
   res.locals.model = model;
 
   try {
     const allowFallback = req.headers['x-shellm-allow-fallback'] === 'true' || undefined;
-    const result = await route({ model, prompt, system, max_tokens, temperature, request_id: req.requestId, allowFallback });
+    const result = await route({ model, prompt, system, max_tokens, temperature, top_p, request_id: req.requestId, allowFallback });
     res.locals.provider = result.provider;
     res.locals.queued_ms = result.queued_ms ?? null;
     res.locals.cost_usd = result.cost_usd ?? null;
@@ -203,7 +203,7 @@ async function messagesHandler(req, res) {
 /**
  * Handle streaming response for /v1/messages (Anthropic SSE format).
  */
-async function handleAnthropicStream(req, res, { model, max_tokens, temperature, prompt, system }) {
+async function handleAnthropicStream(req, res, { model, max_tokens, temperature, top_p, prompt, system }) {
   const logger = require('../lib/logger');
   const { recordSuccess, recordFailure } = require('../circuit-breaker');
 
@@ -254,7 +254,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
 
       if (streamFn) {
         logger.debug({ event: 'stream_calling_provider', format: 'anthropic', provider: provider.name, hasChatStream: true });
-        for await (const event of streamFn({ prompt, system, max_tokens, temperature, model, signal: ac.signal })) {
+        for await (const event of streamFn({ prompt, system, max_tokens, temperature, top_p, model, signal: ac.signal })) {
           if (ac.signal.aborted) { logger.debug({ event: 'stream_aborted', chunkCount }); break; }
           if (event.type === 'delta') {
             chunkCount++;
@@ -268,7 +268,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
         recordSuccess(provider.name);
       } else {
         logger.debug({ event: 'stream_fallback', format: 'anthropic', provider: provider.name });
-        const result = await provider.chat({ prompt, system, max_tokens, temperature, model });
+        const result = await provider.chat({ prompt, system, max_tokens, temperature, top_p, model });
         sendContentBlockDelta(res, 0, result.content);
         recordSuccess(provider.name);
       }

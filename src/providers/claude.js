@@ -7,15 +7,20 @@ const VALID_MODELS = [
   'claude-opus', 'claude-opus-4-6',
 ];
 
-function buildArgs({ prompt, system, temperature }) {
+function buildArgs({ prompt, system, temperature, response_format }) {
   const args = [
     '--print',
     '--dangerously-skip-permissions',
     '--output-format', 'json',
   ];
 
-  if (system) {
-    args.push('--system-prompt', system);
+  const jsonMode = response_format?.type === 'json_object';
+  const systemPrompt = jsonMode && system
+    ? system + '\n\nRespond with valid JSON only.'
+    : jsonMode ? 'Respond with valid JSON only.'
+    : system;
+  if (systemPrompt) {
+    args.push('--system-prompt', systemPrompt);
   }
   if (temperature !== undefined) {
     args.push('--temperature', String(temperature));
@@ -49,8 +54,8 @@ function parseOutput(stdout, stderr) {
   return { content, cost_usd, usage };
 }
 
-async function chat({ prompt, system, temperature }) {
-  const args = buildArgs({ prompt, system, temperature });
+async function chat({ prompt, system, temperature, response_format }) {
+  const args = buildArgs({ prompt, system, temperature, response_format });
 
   // Exclude ANTHROPIC_API_KEY — the CLI uses its own stored credentials
   const env = { ...process.env };
@@ -60,10 +65,15 @@ async function chat({ prompt, system, temperature }) {
   return parseOutput(result.stdout, result.stderr);
 }
 
-async function* chatStream({ prompt, system, temperature, signal }) {
+async function* chatStream({ prompt, system, temperature, response_format, signal }) {
   // For streaming, use --print without --output-format json so tokens emit incrementally
   const args = ['--print', '--dangerously-skip-permissions'];
-  if (system) args.push('--system-prompt', system);
+  const jsonMode = response_format?.type === 'json_object';
+  const systemPrompt = jsonMode && system
+    ? system + '\n\nRespond with valid JSON only.'
+    : jsonMode ? 'Respond with valid JSON only.'
+    : system;
+  if (systemPrompt) args.push('--system-prompt', systemPrompt);
   if (temperature !== undefined) args.push('--temperature', String(temperature));
   args.push('--', prompt);
 

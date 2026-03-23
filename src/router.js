@@ -137,10 +137,10 @@ function getAvailableProviders() {
     .map((p) => p.name);
 }
 
-async function route({ model, prompt, system, max_tokens, temperature, request_id, allowFallback }) {
+async function route({ model, prompt, system, max_tokens, temperature, top_p, response_format, request_id, allowFallback }) {
   const useFallback = allowFallback ?? FALLBACK_ENABLED;
   if (useFallback) {
-    return routeWithFallback({ model, prompt, system, max_tokens, temperature, request_id });
+    return routeWithFallback({ model, prompt, system, max_tokens, temperature, top_p, response_format, request_id });
   }
 
   const provider = selectProvider(model);
@@ -150,7 +150,7 @@ async function route({ model, prompt, system, max_tokens, temperature, request_i
   try {
     result = await queue.enqueue(() => {
       const execStart = Date.now();
-      return provider.chat({ prompt, system, max_tokens, temperature, model })
+      return provider.chat({ prompt, system, max_tokens, temperature, top_p, response_format, model })
         .then((r) => ({ ...r, queued_ms: execStart - startTime }));
     });
     recordSuccess(provider.name);
@@ -171,7 +171,7 @@ async function route({ model, prompt, system, max_tokens, temperature, request_i
   };
 }
 
-async function routeWithFallback({ model, prompt, system, max_tokens, temperature, request_id }) {
+async function routeWithFallback({ model, prompt, system, max_tokens, temperature, top_p, response_format, request_id }) {
   const primary = resolveProvider(model);
   if (!primary) {
     throw invalidRequest(`Unknown provider: ${model}`);
@@ -197,7 +197,7 @@ async function routeWithFallback({ model, prompt, system, max_tokens, temperatur
     try {
       const result = await queue.enqueue(() => {
         const execStart = Date.now();
-        return candidate.chat({ prompt, system, max_tokens, temperature, model })
+        return candidate.chat({ prompt, system, max_tokens, temperature, top_p, response_format, model })
           .then((r) => ({ ...r, queued_ms: execStart - startTime }));
       });
       recordSuccess(candidate.name);

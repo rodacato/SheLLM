@@ -2,11 +2,16 @@ const { execute } = require('./base');
 
 const VALID_MODELS = ['gemini', 'gemini-pro', 'gemini-flash', 'gemini-2.0-flash', 'gemini-2.5-pro'];
 
-function buildArgs({ prompt, system, temperature }) {
+function buildArgs({ prompt, system, temperature, response_format }) {
   // Gemini has no --system-prompt flag — prepend to prompt
   let fullPrompt = '';
-  if (system) {
-    fullPrompt += system + '\n\n---\n\n';
+  const jsonMode = response_format?.type === 'json_object';
+  const systemText = jsonMode && system
+    ? system + '\n\nRespond with valid JSON only.'
+    : jsonMode ? 'Respond with valid JSON only.'
+    : system;
+  if (systemText) {
+    fullPrompt += systemText + '\n\n---\n\n';
   }
   fullPrompt += prompt;
 
@@ -45,8 +50,8 @@ function parseOutput(stdout) {
   }
 }
 
-async function chat({ prompt, system, temperature }) {
-  const args = buildArgs({ prompt, system, temperature });
+async function chat({ prompt, system, temperature, response_format }) {
+  const args = buildArgs({ prompt, system, temperature, response_format });
   const result = await execute('gemini', args);
   return parseOutput(result.stdout);
 }

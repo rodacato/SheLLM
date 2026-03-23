@@ -76,6 +76,18 @@ function validate(body) {
     }
   }
 
+  if (body.top_p !== undefined) {
+    if (typeof body.top_p !== 'number' || body.top_p < 0 || body.top_p > 1) {
+      return invalidRequest('Field "top_p" must be a number between 0 and 1');
+    }
+  }
+
+  if (body.response_format !== undefined) {
+    if (!body.response_format || typeof body.response_format !== 'object' || !['json_object', 'text'].includes(body.response_format.type)) {
+      return invalidRequest('Field "response_format" must be an object with type "json_object" or "text"');
+    }
+  }
+
   return null;
 }
 
@@ -87,7 +99,7 @@ function preflight(req, res) {
   const err = validate(req.body);
   if (err) { sendOpenAIError(res, err); return null; }
 
-  const { model, max_tokens, temperature } = req.body;
+  const { model, max_tokens, temperature, top_p, response_format } = req.body;
 
   if (req.allowedModels && req.allowedModels.length > 0) {
     const providerObj = resolveProvider(model);
@@ -111,7 +123,7 @@ function preflight(req, res) {
     return null;
   }
 
-  return { model, max_tokens, temperature, prompt, system };
+  return { model, max_tokens, temperature, top_p, response_format, prompt, system };
 }
 
 /**
@@ -125,14 +137,14 @@ async function chatCompletionsHandler(req, res) {
     return handleStream(req, res, params);
   }
 
-  const { model, max_tokens, temperature, prompt, system } = params;
+  const { model, max_tokens, temperature, top_p, response_format, prompt, system } = params;
   const startTime = Date.now();
   res.locals.provider = null;
   res.locals.model = model;
 
   try {
     const allowFallback = req.headers['x-shellm-allow-fallback'] === 'true' || undefined;
-    const result = await route({ model, prompt, system, max_tokens, temperature, request_id: req.requestId, allowFallback });
+    const result = await route({ model, prompt, system, max_tokens, temperature, top_p, response_format, request_id: req.requestId, allowFallback });
     res.locals.provider = result.provider;
     res.locals.queued_ms = result.queued_ms ?? null;
     res.locals.cost_usd = result.cost_usd ?? null;
@@ -173,7 +185,7 @@ async function chatCompletionsHandler(req, res) {
  * Handle streaming response (stream: true).
  * Holds a queue slot for the full stream duration.
  */
-async function handleStream(req, res, { model, max_tokens, temperature, prompt, system }) {
+async function handleStream(req, res, { model, max_tokens, temperature, top_p, response_format, prompt, system }) {
   const logger = require('../lib/logger');
   const { recordSuccess, recordFailure } = require('../circuit-breaker');
 
@@ -227,7 +239,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, prompt, 
         logger.debug({ event: 'stream_calling_provider', provider: provider.name, hasChatStream: true });
         // Native streaming
         let chunkCount = 0;
-        for await (const event of streamFn({ prompt, system, max_tokens, temperature, model, signal: ac.signal })) {
+        for await (const event of streamFn({ prompt, system, max_tokens, temperature, top_p, response_format, model, signal: ac.signal })) {
           if (ac.signal.aborted) { logger.debug({ event: 'stream_aborted', chunkCount }); break; }
           if (event.type === 'delta') {
             chunkCount++;
@@ -247,7 +259,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, prompt, 
       } else {
         logger.debug({ event: 'stream_fallback', provider: provider.name });
         // Buffer-and-flush fallback (e.g., Gemini)
-        const result = await provider.chat({ prompt, system, max_tokens, temperature, model });
+        const result = await provider.chat({ prompt, system, max_tokens, temperature, top_p, response_format, model });
         sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model, choices: [{ index: 0, delta: { role: 'assistant', content: result.content }, finish_reason: null }] });
       }
 

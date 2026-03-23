@@ -2,11 +2,16 @@ const { execute, executeStream } = require('./base');
 
 const VALID_MODELS = ['codex', 'codex-mini'];
 
-function buildArgs({ prompt, system }) {
+function buildArgs({ prompt, system, response_format }) {
   // Codex has no --system-prompt flag — prepend to prompt
   let fullPrompt = '';
-  if (system) {
-    fullPrompt += system + '\n\n---\n\n';
+  const jsonMode = response_format?.type === 'json_object';
+  const systemText = jsonMode && system
+    ? system + '\n\nRespond with valid JSON only.'
+    : jsonMode ? 'Respond with valid JSON only.'
+    : system;
+  if (systemText) {
+    fullPrompt += systemText + '\n\n---\n\n';
   }
   fullPrompt += prompt;
 
