@@ -4,7 +4,9 @@ function keysPage() {
     loading: true,
     showCreateModal: false,
     newKeyResult: null,
-    createForm: { name: '', rpm: 10, models: '', expires_at: '' },
+    createForm: { name: '', rpm: 10, models: '', expires_at: '', description: '' },
+    auditLogs: [],
+    showAudit: false,
 
     async fetchKeys() {
       this.loading = true;
@@ -18,6 +20,16 @@ function keysPage() {
       this.loading = false;
     },
 
+    async fetchAuditLogs() {
+      try {
+        const res = await apiFetch(`${API_BASE}/audit?limit=50`);
+        if (res.ok) {
+          const data = await res.json();
+          this.auditLogs = data.logs;
+        }
+      } catch { /* ignore */ }
+    },
+
     async createKey() {
       const body = {
         name: this.createForm.name.trim(),
@@ -29,6 +41,9 @@ function keysPage() {
       if (this.createForm.expires_at) {
         body.expires_at = new Date(this.createForm.expires_at).toISOString();
       }
+      if (this.createForm.description.trim()) {
+        body.description = this.createForm.description.trim();
+      }
 
       try {
         const res = await apiFetch(`${API_BASE}/keys`, {
@@ -38,9 +53,10 @@ function keysPage() {
         if (res.ok) {
           const data = await res.json();
           this.newKeyResult = data.key;
-          this.createForm = { name: '', rpm: 10, models: '', expires_at: '' };
+          this.createForm = { name: '', rpm: 10, models: '', expires_at: '', description: '' };
           this.showCreateModal = false;
           await this.fetchKeys();
+          await this.fetchAuditLogs();
         } else {
           const err = await res.json();
           alert(err.message || 'Failed to create key');
@@ -56,6 +72,7 @@ function keysPage() {
           body: JSON.stringify({ active: newActive }),
         });
         await this.fetchKeys();
+        await this.fetchAuditLogs();
       } catch { /* ignore */ }
     },
 
@@ -67,6 +84,7 @@ function keysPage() {
           const data = await res.json();
           this.newKeyResult = { ...data.key, name: key.name };
           await this.fetchKeys();
+          await this.fetchAuditLogs();
         }
       } catch { /* ignore */ }
     },
@@ -76,6 +94,7 @@ function keysPage() {
       try {
         await apiFetch(`${API_BASE}/keys/${key.id}`, { method: 'DELETE' });
         await this.fetchKeys();
+        await this.fetchAuditLogs();
       } catch { /* ignore */ }
     },
 

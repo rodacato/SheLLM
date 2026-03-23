@@ -92,19 +92,19 @@ function closeDb() {
 
 // --- Client CRUD ---
 
-function createClient({ name, rpm = 10, models = null, expires_at = null }) {
+function createClient({ name, rpm = 10, models = null, expires_at = null, description = null }) {
   const rawKey = generateKey();
   const key_hash = hashKey(rawKey);
   const key_prefix = rawKey.slice(0, KEY_PREFIX_LEN);
   const modelsJson = models ? JSON.stringify(models) : null;
 
   const stmt = db.prepare(`
-    INSERT INTO clients (name, key_hash, key_prefix, rpm, models, expires_at)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO clients (name, key_hash, key_prefix, rpm, models, expires_at, description)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
-  const info = stmt.run(name, key_hash, key_prefix, rpm, modelsJson, expires_at);
+  const info = stmt.run(name, key_hash, key_prefix, rpm, modelsJson, expires_at, description);
 
-  const row = db.prepare('SELECT id, name, key_prefix, rpm, models, active, expires_at, created_at FROM clients WHERE id = ?').get(info.lastInsertRowid);
+  const row = db.prepare('SELECT id, name, key_prefix, rpm, models, active, expires_at, description, created_at FROM clients WHERE id = ?').get(info.lastInsertRowid);
   return {
     ...row,
     models: row.models ? JSON.parse(row.models) : null,
@@ -113,7 +113,7 @@ function createClient({ name, rpm = 10, models = null, expires_at = null }) {
 }
 
 function listClients() {
-  const rows = db.prepare('SELECT id, name, key_prefix, rpm, models, active, expires_at, created_at FROM clients ORDER BY id').all();
+  const rows = db.prepare('SELECT id, name, key_prefix, rpm, models, active, expires_at, description, created_at FROM clients ORDER BY id').all();
   return rows.map((r) => ({
     ...r,
     models: r.models ? JSON.parse(r.models) : null,
@@ -121,7 +121,7 @@ function listClients() {
 }
 
 function updateClient(id, fields) {
-  const allowed = ['rpm', 'models', 'active', 'expires_at'];
+  const allowed = ['rpm', 'models', 'active', 'expires_at', 'description'];
   const sets = [];
   const values = [];
 
@@ -142,7 +142,7 @@ function updateClient(id, fields) {
   values.push(id);
   db.prepare(`UPDATE clients SET ${sets.join(', ')} WHERE id = ?`).run(...values);
 
-  const row = db.prepare('SELECT id, name, key_prefix, rpm, models, active, expires_at, created_at FROM clients WHERE id = ?').get(id);
+  const row = db.prepare('SELECT id, name, key_prefix, rpm, models, active, expires_at, description, created_at FROM clients WHERE id = ?').get(id);
   if (!row) return null;
   return { ...row, models: row.models ? JSON.parse(row.models) : null };
 }
@@ -223,6 +223,22 @@ function getProviderLastUsage() {
   `).all();
 }
 
+// --- Audit Log ---
+
+function insertAuditLog({ action, resource, resource_id = null, details = null }) {
+  if (!db) return;
+  db.prepare('INSERT INTO admin_audit_logs (action, resource, resource_id, details) VALUES (?, ?, ?, ?)')
+    .run(action, resource, resource_id, details);
+}
+
+function getAuditLogs({ limit = 100, resource_id = null } = {}) {
+  if (!db) return [];
+  if (resource_id) {
+    return db.prepare('SELECT * FROM admin_audit_logs WHERE resource_id = ? ORDER BY id DESC LIMIT ?').all(resource_id, limit);
+  }
+  return db.prepare('SELECT * FROM admin_audit_logs ORDER BY id DESC LIMIT ?').all(limit);
+}
+
 module.exports = {
   initDb,
   getDb,
@@ -239,6 +255,8 @@ module.exports = {
   getProviderSetting,
   setProviderEnabled,
   getProviderLastUsage,
+  insertAuditLog,
+  getAuditLogs,
   // Exposed for testing
   hashKey,
   generateKey,

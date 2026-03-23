@@ -552,7 +552,7 @@
       </div>
 
       <!-- KEYS PAGE -->
-      <div x-show="page === 'keys'" x-data="keysPage()" x-effect="if (page === 'keys' && keys.length === 0 && loading) fetchKeys()">
+      <div x-show="page === 'keys'" x-data="keysPage()" x-effect="if (page === 'keys' && keys.length === 0 && loading) { fetchKeys(); fetchAuditLogs(); }">
 
         <header class="mb-10">
           <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">API KEYS<span class="text-primary-container">_</span></h2>
@@ -600,7 +600,10 @@
               </tr>
               <template x-for="key in keys" :key="key.id">
                 <tr class="border-t border-outline-variant/20 hover:bg-surface-container-high transition-colors duration-100">
-                  <td class="px-4 py-3 font-headline font-bold text-white text-sm" x-text="key.name"></td>
+                  <td class="px-4 py-3">
+                    <span class="font-headline font-bold text-white text-sm block" x-text="key.name"></span>
+                    <span x-show="key.description" class="text-outline text-xs block mt-0.5" x-text="key.description"></span>
+                  </td>
                   <td class="px-4 py-3 font-mono text-outline text-xs" x-text="key.key_prefix + '...'"></td>
                   <td class="px-4 py-3 text-center text-on-surface font-mono text-xs" x-text="key.rpm"></td>
                   <td class="px-4 py-3 text-on-surface-variant text-xs font-mono" x-text="key.models ? key.models.join(', ') : 'All'"></td>
@@ -622,6 +625,27 @@
               </template>
             </tbody>
           </table>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="mt-6">
+          <button @click="showAudit = !showAudit; if (showAudit && auditLogs.length === 0) fetchAuditLogs()"
+            class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline hover:text-primary-container transition-colors flex items-center gap-2 mb-3">
+            <span class="material-symbols-outlined text-sm" x-text="showAudit ? 'expand_less' : 'expand_more'"></span>
+            Activity Log
+          </button>
+          <div x-show="showAudit" x-cloak class="bg-surface-container-lowest border border-outline-variant/20 p-4 font-mono text-xs max-h-[300px] overflow-y-auto terminal-scroll">
+            <template x-if="auditLogs.length === 0">
+              <p class="text-outline">No activity yet.</p>
+            </template>
+            <template x-for="entry in auditLogs" :key="entry.id">
+              <div class="flex gap-4 py-1.5 border-b border-outline-variant/10 last:border-0">
+                <span class="text-outline/50 whitespace-nowrap" x-text="formatTime(entry.created_at)"></span>
+                <span class="text-primary-container font-bold uppercase" x-text="entry.action"></span>
+                <span class="text-on-surface-variant" x-text="entry.resource + (entry.details ? ' — ' + entry.details : '')"></span>
+              </div>
+            </template>
+          </div>
         </div>
 
         <!-- Create Key Modal -->
@@ -651,6 +675,12 @@
                 <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Expires At (optional)</label>
                 <input type="datetime-local" x-model="createForm.expires_at"
                   class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container">
+              </div>
+              <div>
+                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Description (optional)</label>
+                <input type="text" x-model="createForm.description"
+                  class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"
+                  placeholder="e.g. Production key for Stockerly">
               </div>
             </div>
             <div class="flex justify-end gap-3 mt-8">

@@ -4,6 +4,7 @@ const { Router } = require('express');
 const { sendError, invalidRequest } = require('../errors');
 const {
   createClient, listClients, updateClient, deleteClient, rotateClientKey,
+  insertAuditLog, getAuditLogs,
 } = require('../db');
 
 const router = Router();
@@ -16,7 +17,7 @@ router.get('/keys', (req, res) => {
 
 // POST /admin/keys
 router.post('/keys', (req, res) => {
-  const { name, rpm, models, expires_at } = req.body || {};
+  const { name, rpm, models, expires_at, description } = req.body || {};
 
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
     return sendError(res, invalidRequest('Missing required field: name'), req.requestId);
@@ -37,7 +38,8 @@ router.post('/keys', (req, res) => {
   }
 
   try {
-    const client = createClient({ name: name.trim(), rpm, models, expires_at });
+    const client = createClient({ name: name.trim(), rpm, models, expires_at, description: description?.trim() || null });
+    insertAuditLog({ action: 'created', resource: 'key', resource_id: client.id, details: client.name });
     res.status(201).json({
       key: {
         id: client.id,
@@ -47,6 +49,7 @@ router.post('/keys', (req, res) => {
         rpm: client.rpm,
         models: client.models,
         expires_at: client.expires_at || null,
+        description: client.description || null,
         created_at: client.created_at,
       },
     });
@@ -65,7 +68,7 @@ router.patch('/keys/:id', (req, res) => {
     return sendError(res, invalidRequest('Invalid key id'), req.requestId);
   }
 
-  const { rpm, models, active, expires_at } = req.body || {};
+  const { rpm, models, active, expires_at, description } = req.body || {};
 
   if (rpm !== undefined && (typeof rpm !== 'number' || !Number.isInteger(rpm) || rpm < 1)) {
     return sendError(res, invalidRequest('Field "rpm" must be a positive integer'), req.requestId);
@@ -85,11 +88,12 @@ router.patch('/keys/:id', (req, res) => {
     }
   }
 
-  const updated = updateClient(id, { rpm, models, active, expires_at });
+  const updated = updateClient(id, { rpm, models, active, expires_at, description: description !== undefined ? (description?.trim() || null) : undefined });
   if (!updated) {
     return sendError(res, { status: 404, code: 'not_found', message: `Key id ${id} not found` }, req.requestId);
   }
 
+  insertAuditLog({ action: 'updated', resource: 'key', resource_id: id, details: JSON.stringify(req.body) });
   res.json({ key: updated });
 });
 
@@ -105,6 +109,7 @@ router.delete('/keys/:id', (req, res) => {
     return sendError(res, { status: 404, code: 'not_found', message: `Key id ${id} not found` }, req.requestId);
   }
 
+  insertAuditLog({ action: 'deleted', resource: 'key', resource_id: id });
   res.json({ deleted: true });
 });
 
@@ -120,6 +125,7 @@ router.post('/keys/:id/rotate', (req, res) => {
     return sendError(res, { status: 404, code: 'not_found', message: `Key id ${id} not found` }, req.requestId);
   }
 
+  insertAuditLog({ action: 'rotated', resource: 'key', resource_id: id });
   res.json({
     key: {
       id,
@@ -127,6 +133,14 @@ router.post('/keys/:id/rotate', (req, res) => {
       key_prefix: rotated.key_prefix,
     },
   });
+});
+
+// GET /admin/audit
+router.get('/audit', (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit, 10) || 100, 500);
+  const resource_id = req.query.resource_id ? parseInt(req.query.resource_id, 10) : null;
+  const logs = getAuditLogs({ limit, resource_id });
+  res.json({ logs });
 });
 
 module.exports = router;
