@@ -13,6 +13,7 @@
     "dev": "node --watch src/server.js",
     "prepare": "git config core.hooksPath scripts 2>/dev/null || true",
     "seed": "node scripts/seed.js",
+    "migrate": "node -e \"require('./src/db').initDb()\"",
     "check:env": "node scripts/check-env.js",
     "lint": "eslint src/ test/",
     "lint:fix": "eslint --fix src/ test/",

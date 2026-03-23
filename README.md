@@ -125,6 +125,26 @@ Response:
 
 See [CONTRIBUTING.md](CONTRIBUTING.md#adding-a-new-provider) to add your own.
 
+## Architecture
+
+```mermaid
+graph LR
+    Consumer -->|HTTP| Auth[Auth Middleware]
+    Auth --> RateLimit[Rate Limit]
+    RateLimit --> Queue[Request Queue]
+    Queue --> Router
+    Router --> Claude[Claude CLI]
+    Router --> Gemini[Gemini CLI]
+    Router --> Codex[Codex CLI]
+    Router --> Cerebras[Cerebras API]
+    Router -.->|health check| Health[Health Poller]
+
+    Admin[Admin Dashboard] -->|Basic Auth| AdminAPI[Admin API]
+    AdminAPI --> SQLite[(SQLite)]
+    Auth -.->|log request| SQLite
+    Health -.->|webhook| Alert[Alert Webhook]
+```
+
 ## API
 
 ### POST /v1/chat/completions (OpenAI format)

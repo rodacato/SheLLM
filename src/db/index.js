@@ -1,7 +1,7 @@
 'use strict';
 
 const { createHash, randomBytes } = require('node:crypto');
-const { mkdirSync, chmodSync, existsSync } = require('node:fs');
+const { mkdirSync, chmodSync, existsSync, readdirSync, readFileSync } = require('node:fs');
 const path = require('node:path');
 
 const KEY_PREFIX_LEN = 8;
@@ -15,6 +15,27 @@ function hashKey(rawKey) {
 
 function generateKey() {
   return 'shellm-' + randomBytes(16).toString('hex');
+}
+
+function runMigrations(database, dbPath) {
+  database.exec('CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT (datetime(\'now\')))');
+
+  const applied = new Set(database.prepare('SELECT name FROM _migrations').all().map(r => r.name));
+
+  // Find migrations directory — handle both normal and :memory: paths
+  const migrationsDir = path.join(__dirname, '..', '..', 'migrations');
+  if (!existsSync(migrationsDir)) return;
+
+  const files = readdirSync(migrationsDir)
+    .filter(f => f.endsWith('.sql'))
+    .sort();
+
+  for (const file of files) {
+    if (applied.has(file)) continue;
+    const sql = readFileSync(path.join(migrationsDir, file), 'utf-8');
+    database.exec(sql);
+    database.prepare('INSERT INTO _migrations (name) VALUES (?)').run(file);
+  }
 }
 
 function initDb(dbPath) {
@@ -44,48 +65,7 @@ function initDb(dbPath) {
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
 
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS clients (
-      id         INTEGER PRIMARY KEY AUTOINCREMENT,
-      name       TEXT NOT NULL UNIQUE,
-      key_hash   TEXT NOT NULL UNIQUE,
-      key_prefix TEXT NOT NULL,
-      rpm        INTEGER NOT NULL DEFAULT 10,
-      models     TEXT,
-      active     INTEGER NOT NULL DEFAULT 1,
-      expires_at TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-
-    CREATE TABLE IF NOT EXISTS request_logs (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      request_id  TEXT,
-      client_name TEXT,
-      provider    TEXT,
-      model       TEXT,
-      status      INTEGER,
-      duration_ms INTEGER,
-      queued_ms   INTEGER,
-      tokens      INTEGER,
-      cost_usd    REAL,
-      created_at  TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_logs_created ON request_logs(created_at);
-    CREATE INDEX IF NOT EXISTS idx_logs_client  ON request_logs(client_name);
-
-    CREATE TABLE IF NOT EXISTS provider_settings (
-      name       TEXT PRIMARY KEY,
-      enabled    INTEGER NOT NULL DEFAULT 1,
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-  `);
-
-  // Seed default provider settings
-  const seedStmt = db.prepare('INSERT OR IGNORE INTO provider_settings (name) VALUES (?)');
-  for (const name of ['claude', 'gemini', 'codex', 'cerebras']) {
-    seedStmt.run(name);
-  }
+  runMigrations(db, dbPath);
 
   // Prune old logs on startup and daily
   pruneOldLogs(30);
