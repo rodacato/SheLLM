@@ -3,6 +3,9 @@ function modelsPage() {
     models: [],
     providers: [],
     loading: true,
+    addingModelProvider: null,
+    newModelName: '',
+    newModelUpstream: '',
 
     async fetchModels() {
       this.loading = true;
@@ -46,6 +49,50 @@ function modelsPage() {
         });
         await this.fetchModels();
         if (this.$root?.fetchHealth) await this.$root.fetchHealth();
+      } catch { /* ignore */ }
+    },
+
+    // --- Model CRUD ---
+
+    startAddModel(providerName) {
+      this.addingModelProvider = providerName;
+      this.newModelName = '';
+      this.newModelUpstream = '';
+      this.$nextTick(() => {
+        const input = this.$el.querySelector(`input[placeholder="model-name"]`);
+        if (input) input.focus();
+      });
+    },
+
+    cancelAddModel() {
+      this.addingModelProvider = null;
+      this.newModelName = '';
+      this.newModelUpstream = '';
+    },
+
+    async addModel(providerName) {
+      const name = this.newModelName.trim();
+      if (!name) return;
+      try {
+        const body = { name };
+        const upstream = this.newModelUpstream.trim();
+        if (upstream) body.upstream_model = upstream;
+        await apiFetch(`${API_BASE}/providers/${providerName}/models`, {
+          method: 'POST',
+          body: JSON.stringify(body),
+        });
+        this.cancelAddModel();
+        await this.fetchModels();
+      } catch { /* ignore */ }
+    },
+
+    async removeModel(providerName, modelName) {
+      if (!confirm(`Remove model "${modelName}" from ${providerName}?`)) return;
+      try {
+        await apiFetch(`${API_BASE}/providers/${providerName}/models/${modelName}`, {
+          method: 'DELETE',
+        });
+        await this.fetchModels();
       } catch { /* ignore */ }
     },
   };

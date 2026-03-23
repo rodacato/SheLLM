@@ -896,14 +896,33 @@
                   x-text="!prov.enabled ? 'Disabled' : (prov.installed && prov.authenticated ? 'Authenticated' : (prov.installed ? (prov.health_error || 'Not authenticated') : 'Not installed'))"></span>
               </div>
               <!-- Model tags -->
-              <div class="flex flex-wrap gap-2">
+              <div class="flex flex-wrap gap-2 items-center">
                 <template x-for="m in prov.models" :key="m.name">
-                  <span class="font-mono text-[10px] bg-surface-container-lowest border border-outline-variant/40 px-2 py-1"
-                    :class="prov.enabled && prov.installed && prov.authenticated ? 'text-on-surface-variant' : 'text-outline/50'"
-                    x-text="'[' + m.name + ']'"></span>
+                  <span class="font-mono text-[10px] bg-surface-container-lowest border border-outline-variant/40 px-2 py-1 inline-flex items-center gap-1.5 group/tag"
+                    :class="prov.enabled && prov.installed && prov.authenticated ? 'text-on-surface-variant' : 'text-outline/50'">
+                    <span x-text="'[' + m.name + ']'"></span>
+                    <button @click="removeModel(prov.name, m.name)"
+                      class="hidden group-hover/tag:inline text-outline/40 hover:text-red-400 transition-colors leading-none"
+                      title="Remove model">&times;</button>
+                  </span>
                 </template>
+                <!-- Add model button -->
+                <button @click="startAddModel(prov.name)"
+                  class="font-mono text-[10px] border border-dashed border-outline-variant/30 px-2 py-1 text-outline/40 hover:text-primary-container hover:border-primary-container/40 transition-colors"
+                  title="Add model">+</button>
                 <span x-show="!prov.models || prov.models.length === 0"
-                  class="text-outline/40 font-mono text-[10px]">No models available</span>
+                  class="text-outline/40 font-mono text-[10px]">No models</span>
+              </div>
+              <!-- Inline add model form -->
+              <div x-show="addingModelProvider === prov.name" class="flex items-center gap-2 mt-2">
+                <input type="text" x-model="newModelName" placeholder="model-name"
+                  @keydown.enter="addModel(prov.name)" @keydown.escape="cancelAddModel()"
+                  class="bg-surface border border-primary-container/30 text-white font-mono text-[10px] px-2 py-1 w-36 focus:outline-none focus:border-primary-container">
+                <input type="text" x-model="newModelUpstream" placeholder="upstream (optional)"
+                  @keydown.enter="addModel(prov.name)" @keydown.escape="cancelAddModel()"
+                  class="bg-surface border border-outline-variant/30 text-white font-mono text-[10px] px-2 py-1 w-36 focus:outline-none focus:border-primary-container">
+                <button @click="addModel(prov.name)" class="text-[10px] font-bold text-green-400 hover:text-green-300">ADD</button>
+                <button @click="cancelAddModel()" class="text-[10px] font-bold text-outline hover:text-white">ESC</button>
               </div>
               <!-- Footer: enabled toggle -->
               <div class="mt-auto pt-4 border-t border-white/5 flex justify-between items-center">
