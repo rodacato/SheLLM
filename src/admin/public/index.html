@@ -482,12 +482,17 @@
               <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">LIVE LOGS<span class="text-primary-container">_</span></h2>
               <p class="text-on-surface-variant">Real-time request stream.</p>
             </div>
-            <button @click="toggleConnection()"
-              :class="connected ? 'border-[#22c55e] text-[#22c55e]' : 'border-outline-variant text-outline'"
-              class="px-5 py-2.5 border font-headline font-bold uppercase text-xs tracking-widest flex items-center gap-2 transition-colors">
-              <span class="w-2 h-2" :class="connected ? 'bg-[#22c55e] animate-pulse' : 'bg-outline-variant'"></span>
-              <span x-text="connected ? 'CONNECTED' : 'DISCONNECTED'"></span>
-            </button>
+            <div class="flex items-center gap-3">
+              <span class="text-[10px] font-mono" :class="connected ? 'text-[#22c55e]' : 'text-outline/50'">
+                <span class="inline-block w-1.5 h-1.5 mr-1" :class="connected ? 'bg-[#22c55e] animate-pulse' : 'bg-outline-variant'"></span>
+                <span x-text="connected ? 'LIVE' : 'PAUSED'"></span>
+              </span>
+              <button @click="toggleConnection()"
+                :class="connected ? 'bg-surface-container-high text-outline hover:text-error' : 'bg-primary-container text-on-primary'"
+                class="w-10 h-10 flex items-center justify-center transition-colors">
+                <span class="material-symbols-outlined text-lg" x-text="connected ? 'pause' : 'play_arrow'"></span>
+              </button>
+            </div>
           </div>
         </header>
 
@@ -757,10 +762,14 @@
                   <td class="px-4 py-3 text-center text-on-surface font-mono text-xs" x-text="key.rpm"></td>
                   <td class="px-4 py-3 text-on-surface-variant text-xs font-mono" x-text="key.models ? key.models.join(', ') : 'All'"></td>
                   <td class="px-4 py-3 text-center">
-                    <button @click="toggleActive(key)"
-                      :class="key.active ? 'badge-2xx' : 'bg-surface-container-highest text-outline'"
-                      class="px-2.5 py-0.5 text-xs font-bold font-headline uppercase cursor-pointer"
-                      x-text="key.active ? 'Active' : 'Inactive'"></button>
+                    <button @click="toggleActive(key)" class="inline-flex items-center gap-2" :title="key.active ? 'Disable this key' : 'Enable this key'">
+                      <div class="toggle-track" :class="{ 'active': key.active }">
+                        <div class="toggle-knob"></div>
+                      </div>
+                      <span class="text-[10px] font-headline font-bold uppercase"
+                        :class="key.active ? 'text-green-400' : 'text-outline'"
+                        x-text="key.active ? 'Active' : 'Off'"></span>
+                    </button>
                   </td>
                   <td class="px-4 py-3 text-xs font-mono whitespace-nowrap"
                     :class="isExpired(key) ? 'text-error' : isExpiringSoon(key) ? 'text-[#ffb800]' : 'text-outline'"
