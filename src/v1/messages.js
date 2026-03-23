@@ -144,7 +144,7 @@ function preflight(req, res) {
   if (system) system = sanitize(system);
 
   // Prompt injection guard
-  const safety = checkPromptSafety(prompt, system, { request_id: req.id, client: req.clientName });
+  const safety = checkPromptSafety(prompt, system, { request_id: req.id, client: req.clientName, safetyLevel: req.safetyLevel });
   if (safety) {
     sendAnthropicError(res, promptRejected());
     return null;
