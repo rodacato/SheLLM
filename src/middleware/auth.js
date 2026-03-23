@@ -1,6 +1,5 @@
 const { sendError, authRequired, rateLimited } = require('../errors');
-const { getDb, findClientByKey } = require('../db');
-const logger = require('../lib/logger');
+const { findClientByKey } = require('../db');
 
 const GLOBAL_RPM = parseInt(process.env.SHELLM_GLOBAL_RPM || '30', 10);
 const WINDOW_MS = 60_000;

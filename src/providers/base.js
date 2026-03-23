@@ -13,8 +13,8 @@ function execute(command, args, { timeout = TIMEOUT_MS, cwd, env } = {}) {
     const startTime = Date.now();
     let stdout = '';
     let stderr = '';
-    let stdoutTruncated = false;
-    let stderrTruncated = false;
+    let _stdoutTruncated = false;
+    let _stderrTruncated = false;
 
     const proc = spawn(command, args, {
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -26,7 +26,7 @@ function execute(command, args, { timeout = TIMEOUT_MS, cwd, env } = {}) {
       if (stdout.length < MAX_OUTPUT) {
         stdout += chunk;
       } else {
-        stdoutTruncated = true;
+        _stdoutTruncated = true;
       }
     });
 
@@ -34,7 +34,7 @@ function execute(command, args, { timeout = TIMEOUT_MS, cwd, env } = {}) {
       if (stderr.length < MAX_OUTPUT) {
         stderr += chunk;
       } else {
-        stderrTruncated = true;
+        _stderrTruncated = true;
       }
     });
 

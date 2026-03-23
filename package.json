@@ -12,6 +12,8 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "check:env": "node scripts/check-env.js",
+    "lint": "eslint src/ test/",
+    "lint:fix": "eslint --fix src/ test/",
     "test": "node --experimental-test-module-mocks --test 'test/*.test.js' 'test/**/*.test.js'",
     "test:e2e": "node --test --test-timeout 120000 test/e2e/*.e2e.js",
     "smoke": "node test/smoke.mjs",
@@ -28,6 +30,7 @@
   },
   "devDependencies": {
     "@redocly/cli": "^2.24.1",
+    "eslint": "^9.39.4",
     "playwright": "^1.58.2",
     "sharp": "^0.34.5",
     "supertest": "^7.1.0"

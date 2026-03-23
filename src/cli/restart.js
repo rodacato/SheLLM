@@ -1,7 +1,5 @@
 'use strict';
 
-const fs = require('node:fs');
-const { PID_FILE } = require('./paths');
 const { readPid, removePid } = require('./pid');
 
 function run(args) {

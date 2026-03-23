@@ -14,7 +14,7 @@ const adminKeysRouter = require('./admin/keys');
 const adminLogsRouter = require('./admin/logs');
 const adminStatsRouter = require('./admin/stats');
 const adminProvidersRouter = require('./admin/providers');
-const { initDb, getDb } = require('./db');
+const { initDb } = require('./db');
 const { sendError, invalidRequest } = require('./errors');
 const path = require('node:path');
 

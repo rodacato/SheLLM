@@ -14,7 +14,7 @@ function resolveModel(model) {
   return MODEL_MAP[model] || model;
 }
 
-async function chat({ prompt, system, max_tokens, model }) {
+async function chat({ prompt, system, max_tokens, temperature, model }) {
   const apiKey = process.env.CEREBRAS_API_KEY;
   if (!apiKey) {
     const err = new Error('CEREBRAS_API_KEY environment variable is required');
