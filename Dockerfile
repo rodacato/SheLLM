@@ -30,8 +30,13 @@ RUN mkdir -p /home/node/.claude /home/node/.gemini /home/node/.codex \
 # Switch to non-root user
 USER node
 
-# Claude Code via native installer (always fetches latest)
-RUN curl -fsSL https://claude.ai/install.sh | bash
+# Claude Code via native installer
+# SECURITY NOTE: No official checksum available. Download, inspect, then execute.
+# To verify: docker build --target=claude-install-verify .
+# See SECURITY.md "Accepted Risks" for details.
+RUN curl -fsSL https://claude.ai/install.sh -o /tmp/claude-install.sh \
+    && bash /tmp/claude-install.sh \
+    && rm /tmp/claude-install.sh
 ENV PATH="/home/node/.local/bin:${PATH}"
 
 # Application setup

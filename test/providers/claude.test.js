@@ -23,6 +23,11 @@ describe('claude provider', () => {
     assert.strictEqual(args2[args2.length - 1], 'just prompt');
   });
 
+  it('buildArgs includes --dangerously-skip-permissions by default', () => {
+    const args = buildArgs({ prompt: 'test' });
+    assert.ok(args.includes('--dangerously-skip-permissions'));
+  });
+
   it('parseOutput extracts result, cost and usage from stderr JSON', () => {
     const stderr = JSON.stringify({
       type: 'result',
@@ -57,8 +62,9 @@ describe('claude provider', () => {
       duration_ms: 50,
     }));
 
+    const { stripNonPrintable } = require('../../src/providers/base');
     mock.module(path.resolve(__dirname, '../../src/providers/base.js'), {
-      namedExports: { execute: mockExecute },
+      namedExports: { execute: mockExecute, stripNonPrintable },
     });
 
     // Clear cached modules so they pick up the mock

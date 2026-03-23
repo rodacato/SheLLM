@@ -71,4 +71,44 @@ describe('auth middleware', () => {
     assert.strictEqual(next.mock.callCount(), 1);
     assert.strictEqual(req.allowedModels, null);
   });
+
+  // --- F-02: SHELLM_REQUIRE_AUTH ---
+
+  it('REQUIRE_AUTH=false with empty DB allows anonymous access', () => {
+    const saved = process.env.SHELLM_REQUIRE_AUTH;
+    process.env.SHELLM_REQUIRE_AUTH = 'false';
+
+    // Re-require to pick up new env value
+    delete require.cache[require.resolve('../../src/middleware/auth')];
+    const { createAuthMiddleware: freshAuth } = require('../../src/middleware/auth');
+    const middleware = freshAuth();
+
+    const req = { headers: {}, requestId: 'req-anon' };
+    const next = mock.fn();
+    middleware(req, mockRes(), next);
+    assert.strictEqual(next.mock.callCount(), 1);
+    assert.strictEqual(req.clientName, '_anonymous');
+    assert.strictEqual(req.allowedModels, null);
+
+    // Restore
+    if (saved !== undefined) process.env.SHELLM_REQUIRE_AUTH = saved;
+    else delete process.env.SHELLM_REQUIRE_AUTH;
+    delete require.cache[require.resolve('../../src/middleware/auth')];
+  });
+
+  it('REQUIRE_AUTH=true (default) with empty DB rejects requests', () => {
+    const saved = process.env.SHELLM_REQUIRE_AUTH;
+    delete process.env.SHELLM_REQUIRE_AUTH;
+
+    delete require.cache[require.resolve('../../src/middleware/auth')];
+    const { createAuthMiddleware: freshAuth } = require('../../src/middleware/auth');
+    const middleware = freshAuth();
+
+    const res = mockRes();
+    middleware({ headers: {}, requestId: 'req-reject' }, res, mock.fn());
+    assert.strictEqual(res._status, 401);
+
+    if (saved !== undefined) process.env.SHELLM_REQUIRE_AUTH = saved;
+    delete require.cache[require.resolve('../../src/middleware/auth')];
+  });
 });

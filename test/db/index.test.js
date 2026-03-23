@@ -5,9 +5,9 @@ const {
   initDb, getDb, closeDb,
   createClient, listClients, updateClient, deleteClient,
   rotateClientKey, findClientByKey,
-  insertRequestLog, pruneOldLogs,
+  insertRequestLog, pruneOldLogs, pruneExpiredKeys,
   getProviderSettings, getProviderSetting, setProviderEnabled, getProviderLastUsage,
-  hashKey, generateKey,
+  hashKey, hashKeyLegacy, generateKey, getHmacSecret,
 } = require('../../src/db');
 
 describe('db layer', () => {
@@ -47,17 +47,81 @@ describe('db layer', () => {
   });
 
   describe('hashKey', () => {
-    it('returns 64 char hex SHA-256', () => {
+    it('returns 64 char hex without secret (legacy SHA-256)', () => {
       const hash = hashKey('shellm-abc123');
       assert.match(hash, /^[0-9a-f]{64}$/);
     });
 
-    it('same input produces same hash', () => {
-      assert.strictEqual(hashKey('test-key'), hashKey('test-key'));
+    it('returns 64 char hex with secret (HMAC-SHA256)', () => {
+      const hash = hashKey('shellm-abc123', 'test-secret');
+      assert.match(hash, /^[0-9a-f]{64}$/);
     });
 
-    it('different inputs produce different hashes', () => {
-      assert.notStrictEqual(hashKey('key-a'), hashKey('key-b'));
+    it('HMAC hash differs from plain SHA-256 hash', () => {
+      const plain = hashKey('shellm-abc123');
+      const hmac = hashKey('shellm-abc123', 'test-secret');
+      assert.notStrictEqual(plain, hmac);
+    });
+
+    it('same input + same secret produces same HMAC hash', () => {
+      assert.strictEqual(
+        hashKey('test-key', 'secret'),
+        hashKey('test-key', 'secret'),
+      );
+    });
+
+    it('different secrets produce different hashes', () => {
+      assert.notStrictEqual(
+        hashKey('test-key', 'secret-a'),
+        hashKey('test-key', 'secret-b'),
+      );
+    });
+  });
+
+  describe('HMAC secret management', () => {
+    it('auto-generates HMAC secret and stores in _config', () => {
+      const secret = getHmacSecret();
+      assert.ok(secret);
+      assert.strictEqual(secret.length, 64); // 32 bytes hex
+
+      // Stored in _config table
+      const row = getDb().prepare("SELECT value FROM _config WHERE key = 'hmac_secret'").get();
+      assert.ok(row);
+      assert.strictEqual(row.value, secret);
+    });
+
+    it('returns cached secret on subsequent calls', () => {
+      const s1 = getHmacSecret();
+      const s2 = getHmacSecret();
+      assert.strictEqual(s1, s2);
+    });
+
+    it('new clients use HMAC hashing', () => {
+      const client = createClient({ name: 'hmac-test-client' });
+      const secret = getHmacSecret();
+      const expectedHash = hashKey(client.rawKey, secret);
+      const row = getDb().prepare('SELECT key_hash FROM clients WHERE id = ?').get(client.id);
+      assert.strictEqual(row.key_hash, expectedHash);
+    });
+
+    it('legacy SHA-256 key is found and auto-upgraded to HMAC', () => {
+      // Manually insert a client with legacy SHA-256 hash
+      const rawKey = generateKey();
+      const legacyHash = hashKeyLegacy(rawKey);
+      getDb().prepare(
+        'INSERT INTO clients (name, key_hash, key_prefix, rpm) VALUES (?, ?, ?, ?)'
+      ).run('legacy-client', legacyHash, rawKey.slice(0, 8), 10);
+
+      // findClientByKey should find it via legacy fallback
+      const found = findClientByKey(rawKey);
+      assert.ok(found);
+      assert.strictEqual(found.name, 'legacy-client');
+
+      // Hash should now be upgraded to HMAC
+      const secret = getHmacSecret();
+      const expectedHmac = hashKey(rawKey, secret);
+      const row = getDb().prepare('SELECT key_hash FROM clients WHERE name = ?').get('legacy-client');
+      assert.strictEqual(row.key_hash, expectedHmac);
     });
   });
 
@@ -173,6 +237,31 @@ describe('db layer', () => {
 
     it('returns null for non-existent id', () => {
       assert.strictEqual(rotateClientKey(99999), null);
+    });
+  });
+
+  describe('pruneExpiredKeys', () => {
+    it('marks expired keys as inactive', () => {
+      const client = createClient({ name: 'expired-client', expires_at: '2020-01-01T00:00:00' });
+      // Manually ensure active
+      getDb().prepare('UPDATE clients SET active = 1 WHERE id = ?').run(client.id);
+      pruneExpiredKeys();
+      const row = getDb().prepare('SELECT active FROM clients WHERE id = ?').get(client.id);
+      assert.strictEqual(row.active, 0);
+    });
+
+    it('does not touch keys with future expiration', () => {
+      const client = createClient({ name: 'future-client', expires_at: '2099-01-01T00:00:00' });
+      pruneExpiredKeys();
+      const row = getDb().prepare('SELECT active FROM clients WHERE id = ?').get(client.id);
+      assert.strictEqual(row.active, 1);
+    });
+
+    it('does not touch keys with no expiration', () => {
+      const client = createClient({ name: 'no-expire-client' });
+      pruneExpiredKeys();
+      const row = getDb().prepare('SELECT active FROM clients WHERE id = ?').get(client.id);
+      assert.strictEqual(row.active, 1);
     });
   });
 

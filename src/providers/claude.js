@@ -1,4 +1,4 @@
-const { execute, executeStream } = require('./base');
+const { execute, executeStream, stripNonPrintable } = require('./base');
 
 const VALID_MODELS = [
   'claude',
@@ -7,12 +7,12 @@ const VALID_MODELS = [
   'claude-opus', 'claude-opus-4-6',
 ];
 
+const SKIP_PERMISSIONS = process.env.SHELLM_CLAUDE_SKIP_PERMISSIONS !== 'false';
+
 function buildArgs({ prompt, system, temperature, response_format }) {
-  const args = [
-    '--print',
-    '--dangerously-skip-permissions',
-    '--output-format', 'json',
-  ];
+  const args = ['--print'];
+  if (SKIP_PERMISSIONS) args.push('--dangerously-skip-permissions');
+  args.push('--output-format', 'json');
 
   const jsonMode = response_format?.type === 'json_object';
   const systemPrompt = jsonMode && system
@@ -51,7 +51,7 @@ function parseOutput(stdout, stderr) {
     // Not JSON — use raw stdout as content
   }
 
-  return { content, cost_usd, usage };
+  return { content: stripNonPrintable(content), cost_usd, usage };
 }
 
 // Claude CLI uses its own stored credentials — no API key needed in env.
@@ -69,7 +69,8 @@ async function chat({ prompt, system, temperature, response_format }) {
 
 async function* chatStream({ prompt, system, temperature, response_format, signal }) {
   // For streaming, use --print without --output-format json so tokens emit incrementally
-  const args = ['--print', '--dangerously-skip-permissions'];
+  const args = ['--print'];
+  if (SKIP_PERMISSIONS) args.push('--dangerously-skip-permissions');
   const jsonMode = response_format?.type === 'json_object';
   const systemPrompt = jsonMode && system
     ? system + '\n\nRespond with valid JSON only.'

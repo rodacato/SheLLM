@@ -116,8 +116,9 @@ const TIER2_THRESHOLD = 2;
  */
 function normalize(text) {
   return text
-    .replace(/[\u200B-\u200F\u2028-\u202F\uFEFF\u00AD]/g, '') // zero-width chars
-    .replace(/\s+/g, ' ');                                       // collapse whitespace
+    .normalize('NFKC')                                            // canonical + compat decomposition
+    .replace(/[\u200B-\u200F\u2028-\u202F\uFEFF\u00AD]/g, '')    // zero-width chars
+    .replace(/\s+/g, ' ');                                         // collapse whitespace
 }
 
 /**
@@ -159,7 +160,7 @@ function analyzePrompt(text) {
  * @param {{ request_id?: string, client?: string }} [meta]
  * @returns {{ blocked: boolean, reason?: string, patterns?: string[] } }
  */
-function guardPrompt(prompt, system, meta = {}) {
+function guardPrompt(prompt, system, meta = {}, tier2ThresholdOverride) {
   const promptResult = analyzePrompt(prompt);
   const systemResult = system ? analyzePrompt(system) : { safe: true, tier1: [], tier2: [] };
 
@@ -167,7 +168,8 @@ function guardPrompt(prompt, system, meta = {}) {
   // Deduplicate tier2 patterns across prompt + system
   const allTier2 = [...new Set([...promptResult.tier2, ...systemResult.tier2])];
 
-  const blocked = allTier1.length > 0 || allTier2.length >= TIER2_THRESHOLD;
+  const threshold = tier2ThresholdOverride || TIER2_THRESHOLD;
+  const blocked = allTier1.length > 0 || allTier2.length >= threshold;
   if (!blocked) {
     return { blocked: false };
   }
