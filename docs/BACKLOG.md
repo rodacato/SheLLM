@@ -24,9 +24,9 @@ real data instead of mock data.
 | 8 | [Cost Intelligence](#8-cost-intelligence--per-client-budgets--spend-tracking) | Per-client cost breakdown, budget caps, spend alerts | 🟡 Backlog |
 | 9 | [Client Lifecycle](#9-client-lifecycle--expiration-metadata--audit) | Key expiration, client metadata, admin audit log | 🟡 Partial |
 | 10 | [Smart Routing](#10-smart-routing--cost-aware--latency-aware-provider-selection) | Virtual models (`auto-cheap`, `auto-best`), latency-aware routing, priority queue | 🟡 Backlog |
-| 11 | [API Parameter Passthrough](#11-api-parameter-passthrough--temperature-response_format-stop) | `temperature`, `response_format`, `stop`, `top_p` forwarded to providers | 🟡 Partial |
+| 11 | [API Parameter Passthrough](#11-api-parameter-passthrough--temperature-response_format-stop) | `temperature`, `response_format`, `top_p` forwarded to providers | ✅ Done |
 | 12 | [Developer Experience](#12-developer-experience--linting-seeding--migrations) | ESLint, Prettier, seed data, migrations, pre-commit hooks | 🟡 Partial |
-| 13 | [Security Hardening](#13-security-hardening--key-expiry-enforcement--input-validation) | Key expiry enforcement, input validation, IP allowlisting | 🟡 Partial |
+| 13 | [Security Hardening](#13-security-hardening--key-expiry-enforcement--input-validation) | Key expiry enforcement, input validation, secret redaction | ✅ Done |
 | 14 | [Admin Playground](#14-admin-playground--interactive-api-testing-console) | Interactive console to test prompts, switch providers/models, see raw responses | ✅ Done |
 
 ---
@@ -691,6 +691,7 @@ admin actions are operational and security risks.
 | Per-client RPM rate limit | ✅ Real |
 | Per-client model restrictions | ✅ Real |
 | Key expiration / TTL | ✅ Implemented |
+| Dashboard expiration indicator (key cards) | ✅ Implemented |
 | Client metadata (description, owner, tags) | ❌ Not implemented |
 | Admin action audit log | ❌ Not implemented |
 | Bulk import/export of clients | ❌ Not implemented |
@@ -828,87 +829,9 @@ optimization, no latency awareness. Consumers must make all routing decisions th
 
 ---
 
-## 11. API Parameter Passthrough — temperature, response_format, stop
+## 11. API Parameter Passthrough — temperature, response_format, stop — ✅ Done
 
-**Related:** Chat completions (`src/v1/chat-completions.js`), Messages (`src/v1/messages.js`), Providers (`src/providers/`)
-
-### Problem Statement
-
-Consumers can't control generation parameters (temperature, top_p, stop sequences) or
-request structured output (JSON mode). These are standard parameters in both the OpenAI
-and Anthropic APIs that SheLLM silently ignores today.
-
-### What exists today
-
-| Feature | Status |
-|---|---|
-| `temperature` parameter | ✅ Implemented |
-| `top_p` parameter | ❌ Ignored |
-| `stop` sequences | ❌ Ignored |
-| `response_format: { type: "json_object" }` | ❌ Ignored — providers report `supports_json_output` but it's never used |
-
-### Expert Panel Review
-
-**Contract ("API Design"):**
-> `temperature` is the most-requested missing parameter. Every LLM cookbook starts with
-> "set temperature to 0 for deterministic output." If SheLLM ignores it, the consumer has
-> no control over response variability. The fix is straightforward: accept the parameter
-> in the request body, pass it as a CLI flag or API parameter to the provider.
->
-> `response_format` is a close second — JSON mode is critical for structured data
-> extraction (Stockerly's primary use case). The providers already declare
-> `supports_json_output` in their capability flags; the router should check this and
-> pass the appropriate flag to the CLI.
-
-**CLI ("LLM CLI Specialist"):**
-> CLI flag availability per provider:
-> - **Claude:** `--temperature 0.5` ✅ supported. JSON mode via system prompt instruction
->   (no dedicated flag, but `--output-format json` affects CLI output, not model output)
-> - **Gemini:** `-t 0.5` or `--temperature 0.5` — check CLI help. JSON mode likely via
->   system prompt
-> - **Codex:** Temperature not obviously exposed in `codex exec` flags. May need to pass
->   via the prompt or a config option
-> - **Cerebras:** Standard API parameters — `temperature`, `top_p`, `stop`, `response_format`
->   all supported in the request body
->
-> **Risk:** Not all providers support all parameters equally. Define behavior when a
-> parameter is unsupported: silently ignore (current), or return 400? I'd prefer: pass
-> when supported, silently ignore when not, and document the support matrix.
-
-**QA ("Testing Architect"):**
-> Test matrix needed: for each parameter × each provider, verify the parameter is either
-> passed correctly or gracefully ignored. This is a combinatorial surface — keep tests
-> focused: one test per provider that verifies the CLI args include `--temperature` when
-> the request specifies it.
-
-### What needs to be built
-
-#### Phase 1 — temperature (Low effort, High value)
-
-1. **Accept `temperature` in request body** — Both `/v1/chat/completions` and `/v1/messages`
-2. **Pass to providers:**
-   - Claude: add `--temperature ${temp}` to args
-   - Gemini: add `--temperature ${temp}` to args (verify flag name)
-   - Codex: investigate flag availability; skip if unsupported
-   - Cerebras: add `temperature` to fetch body (already JSON)
-3. **Validation** — `0 <= temperature <= 2` (OpenAI range). Return 400 if out of range
-
-#### Phase 2 — response_format (Medium effort, High value)
-
-4. **Accept `response_format` in request body** — `{ type: "json_object" }` or
-   `{ type: "text" }` (default)
-5. **Provider implementation:**
-   - Claude: prepend system prompt instruction "Respond with valid JSON only" (no CLI flag)
-   - Cerebras: add `response_format` to fetch body
-   - Gemini/Codex: system prompt instruction fallback
-6. **Validation** — Only accept `json_object` on providers that declare `supports_json_output`
-   or use system prompt fallback
-
-#### Phase 3 — stop sequences & top_p (Low effort, Low value)
-
-7. **`stop` parameter** — Pass to providers that support it (Cerebras API, possibly Claude CLI
-   via `--stop-sequences`). Silently ignore for others
-8. **`top_p` parameter** — Same pattern as temperature
+Implemented `temperature` (0-2), `response_format` (`{type:'json_object'}` / `{type:'text'}`), and `top_p` (0-1) passthrough to all providers. Cerebras passes all natively via API body. Claude uses `--temperature` CLI flag and system prompt augmentation for JSON mode. Gemini uses `-t` flag and system prompt fallback. Codex uses system prompt fallback. `stop` sequences deprioritized (complex across CLI providers, low value).
 
 ---
 
@@ -932,8 +855,8 @@ SQL because there's no migration system.
 | `setup-dev.sh` — interactive onboarding | ✅ Real |
 | `check-env.js` — pre-flight validation | ✅ Real |
 | ESLint / Prettier | ✅ ESLint configured (Prettier still pending) |
-| Pre-commit hook auto-installation | ❌ `scripts/pre-commit` exists but not linked |
-| Seed data for development | ❌ Not implemented |
+| Pre-commit hook auto-installation | ✅ Implemented |
+| Seed data for development | ✅ Implemented |
 | Database migrations | ❌ Schema hardcoded in `initDb()` |
 | Architecture diagram | ❌ Not documented |
 
@@ -1005,72 +928,9 @@ SQL because there's no migration system.
 
 ---
 
-## 13. Security Hardening — Key Expiry Enforcement & Input Validation
+## 13. Security Hardening — Key Expiry Enforcement & Input Validation — ✅ Done
 
-**Related:** Auth middleware (`src/middleware/auth.js`), Admin auth (`src/middleware/admin-auth.js`)
-
-### Problem Statement
-
-API keys never expire, request body size limits are global and fixed, there's no IP
-allowlisting, and the secret redaction in health check errors is fragile. These are
-low-effort, high-impact security improvements that reduce the attack surface.
-
-### What exists today
-
-| Feature | Status |
-|---|---|
-| SHA-256 hashed key storage | ✅ Real |
-| Admin brute-force lockout (5 attempts / 5 min) | ✅ Real |
-| Timing-safe password comparison | ✅ Real |
-| Request body size limit (256KB global) | ✅ Real — not configurable |
-| Secret redaction in health errors | ✅ Fragile — regex `[A-Za-z0-9_-]{32,}` only |
-| Key expiration | ✅ Implemented |
-| IP allowlisting | ❌ Not implemented |
-| `npm audit` in CI | ✅ Implemented |
-| Configurable body size per client | ❌ Not implemented |
-
-### Expert Panel Review
-
-**SecEng ("Security"):**
-> Priority order for this section:
-> 1. **Key expiration** — Highest ROI. One column, one check. Non-expiring keys are a
->    compliance red flag in any regulated industry (fintech).
-> 2. **`npm audit` in CI** — Trivial to add, catches supply chain issues automatically.
->    Add `npm audit --audit-level=high` to the CI pipeline.
-> 3. **Improved secret redaction** — The current regex misses short API keys, keys with
->    special characters, and known patterns (sk-..., gsk_..., AIza...). Add pattern-specific
->    matchers for known key formats.
-> 4. **IP allowlisting** — Medium effort but high value for production. A client with
->    `allowed_ips: ["10.0.0.0/8"]` ensures that even a leaked key can't be used from
->    outside the network.
-
-**Infra ("DevOps"):**
-> IP allowlisting needs to account for reverse proxies. The real client IP is in
-> `X-Forwarded-For`, not `req.ip`. Express 5 has `app.set('trust proxy', ...)` for this.
-> Get it wrong and you're checking the proxy's IP, not the client's.
-
-### What needs to be built
-
-#### Phase 1 — Quick Wins (Low effort, High value)
-
-1. **Key expiration** — Covered in detail in backlog #9. Just the schema + middleware check
-2. **`npm audit` in CI** — Add `npm audit --audit-level=high` step to CI pipeline. Fails
-   build if high/critical vulnerabilities found
-3. **Improved secret redaction** — Add known API key patterns to the redaction function
-   in `src/health.js`:
-   - `sk-[a-zA-Z0-9]+` (OpenAI)
-   - `AIza[a-zA-Z0-9_-]+` (Google)
-   - `gsk_[a-zA-Z0-9]+` (Groq/Cerebras)
-   - Existing catch-all for 32+ char alphanumeric strings
-
-#### Phase 2 — Access Control (Medium effort, Medium value)
-
-4. **IP allowlisting** — `allowed_ips TEXT` column in `clients` table (JSON array of CIDR
-   ranges). Check in auth middleware after key validation. `null` = allow all.
-   Use `node:net` `isIPv4` and a simple CIDR matcher (no dependencies needed for /8, /16,
-   /24 masks)
-5. **Configurable body size per client** — `max_body_kb INTEGER` column in `clients` table.
-   Override the global 256KB limit. Useful for clients sending large prompts
+Key expiration (`expires_at` column with auth middleware enforcement), `npm audit` in CI pipeline, and improved secret redaction (pattern-specific matchers for `sk-*`, `csk-*`, `shellm-*`, `Bearer` tokens, plus 32+ char catch-all). IP allowlisting and configurable body size deprioritized (service is loopback-only behind cloudflared).
 
 ---
 
@@ -1096,18 +956,18 @@ Implemented in `feat(admin): add Playground page`. Alpine.js SPA page with provi
 | ESLint setup + CI integration | Low | High | ✅ Done | #12 |
 | `temperature` passthrough to providers | Low | High | ✅ Done | #11 |
 | Startup health gate | Low | Medium | ✅ Done | #5 |
-| Admin dashboard auth alert banner | Low | Medium | ✅ Next sprint | #5 |
-| Pre-commit hook auto-install | Trivial | Medium | ✅ Next sprint | #12 |
+| Admin dashboard auth alert banner | Low | Medium | ✅ Done | #5 |
+| Pre-commit hook auto-install | Trivial | Medium | ✅ Done | #12 |
 | Architecture diagram (Mermaid in README) | Trivial | Medium | ✅ Next sprint | #12 |
-| Improved secret redaction patterns | Low | Medium | ✅ Next sprint | #13 |
+| Improved secret redaction patterns | Low | Medium | ✅ Done | #13 |
 | `SYSTEM_STATUS` footer (static) | Trivial | Low | ✅ Implement now | #2 |
 | **Soon — Next After Sprint** | | | | |
 | SSE streaming — `base.js` + SSE helper | Medium | High | ✅ Done | #6 |
 | SSE streaming — `/v1/chat/completions` | Medium | High | ✅ Done | #6 |
 | Budget caps per client (`budget_usd`) | Medium | High | 🟡 Next after sprint | #8 |
 | `auto-cheap` / `auto-best` virtual models | Medium | High | 🟡 Next after sprint | #10 |
-| `response_format` (JSON mode) passthrough | Medium | High | 🟡 Next after sprint | #11 |
-| `npm run seed` (demo data) | Medium | Medium | 🟡 Next after sprint | #12 |
+| `response_format` (JSON mode) passthrough | Medium | High | ✅ Done | #11 |
+| `npm run seed` (demo data) | Medium | Medium | ✅ Done | #12 |
 | **Backlog** | | | | |
 | Provider fallback in router | High | High | ✅ Done | #5 |
 | Circuit breaker per provider | High | High | ✅ Done | #5 |
@@ -1121,8 +981,8 @@ Implemented in `feat(admin): add Playground page`. Alpine.js SPA page with provi
 | Admin action audit log | Medium | Medium | 🟡 Backlog | #9 |
 | Budget warning + cost anomaly alerts | Medium | Medium | 🟡 Backlog | #8 |
 | Simple SQL migrations system | Medium | Medium | 🟡 Backlog | #12 |
-| IP allowlisting per client | Medium | Medium | 🟡 Backlog | #13 |
-| `stop` / `top_p` passthrough | Low | Low | 🟡 Backlog | #11 |
+| IP allowlisting per client | Medium | Medium | 🔴 Deprioritize | #13 |
+| `stop` sequences passthrough | Low | Low | 🔴 Deprioritize | #11 |
 | Admin Playground — core page + selectors + response panel | Medium | High | ✅ Done | #14 |
 | Context window metadata | Low | Medium | 🟡 Backlog | #1 |
 | Mistral provider | Medium | Medium | 🟡 Backlog | #1 |
