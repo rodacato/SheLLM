@@ -290,6 +290,28 @@ function setProviderEnabled(name, enabled) {
   return db.prepare('SELECT name, enabled, updated_at FROM providers WHERE name = ?').get(name);
 }
 
+function createProvider({ name, type, capabilities = {}, health_check = {}, priority = 100 }) {
+  if (!db) throw new Error('Database not initialized');
+  db.prepare(`
+    INSERT INTO providers (name, type, capabilities, health_check, priority)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(
+    name, type,
+    typeof capabilities === 'string' ? capabilities : JSON.stringify(capabilities),
+    typeof health_check === 'string' ? health_check : JSON.stringify(health_check),
+    priority
+  );
+  return getProvider(name);
+}
+
+function deleteProvider(name) {
+  if (!db) return false;
+  // Delete associated models first (FK constraint)
+  db.prepare('DELETE FROM models WHERE provider_name = ?').run(name);
+  const info = db.prepare('DELETE FROM providers WHERE name = ?').run(name);
+  return info.changes > 0;
+}
+
 function updateProvider(name, fields) {
   const allowed = ['enabled', 'capabilities', 'health_check', 'priority'];
   const sets = [];
@@ -399,6 +421,8 @@ module.exports = {
   setProviderEnabled,
   getProviders,
   getProvider,
+  createProvider,
+  deleteProvider,
   updateProvider,
   getProviderLastUsage,
   getAllModels,

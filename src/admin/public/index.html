@@ -908,8 +908,9 @@
                 </template>
                 <!-- Add model button -->
                 <button @click="startAddModel(prov.name)"
-                  class="font-mono text-[10px] border border-dashed border-outline-variant/30 px-2 py-1 text-outline/40 hover:text-primary-container hover:border-primary-container/40 transition-colors"
-                  title="Add model">+</button>
+                  class="font-mono text-[10px] border border-dashed border-outline-variant/30 px-3 py-1.5 text-outline/50 hover:text-primary-container hover:border-primary-container/40 transition-colors flex items-center gap-1.5">
+                  <span class="text-sm leading-none">+</span> Add Model
+                </button>
                 <span x-show="!prov.models || prov.models.length === 0"
                   class="text-outline/40 font-mono text-[10px]">No models</span>
               </div>
@@ -926,15 +927,41 @@
               </div>
               <!-- Footer: enabled toggle -->
               <div class="mt-auto pt-4 border-t border-white/5 flex justify-between items-center">
-                <span class="text-[10px] font-mono uppercase"
-                  :class="prov.enabled ? 'text-slate-400' : 'text-red-400'"
-                  x-text="prov.enabled ? 'Enabled' : 'Disabled'"></span>
+                <div class="flex items-center gap-3">
+                  <span class="text-[10px] font-mono uppercase"
+                    :class="prov.enabled ? 'text-slate-400' : 'text-red-400'"
+                    x-text="prov.enabled ? 'Enabled' : 'Disabled'"></span>
+                  <button x-show="prov.type === 'http'" @click="deleteProvider(prov.name)"
+                    class="text-[10px] font-headline font-bold uppercase tracking-widest text-outline/30 hover:text-red-400 transition-colors">Delete</button>
+                </div>
                 <button @click="toggleProvider(prov.name, !prov.enabled)" class="toggle-track" :class="{ 'active': prov.enabled }">
                   <div class="toggle-knob"></div>
                 </button>
               </div>
             </div>
           </template>
+
+          <!-- Add HTTP Provider card -->
+          <div x-show="!addingProvider" @click="startAddProvider()"
+            class="bg-[#2e3b44]/50 p-6 flex flex-col items-center justify-center gap-3 border border-dashed border-outline-variant/30 hover:border-primary-container/40 cursor-pointer transition-colors min-h-[180px]">
+            <span class="text-2xl text-outline/40">+</span>
+            <span class="text-[10px] font-headline font-bold uppercase tracking-widest text-outline/50">Add HTTP Provider</span>
+          </div>
+
+          <!-- Add provider form card -->
+          <div x-show="addingProvider" class="bg-[#2e3b44] p-6 flex flex-col gap-4 border border-primary-container/30">
+            <h3 class="font-headline font-bold text-white text-sm uppercase tracking-tight">New HTTP Provider</h3>
+            <input type="text" x-model="newProvider.name" placeholder="provider-name"
+              class="bg-surface border border-outline-variant/30 text-white font-mono text-xs px-3 py-2 w-full focus:outline-none focus:border-primary-container">
+            <input type="text" x-model="newProvider.chat_url" placeholder="https://api.example.com/v1/chat/completions"
+              class="bg-surface border border-outline-variant/30 text-white font-mono text-xs px-3 py-2 w-full focus:outline-none focus:border-primary-container">
+            <input type="text" x-model="newProvider.auth_env" placeholder="API key env var (e.g. GROQ_API_KEY)"
+              class="bg-surface border border-outline-variant/30 text-white font-mono text-xs px-3 py-2 w-full focus:outline-none focus:border-primary-container">
+            <div class="flex gap-2 mt-auto">
+              <button @click="createProvider()" class="bg-primary-container text-on-primary text-[10px] font-headline font-bold uppercase tracking-widest px-4 py-2 hover:bg-[#39eeff] transition-colors">Create</button>
+              <button @click="cancelAddProvider()" class="text-[10px] font-headline font-bold uppercase tracking-widest text-outline hover:text-white px-4 py-2 transition-colors">Cancel</button>
+            </div>
+          </div>
         </div>
 
         <!-- Full Model Registry -->

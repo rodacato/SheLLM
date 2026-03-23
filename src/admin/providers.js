@@ -3,7 +3,8 @@
 const { Router } = require('express');
 const { sendError, invalidRequest } = require('../errors');
 const {
-  getProviders, getProvider, setProviderEnabled, updateProvider,
+  getProviders, getProvider, createProvider, deleteProvider,
+  setProviderEnabled, updateProvider,
   getProviderLastUsage, getModelsForProvider, upsertModel, deleteModel,
   insertAuditLog,
 } = require('../db');
@@ -142,6 +143,68 @@ router.delete('/providers/:name/models/:modelName', (req, res) => {
 
   insertAuditLog({ action: 'delete', resource: 'model', resource_id: modelName, details: JSON.stringify({ provider: providerName }) });
   logger.info({ event: 'model_deleted', model: modelName, provider: providerName });
+  invalidateModelCache();
+  res.json({ deleted: true });
+});
+
+// POST /admin/providers — create a new HTTP provider
+router.post('/providers', (req, res) => {
+  const { name, chat_url, auth_env, models } = req.body || {};
+
+  if (!name || typeof name !== 'string' || !/^[a-z0-9_-]+$/.test(name)) {
+    return sendError(res, invalidRequest('Field "name" is required (lowercase alphanumeric, hyphens, underscores)'), req.requestId);
+  }
+  if (getProvider(name)) {
+    return sendError(res, invalidRequest(`Provider "${name}" already exists`), req.requestId);
+  }
+  if (!chat_url || typeof chat_url !== 'string') {
+    return sendError(res, invalidRequest('Field "chat_url" is required'), req.requestId);
+  }
+
+  const healthCheck = {
+    url: chat_url.replace(/\/chat\/completions$/, '/models'),
+    auth_env: auth_env || null,
+    chat_url,
+  };
+
+  const provider = createProvider({
+    name,
+    type: 'http',
+    capabilities: { supports_system_prompt: true, supports_json_output: false, supports_max_tokens: true },
+    health_check: healthCheck,
+  });
+
+  // Seed initial models if provided
+  if (Array.isArray(models)) {
+    for (const m of models) {
+      const modelName = typeof m === 'string' ? m : m.name;
+      const upstream = typeof m === 'string' ? null : m.upstream_model || null;
+      if (modelName) upsertModel({ name: modelName, provider_name: name, upstream_model: upstream });
+    }
+  }
+
+  insertAuditLog({ action: 'create', resource: 'provider', resource_id: name, details: JSON.stringify({ type: 'http', chat_url }) });
+  logger.info({ event: 'provider_created', provider: name, type: 'http' });
+  invalidateModelCache();
+  res.status(201).json({ provider });
+});
+
+// DELETE /admin/providers/:name — remove an HTTP provider
+router.delete('/providers/:name', (req, res) => {
+  const { name } = req.params;
+  const provider = getProvider(name);
+  if (!provider) {
+    return sendError(res, invalidRequest(`Unknown provider: ${name}`), req.requestId);
+  }
+  if (provider.type !== 'http') {
+    return sendError(res, invalidRequest(`Cannot delete subprocess provider "${name}" — it requires code changes`), req.requestId);
+  }
+
+  deleteProvider(name);
+  // Remove from engines if registered
+  if (engines[name]) delete engines[name];
+  insertAuditLog({ action: 'delete', resource: 'provider', resource_id: name });
+  logger.info({ event: 'provider_deleted', provider: name });
   invalidateModelCache();
   res.json({ deleted: true });
 });
