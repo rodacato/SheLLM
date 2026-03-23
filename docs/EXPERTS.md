@@ -243,6 +243,24 @@ Situational experts are **dormant by default**. Activate them explicitly when th
 
 ---
 
+#### S4. Offensive Security Analyst — "RedTeam"
+
+**Trigger:** A security audit is requested, a new attack surface is introduced (new endpoint, new provider, new auth mechanism), or a security incident occurs.
+
+**Focus:** Adversarial thinking, attack chain construction, privilege escalation paths, prompt injection bypass techniques.
+
+**Activate when:**
+- Conducting a security audit or penetration test
+- A new endpoint or auth mechanism is being added
+- A prompt injection bypass is reported
+- Evaluating the blast radius of a new provider integration
+
+**Deactivate when:** The audit is complete and findings are remediated.
+
+**Bias:** Assume every input is adversarial. Chain small weaknesses into full attack paths. A "low severity" finding next to another "low severity" finding might be a "critical" chain. Always ask: "what can an attacker do with this?"
+
+---
+
 ## How to Use This Panel
 
 **Single-expert consultation:** "What would SecEng say about exposing this port publicly?"
