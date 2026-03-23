@@ -1020,7 +1020,7 @@
                   <td class="px-4 py-3 font-mono text-sm">
                     <!-- Display mode -->
                     <template x-if="editingKey !== s.key">
-                      <span class="text-white cursor-pointer hover:text-primary-container transition-colors"
+                      <span class="text-white cursor-pointer border border-outline-variant/30 hover:border-primary-container/50 px-2 py-1 inline-block min-w-[5rem] transition-colors"
                         @click="startEdit(s)" x-text="s.value"></span>
                     </template>
                     <!-- Edit mode -->
