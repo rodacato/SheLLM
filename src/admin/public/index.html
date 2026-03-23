@@ -47,6 +47,7 @@
       },
     }
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
   <link rel="stylesheet" href="css/custom.css">
 </head>
@@ -91,7 +92,7 @@
     <main class="flex-1 p-8 overflow-auto">
 
       <!-- OVERVIEW PAGE -->
-      <div x-show="page === 'overview'" x-data="overviewPage()" x-effect="if (page === 'overview') { if (!stats) fetchStats(); if (providers.length === 0) fetchProviders(); }">
+      <div x-show="page === 'overview'" x-data="overviewPage()" x-effect="if (page === 'overview') { if (!stats) fetchStats(); if (providers.length === 0) fetchProviders(); startAutoRefresh(); } else { stopAutoRefresh(); }">
 
         <header class="mb-10">
           <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">OVERVIEW<span class="text-primary-container">_</span></h2>
@@ -180,6 +181,27 @@
                 <p class="text-2xl font-headline font-black text-white" x-text="formatDuration(stats.avg_duration_ms)"></p>
               </div>
             </div>
+
+            <!-- Sparklines -->
+            <template x-if="stats.timeline && stats.timeline.length > 1">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-surface-container p-4">
+                  <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Request Volume</p>
+                  <canvas x-ref="sparkRequests" height="60"></canvas>
+                </div>
+                <div class="bg-surface-container p-4">
+                  <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Errors</p>
+                  <canvas x-ref="sparkErrors" height="60"></canvas>
+                </div>
+                <div class="bg-surface-container p-4">
+                  <div class="flex items-center justify-between mb-2">
+                    <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Cost Trend</p>
+                    <span class="text-xs font-mono text-primary-container" x-text="'$' + stats.cost_burn_rate + '/hr'"></span>
+                  </div>
+                  <canvas x-ref="sparkCost" height="60"></canvas>
+                </div>
+              </div>
+            </template>
 
             <!-- By provider -->
             <template x-if="stats.by_provider && Object.keys(stats.by_provider).length > 0">

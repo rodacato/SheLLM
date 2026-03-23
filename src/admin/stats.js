@@ -92,6 +92,27 @@ router.get('/stats', (req, res) => {
     cost_by_provider[row.provider] = row.cost;
   }
 
+  // Timeline buckets for sparklines
+  const bucketExpr = periodKey === '24h'
+    ? "strftime('%Y-%m-%d %H:00', created_at)"
+    : "strftime('%Y-%m-%d', created_at)";
+  const timelineRows = db.prepare(`
+    SELECT
+      ${bucketExpr} as bucket,
+      COUNT(*) as requests,
+      SUM(CASE WHEN status >= 400 THEN 1 ELSE 0 END) as errors,
+      COALESCE(ROUND(SUM(cost_usd), 4), 0) as cost
+    FROM request_logs
+    WHERE created_at >= datetime('now', ?)
+    GROUP BY bucket
+    ORDER BY bucket
+  `).all(interval);
+
+  // Cost burn rate (cost per hour in the period)
+  const periodHours = { '24h': 24, '7d': 168, '30d': 720 };
+  const hours = periodHours[periodKey] || 24;
+  const cost_burn_rate = Math.round((agg.total_cost_usd / hours) * 10000) / 10000;
+
   const activeClients = db.prepare('SELECT COUNT(*) as count FROM clients WHERE active = 1').get();
 
   res.json({
@@ -104,6 +125,8 @@ router.get('/stats', (req, res) => {
     by_status,
     error_rate,
     cost_by_provider,
+    cost_burn_rate,
+    timeline: timelineRows,
     active_clients: activeClients.count,
   });
 });
