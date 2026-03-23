@@ -139,10 +139,10 @@ Response:
 
 | Provider | Type | Models |
 |---|---|---|
-| Claude Code | CLI | `claude`, `claude-sonnet`, `claude-haiku`, `claude-opus` |
-| Gemini CLI | CLI | `gemini`, `gemini-pro`, `gemini-flash` |
-| Codex CLI | CLI | `codex` |
-| Cerebras | API | `cerebras`, `cerebras-8b`, `cerebras-120b`, `cerebras-qwen` |
+| Claude Code | CLI | `claude`, `claude-sonnet`, `claude-sonnet-4-6`, `claude-haiku`, `claude-haiku-4-5`, `claude-opus`, `claude-opus-4-6` |
+| Gemini CLI | CLI | `gemini`, `gemini-pro`, `gemini-flash`, `gemini-2.0-flash`, `gemini-2.5-pro` |
+| Codex CLI | CLI | `codex`, `codex-mini` |
+| Cerebras | API | `cerebras`, `cerebras-8b`, `cerebras-70b`, `cerebras-120b`, `cerebras-qwen` |
 
 See [CONTRIBUTING.md](CONTRIBUTING.md#adding-a-new-provider) to add your own.
 
@@ -242,10 +242,12 @@ When no API keys exist, auth is disabled (all requests allowed). See [.env.examp
 
 Browser-based dashboard at `/admin/dashboard/` (requires `SHELLM_ADMIN_PASSWORD`):
 
-- **Overview** — Provider health, queue stats, request metrics
-- **Request Logs** — Filterable table with pagination
-- **API Keys** — Create, rotate, revoke keys
-- **Models** — Available models by provider
+- **Overview** — Provider health, sparklines, cost burn rate, request metrics
+- **Playground** — Interactive console to test prompts with any provider/model
+- **Terminal** — Live streaming log feed in real time
+- **Request Logs** — Filterable table with stats summary and pagination
+- **API Keys** — Create, rotate, disable, and revoke keys with audit log
+- **Models** — Provider status cards with enable/disable toggle and model registry
 
 ## CLI
 
