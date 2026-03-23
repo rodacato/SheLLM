@@ -2,6 +2,7 @@
 
 const logger = require('../lib/logger');
 const { getDb, insertRequestLog } = require('../db');
+const { emitLog } = require('../lib/log-emitter');
 
 const QUIET_PATHS = ['/health'];
 
@@ -32,10 +33,10 @@ function requestLogger(req, res, next) {
       logger.info(entry);
     }
 
-    // Persist /v1/* requests to SQLite
+    // Persist /v1/* requests to SQLite and emit for live feed
     if (req.url.startsWith('/v1/') && getDb()) {
       const usage = res.locals.usage;
-      insertRequestLog({
+      const logEntry = {
         request_id: req.requestId || null,
         client_name: req.clientName || null,
         provider: res.locals.provider || null,
@@ -45,7 +46,9 @@ function requestLogger(req, res, next) {
         queued_ms: res.locals.queued_ms || null,
         tokens: usage ? ((usage.input_tokens || 0) + (usage.output_tokens || 0)) : null,
         cost_usd: res.locals.cost_usd || null,
-      });
+      };
+      insertRequestLog(logEntry);
+      emitLog({ ...logEntry, created_at: new Date().toISOString() });
     }
   });
 
