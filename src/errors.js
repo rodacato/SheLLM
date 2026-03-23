@@ -10,6 +10,10 @@ function authRequired() {
   return appError(401, 'auth_required', 'Missing or invalid Authorization header');
 }
 
+function promptRejected(message) {
+  return appError(400, 'prompt_rejected', message || 'Request contains potentially unsafe content');
+}
+
 function rateLimited(message, retryAfter) {
   return appError(429, 'rate_limited', message, retryAfter ? { retry_after: retryAfter } : undefined);
 }
@@ -87,6 +91,7 @@ function sendAnthropicError(res, err) {
 
 module.exports = {
   invalidRequest,
+  promptRejected,
   authRequired,
   rateLimited,
   cliFailed,
