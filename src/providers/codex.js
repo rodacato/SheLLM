@@ -2,6 +2,12 @@ const { execute, executeStream } = require('./base');
 
 const VALID_MODELS = ['codex', 'codex-mini'];
 
+// Codex CLI needs config/data paths for auth tokens
+const CODEX_ENV = {
+  XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME,
+  XDG_DATA_HOME: process.env.XDG_DATA_HOME,
+};
+
 function buildArgs({ prompt, system, response_format }) {
   // Codex has no --system-prompt flag — prepend to prompt
   let fullPrompt = '';
@@ -52,7 +58,7 @@ function parseOutput(stdout) {
 
 async function chat({ prompt, system }) {
   const args = buildArgs({ prompt, system });
-  const result = await execute('codex', args);
+  const result = await execute('codex', args, { env: CODEX_ENV });
   return parseOutput(result.stdout);
 }
 
@@ -60,7 +66,7 @@ async function* chatStream({ prompt, system, signal }) {
   const args = buildArgs({ prompt, system });
   let buffer = '';
 
-  for await (const event of executeStream('codex', args, { signal })) {
+  for await (const event of executeStream('codex', args, { env: CODEX_ENV, signal })) {
     if (event.type === 'chunk') {
       buffer += event.data;
       const lines = buffer.split('\n');

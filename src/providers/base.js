@@ -4,6 +4,29 @@ const TIMEOUT_MS = parseInt(process.env.TIMEOUT_MS || '120000', 10);
 const MAX_OUTPUT = 1024 * 1024; // 1MB cap on stdout/stderr
 
 /**
+ * Minimal safe environment for child processes.
+ * Only passes PATH, HOME, TMPDIR, and NO_COLOR by default.
+ * Provider-specific vars are merged from the `env` option.
+ */
+const BASE_ENV = {
+  PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin',
+  HOME: process.env.HOME || '/tmp/shellm-sandbox',
+  TMPDIR: process.env.TMPDIR || '/tmp',
+  NO_COLOR: '1',
+  // Node.js needs this for native modules / TLS
+  NODE_EXTRA_CA_CERTS: process.env.NODE_EXTRA_CA_CERTS,
+};
+
+// Clean undefined values
+for (const key of Object.keys(BASE_ENV)) {
+  if (BASE_ENV[key] === undefined) delete BASE_ENV[key];
+}
+
+function buildSafeEnv(providerEnv) {
+  return { ...BASE_ENV, ...providerEnv };
+}
+
+/**
  * Execute a CLI command as a subprocess with timeout.
  * Stdin is ignored to prevent hanging on interactive prompts.
  */
@@ -19,7 +42,7 @@ function execute(command, args, { timeout = TIMEOUT_MS, cwd, env } = {}) {
     const proc = spawn(command, args, {
       stdio: ['ignore', 'pipe', 'pipe'],
       cwd: cwd || undefined,
-      env: { ...process.env, NO_COLOR: '1', ...env },
+      env: buildSafeEnv(env),
     });
 
     proc.stdout.on('data', (chunk) => {
@@ -90,7 +113,7 @@ async function* executeStream(command, args, { timeout = TIMEOUT_MS, cwd, env, s
   const proc = spawn(command, args, {
     stdio: ['ignore', 'pipe', 'pipe'],
     cwd: cwd || undefined,
-    env: { ...process.env, NO_COLOR: '1', ...env },
+    env: buildSafeEnv(env),
   });
 
   let stderr = '';
@@ -160,4 +183,4 @@ async function* executeStream(command, args, { timeout = TIMEOUT_MS, cwd, env, s
   yield { type: 'done', stderr: stderr.trim() };
 }
 
-module.exports = { execute, executeStream };
+module.exports = { execute, executeStream, buildSafeEnv };

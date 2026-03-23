@@ -54,14 +54,16 @@ function parseOutput(stdout, stderr) {
   return { content, cost_usd, usage };
 }
 
+// Claude CLI uses its own stored credentials — no API key needed in env.
+// Only pass XDG config paths so the CLI can find its auth config.
+const CLAUDE_ENV = {
+  XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME,
+  XDG_DATA_HOME: process.env.XDG_DATA_HOME,
+};
+
 async function chat({ prompt, system, temperature, response_format }) {
   const args = buildArgs({ prompt, system, temperature, response_format });
-
-  // Exclude ANTHROPIC_API_KEY — the CLI uses its own stored credentials
-  const env = { ...process.env };
-  delete env.ANTHROPIC_API_KEY;
-
-  const result = await execute('claude', args, { env });
+  const result = await execute('claude', args, { env: CLAUDE_ENV });
   return parseOutput(result.stdout, result.stderr);
 }
 
@@ -77,10 +79,7 @@ async function* chatStream({ prompt, system, temperature, response_format, signa
   if (temperature !== undefined) args.push('--temperature', String(temperature));
   args.push('--', prompt);
 
-  const env = { ...process.env };
-  delete env.ANTHROPIC_API_KEY;
-
-  for await (const event of executeStream('claude', args, { env, signal })) {
+  for await (const event of executeStream('claude', args, { env: CLAUDE_ENV, signal })) {
     if (event.type === 'chunk') {
       yield { type: 'delta', content: event.data };
     }

@@ -2,6 +2,13 @@ const { execute } = require('./base');
 
 const VALID_MODELS = ['gemini', 'gemini-pro', 'gemini-flash', 'gemini-2.0-flash', 'gemini-2.5-pro'];
 
+// Gemini CLI needs config paths for auth tokens
+const GEMINI_ENV = {
+  XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME,
+  XDG_DATA_HOME: process.env.XDG_DATA_HOME,
+  GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+};
+
 function buildArgs({ prompt, system, temperature, response_format }) {
   // Gemini has no --system-prompt flag — prepend to prompt
   let fullPrompt = '';
@@ -52,7 +59,7 @@ function parseOutput(stdout) {
 
 async function chat({ prompt, system, temperature, response_format }) {
   const args = buildArgs({ prompt, system, temperature, response_format });
-  const result = await execute('gemini', args);
+  const result = await execute('gemini', args, { env: GEMINI_ENV });
   return parseOutput(result.stdout);
 }
 
