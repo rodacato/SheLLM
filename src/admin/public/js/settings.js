@@ -17,6 +17,21 @@ function settingsPage() {
       this.loading = false;
     },
 
+    get categories() {
+      const cats = {};
+      for (const s of this.settings) {
+        const cat = s.category || 'other';
+        if (!cats[cat]) cats[cat] = [];
+        cats[cat].push(s);
+      }
+      return cats;
+    },
+
+    categoryLabel(cat) {
+      const labels = { performance: 'Performance', alerts: 'Alerts', behavior: 'Behavior' };
+      return labels[cat] || cat;
+    },
+
     startEdit(setting) {
       this.editingKey = setting.key;
       this.editValue = String(setting.value ?? '');

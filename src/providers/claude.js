@@ -1,10 +1,13 @@
 const { execute, executeStream, stripNonPrintable } = require('./base');
 
-const SKIP_PERMISSIONS = process.env.SHELLM_CLAUDE_SKIP_PERMISSIONS !== 'false';
+function shouldSkipPermissions() {
+  try { const { getSetting } = require('../db/settings'); return getSetting('claude_skip_permissions'); }
+  catch { return process.env.SHELLM_CLAUDE_SKIP_PERMISSIONS !== 'false'; }
+}
 
 function buildArgs({ prompt, system, temperature, response_format }) {
   const args = ['--print'];
-  if (SKIP_PERMISSIONS) args.push('--dangerously-skip-permissions');
+  if (shouldSkipPermissions()) args.push('--dangerously-skip-permissions');
   args.push('--output-format', 'json');
 
   const jsonMode = response_format?.type === 'json_object';
@@ -63,7 +66,7 @@ async function chat({ prompt, system, temperature, response_format }) {
 async function* chatStream({ prompt, system, temperature, response_format, signal }) {
   // For streaming, use --print without --output-format json so tokens emit incrementally
   const args = ['--print'];
-  if (SKIP_PERMISSIONS) args.push('--dangerously-skip-permissions');
+  if (shouldSkipPermissions()) args.push('--dangerously-skip-permissions');
   const jsonMode = response_format?.type === 'json_object';
   const systemPrompt = jsonMode && system
     ? system + '\n\nRespond with valid JSON only.'

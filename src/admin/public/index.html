@@ -996,59 +996,68 @@
           </p>
         </header>
 
-        <div class="bg-[#2e3b44] overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-white/5 bg-surface-container-lowest">
-                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-primary-container">Setting</th>
-                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-primary-container">Value</th>
-                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-primary-container">Source</th>
-                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-primary-container">Description</th>
-                <th class="px-4 py-3 text-right text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-primary-container">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-white/5">
-              <tr x-show="loading && settings.length === 0">
-                <td colspan="5" class="px-4 py-10 text-center text-outline font-mono text-sm">Loading...</td>
-              </tr>
-              <template x-for="s in settings" :key="s.key">
-                <tr class="hover:bg-surface-container-lowest/50 transition-colors duration-100 group">
-                  <td class="px-4 py-3 font-mono text-sm text-white">
-                    <span x-text="s.key"></span>
-                    <span class="block text-[10px] text-outline mt-0.5" x-text="s.env_var ? 'env: ' + s.env_var : ''"></span>
-                  </td>
-                  <td class="px-4 py-3 font-mono text-sm">
-                    <!-- Display mode -->
-                    <template x-if="editingKey !== s.key">
-                      <span class="text-white cursor-pointer border border-outline-variant/30 hover:border-primary-container/50 px-2 py-1 inline-block min-w-[5rem] transition-colors"
-                        @click="startEdit(s)" x-text="s.value"></span>
-                    </template>
-                    <!-- Edit mode -->
-                    <template x-if="editingKey === s.key">
-                      <div class="flex items-center gap-2">
-                        <input type="text" x-model="editValue"
-                          @keydown.enter="saveEdit(s.key)" @keydown.escape="cancelEdit()"
-                          class="bg-surface border border-primary-container/30 text-white font-mono text-sm px-2 py-1 w-32 focus:outline-none focus:border-primary-container">
-                        <button @click="saveEdit(s.key)" class="text-[10px] font-bold text-green-400 hover:text-green-300">SAVE</button>
-                        <button @click="cancelEdit()" class="text-[10px] font-bold text-outline hover:text-white">ESC</button>
-                      </div>
-                    </template>
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5"
-                      :class="sourceBadgeClass(s.source)"
-                      x-text="s.source"></span>
-                  </td>
-                  <td class="px-4 py-3 text-xs text-outline" x-text="s.description"></td>
-                  <td class="px-4 py-3 text-right">
-                    <button x-show="s.source === 'db'" @click="resetSetting(s.key)"
-                      class="text-[10px] font-headline font-bold uppercase tracking-widest text-outline hover:text-red-400 transition-colors">Reset</button>
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
+        <div x-show="loading && settings.length === 0" class="bg-[#2e3b44] px-4 py-10 text-center text-outline font-mono text-sm">Loading...</div>
+
+        <template x-for="[cat, items] in Object.entries(categories)" :key="cat">
+          <div class="mb-8">
+            <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase block mb-3" x-text="categoryLabel(cat)"></span>
+            <div class="bg-[#2e3b44] overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-white/5 bg-surface-container-lowest">
+                    <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-primary-container">Setting</th>
+                    <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-primary-container">Value</th>
+                    <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-primary-container">Source</th>
+                    <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-primary-container">Description</th>
+                    <th class="px-4 py-3 text-right text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-primary-container">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                  <template x-for="s in items" :key="s.key">
+                    <tr class="hover:bg-surface-container-lowest/50 transition-colors duration-100 group">
+                      <td class="px-4 py-3 font-mono text-sm text-white">
+                        <span x-text="s.key"></span>
+                        <span class="block text-[10px] text-outline mt-0.5" x-text="s.env_var ? 'env: ' + s.env_var : ''"></span>
+                      </td>
+                      <td class="px-4 py-3 font-mono text-sm">
+                        <!-- Display mode -->
+                        <template x-if="editingKey !== s.key">
+                          <span class="text-white cursor-pointer border border-outline-variant/30 hover:border-primary-container/50 px-2 py-1 inline-block min-w-[5rem] transition-colors"
+                            @click="startEdit(s)" x-text="s.value"></span>
+                        </template>
+                        <!-- Edit mode -->
+                        <template x-if="editingKey === s.key">
+                          <div class="flex items-center gap-2">
+                            <input type="text" x-model="editValue"
+                              @keydown.enter="saveEdit(s.key)" @keydown.escape="cancelEdit()"
+                              class="bg-surface border border-primary-container/30 text-white font-mono text-sm px-2 py-1 w-32 focus:outline-none focus:border-primary-container"
+                              :placeholder="s.allowed ? s.allowed.join(', ') : ''">
+                            <button @click="saveEdit(s.key)" class="text-[10px] font-bold text-green-400 hover:text-green-300">SAVE</button>
+                            <button @click="cancelEdit()" class="text-[10px] font-bold text-outline hover:text-white">ESC</button>
+                          </div>
+                        </template>
+                      </td>
+                      <td class="px-4 py-3">
+                        <span class="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5"
+                          :class="sourceBadgeClass(s.source)"
+                          x-text="s.source"></span>
+                      </td>
+                      <td class="px-4 py-3 text-xs text-outline">
+                        <span x-text="s.description"></span>
+                        <span x-show="s.allowed" class="block text-[10px] text-outline/50 mt-0.5"
+                          x-text="s.allowed ? 'allowed: ' + s.allowed.join(', ') : ''"></span>
+                      </td>
+                      <td class="px-4 py-3 text-right">
+                        <button x-show="s.source === 'db'" @click="resetSetting(s.key)"
+                          class="text-[10px] font-headline font-bold uppercase tracking-widest text-outline hover:text-red-400 transition-colors">Reset</button>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </template>
 
         <!-- Terminal footer -->
         <div class="bg-surface-container-lowest p-3 border-l-2 border-primary-container mt-0">

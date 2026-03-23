@@ -13,7 +13,10 @@ function getGlobalRpm() {
 }
 const WINDOW_MS = 60_000;
 const REQUIRE_AUTH = process.env.SHELLM_REQUIRE_AUTH !== 'false';
-const AUTH_ALERT_THRESHOLD = parseInt(process.env.SHELLM_AUTH_ALERT_THRESHOLD || '10', 10);
+function getAuthAlertThreshold() {
+  try { const { getSetting } = require('../db/settings'); return getSetting('auth_alert_threshold'); }
+  catch { return parseInt(process.env.SHELLM_AUTH_ALERT_THRESHOLD || '10', 10); }
+}
 
 // Track auth failures for alerting
 const authFailureTimestamps = [];
@@ -57,7 +60,7 @@ function recordAuthFailure() {
   while (authFailureTimestamps.length > 0 && authFailureTimestamps[0] < now - WINDOW_MS) {
     authFailureTimestamps.shift();
   }
-  if (authFailureTimestamps.length >= AUTH_ALERT_THRESHOLD) {
+  if (authFailureTimestamps.length >= getAuthAlertThreshold()) {
     sendAuthAlert(authFailureTimestamps.length);
     authFailureTimestamps.length = 0; // Reset after alert
   }

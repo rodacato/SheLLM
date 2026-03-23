@@ -4,7 +4,10 @@ const { timingSafeEqual } = require('node:crypto');
 const { sendError, rateLimited } = require('../errors');
 const logger = require('../lib/logger');
 
-const ADMIN_MAX_ATTEMPTS = parseInt(process.env.SHELLM_ADMIN_MAX_ATTEMPTS || '5', 10);
+function getAdminMaxAttempts() {
+  try { const { getSetting } = require('../db/settings'); return getSetting('admin_max_attempts'); }
+  catch { return parseInt(process.env.SHELLM_ADMIN_MAX_ATTEMPTS || '5', 10); }
+}
 const ADMIN_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
 // Per-IP failed attempt timestamps
@@ -44,7 +47,7 @@ function isRateLimited(ip) {
     return 0;
   }
 
-  if (timestamps.length >= ADMIN_MAX_ATTEMPTS) {
+  if (timestamps.length >= getAdminMaxAttempts()) {
     const oldestInWindow = timestamps[0];
     return Math.ceil((oldestInWindow + ADMIN_WINDOW_MS - now) / 1000);
   }

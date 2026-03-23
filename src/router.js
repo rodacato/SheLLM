@@ -75,28 +75,33 @@ function seedAliasesFromEnv() {
   } catch { /* ignore */ }
 }
 
-const MAX_CONCURRENT = parseInt(process.env.MAX_CONCURRENT || '2', 10);
-const MAX_QUEUE_DEPTH = parseInt(process.env.MAX_QUEUE_DEPTH || '10', 10);
+function getMaxConcurrent() {
+  try { const { getSetting } = require('./db/settings'); return getSetting('max_concurrent'); }
+  catch { return parseInt(process.env.MAX_CONCURRENT || '2', 10); }
+}
+function getMaxQueueDepth() {
+  try { const { getSetting } = require('./db/settings'); return getSetting('max_queue_depth'); }
+  catch { return parseInt(process.env.MAX_QUEUE_DEPTH || '10', 10); }
+}
 const FALLBACK_ENABLED = (process.env.SHELLM_FALLBACK_ENABLED || 'false') === 'true';
 const FALLBACK_ORDER_ENV = process.env.SHELLM_FALLBACK_ORDER || null;
-const MAX_STREAM_CONCURRENT = parseInt(process.env.MAX_STREAM_CONCURRENT || String(MAX_CONCURRENT), 10);
+const MAX_STREAM_CONCURRENT = parseInt(process.env.MAX_STREAM_CONCURRENT || '2', 10);
 
 let activeStreams = 0;
 
 class RequestQueue {
-  constructor(maxConcurrent = MAX_CONCURRENT) {
-    this.maxConcurrent = maxConcurrent;
+  constructor() {
     this.active = 0;
     this.pending = [];
   }
 
   async enqueue(fn) {
-    if (this.pending.length >= MAX_QUEUE_DEPTH) {
+    if (this.pending.length >= getMaxQueueDepth()) {
       logger.warn({ event: 'queue_full', active: this.active, pending: this.pending.length });
       throw rateLimited('Queue is full, try again later');
     }
 
-    if (this.active >= this.maxConcurrent) {
+    if (this.active >= getMaxConcurrent()) {
       await new Promise((resolve) => this.pending.push(resolve));
     }
 
@@ -117,7 +122,7 @@ class RequestQueue {
     return {
       pending: this.pending.length,
       active: this.active,
-      max_concurrent: this.maxConcurrent,
+      max_concurrent: getMaxConcurrent(),
       active_streams: activeStreams,
       max_stream_concurrent: MAX_STREAM_CONCURRENT,
     };

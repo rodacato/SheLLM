@@ -3,10 +3,20 @@ const { queue } = require('./router');
 const { getAllCircuitStates, resetCircuit } = require('./circuit-breaker');
 const logger = require('./lib/logger');
 
-const CACHE_TTL_MS = parseInt(process.env.HEALTH_CACHE_TTL_MS || '30000', 10);
-const POLL_INTERVAL_MS = parseInt(process.env.HEALTH_POLL_INTERVAL_MS || '300000', 10);
 const DEEP_CHECK_TIMEOUT = 15000;
-const ALERT_WEBHOOK_URL = process.env.SHELLM_ALERT_WEBHOOK_URL || null;
+
+function getCacheTtl() {
+  try { const { getSetting } = require('./db/settings'); return getSetting('health_cache_ttl_ms'); }
+  catch { return parseInt(process.env.HEALTH_CACHE_TTL_MS || '30000', 10); }
+}
+function getPollInterval() {
+  try { const { getSetting } = require('./db/settings'); return getSetting('health_poll_interval_ms'); }
+  catch { return parseInt(process.env.HEALTH_POLL_INTERVAL_MS || '300000', 10); }
+}
+function getAlertWebhookUrl() {
+  try { const { getSetting } = require('./db/settings'); return getSetting('alert_webhook_url'); }
+  catch { return process.env.SHELLM_ALERT_WEBHOOK_URL || null; }
+}
 
 let cache = { data: null, expires: 0 };
 let pollerInterval = null;
@@ -143,7 +153,7 @@ async function getHealthStatus() {
   }
 
   const status = computeHealthStatus(providers);
-  cache = { data: { status, providers }, expires: now + CACHE_TTL_MS };
+  cache = { data: { status, providers }, expires: now + getCacheTtl() };
 
   return {
     ...cache.data,
@@ -173,7 +183,8 @@ function getCachedProviderStatus(providerName) {
 // --- Background health poller ---
 
 function sendAlertWebhook(provider, from, to) {
-  if (!ALERT_WEBHOOK_URL) return;
+  const webhookUrl = getAlertWebhookUrl();
+  if (!webhookUrl) return;
   const status = to.authenticated ? 'healthy' : 'unhealthy';
   const payload = {
     text: `[SheLLM] Provider \`${provider}\` is now **${status}**${to.error ? `: ${to.error}` : ''}`,
@@ -182,7 +193,7 @@ function sendAlertWebhook(provider, from, to) {
     to: { authenticated: to.authenticated, installed: to.installed },
     timestamp: new Date().toISOString(),
   };
-  fetch(ALERT_WEBHOOK_URL, {
+  fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -227,7 +238,7 @@ async function pollAllProviders({ deep = false } = {}) {
       const p = providerList[i];
       providers[p.name] = { ...statuses[p.name], enabled: !!p.enabled };
     }
-    cache = { data: { status: 'ok', providers }, expires: Date.now() + POLL_INTERVAL_MS + 5000 };
+    cache = { data: { status: 'ok', providers }, expires: Date.now() + getPollInterval() + 5000 };
   } catch (err) {
     logger.error({ event: 'health_poll_error', error: err.message });
   }
@@ -235,7 +246,7 @@ async function pollAllProviders({ deep = false } = {}) {
 
 function startHealthPoller() {
   pollAllProviders({ deep: true });
-  pollerInterval = setInterval(() => pollAllProviders({ deep: false }), POLL_INTERVAL_MS);
+  pollerInterval = setInterval(() => pollAllProviders({ deep: false }), getPollInterval());
   pollerInterval.unref();
   return pollerInterval;
 }

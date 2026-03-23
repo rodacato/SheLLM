@@ -3,10 +3,10 @@
 const { emitLog } = require('./log-emitter');
 
 const LEVELS = { debug: 0, info: 1, warn: 2, error: 3 };
-const currentLevel = LEVELS[process.env.LOG_LEVEL || 'info'] ?? LEVELS.info;
+const startupLevel = LEVELS[process.env.LOG_LEVEL || 'info'] ?? LEVELS.info;
 
 // Warn if debug logging is enabled in production (may expose sensitive data)
-if (process.env.NODE_ENV === 'production' && currentLevel === LEVELS.debug) {
+if (process.env.NODE_ENV === 'production' && startupLevel === LEVELS.debug) {
   process.stderr.write(JSON.stringify({
     ts: new Date().toISOString(),
     level: 'warn',
@@ -15,8 +15,19 @@ if (process.env.NODE_ENV === 'production' && currentLevel === LEVELS.debug) {
   }) + '\n');
 }
 
+function getCurrentLevel() {
+  try {
+    const { getDb } = require('../db/index');
+    if (!getDb()) return startupLevel;
+    const { getSetting } = require('../db/settings');
+    return LEVELS[getSetting('log_level')] ?? startupLevel;
+  } catch {
+    return startupLevel;
+  }
+}
+
 function log(level, data) {
-  if (LEVELS[level] < currentLevel) return;
+  if (LEVELS[level] < getCurrentLevel()) return;
 
   const entry = {
     ts: new Date().toISOString(),
