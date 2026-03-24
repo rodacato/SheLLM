@@ -1,7 +1,7 @@
 'use strict';
 
 const { execSync } = require('node:child_process');
-const { existsSync, readFileSync } = require('node:fs');
+const { existsSync } = require('node:fs');
 const path = require('node:path');
 const { PROJECT_ROOT } = require('./paths');
 
@@ -40,7 +40,7 @@ function run() {
 
   // 3. Run migrations
   step('Running migrations');
-  exec('node -e "require(\'./src/db\').initDb(); require(\'./src/db\').closeDb();"');
+  exec('npm run migrate');
   console.log('  done');
 
   // 4. Rebuild API docs if possible
@@ -85,7 +85,7 @@ function run() {
 
   if (healthy) {
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`  healthy ✓`);
+    console.log('  healthy ✓');
     console.log(`\nUpdate complete in ${elapsed}s`);
   } else {
     console.error('  FAILED — service is not healthy');
