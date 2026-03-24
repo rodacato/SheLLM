@@ -424,11 +424,8 @@ The setup script installs a logrotate config at `/etc/logrotate.d/shellm`. Logs 
 One command from the VPS:
 
 ```bash
-# [root] From any directory:
-sudo /usr/bin/shellm update
-
-# [root/sudo] Alternative if shellm is not in PATH:
-cd /home/shellmer/shellm && sudo node src/cli.js update
+# [deploy/root] From any directory:
+sudo shellm update
 ```
 
 This automatically:
@@ -440,7 +437,9 @@ This automatically:
 6. Restarts the service
 7. Runs a health check — **auto-rollback** if it fails
 
-> **Note:** The `shellm` CLI is installed in shellmer's PATH (`/usr/bin/shellm`). Use `sudo` because the update needs root to restart systemd.
+> **Tip:** Add an alias for convenience: `echo 'alias shellm-update="sudo /usr/bin/shellm update"' >> ~/.bashrc && source ~/.bashrc`. Then just run `shellm-update`.
+
+> **Note:** Requires `sudo` because the update restarts the systemd service. Git commands run as `shellmer` automatically.
 
 **Manual alternative** (step by step):
 
@@ -557,7 +556,7 @@ Internet
 | View logs (live) | `journalctl -u shellm -f` |
 | Check health | `curl http://127.0.0.1:6100/health` |
 | Re-auth a CLI | `sudo -iu shellmer && claude auth login && exit` |
-| Update SheLLM | `sudo /usr/bin/shellm update` |
+| Update SheLLM | `sudo shellm update` |
 | Tunnel status | `cloudflared tunnel info shellm` |
 | View admin logs | `journalctl -u shellm \| grep admin` |
 
