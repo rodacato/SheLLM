@@ -46,11 +46,18 @@ else
 fi
 
 echo ""
-echo "==> Installing LLM CLIs..."
-npm install -g @google/gemini-cli @openai/codex 2>/dev/null
+echo "==> Configuring npm for shellmer user..."
+sudo -u shellmer mkdir -p "${SHELLM_HOME}/.npm-global"
+sudo -u shellmer bash -c 'npm config set prefix ~/.npm-global'
+# Add to PATH for future sessions
+grep -q '.npm-global/bin' "${SHELLM_HOME}/.bashrc" 2>/dev/null || \
+  sudo -u shellmer bash -c 'echo "export PATH=\$HOME/.npm-global/bin:\$PATH" >> ~/.bashrc'
+
+echo ""
+echo "==> Installing LLM CLIs as shellmer user..."
+sudo -u shellmer bash -c 'export PATH=$HOME/.npm-global/bin:$PATH && npm install -g @google/gemini-cli @openai/codex@latest'
 echo "  Installed Gemini CLI and Codex CLI"
 
-echo "  Installing Claude Code as shellmer user..."
 sudo -u shellmer bash -c 'curl -fsSL https://claude.ai/install.sh | bash'
 echo "  Installed Claude Code"
 
