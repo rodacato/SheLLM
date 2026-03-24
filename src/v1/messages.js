@@ -271,17 +271,11 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
 
   logger.debug({ event: 'stream_start', format: 'anthropic', provider: provider.name, model, request_id: req.requestId });
 
-  // Stream concurrency check
-  if (!acquireStreamSlot()) {
-    const { rateLimited } = require('../errors');
-    return sendAnthropicError(res, rateLimited('Too many concurrent streams, try again later'));
-  }
-
   const streamStart = Date.now();
   let ttftMs = null;
   const ac = new AbortController();
-  initSSE(res);
   res.set('X-Powered-By', 'SheLLM');
+  initSSE(res);
 
   // Client disconnect detection
   const disconnectCheck = setInterval(() => {
@@ -295,9 +289,16 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
 
   const id = `msg_${req.requestId}`;
   const responseModel = resolveUpstreamModel(model);
+  let slotAcquired = false;
 
   try {
     await queue.enqueue(async () => {
+      // Stream concurrency check (inside queue to avoid holding slots while waiting)
+      if (!acquireStreamSlot()) {
+        sendStreamError(res, new Error('Too many concurrent streams, try again later'));
+        return;
+      }
+      slotAcquired = true;
       // Estimate input tokens from prompt length (real count unavailable during streaming)
       const estimatedInputTokens = Math.ceil(prompt.length / 4);
       sendMessageStart(res, id, responseModel, estimatedInputTokens);
@@ -345,7 +346,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
       sendStreamError(res, err);
     }
   } finally {
-    releaseStreamSlot();
+    if (slotAcquired) releaseStreamSlot();
   }
 }
 

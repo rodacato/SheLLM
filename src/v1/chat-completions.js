@@ -251,17 +251,11 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
 
   logger.debug({ event: 'stream_start', provider: provider.name, model, request_id: req.requestId });
 
-  // Stream concurrency check
-  if (!acquireStreamSlot()) {
-    const { rateLimited } = require('../errors');
-    return sendOpenAIError(res, rateLimited('Too many concurrent streams, try again later'));
-  }
-
   const streamStart = Date.now();
   let ttftMs = null;
   const ac = new AbortController();
-  initSSE(res);
   res.set('X-Powered-By', 'SheLLM');
+  initSSE(res);
 
   // Detect client disconnect: poll socket state instead of relying on close events
   // (Express close events fire prematurely after flushHeaders in some environments)
@@ -278,11 +272,19 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
   const created = Math.floor(Date.now() / 1000);
   const responseModel = resolveUpstreamModel(model);
   let sentRole = false;
+  let slotAcquired = false;
 
   try {
     logger.debug({ event: 'stream_queue_wait', active: queue.stats.active, pending: queue.stats.pending, request_id: req.requestId });
     await queue.enqueue(async () => {
       logger.debug({ event: 'stream_queue_entered', request_id: req.requestId });
+
+      // Stream concurrency check (inside queue to avoid holding slots while waiting)
+      if (!acquireStreamSlot()) {
+        sendSSEError(res, { message: 'Too many concurrent streams, try again later', code: 'rate_limited' });
+        return;
+      }
+      slotAcquired = true;
       // Determine if provider supports streaming
       const streamFn = provider.chatStream;
 
@@ -330,7 +332,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
       sendSSEError(res, err);
     }
   } finally {
-    releaseStreamSlot();
+    if (slotAcquired) releaseStreamSlot();
   }
 }
 
