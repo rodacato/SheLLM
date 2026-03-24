@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-REPO="git@github.com:rodacato/SheLLM.git"
+REPO="https://github.com/rodacato/SheLLM.git"
 SHELLM_HOME="/home/shellmer"
 APP_DIR="${SHELLM_HOME}/shellm"
 DOMAIN="shellm.notdefined.dev"
