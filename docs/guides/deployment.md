@@ -29,7 +29,7 @@ curl -fsSL https://raw.githubusercontent.com/rodacato/SheLLM/master/scripts/setu
 Or clone first if you prefer to inspect the script:
 
 ```bash
-git clone git@github.com:rodacato/SheLLM.git /home/shellmer/shellm
+git clone https://github.com/rodacato/SheLLM.git /home/shellmer/shellm
 bash /home/shellmer/shellm/scripts/setup-vps.sh
 ```
 
@@ -198,7 +198,7 @@ Verify it's running:
 sudo systemctl status shellm
 
 # Check the health endpoint
-curl http://127.0.0.1:6000/health
+curl http://127.0.0.1:6100/health
 ```
 
 You should see a JSON response with provider statuses:
@@ -275,7 +275,7 @@ credentials-file: /root/.cloudflared/<TUNNEL_ID>.json
 
 ingress:
   - hostname: shellm.notdefined.dev
-    service: http://127.0.0.1:6000
+    service: http://127.0.0.1:6100
     originRequest:
       noTLSVerify: true
   - service: http_status:404
@@ -283,7 +283,7 @@ ingress:
 
 Replace `<TUNNEL_ID>` with the actual tunnel ID from step 6.2.
 
-> **Port note:** The systemd service runs SheLLM on port **6000** (production default from the Dockerfile). If you changed `PORT` in `.env`, update the service URL here to match.
+> **Port note:** SheLLM defaults to port **6100**. If you changed `PORT` in `.env`, update the service URL here to match.
 
 ### 6.5 — Install cloudflared as a service
 
@@ -376,7 +376,7 @@ SheLLM binds to `127.0.0.1` — it doesn't listen on public interfaces. But as a
 
 ```bash
 # Should show nothing listening on 0.0.0.0:6000
-ss -tlnp | grep 6000
+ss -tlnp | grep 6100
 ```
 
 Since all traffic goes through cloudflared, you can block all inbound ports except SSH:
@@ -440,7 +440,7 @@ curl https://shellm.notdefined.dev/health
 
 ```bash
 # Check which provider is failing
-curl http://127.0.0.1:6000/health | jq .providers
+curl http://127.0.0.1:6100/health | jq .providers
 
 # Test the CLI directly
 sudo -iu shellmer
@@ -463,7 +463,7 @@ systemctl status shellm
 systemctl status cloudflared
 
 # Does the port match?
-curl http://127.0.0.1:6000/health
+curl http://127.0.0.1:6100/health
 ```
 
 ### Admin dashboard returns 401
@@ -504,7 +504,7 @@ Internet
 │   cloudflared           │  Runs as systemd service
 │   (outbound tunnel)     │  No inbound ports needed
 └───────────┬─────────────┘
-            │ http://127.0.0.1:6000
+            │ http://127.0.0.1:6100
             ▼
 ┌─────────────────────────┐
 │   SheLLM                │  Node.js + Express
@@ -532,8 +532,107 @@ Internet
 | Stop service | `sudo systemctl stop shellm` |
 | Restart service | `sudo systemctl restart shellm` |
 | View logs (live) | `journalctl -u shellm -f` |
-| Check health | `curl http://127.0.0.1:6000/health` |
+| Check health | `curl http://127.0.0.1:6100/health` |
 | Re-auth a CLI | `sudo -iu shellmer && claude auth login && exit` |
 | Update SheLLM | `sudo -iu shellmer bash -c "cd ~/shellm && git pull && npm ci --omit=dev" && sudo systemctl restart shellm` |
 | Tunnel status | `cloudflared tunnel info shellm` |
 | View admin logs | `journalctl -u shellm \| grep admin` |
+
+---
+
+## FAQ
+
+### Which user do I use for what?
+
+| User | Purpose |
+|---|---|
+| **root** or **deploy** (with sudo) | systemctl, editing .env, cloudflared, firewall |
+| **shellmer** | CLI authentication (claude/gemini/codex), manual server testing |
+
+`shellmer` is intentionally unprivileged — it cannot run `sudo`. Service management always happens from a user with sudo access.
+
+### Git clone fails with "Permission denied (publickey)"
+
+The setup script uses HTTPS, not SSH. If you see this error you may be running an older version of the script, or cloning manually with `git@github.com:...`. Use HTTPS instead:
+
+```bash
+git clone https://github.com/rodacato/SheLLM.git /home/shellmer/shellm
+```
+
+### Gemini CLI fails with "Cannot find module './v3'"
+
+Known issue with `@google/gemini-cli` on Node 22. Try reinstalling:
+
+```bash
+sudo -iu shellmer
+npm install -g @google/gemini-cli@latest
+```
+
+If it persists, Gemini CLI has open upstream issues with `googleapis` on Node 22. SheLLM will mark gemini as "Not installed" and continue working with other providers.
+
+### Codex CLI fails with "Missing optional dependency @openai/codex-linux-x64"
+
+The platform-specific binary wasn't installed. Reinstall as shellmer:
+
+```bash
+sudo -iu shellmer
+npm install -g @openai/codex@latest
+```
+
+### npm install -g fails with EACCES as shellmer
+
+The npm global prefix needs to be set to shellmer's home directory. The setup script does this automatically, but if you're installing manually:
+
+```bash
+sudo -iu shellmer
+mkdir -p ~/.npm-global
+npm config set prefix ~/.npm-global
+echo 'export PATH=$HOME/.npm-global/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+npm install -g @openai/codex@latest   # now works without root
+```
+
+### .env not being loaded / "SHELLM_ADMIN_PASSWORD not configured"
+
+The `.env` file must be inside the project directory, not the home directory:
+
+```
+/home/shellmer/shellm/.env    ← correct
+/home/shellmer/.env            ← wrong, will not be loaded
+```
+
+If you created it in the wrong place:
+
+```bash
+mv /home/shellmer/.env /home/shellmer/shellm/.env
+chown shellmer:shellmer /home/shellmer/shellm/.env
+chmod 600 /home/shellmer/shellm/.env
+sudo systemctl restart shellm
+```
+
+### "Refusing to start: admin password is too weak"
+
+SheLLM requires the admin password to be at least 12 characters. Edit the `.env` and set a stronger password:
+
+```bash
+nano /home/shellmer/shellm/.env
+# Change SHELLM_ADMIN_PASSWORD to something >= 12 chars
+sudo systemctl restart shellm
+```
+
+### How do I check logs after a crash?
+
+```bash
+# Last 50 lines of service logs
+sudo journalctl -u shellm -n 50 --no-pager
+
+# Service status with exit code
+sudo systemctl status shellm
+
+# Follow logs in real time
+sudo journalctl -u shellm -f
+```
+
+### Is the setup script idempotent / can I run it again?
+
+Yes. Most steps have guards (skip if already exists). It's safe to re-run after fixing an issue. It will pull latest code, reinstall deps, and update the systemd service without losing your `.env` or database.
