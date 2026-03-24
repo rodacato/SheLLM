@@ -96,10 +96,12 @@ function createAuthMiddleware() {
   }
 
   return (req, res, next) => {
+    // Support both Authorization: Bearer <token> and x-api-key: <token>
     const header = req.headers.authorization || '';
     const match = header.match(/^Bearer\s+(.+)$/i);
+    const token = match ? match[1] : (req.headers['x-api-key'] || null);
 
-    if (!match) {
+    if (!token) {
       // Dev mode: allow anonymous access when no keys exist and auth not required
       if (!REQUIRE_AUTH) {
         try {
@@ -114,8 +116,6 @@ function createAuthMiddleware() {
       recordAuthFailure();
       return sendError(res, authRequired(), req.requestId);
     }
-
-    const token = match[1];
     const dbClient = findClientByKey(token);
 
     if (!dbClient || !dbClient.active) {

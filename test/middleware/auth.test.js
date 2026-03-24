@@ -96,6 +96,41 @@ describe('auth middleware', () => {
     delete require.cache[require.resolve('../../src/middleware/auth')];
   });
 
+  it('accepts valid x-api-key header (Anthropic SDK compatibility)', () => {
+    const client = createClient({ name: 'anthropic-client', rpm: 100 });
+    const middleware = createAuthMiddleware();
+    const req = { headers: { 'x-api-key': client.rawKey }, requestId: 'req-xapi' };
+    const next = mock.fn();
+    middleware(req, mockRes(), next);
+    assert.strictEqual(next.mock.callCount(), 1);
+    assert.strictEqual(req.clientName, 'anthropic-client');
+  });
+
+  it('prefers Authorization Bearer over x-api-key when both present', () => {
+    const bearerClient = createClient({ name: 'bearer-client', rpm: 100 });
+    const xapiClient = createClient({ name: 'xapi-client', rpm: 100 });
+    const middleware = createAuthMiddleware();
+    const req = {
+      headers: {
+        authorization: `Bearer ${bearerClient.rawKey}`,
+        'x-api-key': xapiClient.rawKey,
+      },
+      requestId: 'req-both',
+    };
+    const next = mock.fn();
+    middleware(req, mockRes(), next);
+    assert.strictEqual(next.mock.callCount(), 1);
+    assert.strictEqual(req.clientName, 'bearer-client');
+  });
+
+  it('rejects invalid x-api-key token', () => {
+    createClient({ name: 'testclient', rpm: 10 });
+    const middleware = createAuthMiddleware();
+    const res = mockRes();
+    middleware({ headers: { 'x-api-key': 'wrong-key-xyz' }, requestId: 'req-bad-xapi' }, res, mock.fn());
+    assert.strictEqual(res._status, 401);
+  });
+
   it('REQUIRE_AUTH=true (default) with empty DB rejects requests', () => {
     const saved = process.env.SHELLM_REQUIRE_AUTH;
     delete process.env.SHELLM_REQUIRE_AUTH;
