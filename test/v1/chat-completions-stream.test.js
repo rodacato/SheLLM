@@ -342,12 +342,14 @@ describe('/v1/chat/completions streaming integration', () => {
 
     const events = parseSSE(res.text);
 
-    // First chunk: role + content
+    // First chunk: role only (per OpenAI spec, role and content are separate chunks)
     assert.strictEqual(events[0].object, 'chat.completion.chunk');
     assert.strictEqual(events[0].choices[0].delta.role, 'assistant');
-    assert.strictEqual(typeof events[0].choices[0].delta.content, 'string');
     assert.strictEqual(events[0].choices[0].finish_reason, null);
-    assert.ok(events[0].id.startsWith('shellm-'));
+    assert.ok(events[0].id.startsWith('chatcmpl-'));
+
+    // Second chunk: content
+    assert.strictEqual(typeof events[1].choices[0].delta.content, 'string');
 
     // Find final chunk with finish_reason
     const finalChunk = events.find((e) => e.choices && e.choices[0].finish_reason === 'stop');

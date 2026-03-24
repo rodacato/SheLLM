@@ -58,7 +58,7 @@ describe('/v1/messages', () => {
       .send({ model: 'claude', max_tokens: 1024, messages: [{ role: 'user', content: 'hello' }] });
 
     assert.strictEqual(res.status, 200);
-    assert.ok(res.body.id.startsWith('msg_shellm-'));
+    assert.ok(res.body.id.startsWith('msg_'));
     assert.strictEqual(res.body.type, 'message');
     assert.strictEqual(res.body.role, 'assistant');
     assert.strictEqual(res.body.model, 'claude');

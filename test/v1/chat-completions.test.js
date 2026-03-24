@@ -60,7 +60,7 @@ describe('/v1/chat/completions', () => {
     const res = await post({ model: 'claude', messages: [{ role: 'user', content: 'hello' }] });
 
     assert.strictEqual(res.status, 200);
-    assert.ok(res.body.id.startsWith('shellm-'));
+    assert.ok(res.body.id.startsWith('chatcmpl-'));
     assert.strictEqual(res.body.object, 'chat.completion');
     assert.strictEqual(typeof res.body.created, 'number');
     assert.strictEqual(res.body.model, 'claude');

@@ -91,7 +91,7 @@ describe('/v1/messages streaming', () => {
     assert.strictEqual(events[0].event, 'message_start');
     assert.strictEqual(events[0].data.type, 'message_start');
     assert.strictEqual(events[0].data.message.role, 'assistant');
-    assert.ok(events[0].data.message.id.startsWith('msg_shellm-'));
+    assert.ok(events[0].data.message.id.startsWith('msg_'));
 
     // Second event: content_block_start
     assert.strictEqual(events[1].event, 'content_block_start');
