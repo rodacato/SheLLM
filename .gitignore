@@ -45,8 +45,7 @@ Thumbs.db
 *.sublime-project
 *.sublime-workspace
 
-# Docs build output
-docs/api/bundled.json
+# Docs build output (tracked — needed for self-hosted /docs/ endpoint)
 
 # Build & artifacts
 *.tgz

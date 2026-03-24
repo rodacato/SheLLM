@@ -38,10 +38,10 @@ jobs:
       - name: Build API docs
         run: |
           npm run docs:build
-          mkdir -p site/api
-          cp docs/index.html site/api/index.html
-          cp docs/api/bundled.json site/api/bundled.json
-          cp docs/api/logo.svg site/api/logo.svg
+          mkdir -p site/docs/api
+          cp docs/index.html site/docs/index.html
+          cp docs/api/bundled.json site/docs/api/bundled.json
+          cp docs/api/logo.svg site/docs/api/logo.svg
 
       - uses: actions/configure-pages@v5
 
