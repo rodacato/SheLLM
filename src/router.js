@@ -159,6 +159,20 @@ function resolveProvider(model) {
 }
 
 /**
+ * Resolve the upstream model name for API-compatible responses.
+ * Returns the upstream_model from DB if set, otherwise the alias target or original name.
+ */
+function resolveUpstreamModel(model) {
+  try {
+    const { getModelByName } = require('./db');
+    const row = getModelByName(model);
+    if (row && row.upstream_model) return row.upstream_model;
+    if (row && row.alias_for) return row.alias_for;
+  } catch { /* DB not ready */ }
+  return model;
+}
+
+/**
  * Check if a provider is available (enabled, authenticated, circuit closed).
  * Returns null if available, or a reason string if not.
  */
@@ -232,6 +246,7 @@ async function route({ model, prompt, system, max_tokens, temperature, top_p, re
     content: result.content,
     provider: provider.name,
     model,
+    upstream_model: resolveUpstreamModel(model),
     duration_ms: Date.now() - startTime,
     queued_ms: result.queued_ms,
     request_id: request_id || null,
@@ -291,6 +306,7 @@ async function routeWithFallback({ model, prompt, system, max_tokens, temperatur
         content: result.content,
         provider: candidate.name,
         model,
+        upstream_model: resolveUpstreamModel(model),
         duration_ms: Date.now() - startTime,
         queued_ms: result.queued_ms,
         request_id: request_id || null,
@@ -352,4 +368,4 @@ function releaseStreamSlot() {
   if (activeStreams > 0) activeStreams--;
 }
 
-module.exports = { route, queue, listProviders, resolveProvider, selectProvider, providers: engines, engines, getAliases, getAvailableProviders, acquireStreamSlot, releaseStreamSlot, buildModelMap, invalidateModelCache, seedAliasesFromEnv };
+module.exports = { route, queue, listProviders, resolveProvider, resolveUpstreamModel, selectProvider, providers: engines, engines, getAliases, getAvailableProviders, acquireStreamSlot, releaseStreamSlot, buildModelMap, invalidateModelCache, seedAliasesFromEnv };

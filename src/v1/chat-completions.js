@@ -1,4 +1,4 @@
-const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../router');
+const { route, resolveProvider, resolveUpstreamModel, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../router');
 const { sanitize, checkPromptSafety } = require('../middleware/sanitize');
 const { invalidRequest, promptRejected, fromCatchable, sendOpenAIError } = require('../errors');
 const { initSSE, sendSSEChunk, sendSSEDone, sendSSEError } = require('../lib/sse');
@@ -200,6 +200,7 @@ async function chatCompletionsHandler(req, res) {
     res.locals.cost_usd = result.cost_usd ?? null;
     res.locals.usage = result.usage ?? null;
 
+    res.set('X-Powered-By', 'SheLLM');
     res.set('X-Queue-Depth', String(queue.stats.pending));
     res.set('X-Queue-Active', String(queue.stats.active));
     if (result.original_provider) {
@@ -207,10 +208,10 @@ async function chatCompletionsHandler(req, res) {
     }
 
     res.json({
-      id: `shellm-${req.requestId}`,
+      id: `chatcmpl-${req.requestId}`,
       object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
-      model: result.model,
+      model: result.upstream_model || result.model,
       choices: [{
         index: 0,
         message: { role: 'assistant', content: result.content },
@@ -260,6 +261,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
   let ttftMs = null;
   const ac = new AbortController();
   initSSE(res);
+  res.set('X-Powered-By', 'SheLLM');
 
   // Detect client disconnect: poll socket state instead of relying on close events
   // (Express close events fire prematurely after flushHeaders in some environments)
@@ -272,8 +274,9 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
   }, 1000);
   res.on('finish', () => clearInterval(disconnectCheck));
 
-  const id = `shellm-${req.requestId}`;
+  const id = `chatcmpl-${req.requestId}`;
   const created = Math.floor(Date.now() / 1000);
+  const responseModel = resolveUpstreamModel(model);
   let sentRole = false;
 
   try {
@@ -296,11 +299,11 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
               logger.debug({ event: 'stream_first_token', ttft_ms: ttftMs, request_id: req.requestId });
             }
             if (!sentRole) {
-              sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model, choices: [{ index: 0, delta: { role: 'assistant', content: event.content }, finish_reason: null }] });
+              // Send role and content as separate chunks per OpenAI spec
+              sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model: responseModel, choices: [{ index: 0, delta: { role: 'assistant' }, finish_reason: null }] });
               sentRole = true;
-            } else {
-              sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model, choices: [{ index: 0, delta: { content: event.content }, finish_reason: null }] });
             }
+            sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model: responseModel, choices: [{ index: 0, delta: { content: event.content }, finish_reason: null }] });
           }
         }
         logger.debug({ event: 'stream_generator_done', chunkCount, request_id: req.requestId });
@@ -308,12 +311,13 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
         logger.debug({ event: 'stream_fallback', provider: provider.name });
         // Buffer-and-flush fallback (e.g., Gemini)
         const result = await provider.chat({ prompt, system, max_tokens, temperature, top_p, response_format, model });
-        sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model, choices: [{ index: 0, delta: { role: 'assistant', content: result.content }, finish_reason: null }] });
+        sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model: responseModel, choices: [{ index: 0, delta: { role: 'assistant' }, finish_reason: null }] });
+        sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model: responseModel, choices: [{ index: 0, delta: { content: result.content }, finish_reason: null }] });
       }
 
       // Final chunk with finish_reason + TTFT metric
       if (!ac.signal.aborted) {
-        const finalChunk = { id, object: 'chat.completion.chunk', created, model, choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] };
+        const finalChunk = { id, object: 'chat.completion.chunk', created, model: responseModel, choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] };
         if (ttftMs != null) finalChunk.shellm = { ttft_ms: ttftMs };
         sendSSEChunk(res, finalChunk);
         sendSSEDone(res);

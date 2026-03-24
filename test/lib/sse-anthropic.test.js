@@ -49,6 +49,21 @@ describe('sse-anthropic helpers', () => {
     assert.strictEqual(data.message.stop_reason, null);
   });
 
+  it('sendMessageStart accepts inputTokens parameter', () => {
+    const res = mockRes();
+    sendMessageStart(res, 'msg_456', 'claude', 150);
+    const { data } = res.lastEvent;
+    assert.strictEqual(data.message.usage.input_tokens, 150);
+    assert.strictEqual(data.message.usage.output_tokens, 0);
+  });
+
+  it('sendMessageStart defaults input_tokens to 0 when omitted', () => {
+    const res = mockRes();
+    sendMessageStart(res, 'msg_789', 'claude');
+    const { data } = res.lastEvent;
+    assert.strictEqual(data.message.usage.input_tokens, 0);
+  });
+
   it('sendContentBlockStart emits content_block_start', () => {
     const res = mockRes();
     sendContentBlockStart(res, 0);

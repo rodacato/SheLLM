@@ -1,4 +1,4 @@
-const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../router');
+const { route, resolveProvider, resolveUpstreamModel, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../router');
 const { sanitize, checkPromptSafety } = require('../middleware/sanitize');
 const { invalidRequest, promptRejected, fromCatchable, sendAnthropicError } = require('../errors');
 const { initSSE } = require('../lib/sse');
@@ -224,6 +224,7 @@ async function messagesHandler(req, res) {
     res.locals.cost_usd = result.cost_usd ?? null;
     res.locals.usage = result.usage ?? null;
 
+    res.set('X-Powered-By', 'SheLLM');
     res.set('X-Queue-Depth', String(queue.stats.pending));
     res.set('X-Queue-Active', String(queue.stats.active));
     if (result.original_provider) {
@@ -231,11 +232,11 @@ async function messagesHandler(req, res) {
     }
 
     res.json({
-      id: `msg_shellm-${req.requestId}`,
+      id: `msg_${req.requestId}`,
       type: 'message',
       role: 'assistant',
       content: [{ type: 'text', text: result.content }],
-      model: result.model,
+      model: result.upstream_model || result.model,
       stop_reason: 'end_turn',
       stop_sequence: null,
       usage: {
@@ -280,6 +281,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
   let ttftMs = null;
   const ac = new AbortController();
   initSSE(res);
+  res.set('X-Powered-By', 'SheLLM');
 
   // Client disconnect detection
   const disconnectCheck = setInterval(() => {
@@ -291,12 +293,14 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
   }, 1000);
   res.on('finish', () => clearInterval(disconnectCheck));
 
-  const id = `msg_shellm-${req.requestId}`;
+  const id = `msg_${req.requestId}`;
+  const responseModel = resolveUpstreamModel(model);
 
   try {
     await queue.enqueue(async () => {
-      // Send message_start and content_block_start
-      sendMessageStart(res, id, model);
+      // Estimate input tokens from prompt length (real count unavailable during streaming)
+      const estimatedInputTokens = Math.ceil(prompt.length / 4);
+      sendMessageStart(res, id, responseModel, estimatedInputTokens);
       sendContentBlockStart(res, 0);
 
       const streamFn = provider.chatStream;

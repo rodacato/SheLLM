@@ -9,7 +9,7 @@ function sendEvent(res, eventType, data) {
   res.write(`event: ${eventType}\ndata: ${JSON.stringify(data)}\n\n`);
 }
 
-function sendMessageStart(res, id, model) {
+function sendMessageStart(res, id, model, inputTokens) {
   sendEvent(res, 'message_start', {
     type: 'message_start',
     message: {
@@ -20,7 +20,7 @@ function sendMessageStart(res, id, model) {
       model,
       stop_reason: null,
       stop_sequence: null,
-      usage: { input_tokens: 0, output_tokens: 0 },
+      usage: { input_tokens: inputTokens ?? 0, output_tokens: 0 },
     },
   });
 }
