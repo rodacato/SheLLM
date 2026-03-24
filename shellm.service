@@ -9,6 +9,7 @@ WorkingDirectory=/home/shellmer/shellm
 ExecStart=/usr/bin/node src/server.js
 EnvironmentFile=/home/shellmer/shellm/.env
 Environment=NODE_ENV=production NO_COLOR=1 LOG_LEVEL=info
+Environment=PATH=/home/shellmer/.local/bin:/home/shellmer/.npm-global/bin:/usr/local/bin:/usr/bin:/bin
 Restart=on-failure
 RestartSec=5s
 StandardOutput=journal
