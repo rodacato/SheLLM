@@ -421,15 +421,38 @@ The setup script installs a logrotate config at `/etc/logrotate.d/shellm`. Logs 
 
 ## Updating SheLLM
 
+One command from the VPS:
+
 ```bash
-# Pull latest code
+# [root] From any directory:
+sudo /usr/bin/shellm update
+
+# [root/sudo] Alternative if shellm is not in PATH:
+cd /home/shellmer/shellm && sudo node src/cli.js update
+```
+
+This automatically:
+1. Pulls latest code (`git pull --ff-only`)
+2. Installs deps if `package-lock.json` changed
+3. Runs database migrations
+4. Rebuilds API docs
+5. Updates systemd service file if changed
+6. Restarts the service
+7. Runs a health check — **auto-rollback** if it fails
+
+> **Note:** The `shellm` CLI is installed in shellmer's PATH (`/usr/bin/shellm`). Use `sudo` because the update needs root to restart systemd.
+
+**Manual alternative** (step by step):
+
+```bash
+# [shellmer] Pull code:
 sudo -iu shellmer bash -c "cd ~/shellm && git pull && npm ci --omit=dev"
 
-# Restart the service (migrations run automatically on start)
+# [root/sudo] Restart:
 sudo systemctl restart shellm
 
-# Verify
-curl https://shellm.notdefined.dev/health
+# [any user] Verify:
+curl http://127.0.0.1:6100/health
 ```
 
 ---
@@ -534,7 +557,7 @@ Internet
 | View logs (live) | `journalctl -u shellm -f` |
 | Check health | `curl http://127.0.0.1:6100/health` |
 | Re-auth a CLI | `sudo -iu shellmer && claude auth login && exit` |
-| Update SheLLM | `sudo -iu shellmer bash -c "cd ~/shellm && git pull && npm ci --omit=dev" && sudo systemctl restart shellm` |
+| Update SheLLM | `sudo /usr/bin/shellm update` |
 | Tunnel status | `cloudflared tunnel info shellm` |
 | View admin logs | `journalctl -u shellm \| grep admin` |
 
