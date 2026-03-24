@@ -77,7 +77,7 @@ function modelsPage() {
       this.newModelName = '';
       this.newModelUpstream = '';
       this.$nextTick(() => {
-        const input = this.$el.querySelector(`input[placeholder="model-name"]`);
+        const input = this.$el.querySelector('input[placeholder="model-name"]');
         if (input) input.focus();
       });
     },

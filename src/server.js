@@ -95,6 +95,16 @@ app.use('/admin', adminAuth, adminSettingsRouter);
 // Admin models endpoint (avoids needing Bearer auth for dashboard)
 app.get('/admin/models', adminAuth, modelsHandler);
 
+// Admin health endpoint (detailed, for dashboard)
+app.get('/admin/health', adminAuth, async (req, res) => {
+  try {
+    const status = await getHealthStatus();
+    res.json(status);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Security headers for admin dashboard
 function adminSecurityHeaders(req, res, next) {
   res.set('X-Frame-Options', 'DENY');
@@ -117,7 +127,15 @@ function adminSecurityHeaders(req, res, next) {
 }
 
 // Static dashboard files
-app.use('/admin/dashboard', adminAuth, adminSecurityHeaders, express.static(path.join(__dirname, 'admin/public')));
+// Static assets (JS, CSS, images) don't need auth — no sensitive data
+app.use('/admin/dashboard', adminSecurityHeaders, express.static(path.join(__dirname, 'admin/public'), {
+  // Only serve the index.html behind auth
+  index: false,
+}));
+// The dashboard page itself requires auth
+app.get('/admin/dashboard/', adminAuth, adminSecurityHeaders, (_req, res) => {
+  res.sendFile(path.join(__dirname, 'admin/public/index.html'));
+});
 
 // Graceful shutdown: drain in-flight requests before exiting
 let shuttingDown = false;

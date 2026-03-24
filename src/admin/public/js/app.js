@@ -2,7 +2,7 @@
 
 // Base URL for admin API (relative to dashboard)
 const API_BASE = '/admin';
-const HEALTH_URL = '/health';
+const HEALTH_URL = `${API_BASE}/health`;
 
 async function apiFetch(url, options = {}) {
   const res = await fetch(url, {
@@ -91,7 +91,7 @@ function app() {
     },
     async fetchHealth() {
       try {
-        const res = await fetch(HEALTH_URL);
+        const res = await apiFetch(HEALTH_URL);
         if (res.ok) {
           const data = await res.json();
           this.health = {
