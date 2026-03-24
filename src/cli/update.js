@@ -98,11 +98,13 @@ function run() {
 }
 
 function exec(cmd) {
-  return execSync(cmd, { cwd: PROJECT_ROOT, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
+  // Run as shellmer if we're root (git safe.directory issue)
+  const isRoot = process.getuid() === 0;
+  const fullCmd = isRoot ? `sudo -u shellmer bash -c 'cd ${PROJECT_ROOT} && ${cmd}'` : cmd;
+  return execSync(fullCmd, { cwd: isRoot ? undefined : PROJECT_ROOT, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
 }
 
 function execAsRoot(cmd) {
-  // If already root, run directly; otherwise use sudo
   if (process.getuid() === 0) {
     return execSync(cmd, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
   }
