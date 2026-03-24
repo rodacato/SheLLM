@@ -46,6 +46,10 @@ else
 fi
 
 echo ""
+echo "==> Cleaning up root-level CLI installs (if any)..."
+npm uninstall -g @google/gemini-cli @openai/codex 2>/dev/null || true
+
+echo ""
 echo "==> Configuring npm for shellmer user..."
 sudo -u shellmer mkdir -p "${SHELLM_HOME}/.npm-global"
 sudo -u shellmer bash -c 'npm config set prefix ~/.npm-global'
