@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-03-24
+
+### Added
+
+- **admin:** separate CLI/API provider sections with templates
+- **providers:** generic HTTP provider engine + CRUD from admin UI
+- **admin:** complete settings system with Tier 2/3 and category grouping
+- **admin:** add model CRUD controls to provider cards
+- **admin:** add hot-reloadable settings system
+- **admin:** normalize providers and models into database
+- **compat:** improve OpenAI and Anthropic API compatibility
+- **security:** per-client safety profiles with X-SheLLM-Safety header
+- **security:** add prompt injection guard middleware
+- **site:** add subtle animations to GitHub Pages landing
+
+### Fixed
+
+- **service:** add CLI paths to systemd PATH
+- **scripts:** clarify .env path in post-setup instructions
+- **scripts:** clarify user context in post-setup steps and fix port
+- **scripts:** clean up root-level CLI installs before shellmer setup
+- **scripts:** install LLM CLIs as shellmer user with npm prefix
+- **scripts:** use HTTPS for git clone in VPS setup
+- **admin:** make settings values look like editable inputs
+- **admin:** unify toggle switches across dashboard
+- **security:** hardening fixes
+- **security:** important security fixes
+- **security:** critical security hardening
+- **security:** harden subprocess env to prevent credential leakage
+- **lint:** resolve 7 eslint errors breaking CI
+- **release:** auto-update version in site/index.html during npm version
+- **docs:** update landing page version to v0.3.0
+
+### Documentation
+
+- **deployment:** fix port references (6000→6100), add FAQ section
+- **guides:** add VPS deployment guide and improve Getting Started
+- **guides:** add API compatibility guide for OpenAI and Anthropic
+- **guides:** add prompt safety guide for developers
+- **security:** update documentation for security hardening
+- **readme:** update supported models list with all current model aliases
+
+### Maintenance
+
+- ignore plan files
+
+
 ## [0.3.0] - 2026-03-23
 
 ### Added
@@ -150,5 +197,5 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v0.3.0...HEAD
-[0.3.0]: https://github.com/rodacato/SheLLM/compare/v0.2.0...v0.3.0
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/rodacato/SheLLM/compare/v0.3.0...v0.4.0
