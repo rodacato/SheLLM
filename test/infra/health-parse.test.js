@@ -6,7 +6,7 @@ describe('health parseCheckError', () => {
   let parseCheckError;
 
   before(() => {
-    mock.module(path.resolve(__dirname, '../src/providers/base.js'), {
+    mock.module(path.resolve(__dirname, '../../src/providers/base.js'), {
       namedExports: {
         execute: async () => ({ stdout: '', stderr: '', duration_ms: 0 }),
         stripNonPrintable: (t) => t,
@@ -14,12 +14,12 @@ describe('health parseCheckError', () => {
     });
 
     for (const key of Object.keys(require.cache)) {
-      if (key.includes('src/health') || key.includes('src/providers/') || key.includes('src/router')) {
+      if (key.includes('src/infra/') || key.includes('src/providers/') || key.includes('src/routing')) {
         delete require.cache[key];
       }
     }
 
-    ({ parseCheckError } = require('../src/health'));
+    ({ parseCheckError } = require('../../src/infra/health'));
   });
 
   it('treats ENOENT / not found as not installed', () => {

@@ -6,7 +6,7 @@ describe('router fail-fast on unauthenticated provider', () => {
   let route;
 
   before(() => {
-    mock.module(path.resolve(__dirname, '../src/providers/base.js'), {
+    mock.module(path.resolve(__dirname, '../../src/providers/base.js'), {
       namedExports: {
         execute: mock.fn(async () => ({
           stdout: JSON.stringify({ result: 'test' }),
@@ -18,7 +18,7 @@ describe('router fail-fast on unauthenticated provider', () => {
     });
 
     // Mock health module to return unauthenticated status for claude
-    mock.module(path.resolve(__dirname, '../src/health.js'), {
+    mock.module(path.resolve(__dirname, '../../src/infra/health.js'), {
       namedExports: {
         getCachedProviderStatus: mock.fn((name) => {
           if (name === 'claude') {
@@ -36,7 +36,7 @@ describe('router fail-fast on unauthenticated provider', () => {
       }
     }
 
-    ({ route } = require('../src/router'));
+    ({ route } = require('../../src/routing'));
   });
 
   it('throws provider_unavailable when provider is not authenticated', async () => {

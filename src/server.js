@@ -2,7 +2,7 @@ require('dotenv').config({ quiet: true });
 
 const express = require('express');
 const logger = require('./lib/logger');
-const { getHealthStatus } = require('./health');
+const { getHealthStatus } = require('./infra/health');
 const { chatCompletionsHandler } = require('./v1/chat-completions');
 const { messagesHandler } = require('./v1/messages');
 const { modelsHandler } = require('./v1/models');
@@ -23,7 +23,7 @@ const path = require('node:path');
 initDb();
 
 // Build model map from DB and seed env aliases
-const { buildModelMap, seedAliasesFromEnv } = require('./router');
+const { buildModelMap, seedAliasesFromEnv } = require('./routing');
 buildModelMap();
 seedAliasesFromEnv();
 
@@ -143,7 +143,7 @@ function gracefulShutdown(server, signal) {
   if (shuttingDown) { process.exit(1); return; }
   shuttingDown = true;
   logger.info({ event: 'shutdown', signal });
-  const { stopHealthPoller } = require('./health');
+  const { stopHealthPoller } = require('./infra/health');
   stopHealthPoller();
   server.close(() => {
     logger.info({ event: 'shutdown_complete' });
@@ -155,7 +155,7 @@ function gracefulShutdown(server, signal) {
 
 // Only start listening when run directly (not when required for testing)
 if (require.main === module) {
-  const { getHealthStatus, startHealthPoller } = require('./health');
+  const { getHealthStatus, startHealthPoller } = require('./infra/health');
 
   // Startup health gate: warn about unhealthy providers, then proceed
   getHealthStatus().then((health) => {

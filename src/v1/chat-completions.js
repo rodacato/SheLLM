@@ -1,4 +1,4 @@
-const { route, resolveProvider, resolveUpstreamModel, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../router');
+const { route, resolveProvider, resolveUpstreamModel, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../routing');
 const { sanitize, checkPromptSafety } = require('../middleware/sanitize');
 const { invalidRequest, promptRejected, fromCatchable, sendOpenAIError } = require('../errors');
 const { initSSE, sendSSEChunk, sendSSEDone, sendSSEError } = require('../lib/sse');

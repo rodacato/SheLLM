@@ -8,8 +8,8 @@ const {
   getProviderLastUsage, getModelsForProvider, upsertModel, deleteModel,
   insertAuditLog,
 } = require('../db');
-const { engines, invalidateModelCache } = require('../router');
-const { getHealthStatus } = require('../health');
+const { engines, invalidateModelCache } = require('../routing');
+const { getHealthStatus } = require('../infra/health');
 const logger = require('../lib/logger');
 
 const router = Router();

@@ -10,7 +10,7 @@ describe('router fallback', () => {
     process.env.SHELLM_FALLBACK_ENABLED = 'true';
     process.env.CIRCUIT_BREAKER_THRESHOLD = '3';
 
-    mock.module(path.resolve(__dirname, '../src/providers/base.js'), {
+    mock.module(path.resolve(__dirname, '../../src/providers/base.js'), {
       namedExports: {
         execute: mock.fn(async (cmd) => {
           if (cmd === 'claude') throw Object.assign(new Error('auth expired'), { stderr: 'not authenticated' });
@@ -24,7 +24,7 @@ describe('router fallback', () => {
       },
     });
 
-    mock.module(path.resolve(__dirname, '../src/health.js'), {
+    mock.module(path.resolve(__dirname, '../../src/infra/health.js'), {
       namedExports: {
         getCachedProviderStatus: mock.fn((name) => {
           if (name === 'claude') return { installed: true, authenticated: false };
@@ -34,7 +34,7 @@ describe('router fallback', () => {
       },
     });
 
-    mock.module(path.resolve(__dirname, '../src/db/index.js'), {
+    mock.module(path.resolve(__dirname, '../../src/db/index.js'), {
       namedExports: {
         getProviderSetting: mock.fn(() => ({ enabled: 1 })),
         getProviderSettings: mock.fn(() => []),
@@ -47,7 +47,7 @@ describe('router fallback', () => {
       if (key.includes('/src/')) delete require.cache[key];
     }
 
-    ({ route } = require('../src/router'));
+    ({ route } = require('../../src/routing'));
   });
 
   it('falls back to another provider when primary is unhealthy', async () => {

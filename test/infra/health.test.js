@@ -13,7 +13,7 @@ describe('health', () => {
       duration_ms: 10,
     }));
 
-    mock.module(path.resolve(__dirname, '../src/providers/base.js'), {
+    mock.module(path.resolve(__dirname, '../../src/providers/base.js'), {
       namedExports: { execute: mockExecute, stripNonPrintable: (t) => t },
     });
 
@@ -22,12 +22,12 @@ describe('health', () => {
 
     // Clear cached modules so they pick up the mock
     for (const key of Object.keys(require.cache)) {
-      if (key.includes('src/providers/') || key.includes('src/router') || key.includes('src/health')) {
+      if (key.includes('src/providers/') || key.includes('src/routing') || key.includes('src/infra/')) {
         delete require.cache[key];
       }
     }
 
-    ({ getHealthStatus } = require('../src/health'));
+    ({ getHealthStatus } = require('../../src/infra/health'));
   });
 
   it('returns correct shape with provider statuses', async () => {

@@ -1,4 +1,4 @@
-const { route, resolveProvider, resolveUpstreamModel, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../router');
+const { route, resolveProvider, resolveUpstreamModel, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../routing');
 const { sanitize, checkPromptSafety } = require('../middleware/sanitize');
 const { invalidRequest, promptRejected, fromCatchable, sendAnthropicError } = require('../errors');
 const { initSSE } = require('../lib/sse');
@@ -256,7 +256,7 @@ async function messagesHandler(req, res) {
  */
 async function handleAnthropicStream(req, res, { model, max_tokens, temperature, top_p, prompt, system }) {
   const logger = require('../lib/logger');
-  const { recordSuccess, recordFailure } = require('../circuit-breaker');
+  const { recordSuccess, recordFailure } = require('../infra/circuit-breaker');
 
   let provider;
   try {

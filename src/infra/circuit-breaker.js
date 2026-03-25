@@ -1,4 +1,4 @@
-const logger = require('./lib/logger');
+const logger = require('../lib/logger');
 
 const THRESHOLD = parseInt(process.env.CIRCUIT_BREAKER_THRESHOLD || '3', 10);
 const RESET_MS = parseInt(process.env.CIRCUIT_BREAKER_RESET_MS || '60000', 10);

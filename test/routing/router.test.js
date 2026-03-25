@@ -1,12 +1,12 @@
 const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert/strict');
-const { initDb, closeDb } = require('../src/db');
+const { initDb, closeDb } = require('../../src/db');
 
 describe('router', () => {
   before(() => {
     initDb(':memory:');
     // Rebuild model map now that DB is available
-    const { buildModelMap } = require('../src/router');
+    const { buildModelMap } = require('../../src/routing');
     buildModelMap();
   });
 
@@ -14,7 +14,7 @@ describe('router', () => {
     closeDb();
   });
 
-  const { resolveProvider, listProviders, queue, getAliases } = require('../src/router');
+  const { resolveProvider, listProviders, queue, getAliases } = require('../../src/routing');
   it('resolveProvider resolves direct names and model aliases', () => {
     assert.strictEqual(resolveProvider('claude')?.name, 'claude');
     assert.strictEqual(resolveProvider('gemini')?.name, 'gemini');

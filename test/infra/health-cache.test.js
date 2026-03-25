@@ -7,7 +7,7 @@ describe('getCachedProviderStatus', () => {
   let getCachedProviderStatus;
 
   before(() => {
-    mock.module(path.resolve(__dirname, '../src/providers/base.js'), {
+    mock.module(path.resolve(__dirname, '../../src/providers/base.js'), {
       namedExports: {
         execute: mock.fn(async () => ({
           stdout: 'v1.0.0',
@@ -21,12 +21,12 @@ describe('getCachedProviderStatus', () => {
     process.env.CEREBRAS_API_KEY = 'test-key-health-cache';
 
     for (const key of Object.keys(require.cache)) {
-      if (key.includes('src/providers/') || key.includes('src/router') || key.includes('src/health')) {
+      if (key.includes('src/providers/') || key.includes('src/routing') || key.includes('src/infra/')) {
         delete require.cache[key];
       }
     }
 
-    ({ getHealthStatus, getCachedProviderStatus } = require('../src/health'));
+    ({ getHealthStatus, getCachedProviderStatus } = require('../../src/infra/health'));
   });
 
   it('returns null when cache is empty', () => {

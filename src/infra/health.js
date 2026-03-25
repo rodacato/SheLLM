@@ -1,20 +1,20 @@
-const { execute } = require('./providers/base');
-const { queue } = require('./router');
+const { execute } = require('../providers/base');
+const { queue } = require('./queue');
 const { getAllCircuitStates, resetCircuit } = require('./circuit-breaker');
-const logger = require('./lib/logger');
+const logger = require('../lib/logger');
 
 const DEEP_CHECK_TIMEOUT = 15000;
 
 function getCacheTtl() {
-  try { const { getSetting } = require('./db/settings'); return getSetting('health_cache_ttl_ms'); }
+  try { const { getSetting } = require('../db/settings'); return getSetting('health_cache_ttl_ms'); }
   catch { return parseInt(process.env.HEALTH_CACHE_TTL_MS || '30000', 10); }
 }
 function getPollInterval() {
-  try { const { getSetting } = require('./db/settings'); return getSetting('health_poll_interval_ms'); }
+  try { const { getSetting } = require('../db/settings'); return getSetting('health_poll_interval_ms'); }
   catch { return parseInt(process.env.HEALTH_POLL_INTERVAL_MS || '300000', 10); }
 }
 function getAlertWebhookUrl() {
-  try { const { getSetting } = require('./db/settings'); return getSetting('alert_webhook_url'); }
+  try { const { getSetting } = require('../db/settings'); return getSetting('alert_webhook_url'); }
   catch { return process.env.SHELLM_ALERT_WEBHOOK_URL || null; }
 }
 
@@ -26,7 +26,7 @@ let previousStatus = {};
 
 function getProviderList() {
   try {
-    const { getProviders, getDb } = require('./db');
+    const { getProviders, getDb } = require('../db');
     if (!getDb()) throw new Error('DB not initialized');
     return getProviders();
   } catch {

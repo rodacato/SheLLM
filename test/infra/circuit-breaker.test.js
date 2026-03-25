@@ -3,10 +3,10 @@ const assert = require('node:assert/strict');
 
 // Fresh module for each test suite to reset state
 function loadCircuitBreaker() {
-  const modulePath = require.resolve('../src/circuit-breaker');
+  const modulePath = require.resolve('../../src/infra/circuit-breaker');
   delete require.cache[modulePath];
   // Also reload logger to avoid issues
-  return require('../src/circuit-breaker');
+  return require('../../src/infra/circuit-breaker');
 }
 
 describe('circuit-breaker', () => {
