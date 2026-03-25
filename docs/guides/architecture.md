@@ -34,7 +34,7 @@ src/
 │   ├── codex.js           # Codex CLI adapter
 │   └── http-generic.js    # Generic OpenAI-compatible HTTP provider factory
 │
-├── v1/                    # API endpoint handlers
+├── api/v1/                # API endpoint handlers (versioned)
 │   ├── chat-completions.js # POST /v1/chat/completions (OpenAI format)
 │   ├── messages.js        # POST /v1/messages (Anthropic format)
 │   └── models.js          # GET /v1/models
@@ -94,7 +94,7 @@ HTTP Request
                │
                ▼
 ┌──────────────────────────┐
-│  Handler (v1/)            │
+│  Handler (api/v1/)        │
 │  • Validate request body  │
 │  • Extract messages       │
 │  • Sanitize + guard       │
@@ -209,7 +209,7 @@ Middleware runs in order — changing the order changes behavior:
 server.js
   └── app.js
         ├── middleware/*
-        ├── v1/*
+        ├── api/v1/*
         │     └── routing/ (route, selectProvider, queue, stream-slots)
         ├── admin/*
         │     ├── db/* (clients, providers, models, audit)

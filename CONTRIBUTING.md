@@ -36,7 +36,7 @@ gemini --version
 codex --version
 ```
 
-> **Note:** The devcontainer is for development only. In production, SheLLM runs directly on a VPS via systemd (see `scripts/setup-vps.sh`).
+> **Note:** The devcontainer is for development only. In production, SheLLM runs directly on a VPS via systemd (see `scripts/setup/vps.sh`).
 
 ## Code Conventions
 
@@ -80,10 +80,10 @@ module.exports = {
 ## Adding a New Provider
 
 1. Create `src/providers/<name>.js` following the contract above
-2. Add the provider to the `providers` object in `src/router.js`
-3. Add a health check in `src/health.js`
+2. Register the engine in `src/routing/engines.js`
+3. Add a health check entry in the provider's DB row (see `src/infra/health.js`)
 4. Write tests in `test/providers/<name>.test.js`
-5. Update the `GET /providers` response implicitly (it reads from the router)
+5. Update the `GET /providers` response implicitly (it reads from the routing layer)
 
 For CLI-based providers, use `execute()` from `src/providers/base.js`:
 
@@ -149,7 +149,7 @@ To unlink later: `npm unlink -g shellm`
 
 ### Testing the VPS Setup Script
 
-The setup script (`scripts/setup-vps.sh`) requires root and is designed for a fresh Ubuntu server. To test it safely without a real VPS, run it in a disposable Docker container:
+The setup script (`scripts/setup/vps.sh`) requires root and is designed for a fresh Ubuntu server. To test it safely without a real VPS, run it in a disposable Docker container:
 
 ```bash
 # Launch a disposable Ubuntu container
@@ -162,7 +162,7 @@ apt-get update && apt-get install -y git curl sudo
 git clone https://github.com/rodacato/SheLLM.git /tmp/shellm
 
 # Run the setup script as root
-bash /tmp/shellm/scripts/setup-vps.sh
+bash /tmp/shellm/scripts/setup/vps.sh
 ```
 
 The script will create the `shellmer` user, install Node.js 22, CLI tools, clone the repo, configure systemd, and set up cloudflared. Since this is a disposable container, nothing persists after you exit — safe to experiment freely.

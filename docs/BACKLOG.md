@@ -313,7 +313,7 @@ Key expiration (`expires_at` column) with auth middleware enforcement and admin 
 
 ## 10. Smart Routing — Cost-Aware & Latency-Aware Provider Selection
 
-**Related:** Router (`src/router.js`), Provider registry (`src/providers/`)
+**Related:** Routing (`src/routing/`), Provider registry (`src/providers/`)
 
 ### Problem Statement
 

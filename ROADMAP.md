@@ -12,17 +12,17 @@ SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterpris
 
 | Phase | Scope | Key Deliverables |
 |---|---|---|
-| **1 — Core Service** | Express server, providers, queue, middleware | `src/server.js`, `src/router.js`, `src/providers/`, `src/middleware/`, `src/health.js` |
+| **1 — Core Service** | Express server, providers, queue, middleware | `src/server.js`, `src/routing/`, `src/providers/`, `src/middleware/`, `src/infra/health.js` |
 | **2 — API Contract & Auth** | Multi-client auth, rate limiting, error standardization | `src/errors.js`, `src/middleware/auth.js`, pre-commit hook, `.env.example` |
 | **3 — Testing** | 56 tests across 16 suites, < 1s runtime | `test/` (unit + integration via `node:test` + `supertest`) |
 | **4 — Containerization** | Dockerfile, compose (dev use) | `Dockerfile`, `docker-compose.yml`, `.dockerignore` |
 | **5 — CLI & Logging** | `shellm` CLI, structured JSON logger, log rotation | `src/cli.js`, `src/cli/*.js`, `src/lib/logger.js`, `config/logrotate.conf` |
-| **6 — VPS Deployment** | systemd, cloudflared, provisioning script | `shellm.service`, `scripts/setup-vps.sh` |
+| **6 — VPS Deployment** | systemd, cloudflared, provisioning script | `shellm.service`, `scripts/setup/vps.sh` |
 | **7 — API Hardening** | Validation, graceful shutdown, observability | 82 tests, settled guard, buffer cap, queue headers |
 | **8 — OpenAI Proxy** | `/v1/chat/completions`, `/v1/models`, model aliases | Replaced legacy `/completions` + `/providers`, 93 tests |
 | **9 — SQLite + Key Mgmt** | SQLite persistence, admin key CRUD, request logging | `src/db/`, `src/admin/keys.js`, `src/middleware/admin-auth.js`, 138 tests |
 | **10 — Admin Dashboard** | Browser dashboard, logs/stats endpoints, SPA | `src/admin/public/`, `src/admin/logs.js`, `src/admin/stats.js`, 156 tests |
-| **11a — Anthropic Messages** | `POST /v1/messages`, Anthropic error format | `src/v1/messages.js`, `src/errors.js`, 180 tests |
+| **11a — Anthropic Messages** | `POST /v1/messages`, Anthropic error format | `src/api/v1/messages.js`, `src/errors.js`, 180 tests |
 
 **Key architectural decisions (phases 1–6, 9):**
 - CommonJS, three runtime dependencies (Express + dotenv + better-sqlite3), functional provider modules
@@ -69,7 +69,7 @@ SQLite persistence via `better-sqlite3` for client key management and request lo
 
 **9b — Key Management API:** `src/admin/keys.js` Express Router — `GET/POST/PATCH/DELETE /admin/keys`, `POST /admin/keys/:id/rotate`. Admin auth via `SHELLM_ADMIN_PASSWORD` (HTTP Basic). Raw key only visible on create and rotate. `src/middleware/admin-auth.js` with timing-safe password comparison.
 
-**9c — Request Logging + Auth:** `/v1/*` requests logged to `request_logs` (request_id, client, provider, model, status, duration_ms, queued_ms, tokens, cost_usd). `src/middleware/auth.js` updated with DB-first client lookup, env var fallback. `src/v1/chat-completions.js` exposes `queued_ms`, `cost_usd`, `usage` on `res.locals`.
+**9c — Request Logging + Auth:** `/v1/*` requests logged to `request_logs` (request_id, client, provider, model, status, duration_ms, queued_ms, tokens, cost_usd). `src/middleware/auth.js` updated with DB-first client lookup, env var fallback. `src/api/v1/chat-completions.js` exposes `queued_ms`, `cost_usd`, `usage` on `res.locals`.
 
 ---
 
@@ -93,7 +93,7 @@ Drop-in replacement for the Anthropic Messages API. Claude Code, the Anthropic S
 
 **Endpoint:** `POST /v1/messages` — accepts Anthropic request shape (`model`, `max_tokens` required, `messages[]` with string or content block arrays, top-level `system`), returns Anthropic response shape (`content[]`, `stop_reason: "end_turn"`, `usage`). Anthropic error format (`{ type: "error", error: { type, message } }`).
 
-**Files:** `src/v1/messages.js`, `src/errors.js` (`sendAnthropicError`), `test/v1/messages.test.js` (24 tests). 180 total tests passing.
+**Files:** `src/api/v1/messages.js`, `src/errors.js` (`sendAnthropicError`), `test/api/v1/messages.test.js` (24 tests). 180 total tests passing.
 
 ### 11b — `/v1/embeddings` `PENDING`
 

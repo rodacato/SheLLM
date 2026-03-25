@@ -29,7 +29,7 @@ Step-by-step instructions for cutting a SheLLM release. Follow this in order —
 Before actually bumping, see what the generated entry will look like:
 
 ```bash
-node scripts/changelog.js --dry-run
+node scripts/release-changelog.js --dry-run
 ```
 
 This parses all conventional commits since the last tag and prints the CHANGELOG section without touching any file. If the output looks wrong, check your commit messages — they need to follow the `type(scope): description` format documented in [CONTRIBUTING.md](../../CONTRIBUTING.md#commit-messages).
@@ -45,7 +45,7 @@ npm version patch   # replace with minor or major as needed
 This single command does four things automatically:
 
 1. Bumps `version` in `package.json`
-2. Runs `scripts/changelog.js` → prepends the new entry to `CHANGELOG.md`
+2. Runs `scripts/release-changelog.js` → prepends the new entry to `CHANGELOG.md`
 3. Stages `CHANGELOG.md` (`git add`)
 4. Creates a git commit `v0.x.y` and a git tag `v0.x.y`
 
@@ -129,7 +129,7 @@ git status
 npm test
 
 # 2. Preview
-node scripts/changelog.js --dry-run
+node scripts/release-changelog.js --dry-run
 
 # 3. Bump
 npm version patch
@@ -177,8 +177,8 @@ git push
 
 | File | Purpose |
 |---|---|
-| `scripts/changelog.js` | Generates CHANGELOG entry from git log |
-| `scripts/changelog.js --dry-run` | Preview without writing |
+| `scripts/release-changelog.js` | Generates CHANGELOG entry from git log |
+| `scripts/release-changelog.js --dry-run` | Preview without writing |
 | `.github/workflows/release.yml` | CI job that creates the GitHub Release |
 | `CHANGELOG.md` | Human-readable release history |
 | `VERSIONS.md` | CLI versions tested with each SheLLM release |

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# setup-dev.sh — interactive dev environment setup for SheLLM
-# Run once after cloning: bash scripts/setup-dev.sh
+# setup/dev.sh — interactive dev environment setup for SheLLM
+# Run once after cloning: bash scripts/setup/dev.sh
 
 set -euo pipefail
 

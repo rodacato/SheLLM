@@ -73,7 +73,7 @@ Most LLM gateways assume you're paying per-token via API. SheLLM's primary use c
 
 ```bash
 git clone git@github.com:rodacato/SheLLM.git && cd SheLLM
-bash scripts/setup-dev.sh   # install deps, create .env, link CLI
+bash scripts/setup/dev.sh   # install deps, create .env, link CLI
 ```
 
 The setup script checks for CLI tools but **does not authenticate them**. You must authenticate each provider you plan to use:
@@ -106,7 +106,7 @@ Open the admin dashboard at `http://localhost:6100/admin/dashboard/` (requires `
 
 For production deployment with systemd and cloudflared (zero-trust tunnel, no open ports), see the **[VPS Deployment Guide](docs/guides/deployment.md)**. It covers:
 
-- Full server provisioning (`scripts/setup-vps.sh`)
+- Full server provisioning (`scripts/setup/vps.sh`)
 - CLI authentication on headless servers
 - Database migrations and seed data
 - cloudflared tunnel setup with your custom domain
@@ -296,7 +296,7 @@ SheLLM runs on a VPS with systemd and cloudflared — no open ports, TLS handled
 
 ```bash
 # On the VPS as root
-bash scripts/setup-vps.sh
+bash scripts/setup/vps.sh
 ```
 
 See the complete **[VPS Deployment Guide](docs/guides/deployment.md)** for the full walkthrough — from provisioning to your first Playground prompt.

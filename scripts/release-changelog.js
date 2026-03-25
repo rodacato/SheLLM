@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// changelog.js — generates a CHANGELOG entry from conventional commits
+// release-changelog.js — generates a CHANGELOG entry from conventional commits
 // Invoked automatically by `npm version` via the "version" lifecycle script.
-// Can also be run manually: node scripts/changelog.js [--dry-run]
+// Can also be run manually: node scripts/release-changelog.js [--dry-run]
 
 import { execSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';

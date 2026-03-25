@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# setup-vps.sh — One-time VPS provisioning for SheLLM.
-# Usage: ssh root@your-vps 'bash -s' < scripts/setup-vps.sh
+# setup/vps.sh — One-time VPS provisioning for SheLLM.
+# Usage: ssh root@your-vps 'bash -s' < scripts/setup/vps.sh
 #
 # What this does:
 #   1. Creates shellmer user

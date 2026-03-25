@@ -4,7 +4,7 @@
  * Generate README screenshots from a running SheLLM instance.
  *
  * Usage:
- *   node scripts/screenshots.js [--base-url http://localhost:6100]
+ *   node scripts/release-screenshots.js [--base-url http://localhost:6100]
  *
  * Requires: playwright (devDependency)
  * Outputs:  docs/screenshots/landing.png

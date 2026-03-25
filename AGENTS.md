@@ -75,8 +75,8 @@ src/
 ### Adding a New Provider
 
 1. Create `src/providers/<name>.js` following the contract in IDENTITY.md
-2. Register it in `src/router.js` (add to `providers` object)
-3. Add a health check for it in `src/health.js`
+2. Register it in `src/routing/engines.js` (add to `engines` object)
+3. Add a health check entry in the provider's DB row (see `src/infra/health.js`)
 4. Add tests in `test/providers/<name>.test.js`
 
 ### Testing

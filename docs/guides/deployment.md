@@ -23,14 +23,14 @@ SSH into your VPS as root and run:
 
 ```bash
 # Download and run in one step
-curl -fsSL https://raw.githubusercontent.com/rodacato/SheLLM/master/scripts/setup-vps.sh | bash
+curl -fsSL https://raw.githubusercontent.com/rodacato/SheLLM/master/scripts/setup/vps.sh | bash
 ```
 
 Or clone first if you prefer to inspect the script:
 
 ```bash
 git clone https://github.com/rodacato/SheLLM.git /home/shellmer/shellm
-bash /home/shellmer/shellm/scripts/setup-vps.sh
+bash /home/shellmer/shellm/scripts/setup/vps.sh
 ```
 
 **What the script does:**

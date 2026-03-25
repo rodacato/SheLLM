@@ -8,24 +8,24 @@
     "shellm": "src/cli.js"
   },
   "scripts": {
-    "version": "node scripts/changelog.js && sed -i \"s/v[0-9]*\\.[0-9]*\\.[0-9]*/v$npm_package_version/\" site/index.html && git add CHANGELOG.md site/index.html",
+    "prepare": "git config core.hooksPath scripts 2>/dev/null || true",
+    "version": "node scripts/release-changelog.js && sed -i \"s/v[0-9]*\\.[0-9]*\\.[0-9]*/v$npm_package_version/\" site/index.html && git add CHANGELOG.md site/index.html",
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "prepare": "git config core.hooksPath scripts 2>/dev/null || true",
     "seed": "node scripts/seed.js",
     "migrate": "node -e \"require('./src/db').initDb()\"",
-    "check:env": "node scripts/check-env.js",
-    "audit:security": "npm audit --audit-level=high",
+    "check:env": "node scripts/setup/check-env.js",
     "lint": "eslint src/ test/",
     "lint:fix": "eslint --fix src/ test/",
     "test": "node --experimental-test-module-mocks --test 'test/*.test.js' 'test/**/*.test.js'",
     "test:e2e": "node --test --test-timeout 120000 test/e2e/*.e2e.js",
     "smoke": "node test/smoke.mjs",
+    "audit:security": "npm audit --audit-level=high",
     "docs:build": "redocly bundle docs/api/openapi.yaml --output docs/api/bundled.json --ext json",
     "docs:preview": "redocly preview docs/api/openapi.yaml",
     "docs:lint": "redocly lint docs/api/openapi.yaml",
-    "favicons": "node scripts/generate-favicons.js",
-    "screenshots": "node scripts/screenshots.js"
+    "release:favicons": "node scripts/release-favicons.js",
+    "release:screenshots": "node scripts/release-screenshots.js"
   },
   "dependencies": {
     "better-sqlite3": "^12.6.2",

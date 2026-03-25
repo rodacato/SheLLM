@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Generates PNG favicons from assets/favicon/favicon.svg using sharp.
-// Usage: node scripts/generate-favicons.js
+// Usage: node scripts/release-favicons.js
 
 import sharp from 'sharp';
 import { readFileSync } from 'fs';
