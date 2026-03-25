@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-25
+
+### Added
+
+- **admin:** sidebar with uptime, health endpoint, and docs links
+
+### Fixed
+
+- **test:** use standard API ID formats and fix all failing tests
+- **stream:** prevent zombie slots and fix headers-after-flush crash
+- **cli:** use npm run migrate and remove unused import
+
+### Changed
+
+- organize scripts/ with setup/ subfolder and release- prefixes
+- move v1/ to api/v1/
+- extract app.js from server.js
+- split db/index.js by domain and co-locate migrations
+- extract infra/ and routing/ from God modules
+
+### Documentation
+
+- add architecture guide with module overview and request flow
+
+
 ## [0.4.1] - 2026-03-24
 
 ### Added
@@ -215,5 +240,5 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v0.4.1...HEAD
-[0.4.1]: https://github.com/rodacato/SheLLM/compare/v0.4.0...v0.4.1
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/rodacato/SheLLM/compare/v0.4.1...v0.5.0
