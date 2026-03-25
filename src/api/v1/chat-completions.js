@@ -1,7 +1,7 @@
-const { route, resolveProvider, resolveUpstreamModel, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../routing');
-const { sanitize, checkPromptSafety } = require('../middleware/sanitize');
-const { invalidRequest, promptRejected, fromCatchable, sendOpenAIError } = require('../errors');
-const { initSSE, sendSSEChunk, sendSSEDone, sendSSEError } = require('../lib/sse');
+const { route, resolveProvider, resolveUpstreamModel, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../../routing');
+const { sanitize, checkPromptSafety } = require('../../middleware/sanitize');
+const { invalidRequest, promptRejected, fromCatchable, sendOpenAIError } = require('../../errors');
+const { initSSE, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../lib/sse');
 
 const MAX_PROMPT_LENGTH = 50000;
 
@@ -237,7 +237,7 @@ async function chatCompletionsHandler(req, res) {
  * Holds a queue slot for the full stream duration.
  */
 async function handleStream(req, res, { model, max_tokens, temperature, top_p, response_format, prompt, system }) {
-  const logger = require('../lib/logger');
+  const logger = require('../../lib/logger');
   let provider;
   try {
     provider = selectProvider(model);

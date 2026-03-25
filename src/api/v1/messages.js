@@ -1,11 +1,11 @@
-const { route, resolveProvider, resolveUpstreamModel, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../routing');
-const { sanitize, checkPromptSafety } = require('../middleware/sanitize');
-const { invalidRequest, promptRejected, fromCatchable, sendAnthropicError } = require('../errors');
-const { initSSE } = require('../lib/sse');
+const { route, resolveProvider, resolveUpstreamModel, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../../routing');
+const { sanitize, checkPromptSafety } = require('../../middleware/sanitize');
+const { invalidRequest, promptRejected, fromCatchable, sendAnthropicError } = require('../../errors');
+const { initSSE } = require('../../lib/sse');
 const {
   sendMessageStart, sendContentBlockStart, sendContentBlockDelta,
   sendContentBlockStop, sendMessageDelta, sendMessageStop, sendStreamError,
-} = require('../lib/sse-anthropic');
+} = require('../../lib/sse-anthropic');
 
 const MAX_PROMPT_LENGTH = 50000;
 
@@ -255,8 +255,8 @@ async function messagesHandler(req, res) {
  * Handle streaming response for /v1/messages (Anthropic SSE format).
  */
 async function handleAnthropicStream(req, res, { model, max_tokens, temperature, top_p, prompt, system }) {
-  const logger = require('../lib/logger');
-  const { recordSuccess, recordFailure } = require('../infra/circuit-breaker');
+  const logger = require('../../lib/logger');
+  const { recordSuccess, recordFailure } = require('../../infra/circuit-breaker');
 
   let provider;
   try {

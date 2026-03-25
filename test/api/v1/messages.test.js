@@ -8,7 +8,7 @@ describe('/v1/messages', () => {
   let testKey;
 
   before(() => {
-    mock.module(path.resolve(__dirname, '../../src/providers/base.js'), {
+    mock.module(path.resolve(__dirname, '../../../src/providers/base.js'), {
       namedExports: {
         execute: mock.fn(async (cmd) => ({
           stdout: cmd === 'claude'
@@ -34,18 +34,18 @@ describe('/v1/messages', () => {
       }
     }
 
-    const { initDb, closeDb, createClient } = require('../../src/db');
+    const { initDb, closeDb, createClient } = require('../../../src/db');
     try { closeDb(); } catch { /* ignore */ }
     initDb(':memory:');
     const client = createClient({ name: 'test-client', rpm: 100 });
     testKey = client.rawKey;
 
     request = require('supertest');
-    app = require('../../src/server');
+    app = require('../../../src/server');
   });
 
   after(() => {
-    const { closeDb } = require('../../src/db');
+    const { closeDb } = require('../../../src/db');
     try { closeDb(); } catch { /* ignore */ }
   });
 
@@ -497,7 +497,7 @@ describe('/v1/messages', () => {
 });
 
 describe('extractContent', () => {
-  const { extractContent } = require('../../src/v1/messages');
+  const { extractContent } = require('../../../src/api/v1/messages');
 
   it('returns string content as-is', () => {
     assert.strictEqual(extractContent('hello'), 'hello');
@@ -523,7 +523,7 @@ describe('extractContent', () => {
 });
 
 describe('extractPrompt', () => {
-  const { extractPrompt } = require('../../src/v1/messages');
+  const { extractPrompt } = require('../../../src/api/v1/messages');
 
   it('extracts single user message as prompt', () => {
     const { prompt, system } = extractPrompt(

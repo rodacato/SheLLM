@@ -1,4 +1,4 @@
-const { listProviders } = require('../routing');
+const { listProviders } = require('../../routing');
 
 /**
  * GET /v1/models — OpenAI-compatible model list

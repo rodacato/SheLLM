@@ -8,7 +8,7 @@ describe('/v1/chat/completions', () => {
   let authHeader;
 
   before(() => {
-    mock.module(path.resolve(__dirname, '../../src/providers/base.js'), {
+    mock.module(path.resolve(__dirname, '../../../src/providers/base.js'), {
       namedExports: {
         execute: mock.fn(async (cmd) => ({
           stdout: cmd === 'claude'
@@ -34,18 +34,18 @@ describe('/v1/chat/completions', () => {
       }
     }
 
-    const { initDb, closeDb, createClient } = require('../../src/db');
+    const { initDb, closeDb, createClient } = require('../../../src/db');
     try { closeDb(); } catch { /* ignore */ }
     initDb(':memory:');
     const client = createClient({ name: 'test-client', rpm: 100 });
     authHeader = `Bearer ${client.rawKey}`;
 
     request = require('supertest');
-    app = require('../../src/server');
+    app = require('../../../src/server');
   });
 
   after(() => {
-    const { closeDb } = require('../../src/db');
+    const { closeDb } = require('../../../src/db');
     closeDb();
   });
 
@@ -354,7 +354,7 @@ describe('/v1/chat/completions', () => {
 });
 
 describe('extractMessages', () => {
-  const { extractMessages } = require('../../src/v1/chat-completions');
+  const { extractMessages } = require('../../../src/api/v1/chat-completions');
 
   it('extracts system and single user message', () => {
     const { prompt, system } = extractMessages([

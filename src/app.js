@@ -1,8 +1,8 @@
 const express = require('express');
 const { getHealthStatus } = require('./infra/health');
-const { chatCompletionsHandler } = require('./v1/chat-completions');
-const { messagesHandler } = require('./v1/messages');
-const { modelsHandler } = require('./v1/models');
+const { chatCompletionsHandler } = require('./api/v1/chat-completions');
+const { messagesHandler } = require('./api/v1/messages');
+const { modelsHandler } = require('./api/v1/models');
 const { requestLogger } = require('./middleware/logging');
 const { requestId } = require('./middleware/request-id');
 const { createAuthMiddleware } = require('./middleware/auth');

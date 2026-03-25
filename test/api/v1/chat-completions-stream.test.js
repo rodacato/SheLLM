@@ -5,7 +5,7 @@ const path = require('node:path');
 // --- Unit tests for SSE helpers ---
 
 describe('SSE helpers', () => {
-  const { initSSE, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../src/lib/sse');
+  const { initSSE, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../../src/lib/sse');
 
   it('initSSE sets correct headers and flushes', () => {
     const headers = {};
@@ -59,7 +59,7 @@ describe('SSE helpers', () => {
 // --- Unit tests for handleStream logic ---
 
 describe('handleStream', () => {
-  const { initSSE, sendSSEChunk, sendSSEDone } = require('../../src/lib/sse');
+  const { initSSE, sendSSEChunk, sendSSEDone } = require('../../../src/lib/sse');
 
   function parseSSEText(text) {
     return text
@@ -169,7 +169,7 @@ describe('handleStream', () => {
   });
 
   it('error mid-stream sends SSE error event', () => {
-    const { sendSSEError } = require('../../src/lib/sse');
+    const { sendSSEError } = require('../../../src/lib/sse');
     const written = [];
     let ended = false;
     const res = {
@@ -270,7 +270,7 @@ describe('/v1/chat/completions streaming integration', () => {
   let testKey;
 
   before(() => {
-    mock.module(path.resolve(__dirname, '../../src/providers/base.js'), {
+    mock.module(path.resolve(__dirname, '../../../src/providers/base.js'), {
       namedExports: {
         execute: mock.fn(async (cmd) => ({
           stdout: cmd === 'claude'
@@ -301,18 +301,18 @@ describe('/v1/chat/completions streaming integration', () => {
       }
     }
 
-    const { initDb, closeDb, createClient } = require('../../src/db');
+    const { initDb, closeDb, createClient } = require('../../../src/db');
     try { closeDb(); } catch { /* ignore */ }
     initDb(':memory:');
     const client = createClient({ name: 'test-client', rpm: 100 });
     testKey = client.rawKey;
 
     request = require('supertest');
-    app = require('../../src/server');
+    app = require('../../../src/server');
   });
 
   after(() => {
-    const { closeDb } = require('../../src/db');
+    const { closeDb } = require('../../../src/db');
     try { closeDb(); } catch { /* ignore */ }
   });
 
