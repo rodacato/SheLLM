@@ -1,0 +1,47 @@
+# .notdefined.yml — metadata for rodacato/projects
+# Spec: https://github.com/rodacato/rodacato/blob/master/docs/guides/notdefined-yml-spec.md
+
+# --- Identity ---
+tagline: "Your LLM subscriptions as a single REST API"
+description: >
+  Unifies Claude, Gemini, Codex and Cerebras under an
+  OpenAI-compatible endpoint — wrapping CLI subscriptions
+  you already pay for instead of burning API tokens.
+  Self-hosted, Express + SQLite, with an admin dashboard.
+version: "0.5.0"
+icon: assets/logo/icon-color.svg
+icon_dark: assets/logo/icon-dark.svg
+icon_light: assets/logo/icon-light.svg
+background_color: "#0C0C0E"
+screenshot: docs/screenshots/dashboard-overview.png
+screenshots:
+  - path: docs/screenshots/landing.png
+    alt: "Landing page with feature overview"
+  - path: docs/screenshots/dashboard-playground.png
+    alt: "Interactive playground for testing prompts"
+  - path: docs/screenshots/dashboard-terminal.png
+    alt: "Live streaming log terminal"
+  - path: docs/screenshots/dashboard-logs.png
+    alt: "Filterable request logs with stats"
+  - path: docs/screenshots/dashboard-keys.png
+    alt: "API key management with audit log"
+  - path: docs/screenshots/dashboard-models.png
+    alt: "Provider status and model registry"
+
+# --- Classification ---
+category: utility
+status: active
+lang: JavaScript
+stack:
+  - Node.js 22
+  - Express 5
+  - SQLite
+  - Playwright
+tags:
+  - ai
+  - llm
+  - api
+  - self-hosted
+
+# --- Links ---
+repo: https://github.com/rodacato/SheLLM
