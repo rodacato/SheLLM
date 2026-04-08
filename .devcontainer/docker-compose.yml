@@ -1,5 +1,5 @@
 services:
-  shellm-dev:
+  workspace:
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
