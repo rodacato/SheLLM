@@ -3,26 +3,32 @@ services:
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
+    # tini as PID 1 — `sleep infinity` never reaps, so git/node/claude zombies pile up.
+    init: true
     volumes:
-      - ..:/workspace:cached
-      - claude-auth:/home/node/.claude
-      - gemini-auth:/home/node/.gemini
-      - codex-auth:/home/node/.codex
-      - node_modules:/workspace/node_modules
-    command: sleep infinity
+      - ..:/workspaces/shellm:cached
+      # The shell-history feature writes to /dc/shellhistory, NOT /commandhistory (which persists nothing).
+      - commandhistory:/dc/shellhistory
+      # Provider CLI logins are what this repo exercises; keeping them in volumes spares a
+      # re-login on every rebuild. post-create.sh hands ownership to the remote user.
+      - claude-auth:/home/vscode/.claude
+      - gemini-auth:/home/vscode/.gemini
+      - codex-auth:/home/vscode/.codex
+      # better-sqlite3 is a native module: a Linux build must never mix with the host's.
+      - node_modules:/workspaces/shellm/node_modules
+    # .host.env comes from initialize.sh. See README.md.
+    env_file:
+      - path: .host.env
+        required: false
     environment:
       NODE_ENV: development
-      MAX_CONCURRENT: "2"
-      TIMEOUT_MS: "120000"
       LOG_LEVEL: debug
-      NODE_OPTIONS: "--max-old-space-size=4096"
+    # Playwright (release:screenshots) runs Chromium, which needs more than the 64 MB default.
     shm_size: "256m"
-    ulimits:
-      nofile:
-        soft: 65536
-        hard: 65536
+    command: sleep infinity
 
 volumes:
+  commandhistory:
   claude-auth:
   gemini-auth:
   codex-auth:
