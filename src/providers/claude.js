@@ -5,24 +5,24 @@ function shouldSkipPermissions() {
   catch { return process.env.SHELLM_CLAUDE_SKIP_PERMISSIONS !== 'false'; }
 }
 
-function buildArgs({ prompt, system, temperature, response_format }) {
+function systemPromptFor({ system, response_format }) {
+  if (response_format?.type !== 'json_object') return system;
+  return system ? system + '\n\nRespond with valid JSON only.' : 'Respond with valid JSON only.';
+}
+
+// The claude CLI has no temperature flag, so temperature is ignored.
+function buildStreamArgs({ prompt, system, response_format }) {
   const args = ['--print'];
   if (shouldSkipPermissions()) args.push('--dangerously-skip-permissions');
-  args.push('--output-format', 'json');
-
-  const jsonMode = response_format?.type === 'json_object';
-  const systemPrompt = jsonMode && system
-    ? system + '\n\nRespond with valid JSON only.'
-    : jsonMode ? 'Respond with valid JSON only.'
-    : system;
-  if (systemPrompt) {
-    args.push('--system-prompt', systemPrompt);
-  }
-  if (temperature !== undefined) {
-    args.push('--temperature', String(temperature));
-  }
-
+  const systemPrompt = systemPromptFor({ system, response_format });
+  if (systemPrompt) args.push('--system-prompt', systemPrompt);
   args.push('--', prompt);
+  return args;
+}
+
+function buildArgs(params) {
+  const args = buildStreamArgs(params);
+  args.splice(args.indexOf('--'), 0, '--output-format', 'json');
   return args;
 }
 
@@ -31,10 +31,8 @@ function parseOutput(stdout, stderr) {
   let cost_usd = null;
   let usage = null;
 
-  // Claude CLI writes the result JSON to stderr with --output-format json
-  const source = stderr || stdout;
   try {
-    const data = JSON.parse(source);
+    const data = JSON.parse(stdout || stderr);
     content = data.result || data.content || stdout;
     cost_usd = data.total_cost_usd || data.cost_usd || null;
     if (data.usage) {
@@ -57,24 +55,15 @@ const CLAUDE_ENV = {
   XDG_DATA_HOME: process.env.XDG_DATA_HOME,
 };
 
-async function chat({ prompt, system, temperature, response_format }) {
-  const args = buildArgs({ prompt, system, temperature, response_format });
+async function chat({ prompt, system, response_format }) {
+  const args = buildArgs({ prompt, system, response_format });
   const result = await execute('claude', args, { env: CLAUDE_ENV });
   return parseOutput(result.stdout, result.stderr);
 }
 
-async function* chatStream({ prompt, system, temperature, response_format, signal }) {
-  // For streaming, use --print without --output-format json so tokens emit incrementally
-  const args = ['--print'];
-  if (shouldSkipPermissions()) args.push('--dangerously-skip-permissions');
-  const jsonMode = response_format?.type === 'json_object';
-  const systemPrompt = jsonMode && system
-    ? system + '\n\nRespond with valid JSON only.'
-    : jsonMode ? 'Respond with valid JSON only.'
-    : system;
-  if (systemPrompt) args.push('--system-prompt', systemPrompt);
-  if (temperature !== undefined) args.push('--temperature', String(temperature));
-  args.push('--', prompt);
+async function* chatStream({ prompt, system, response_format, signal }) {
+  // Without --output-format json, tokens emit incrementally
+  const args = buildStreamArgs({ prompt, system, response_format });
 
   for await (const event of executeStream('claude', args, { env: CLAUDE_ENV, signal })) {
     if (event.type === 'chunk') {
@@ -89,5 +78,6 @@ module.exports = {
   chat,
   chatStream,
   buildArgs,
+  buildStreamArgs,
   parseOutput,
 };

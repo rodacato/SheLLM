@@ -7,7 +7,8 @@ const GEMINI_ENV = {
   GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS,
 };
 
-function buildArgs({ prompt, system, temperature, response_format }) {
+// The gemini CLI has no temperature flag, so temperature is ignored.
+function buildArgs({ prompt, system, response_format }) {
   // Gemini has no --system-prompt flag — prepend to prompt
   let fullPrompt = '';
   const jsonMode = response_format?.type === 'json_object';
@@ -24,7 +25,6 @@ function buildArgs({ prompt, system, temperature, response_format }) {
     '--output-format', 'json',
     '--approval-mode', 'yolo',
   ];
-  if (temperature !== undefined) args.push('-t', String(temperature));
   args.push('-p', fullPrompt);
   return args;
 }
@@ -55,8 +55,8 @@ function parseOutput(stdout) {
   }
 }
 
-async function chat({ prompt, system, temperature, response_format }) {
-  const args = buildArgs({ prompt, system, temperature, response_format });
+async function chat({ prompt, system, response_format }) {
+  const args = buildArgs({ prompt, system, response_format });
   const result = await execute('gemini', args, { env: GEMINI_ENV });
   return parseOutput(result.stdout);
 }
