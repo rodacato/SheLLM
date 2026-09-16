@@ -117,6 +117,8 @@ SheLLM uses its own API keys (created via `/admin/keys`), not OpenAI or Anthropi
 
 If you're swapping between endpoints, be aware of the different valid ranges.
 
+Only Cerebras applies it. The claude, gemini and codex CLIs have no temperature flag, so SheLLM validates the value and ignores it for them.
+
 ### 4. `max_tokens` Requirement
 
 - **OpenAI endpoint**: Optional (defaults vary by provider)
@@ -201,7 +203,7 @@ Not all SheLLM providers support all parameters equally:
 | Capability | Claude | Gemini | Codex | Cerebras |
 |---|---|---|---|---|
 | System prompt | Native | Prepended to prompt | Prepended to prompt | Native |
-| Temperature | Passed | Passed | Ignored | Passed |
+| Temperature | Ignored | Ignored | Ignored | Passed |
 | Top P | Ignored | Ignored | Ignored | Passed |
 | Max tokens | Ignored | Ignored | Ignored | Passed |
 | JSON mode | Appends instruction | Appends instruction | Appends instruction | API parameter |

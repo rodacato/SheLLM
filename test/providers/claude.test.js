@@ -28,22 +28,22 @@ describe('claude provider', () => {
     assert.ok(args.includes('--dangerously-skip-permissions'));
   });
 
-  it('parseOutput extracts result, cost and usage from stderr JSON', () => {
-    const stderr = JSON.stringify({
+  it('parseOutput extracts result, cost and usage from stdout JSON', () => {
+    const stdout = JSON.stringify({
       type: 'result',
       result: 'hello',
       total_cost_usd: 0.019,
       usage: { input_tokens: 10, output_tokens: 24 },
     });
-    const parsed = parseOutput('', stderr);
+    const parsed = parseOutput(stdout, 'warning: something on stderr');
     assert.strictEqual(parsed.content, 'hello');
     assert.strictEqual(parsed.cost_usd, 0.019);
     assert.deepStrictEqual(parsed.usage, { input_tokens: 10, output_tokens: 24 });
   });
 
-  it('parseOutput falls back to stdout JSON when stderr is empty', () => {
-    const stdout = JSON.stringify({ result: 'hello', cost_usd: 0.01 });
-    const parsed = parseOutput(stdout, '');
+  it('parseOutput falls back to stderr JSON when stdout is empty', () => {
+    const stderr = JSON.stringify({ result: 'hello', cost_usd: 0.01 });
+    const parsed = parseOutput('', stderr);
     assert.strictEqual(parsed.content, 'hello');
     assert.strictEqual(parsed.cost_usd, 0.01);
   });
@@ -57,8 +57,7 @@ describe('claude provider', () => {
 
   it('chat() calls execute with correct command and env', async () => {
     const mockExecute = mock.fn(async () => ({
-      stdout: '',
-      stderr: JSON.stringify({ type: 'result', result: 'mocked reply', total_cost_usd: 0.003, usage: { input_tokens: 5, output_tokens: 10 } }),
+      stdout: JSON.stringify({ type: 'result', result: 'mocked reply', total_cost_usd: 0.003, usage: { input_tokens: 5, output_tokens: 10 } }),
       duration_ms: 50,
     }));
 
