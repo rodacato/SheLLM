@@ -1,274 +1,232 @@
 # SheLLM — Expert Panel
 
-A roster of specialists to consult when making design decisions, debugging issues, or evaluating trade-offs. Each expert brings a distinct lens. Consult the relevant expert(s) for the problem at hand — don't try to satisfy all of them simultaneously.
+> A virtual panel the AI assistant consults before a decision that will outlive the change in front
+> of it. **The panel advises, the assistant recommends, the maintainer decides.** It sits beside
+> [`AUDIENCE.md`](./AUDIENCE.md) because the two answer the questions every proposal has to
+> survive: *who is this for* and *who would object*. The one seat that is not an outside expert —
+> `el-integrador`, the actual user — is defined there.
+>
+> Rewritten 2026-09-16 for the revamp: the domain seats of the first build (a fintech advisor, a
+> Rails consumer) are retired, and the panel now centers on the two things that decide whether
+> SheLLM works — driving official CLIs safely and answering like the real provider APIs. IDs are
+> permanent from this version on; a retired seat keeps its ID and says where its lens went.
 
-Experts are classified as **permanent** (always relevant, always in the panel) or **situational** (activated only when a specific trigger condition is met — dormant otherwise).
+## How to consult
 
----
+- **By concern, not by roll call.** Pick the two to four seats whose lens fits; the quick reference
+  says who. Address them by handle or ID: *"¿qué dice `helena` de este flag?"*, *"C2, ¿esto rompe
+  el SDK de Anthropic?"*, *"¿qué opina `el-integrador` de este setup?"*.
+- **Each voice is 2–4 lines:** its take and its concern. Then one synthesis — **a recommended
+  option, the key risks, and the fallback.**
+- **Conflicts are surfaced, never settled silently.** Check [`IDENTITY.md`](./IDENTITY.md) and the
+  ADRs first; if they do not settle it, it goes to the maintainer. A lone `helena` objection is the
+  one most worth reading twice — it is the one that costs an account.
+- **A consultation that changes direction becomes an ADR** naming who was consulted and why their
+  view won. Without one, the reasoning evaporates.
+- **Do not consult** for a rename, a question an ADR already answered, or as a ritual before a
+  commit.
 
-## Permanent Experts
+## Quick reference
 
-Permanent experts are always active. Any significant decision should at minimum pass through the relevant permanent experts before being approved.
+| ID | Handle | Lens | Consult when |
+|---|---|---|---|
+| **C1** | `ines` | LLM CLI internals: flags, output formats, auth flows, versions | A provider adapter, a CLI upgrade, output that parses wrong |
+| **C2** | `marta` | Provider API compatibility: OpenAI and Anthropic wire formats, SSE | Any `/v1` request, response, error or stream shape |
+| **C3** | `tomas` | Node process supervision: child_process, warm pools, backpressure | Spawning, pooling, queueing, signals, memory under load |
+| **C4** | `amara` | Application security: credentials, exposure, prompt injection | Keys, tokens on disk, a new route, anything reaching a subprocess |
+| **C5** | `helena` | Provider terms and ban risk | Any change to how a CLI is invoked, authenticated or shared |
+| **C6** | `dhh` | Pragmatic simplicity, anti-ceremony | A new layer, dependency, abstraction or config knob |
+| **C7** | `rafael` | Reliability and observability | Timeouts, retries, circuit breaker, health, logs, measured numbers |
+| **C8** | `priya` | Developer experience and public docs | Setup, first request, README, error messages, what a stranger meets |
+| **C9** | `el-integrador` | The actual user — [defined in AUDIENCE.md](./AUDIENCE.md#consult-as-el-integrador) | Every API shape, every setup step, every "should we add X" |
+| **S1** | `lucas` | Testing strategy with `node:test` | A new provider's tests, mocking boundaries, flaky or slow suites |
+| **S2** | `vera` | Offensive security | An explicit audit, a new attack surface, a reported bypass |
+| **S3** | `kleppmann` | Failure semantics: idempotency, retries, partial streams | Fallback routing, retrying a half-sent stream, double execution |
+| **S4** | `oskar` | Releases and versioning | Cutting a release, a breaking change, changelog and tags |
+| **S5** | `sofia` | Admin dashboard UX and the Pencil design system | A dashboard screen, `design/` work, dense operational tables |
+| **S6** | `bruno` | Linux service operations: systemd, cloudflared, VPS setup | The install script, the unit file, log rotation, the tunnel |
+| **S7** | `fowler` | Refactoring and migration sequencing | Restructuring a module, sequencing the revamp behind tests |
 
----
+Core seats are consulted whenever their lens is touched; situational seats only on their trigger.
 
-### Software Experts
+## The built-in tension
 
-#### 1. Node.js Runtime Specialist — "Runtime"
+The runtime seats are chosen to disagree. `tomas` wants the warm pool, supervised and reused;
+`rafael` wants every failure mode of that pool measured before it ships; `dhh` pushes back toward
+spawn-per-request until the numbers prove it hurts. **When these three agree, it is probably
+right.**
 
-**Focus:** Event loop, child_process, memory, streams, V8 behavior.
-
-**Consult when:**
-- A subprocess hangs, leaks memory, or behaves differently under load
-- You're choosing between spawn/exec/fork or pipe/ignore/inherit for stdio
-- Performance degrades with concurrent requests
-- You need to understand signal propagation (SIGTERM vs SIGKILL to child processes)
-
-**Bias:** Will always prefer native Node.js APIs over npm packages. Distrusts abstractions that hide event loop behavior. Will flag any blocking operation in the main thread.
-
----
-
-#### 2. API Design Engineer — "Contract"
-
-**Focus:** REST semantics, error contracts, backwards compatibility, consumer experience.
-
-**Consult when:**
-- Adding or modifying endpoints
-- Defining error response shapes and HTTP status codes
-- A consumer (Stockerly, curl, future project) reports confusing behavior
-- Considering breaking changes to the API
-
-**Bias:** Every response must be predictable and machine-parseable. Prefers explicit over implicit. Will reject any endpoint that returns different shapes depending on context. Insists on consistent `error`/`message`/`request_id` in every error response.
-
----
-
-#### 3. DevOps & Container Engineer — "Infra"
-
-**Focus:** Docker, Kamal, volumes, networking, resource limits, CI/CD.
-
-**Consult when:**
-- Modifying Dockerfile or docker-compose
-- Debugging auth token persistence across container restarts
-- Sizing memory/CPU limits
-- Setting up health checks, deployment pipelines, or monitoring
-
-**Bias:** Immutable infrastructure. Containers should be disposable — all state lives in volumes or external services. Prefers convention over configuration. Will reject any approach that requires SSH-ing into production to fix something.
-
----
-
-#### 4. Security Engineer — "SecEng"
-
-**Focus:** Network isolation, auth token handling, input sanitization, supply chain.
-
-**Consult when:**
-- Handling CLI auth tokens or API keys
-- Modifying network exposure (ports, bindings)
-- Processing user-supplied input that reaches a subprocess or API call
-- Adding dependencies (supply chain risk)
-
-**Bias:** Assume the network is hostile. Assume inputs are malicious. Defense in depth: network isolation + input sanitization + output validation. Will flag any dependency that hasn't been audited or is maintained by a single person.
+The contract seats pull the same way. `marta` wants byte-level fidelity to the provider APIs;
+`dhh` wants only the subset an app actually calls; `el-integrador` settles it by asking which apps
+break. And `helena` sits over all of them with a veto: **no speedup, compatibility trick or setup
+shortcut is worth leaving the official, unmodified CLI binary.**
 
 ---
 
-#### 5. Reliability Engineer — "SRE"
+## Core
 
-**Focus:** Failure modes, timeouts, queues, backpressure, observability, recovery.
+### C1 — Inés Salgado · `ines` · LLM CLI internals
 
-**Consult when:**
-- A CLI process times out or returns unexpected output
-- The queue fills up and requests start failing
-- You need to decide retry strategy or circuit breaker behavior
-- Adding logging, metrics, or alerting
+> *"The CLI changed last Tuesday. The docs will catch up in a month."*
 
-**Bias:** Every failure must be observable, measurable, and recoverable. Prefers graceful degradation over hard failures. Will insist on structured logs with correlation IDs. Distrusts any system that doesn't expose its internal state via an API.
+- **Background:** built editor integrations on top of three vendor CLIs; keeps a diff of every
+  `--help` output across versions.
+- **Brings:** how `claude`, `gemini` and `codex` really behave — `--print` vs
+  `--input-format stream-json`, what goes to stdout vs stderr, ANSI and warning noise, where each
+  stores its OAuth state, what a version bump silently changed.
+- **Consult when:** touching `src/providers/`; bumping a CLI version ([`VERSIONS.md`](../VERSIONS.md));
+  output that parses wrong; a flag that "should" work.
+- **Style:** runs the binary before believing the docs. Defensive parsing, pinned versions.
 
----
+### C2 — Marta Oyelaran · `marta` · Provider API compatibility
 
-#### 6. Testing Architect — "QA"
+> *"If the SDK needs a special case for you, you are not compatible."*
 
-**Focus:** Test strategy, mocking subprocess calls, integration vs unit boundaries, CI reliability.
+- **Background:** maintained an OpenAI-compatible gateway used by a dozen SDKs; has the
+  Anthropic and OpenAI streaming event sequences memorized.
+- **Brings:** request, response, error and SSE shapes for `/v1/chat/completions` and
+  `/v1/messages`; what official SDKs actually validate; `stop_reason`, `usage`, tool-call and
+  content-block edge cases; which divergences break clients and which they ignore.
+- **Consult when:** any `src/api/v1/` change; a new field; streaming; an error format; an SDK or
+  tool that "almost works".
+- **Style:** tests against the official SDKs, not against her own reading of the spec.
 
-**Consult when:**
-- Writing tests for providers (mocked subprocess vs real CLI)
-- Deciding what to test at the unit vs integration level
-- Tests are flaky or slow in CI
-- Adding a new provider and need to define its test surface
+### C3 — Tomás Lindqvist · `tomas` · Node process supervision
 
-**Bias:** Tests should be fast, deterministic, and tell you exactly what broke. Mock at the boundary (subprocess calls), not in the middle. Integration tests exist to verify wiring, not business logic. If a test needs `setTimeout`, it's testing the wrong thing.
+> *"A process you did not start is a process you cannot trust. A process you keep is one you must supervise."*
 
----
+- **Background:** a decade on job runners and language-server hosts that keep long-lived child
+  processes healthy.
+- **Brings:** spawn vs long-lived processes, stdin/stdout framing, SIGTERM→SIGKILL, zombie
+  reaping, pool sizing, backpressure, memory per process, isolating context between requests.
+- **Consult when:** `src/providers/base.js`, `src/infra/queue.js`, `src/infra/stream-slots.js`;
+  the warm pool; anything that holds a process across requests.
+- **Style:** draws the process lifecycle first — start, ready, busy, dead, replaced.
 
-### Domain Experts
+### C4 — Amara Nwosu · `amara` · Application security
 
-#### 7. LLM CLI Specialist — "CLI"
+> *"The prompt is user input. The subprocess is a shell you handed to that input."*
 
-**Focus:** How Claude Code, Gemini CLI, and Codex CLI actually behave in practice.
+- **Background:** application security lead for developer-tool platforms; has written the
+  post-mortem for a leaked token more than once.
+- **Brings:** OAuth tokens and API keys at rest, admin auth, network exposure behind a tunnel,
+  prompt-injection surfaces, environment isolation for child processes, dependency supply chain.
+- **Consult when:** `src/middleware/auth.js`, `admin-auth.js`, `prompt-guard.js`, `sanitize.js`;
+  a new route; anything that stores or logs a credential.
+- **Style:** starts from *"what can an attacker reach from here?"* and asks for the boundary.
 
-**Consult when:**
-- A CLI tool updates and changes its flags, output format, or auth flow
-- Parsing stdout produces unexpected results (ANSI codes, warnings, deprecation notices)
-- A provider returns errors that don't match documentation
-- You need to understand rate limits, cold start times, or auth token expiration
+### C5 — Helena Varga · `helena` · Provider terms and ban risk
 
-**Bias:** CLIs are living software that changes without notice. Always test actual behavior, not just documentation. Defensive parsing is mandatory. Version-pin CLI tools in the Dockerfile.
+> *"Fast and banned is slower than slow."*
 
----
+- **Background:** platform-policy counsel turned engineer; reads terms of service the way others
+  read changelogs.
+- **Brings:** what each provider allows for consumer subscriptions, what counts as intermediating
+  or sharing credentials, how account suspensions have been triggered in practice, usage limits.
+- **Consult when:** a change to how a CLI is invoked, authenticated or identified; anything that
+  lets someone other than the subscription owner use it; any "faster" path that bypasses the
+  official binary. Holds the veto described above.
+- **Style:** cites the clause and the precedent. No speculation dressed as policy.
 
-#### 8. Fintech Domain Advisor — "Domain"
+### C6 — `dhh` · Pragmatic simplicity
 
-**Focus:** How SheLLM fits into the Stockerly ecosystem and financial use cases.
+> *"You are not Google. You have one user and three CLIs."*
 
-**Consult when:**
-- Deciding what data flows through the service (PII concerns)
-- Prioritizing which provider to use for which use case
-- Evaluating cost-efficiency of different LLM providers
-- Planning capacity for batch jobs (portfolio insights, news sentiment)
+- **Lens:** the permanent brake. Questions every dependency, layer, config option and abstraction
+  against a single-maintainer service with low traffic.
+- **Consult when:** a new module boundary, a new npm package, a framework, a feature flag, a
+  "generic" solution for a problem that exists once.
+- **Style:** blunt; proposes the version with fewer moving parts and asks what breaks without the
+  rest.
 
-**Bias:** No PII should ever reach an LLM — anonymize in the caller, not in the bridge. Prefer cheaper providers (Gemini, Cerebras) for bulk tasks. Reserve Claude for high-value, low-volume analysis. Cost per request matters when running daily batch jobs across hundreds of portfolios.
+### C7 — Rafael Montaño · `rafael` · Reliability and observability
 
----
+> *"Measured, or it didn't happen."*
 
-#### 9. Rails Integration Engineer — "Consumer"
+- **Background:** SRE for an internal API gateway; built the dashboards people actually opened
+  during incidents.
+- **Brings:** timeouts, retries, circuit breakers, health checks that test real state, structured
+  logs with request IDs, latency numbers with their conditions stated.
+- **Consult when:** `src/infra/health.js`, `circuit-breaker.js`, `src/routing/fallback.js`,
+  logging; any performance claim.
+- **Style:** asks for the number, the machine it was measured on and the failure it guards against.
 
-**Focus:** How Stockerly (Rails 8) consumes SheLLM via HTTP.
+### C8 — Priya Raman · `priya` · Developer experience
 
-**Consult when:**
-- Changing the API contract (this is the primary consumer)
-- Debugging timeouts or connection issues from the Rails side
-- Evaluating error handling and retry behavior from the caller's perspective
-- Planning new endpoints or capabilities that Stockerly needs
+> *"Zero to a working request in five minutes, or the README is lying."*
 
-**Bias:** The gateway client should be dead simple — Faraday POST, parse JSON, handle errors. Any complexity in the protocol means the bridge is doing something wrong. Timeout must be CLI timeout + buffer. Circuit breaker wraps the gateway, not the bridge.
+- **Background:** developer relations for API products; rewrote three onboarding flows by watching
+  strangers fail at them.
+- **Brings:** install paths, first-run checks, copy-pasteable examples in `curl`, Node, Python and
+  Ruby, error messages that say what to do next, what belongs in the README vs a guide.
+- **Consult when:** `README.md`, `docs/guides/`, the landing page, `shellm` CLI output,
+  `scripts/setup/`; any change a new user meets first.
+- **Style:** follows the docs literally on a clean machine and reports where she got stuck.
 
----
+### C9 — `el-integrador` · The actual user
 
-#### 10. Developer Experience Engineer — "DevRel"
-
-**Focus:** Onboarding friction, public documentation quality, integration examples, first-run experience.
-
-**Consult when:**
-- Adding or updating public-facing documentation (README, GitHub Pages, CONTRIBUTING)
-- Evaluating the first-run experience for a new developer or integrator
-- Writing integration examples for a new consumer language or framework
-- Deciding what belongs on the public landing page vs internal docs
-- Reviewing any change that affects `npm install → working request` flow
-
-**Bias:** A developer should go from zero to a working request in under 5 minutes. Documentation debt is technical debt. Every ambiguous step in the README is a future GitHub issue. Public docs must be versioned — "latest" is not a version.
-
----
-
-#### 11. Release Engineer — "Release"
-
-**Focus:** Versioning discipline, changelog automation, tag hygiene, release process.
-
-**Consult when:**
-- Cutting a new release (patch, minor, or major)
-- Deciding whether a change warrants a version bump
-- Setting up or modifying the release pipeline in CI
-- Evaluating conventional commits adoption or CHANGELOG automation
-
-**Bias:** Every release must be reproducible, traceable, and auditable. Conventional commits are not a style preference — they are the machine-readable input to the changelog. Manual changelogs drift. Automate or accept the drift.
-
----
-
-#### 12. Open Source Maintainer — "OSS"
-
-**Focus:** Community health, contribution process, issue triage, public repository hygiene.
-
-**Consult when:**
-- Setting up or modifying issue templates, PR templates, or CODEOWNERS
-- Deciding how to label, triage, or close issues
-- Evaluating the public face of the repository (README, topics, description)
-- Planning what to expose publicly vs keep internal as GitHub Pages gains traffic
-
-**Bias:** First impressions are permanent. A repository without issue templates gets noise issues. A repository without CONTRIBUTING.md gets PRs that can't be merged. Good OSS hygiene is a force multiplier — it reduces maintainer burden, not increases it.
+Defined in [`AUDIENCE.md`](./AUDIENCE.md#consult-as-el-integrador). Holds the veto on anything
+that serves SheLLM's ambition over the integrator wiring it into another app.
 
 ---
 
-## Situational Experts
+## Situational
 
-Situational experts are **dormant by default**. Activate them explicitly when their trigger condition is met. Once the situation is resolved, they return to dormant.
+### S1 — Lucas Ferreira · `lucas` · Testing strategy
 
----
+- **Trigger:** a new provider or endpoint needs a test surface; the suite is flaky or slow.
+- **Brings:** `node:test` and its mocking; mocking at the `execute()` boundary, never in the
+  middle; when an e2e run against a real CLI earns its cost.
 
-#### S1. Compatibility Tracker — "Compat"
+### S2 — Vera Kostić · `vera` · Offensive security
 
-**Trigger:** A CLI upstream (`claude`, `gemini`, `codex`) releases a new version, changes flags, changes output format, or deprecates an auth flow.
+- **Trigger:** an explicit security audit, a new attack surface, a reported prompt-injection bypass.
+- **Brings:** attack chains — two "low" findings that compose into a critical one.
 
-**Focus:** Assessing the blast radius of upstream CLI changes on SheLLM's providers and parsing logic.
+### S3 — `kleppmann` · Failure semantics
 
-**Activate when:**
-- Any of the upstream CLIs publishes a changelog entry that could affect SheLLM
-- A provider starts returning unexpected output or failing health checks after a system update
-- You are about to update CLI versions in the Dockerfile
+- **Trigger:** fallback across providers, retrying a request that may already have run, a stream
+  that failed halfway.
+- **Brings:** at-most-once vs at-least-once, what the client has already received, idempotency.
 
-**Deactivate when:** The compatibility issue is resolved, pinned, or documented in `VERSIONS.md`.
+### S4 — Oskar Brandt · `oskar` · Releases and versioning
 
-**Bias:** Never upgrade a CLI without reading its changelog. Always test the actual binary output, not just the docs. Pin versions in the Dockerfile — `@latest` is a liability.
+- **Trigger:** cutting a release, a breaking API change, changelog or tag hygiene.
+- **Brings:** semver for an HTTP API, conventional commits as changelog input, migration notes.
 
----
+### S5 — Sofía Herrera · `sofia` · Admin dashboard UX and design system
 
-#### S2. Technical Writer — "TechWriter"
+- **Trigger:** a dashboard screen, work under `design/`, a dense table or status view.
+- **Brings:** operational UI that reads in two seconds; follows [`design/README.md`](../design/README.md)
+  — the code is the source of truth, copy is never invented.
 
-**Trigger:** A version release, public announcement, migration guide, or blog post is being prepared.
+### S6 — Bruno Achterberg · `bruno` · Linux service operations
 
-**Focus:** Documentation quality, structure, and clarity for external audiences.
+- **Trigger:** `scripts/setup/`, `shellm.service`, cloudflared, log rotation, the upgrade path.
+- **Brings:** systemd units, dedicated service users, file permissions for CLI logins, tunnels.
 
-**Activate when:**
-- Cutting a minor or major release that needs release notes for a public audience
-- Writing a migration guide (e.g., breaking API change)
-- Preparing the initial GitHub Pages content
-- Any content that will be read by someone outside the core team
+### S7 — `fowler` · Refactoring and migration sequencing
 
-**Deactivate when:** The document is published and merged.
-
-**Bias:** Write for the reader who has never seen the project. Every document needs a goal, an audience, and a "done" state. Reference docs (API spec) and narrative docs (guides, tutorials) are different genres — don't mix them.
-
----
-
-#### S3. Integration Examples Engineer — "Examples"
-
-**Trigger:** A new endpoint is added, a new consumer language/framework is being integrated, or the API contract changes in a way that affects existing examples.
-
-**Focus:** Code examples in multiple languages (Ruby, Python, TypeScript, curl) that are accurate, minimal, and copy-pasteable.
-
-**Activate when:**
-- Adding a new endpoint to the public docs
-- A new consumer outside of Stockerly starts integrating SheLLM
-- Existing code examples in README or docs become stale after an API change
-
-**Deactivate when:** Examples are updated, reviewed, and merged.
-
-**Bias:** An example that doesn't run is worse than no example — it creates false confidence. Every example must be tested against a real running instance before publishing. Minimal > comprehensive: show the happy path, link to the full spec for edge cases.
+- **Trigger:** restructuring a module or sequencing the revamp.
+- **Brings:** small steps behind green tests, strangler moves, naming that survives the refactor.
 
 ---
 
-#### S4. Offensive Security Analyst — "RedTeam"
+## Retired seats
 
-**Trigger:** A security audit is requested, a new attack surface is introduced (new endpoint, new provider, new auth mechanism), or a security incident occurs.
+The pre-2026-09-16 panel used numbers `1`–`12` and `S1`–`S4`. Where each lens went:
 
-**Focus:** Adversarial thinking, attack chain construction, privilege escalation paths, prompt injection bypass techniques.
-
-**Activate when:**
-- Conducting a security audit or penetration test
-- A new endpoint or auth mechanism is being added
-- A prompt injection bypass is reported
-- Evaluating the blast radius of a new provider integration
-
-**Deactivate when:** The audit is complete and findings are remediated.
-
-**Bias:** Assume every input is adversarial. Chain small weaknesses into full attack paths. A "low severity" finding next to another "low severity" finding might be a "critical" chain. Always ask: "what can an attacker do with this?"
-
----
-
-## How to Use This Panel
-
-**Single-expert consultation:** "What would SecEng say about exposing this port publicly?"
-
-**Multi-expert review:** "Review this change from the perspective of Contract, SRE, and QA."
-
-**Activating a situational expert:** "Activate Compat — gemini just released v2.0 with a new output format."
-
-**Deactivating a situational expert:** "Deactivate Compat — provider patch is merged and pinned."
-
-**Conflict resolution:** When experts disagree, the project lead (IDENTITY.md) makes the final call based on the decision-making framework: debuggability > simplicity > elegance.
+| Old seat | Now |
+|---|---|
+| 1 Runtime | C3 `tomas` |
+| 2 Contract | C2 `marta` |
+| 3 Infra (Docker, Kamal) | S6 `bruno` — SheLLM deploys to systemd, not containers |
+| 4 SecEng | C4 `amara` |
+| 5 SRE | C7 `rafael` |
+| 6 QA | S1 `lucas` |
+| 7 CLI · S1 Compat | C1 `ines` |
+| 8 Fintech Domain | retired — SheLLM has no business domain; the no-PII boundary lives in `IDENTITY.md` |
+| 9 Rails Consumer | C9 `el-integrador` — every consuming app, not one |
+| 10 DevRel · 12 OSS · S2 TechWriter · S3 Examples | C8 `priya` |
+| 11 Release | S4 `oskar` |
+| S4 RedTeam | S2 `vera` |
