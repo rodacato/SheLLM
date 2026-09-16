@@ -1,0 +1,12 @@
+title = "SheLLM Gitleaks Config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Pencil writes a per-file identifier into every .pen document; it is not a credential"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''\.pen$''']
+regexTarget = "match"
+regexes = ['''^fileToken"?\s*:''']

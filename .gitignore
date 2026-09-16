@@ -73,3 +73,6 @@ scratchpad/
 .tmp
 
 docs/screens
+
+# Design: local-only device captures, never committed (may hold real data)
+design/references/
