@@ -63,6 +63,7 @@ describe('e2e: claude', { skip: !authenticated.claude && 'claude not authenticat
     const res = await request(app)
       .post('/v1/chat/completions')
       .send(chatBody('claude', 'Respond with exactly one word: hello', {
+        temperature: 0.2,
         messages: [
           { role: 'system', content: 'Reply in one word only.' },
           { role: 'user', content: 'Respond with exactly one word: hello' },
@@ -81,7 +82,7 @@ describe('e2e: gemini', { skip: !authenticated.gemini && 'gemini not authenticat
   it('POST /v1/chat/completions with gemini returns content', async () => {
     const res = await request(app)
       .post('/v1/chat/completions')
-      .send(chatBody('gemini', 'What is 2+2? Reply with just the number.'))
+      .send(chatBody('gemini', 'What is 2+2? Reply with just the number.', { temperature: 0.2 }))
       .timeout(120000);
 
     assert.strictEqual(res.status, 200);
@@ -95,7 +96,7 @@ describe('e2e: codex', { skip: !authenticated.codex && 'codex not authenticated'
   it('POST /v1/chat/completions with codex returns content', async () => {
     const res = await request(app)
       .post('/v1/chat/completions')
-      .send(chatBody('codex', 'Say hello in Spanish. One word only.'))
+      .send(chatBody('codex', 'Say hello in Spanish. One word only.', { temperature: 0.2 }))
       .timeout(120000);
 
     assert.strictEqual(res.status, 200);
