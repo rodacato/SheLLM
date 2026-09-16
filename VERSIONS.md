@@ -10,8 +10,8 @@ This file tracks the last known-good version of each upstream CLI tool tested wi
 
 | Tool | Version | Pinned | Notes |
 |---|---|:---:|---|
-| `@google/gemini-cli` | `0.30.0` | ✅ | Pinned via `ARG GEMINI_CLI_VERSION` in Dockerfile |
-| `@openai/codex` | `0.105.0` | ✅ | Pinned via `ARG CODEX_CLI_VERSION` in Dockerfile |
+| `@google/gemini-cli` | `0.60.0` | ✅ | Pinned via `ARG GEMINI_CLI_VERSION` in Dockerfile |
+| `@openai/codex` | `0.154.0` | ✅ | Pinned via `ARG CODEX_CLI_VERSION` in Dockerfile |
 | `claude` (Claude Code) | latest | ❌ | Installed via `curl \| bash` — no version pin |
 
 ## Tested Combinations
@@ -19,6 +19,7 @@ This file tracks the last known-good version of each upstream CLI tool tested wi
 | SheLLM | claude | gemini-cli | codex | Node.js | Last tested |
 |---|---|---|---|---|---|
 | v0.1.0 | unknown | 0.30.0 | 0.105.0 | 22.x | 2026-02-27 |
+| v0.5.0 | 2.1.273 | 0.60.0 | 0.154.0 | 24.x | 2026-09-16 — CLI flags only (`npm run test:cli`); output formats not yet run through `npm run test:e2e` |
 
 ---
 
@@ -26,9 +27,9 @@ This file tracks the last known-good version of each upstream CLI tool tested wi
 
 | Tool | Risk | Impact | Mitigation |
 |---|---|---|---|
-| `claude` | High — no version pin | Auth flow or `--print` flag changes break `claude.js` | Pin version in Dockerfile once stable release tag is available |
-| `gemini-cli` | Medium — pinned | Output format changes in minor versions | Read CHANGELOG before bumping `GEMINI_CLI_VERSION` |
-| `codex` | Medium — pinned | `--quiet` flag or JSON output format changes | Read CHANGELOG before bumping `CODEX_CLI_VERSION` |
+| `claude` | High — no version pin | Unsupported flags or `--print` output changes break `claude.js` | Pin version in Dockerfile once stable release tag is available |
+| `gemini-cli` | Medium — pinned in Docker, latest on the VPS | Unsupported flags or `--output-format json` shape changes | `npm run test:cli` weekly; e2e before bumping `GEMINI_CLI_VERSION` |
+| `codex` | Medium — pinned in Docker, latest on the VPS | `exec --json` event shape changes | `npm run test:cli` weekly; e2e before bumping `CODEX_CLI_VERSION` |
 
 ---
 
@@ -36,7 +37,7 @@ This file tracks the last known-good version of each upstream CLI tool tested wi
 
 1. Read the tool's changelog for breaking changes to flags, output format, or auth flow.
 2. Update the version in `Dockerfile` (`ARG *_CLI_VERSION`).
-3. Run `npm run smoke` against a local Docker build to verify provider output parsing still works.
+3. Run `npm run test:cli` to check every flag the providers pass is still accepted, then `npm run test:e2e` with the CLIs logged in to verify output parsing.
 4. Update the **Tested Combinations** table above with the new version and date.
 5. Commit with message: `chore(deps): bump gemini-cli to x.y.z`.
 
