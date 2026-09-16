@@ -1,10 +1,12 @@
 # SheLLM — Roadmap
 
-> Last updated: 2026-02-27
+> Last updated: 2026-09-16
+>
+> What is built and why. Planned work lives on the private GitHub Project, not here.
 
 ## Overview
 
-SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterprise) and API providers (Cerebras) as a unified REST API. The project is organized in implementation phases plus a future enhancements backlog.
+SheLLM wraps LLM CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterprise) and API providers (Cerebras) as a unified REST API. The phases below record what was built; the decision log records why.
 
 ---
 
@@ -85,7 +87,7 @@ Browser-based admin dashboard at `/admin/dashboard/`. Static HTML SPA served by 
 
 ---
 
-## Phase 11 — Additional Endpoints `IN PROGRESS`
+## Phase 11 — Anthropic Messages `COMPLETED`
 
 ### 11a — `/v1/messages` (Anthropic Format) `COMPLETED`
 
@@ -94,26 +96,6 @@ Drop-in replacement for the Anthropic Messages API. Claude Code, the Anthropic S
 **Endpoint:** `POST /v1/messages` — accepts Anthropic request shape (`model`, `max_tokens` required, `messages[]` with string or content block arrays, top-level `system`), returns Anthropic response shape (`content[]`, `stop_reason: "end_turn"`, `usage`). Anthropic error format (`{ type: "error", error: { type, message } }`).
 
 **Files:** `src/api/v1/messages.js`, `src/errors.js` (`sendAnthropicError`), `test/api/v1/messages.test.js` (24 tests). 180 total tests passing.
-
-### 11b — `/v1/embeddings` `PENDING`
-
-Requires direct API access — CLIs don't expose embedding functionality. Needs at least one embedding-capable API provider.
-
-**Note:** This is the first feature that cannot be served by CLI backends. It requires a direct API key (OpenAI, Cohere, or Vertex AI). Lower priority unless a consumer specifically needs it.
-
----
-
-## Future Enhancements `BACKLOG`
-
-| Feature | Description | Effort | Priority |
-|---|---|---|---|
-| Streaming support | `POST /v1/chat/completions` with `stream: true` (SSE) | Medium | Medium |
-| Webhook callbacks | `POST /tasks` → async, POST result to `callback_url` | Medium | Medium |
-| Provider fallback | If primary fails, auto-retry with alternate provider | Low | Low |
-| Per-client model restrictions | Optional `models` array in client config | Low | Low |
-| Response caching | In-memory LRU cache with per-request opt-out | Low | Low |
-| Scheduled tasks | Cron-like recurring completions (via node-cron or external) | Medium | Low |
-| Token usage tracking | Estimate token consumption per provider | Low | Low |
 
 ---
 
