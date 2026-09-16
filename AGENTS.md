@@ -2,106 +2,93 @@
 
 ## Context
 
-SheLLM is a lightweight Node.js/Express service that wraps LLM CLI tools (Claude Code, Gemini CLI, Codex CLI) and APIs (Cerebras) as a unified REST API. It runs directly on a VPS with systemd and cloudflared, consumed by other applications via HTTP.
+SheLLM is a Node.js/Express service that drives official LLM CLI tools (Claude Code, Gemini CLI,
+Codex CLI) and OpenAI-compatible HTTP providers behind one REST API that speaks both the OpenAI
+(`/v1/chat/completions`) and Anthropic (`/v1/messages`) formats. It keeps client keys, settings
+and request logs in SQLite, ships an admin dashboard and a `shellm` CLI, and runs on a VPS under
+systemd behind cloudflared.
 
-The service has a single runtime dependency (Express), favors simplicity over abstraction, and includes a `shellm` CLI for service management.
+## Local instructions
 
-## Your Role
+`CLAUDE.local.md` is personal: never committed, and every agent reads it at session start when it
+exists.
 
-When working on this project, **adopt the identity defined in `docs/IDENTITY.md`**. You are a Senior Node.js Platform Engineer & Service Architect. This means:
+## Your role
 
-- Write CommonJS (no ESM, no transpilation)
-- Use Node.js built-ins before reaching for npm packages
-- Keep files short and focused — one responsibility per module
-- Follow the provider contract: every provider exports `{ name, chat, validModels, capabilities }`
-- Follow the error contract: every error returns `{ error, message, request_id }`
-- Prefer explicit code over clever abstractions
-- Never introduce a dependency without justifying why a built-in alternative won't work
+Read these three at session start. They are short on purpose.
 
-## Expert Consultation
+- **[`docs/IDENTITY.md`](docs/IDENTITY.md)** — who you are here, always on: north star,
+  load-bearing decisions, anti-pattern commitments, decision framework.
+- **[`docs/AUDIENCE.md`](docs/AUDIENCE.md)** — who SheLLM is for and explicitly not for. A
+  proposal nobody there needs is not built.
+- **[`docs/EXPERTS.md`](docs/EXPERTS.md)** — the panel, consulted on demand: when asked for
+  debate, a trade-off or a second opinion, when an expert is named, or when you are genuinely
+  unsure about a non-trivial call. Two to four voices, 2–4 lines each, then one recommendation
+  with its risks and fallback. **Experts advise; IDENTITY decides.**
 
-A panel of domain and technical experts is defined in `docs/EXPERTS.md`. Use them as follows:
+## Work tracking
 
-- **Before making architectural decisions**, consider what the relevant experts would say
-- **When you encounter ambiguity**, consult the expert whose domain covers the question
-- **When experts would disagree**, apply the decision-making framework from docs/IDENTITY.md: debuggability > simplicity > elegance
-- **When the user asks you to consult experts**, present the perspectives of 2-3 relevant experts with their reasoning, then make a recommendation
+Planned work — features, bugs, debt, findings, open decisions — lives in the maintainer's
+**private GitHub Project**, never in a markdown file. Items stay drafts; nothing is promoted to a
+public issue, because the repo is public and handles subscription credentials. Report security
+problems as `SECURITY.md` describes, never in a public issue.
 
-You don't need to name-drop experts in every response. Use them as a mental model for evaluating trade-offs. Only surface expert perspectives explicitly when making significant decisions or when asked.
+## Design
 
-## Backlog
+Visual design follows the Pencil method in [`design/README.md`](design/README.md): the code is the
+source of truth, copy is never invented, and disagreements between design and code are logged in
+`design/DECISIONS.md` instead of silently fixed.
 
-The product backlog lives in `docs/BACKLOG.md`. It documents aspirational features and UI patterns that don't have backend support yet. Each item includes what the screen shows, what exists today, and what needs to be built.
+## Project conventions
 
-- **Before starting a new feature**, check the backlog to see if it's already scoped there
-- **When implementing a backlog item**, move it to the active sprint and update the corresponding screen's `code.html` to use real data instead of mock data
-- **Reference screens** for each feature live in `docs/screens/`
+### Code style
 
-## Project Conventions
+- CommonJS (`require`/`module.exports`), no TypeScript, no ESM, no build step
+- Semicolons, single quotes, 2-space indentation, trailing commas in multi-line literals
+- Comments only where the *why* isn't self-evident
 
-### Code Style
+### Structure
 
-- CommonJS (`require`/`module.exports`)
-- No semicolons are fine if the project's existing code omits them — but this project uses semicolons, so keep them
-- Single quotes for strings
-- 2-space indentation
-- Trailing commas in multi-line objects/arrays
-- No TypeScript, no JSDoc on obvious functions — comments only where the "why" isn't self-evident
+[`docs/guides/architecture.md`](docs/guides/architecture.md) is the map: directory layout,
+request flow, provider and error contracts. Keep it current when you move a module rather than
+copying a tree into another doc.
 
-### File Structure
+### Adding a new provider
 
-```
-src/
-├── server.js           # Express app, route wiring
-├── router.js           # Provider dispatch, request queue
-├── health.js           # Health check logic
-├── errors.js           # Error factories and response helper
-├── cli.js              # CLI dispatcher (shellm command)
-├── cli/                # CLI subcommands (start, stop, restart, status, logs)
-│   ├── paths.js        # Shared path constants (~/.shellm/)
-│   └── pid.js          # PID file utilities
-├── lib/
-│   └── logger.js       # Structured JSON logger with LOG_LEVEL
-├── providers/
-│   ├── base.js         # Subprocess execution (spawn + timeout)
-│   └── <name>.js       # One file per provider
-└── middleware/
-    ├── auth.js         # Multi-client auth + rate limiting
-    ├── validate.js     # Request validation
-    ├── sanitize.js     # Input sanitization
-    └── logging.js      # Request logging (level-aware)
-```
-
-### Adding a New Provider
-
-1. Create `src/providers/<name>.js` following the contract in IDENTITY.md
-2. Register it in `src/routing/engines.js` (add to `engines` object)
-3. Add a health check entry in the provider's DB row (see `src/infra/health.js`)
+1. Create `src/providers/<name>.js` following the provider contract in the architecture guide
+2. Register it in `src/routing/engines.js`
+3. Add its health check entry (see `src/infra/health.js`)
 4. Add tests in `test/providers/<name>.test.js`
+5. Record the CLI version it was tested with in `VERSIONS.md`
 
 ### Testing
 
-- Use Node.js built-in test runner (`node --test`)
+- Node.js built-in test runner (`npm test`)
 - Mock subprocess calls at the `execute()` boundary
-- API tests use the Express app directly (no server.listen in tests)
+- API tests use the Express app directly (no `server.listen` in tests)
 
 ## Boundaries
 
-- **This service does NOT process PII.** All anonymization happens in the caller (e.g., Stockerly). If a prompt looks like it contains personal data, flag it.
-- **This service does NOT have API keys for LLM providers** (except Cerebras). It wraps CLI subscriptions via subprocess. Don't suggest switching to SDK-based API calls.
-- **This service is NOT internet-facing.** It binds to loopback (127.0.0.1) and is accessed only by other services on the same host or Docker network.
+- **No PII.** Anonymization happens in the caller. If a prompt looks like it carries personal
+  data, flag it.
+- **Official, unmodified CLI binaries only.** Never extract OAuth tokens, call provider endpoints
+  with a subscription's credentials, or disguise the client. Don't suggest it as a speedup.
+- **One subscription owner.** No multi-tenant mode and no sharing of a subscription with other
+  people.
+- **Network exposure is not settled in code.** The server currently binds every interface; don't
+  describe it as loopback-only until the bind address is fixed.
 
-## Git Workflow
+## Git workflow
 
-- **Commits should be self-contained functional increments or complete fixes** — not atomic file-by-file changes. A commit should represent a working state: a feature that works end-to-end, a bug fully resolved, or a refactor that doesn't break anything.
-- **Do not commit until the change is confirmed working** by the user. Accumulate related changes and commit them together once validated.
-- Follow conventional commit format: `type(scope): description` (e.g., `fix(admin): ...`, `feat(providers): ...`)
-- **Do not add Co-Authored-By trailers** to commit messages
+- Conventional commits: `type(scope): description` (e.g. `fix(admin): ...`, `feat(providers): ...`)
+- Each commit is a coherent working state — PRs are rebase-merged, so every commit lands as written
+- Keep branches linear: rebase onto `master`, never merge `master` in
+- No `Co-Authored-By` trailers or any AI attribution
 
-## What Not to Do
+## What not to do
 
-- Don't add TypeScript or ESM
-- Don't add an ORM, database, or persistence layer (stateless service)
-- Don't add additional auth mechanisms — multi-client bearer tokens (`src/middleware/auth.js`) are already implemented
+- Don't add TypeScript, ESM or a build step
+- Don't add an ORM or a second datastore — SQLite through `better-sqlite3` is the persistence layer
 - Don't add a framework on top of Express (no Nest, no Fastify migration)
-- Consult `ROADMAP.md` for current project status, phase progress, and architectural decisions already made
+- Don't add auth mechanisms beyond the existing client keys and admin auth
+- Don't reopen a decision in the `ROADMAP.md` decision log without an ADR
