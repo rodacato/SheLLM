@@ -1,5 +1,13 @@
-# Claude Code (local settings and session plans)
-.claude/
+# Personal agent setup — only the paths the tools themselves define as local
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/worktrees/
+.claude/agent-memory-local/
+
+# Devcontainer: initialize.sh rewrites .host.env on every start; local.env is yours.
+/.devcontainer/.host.env
+/.devcontainer/.host.env.tmp
+/.devcontainer/local.env
 
 # Environment & Secrets
 .env
