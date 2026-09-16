@@ -28,16 +28,16 @@
     "release:screenshots": "node scripts/release-screenshots.js"
   },
   "dependencies": {
-    "better-sqlite3": "^12.6.2",
-    "dotenv": "^17.3.1",
-    "express": "^5.1.0"
+    "better-sqlite3": "^12.11.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
   },
   "devDependencies": {
-    "@redocly/cli": "^2.24.1",
-    "eslint": "^9.39.4",
-    "playwright": "^1.58.2",
-    "sharp": "^0.34.5",
-    "supertest": "^7.1.0"
+    "@redocly/cli": "^2.53.2",
+    "eslint": "^10.10.0",
+    "playwright": "^1.63.0",
+    "sharp": "^0.35.4",
+    "supertest": "^7.2.2"
   },
   "engines": {
     "node": ">=22"
