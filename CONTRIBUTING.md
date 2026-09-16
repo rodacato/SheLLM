@@ -26,7 +26,7 @@ npm test
 
 ### Using the Dev Container
 
-The project includes a devcontainer configuration for local development. Open in VS Code with the Dev Containers extension.
+The project includes a devcontainer configuration for local development. Open in VS Code with the Dev Containers extension. How credentials reach the container and what survives a rebuild is in [`.devcontainer/README.md`](.devcontainer/README.md).
 
 ```bash
 # The devcontainer installs all CLI tools automatically

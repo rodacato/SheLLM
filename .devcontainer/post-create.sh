@@ -1,48 +1,19 @@
 #!/usr/bin/env bash
+# Re-runs on every rebuild: everything here must be idempotent.
 set -euo pipefail
+cd "$(dirname "$0")/.."
 
-echo "==> Ensuring node_modules ownership..."
-sudo chown -R node:node /workspace/node_modules
+# Named volumes are created root-owned; the CLIs and npm write into them as the remote user.
+sudo chown "$(id -u):$(id -g)" node_modules "$HOME/.claude" "$HOME/.gemini" "$HOME/.codex"
 
-echo "==> Installing npm dependencies..."
 npm install
 
-echo "==> Setting up Claude Code config..."
-CLAUDE_PROJECT_DIR="$(pwd)/.claude"
-CLAUDE_HOME="$HOME/.claude"
+# The versions production is tested against live in VERSIONS.md; claude comes from its feature.
+command -v gemini >/dev/null 2>&1 || npm install -g @google/gemini-cli
+command -v codex >/dev/null 2>&1 || npm install -g @openai/codex
 
-mkdir -p "$CLAUDE_HOME"
-
-if [ -d "$CLAUDE_PROJECT_DIR" ]; then
-  cp -rn "$CLAUDE_PROJECT_DIR/." "$CLAUDE_HOME/"
-  echo "  ✓ Claude config copied from project."
-else
-  echo "  ✗ No .claude in project, created empty ~/.claude."
-fi
-
-echo "==> Verifying CLI tools..."
-if command -v claude &>/dev/null; then
-  echo "  ✓ Claude Code: $(claude --version 2>/dev/null || echo 'installed')"
-else
-  echo "  ⟳ Claude Code: not found — installing..."
-  curl -fsSL https://claude.ai/install.sh | bash
-  export PATH="/home/node/.local/bin:${PATH}"
-  echo "  ✓ Claude Code: $(claude --version 2>/dev/null || echo 'installed')"
-fi
-
-if command -v gemini &>/dev/null; then
-  echo "  ✓ Gemini CLI: installed"
-else
-  echo "  ✗ Gemini CLI: not found"
-fi
-
-if command -v codex &>/dev/null; then
-  echo "  ✓ Codex CLI: installed"
-else
-  echo "  ✗ Codex CLI: not found"
-fi
+[ -f .env ] || cp .env.example .env
 
 echo ""
-echo "==> Dev container ready!"
-echo "    Run 'npm run dev' to start the server on :8000"
-echo "    Run 'npm test' to run the test suite"
+echo "  shellm ready — npm run dev serves :6100, npm test runs the suite."
+echo "  Provider logins survive rebuilds: claude, gemini and codex need one login each, once."
