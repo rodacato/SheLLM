@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # CLI installations (version-pinned via build args)
-ARG GEMINI_CLI_VERSION=0.30.0
-ARG CODEX_CLI_VERSION=0.105.0
+ARG GEMINI_CLI_VERSION=0.60.0
+ARG CODEX_CLI_VERSION=0.154.0
 
 RUN npm install -g \
     @google/gemini-cli@${GEMINI_CLI_VERSION} \
