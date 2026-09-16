@@ -11,7 +11,7 @@ src/api/v1/ @rodacato
 # Providers — CLI specialist review required
 src/providers/ @rodacato
 
-# Security-sensitive paths — SecEng review required
+# Security-sensitive paths — review with the security lens (docs/EXPERTS.md, C4)
 src/middleware/auth.js @rodacato
 src/middleware/admin-auth.js @rodacato
 src/middleware/sanitize.js @rodacato

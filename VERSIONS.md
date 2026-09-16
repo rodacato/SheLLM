@@ -2,7 +2,7 @@
 
 This file tracks the last known-good version of each upstream CLI tool tested with SheLLM. Before upgrading a CLI in production or in the Dockerfile, check this table and read the tool's changelog.
 
-> **Activate Compat (S1)** when any of these versions changes or a provider starts behaving unexpectedly.
+> **Consult C1 `ines`** ([expert panel](docs/EXPERTS.md)) when any of these versions changes or a provider starts behaving unexpectedly.
 
 ---
 
