@@ -29,10 +29,10 @@ section('Runtime');
 
 const nodeVersion = process.versions.node;
 const [major] = nodeVersion.split('.').map(Number);
-if (major >= 22) {
+if (major >= 24) {
   ok(`Node.js ${nodeVersion}`);
 } else {
-  fail(`Node.js ${nodeVersion} — requires >= 22`, 'Install via https://nodejs.org or use nvm: nvm install 22');
+  fail(`Node.js ${nodeVersion} — requires >= 24`, 'Install via https://nodejs.org or use nvm: nvm install 24');
 }
 
 // ── .env file ────────────────────────────────────────────────────────────────

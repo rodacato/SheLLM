@@ -27,14 +27,14 @@ echo -e "${DIM}This script prepares your local environment after cloning.${RESET
 section "Checking Node.js"
 
 NODE_MAJOR=$(node -e "process.stdout.write(process.versions.node.split('.')[0])" 2>/dev/null || echo "0")
-if [ "$NODE_MAJOR" -ge 22 ]; then
+if [ "$NODE_MAJOR" -ge 24 ]; then
   ok "Node.js $(node --version)"
 else
-  fail "Node.js $(node --version 2>/dev/null || echo 'not found') — requires >= 22"
+  fail "Node.js $(node --version 2>/dev/null || echo 'not found') — requires >= 24"
   echo ""
-  echo -e "  Install Node.js 22 via nvm:"
+  echo -e "  Install Node.js 24 via nvm:"
   echo -e "  ${DIM}curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash${RESET}"
-  echo -e "  ${DIM}nvm install 22 && nvm use 22${RESET}"
+  echo -e "  ${DIM}nvm install 24 && nvm use 24${RESET}"
   echo ""
   exit 1
 fi

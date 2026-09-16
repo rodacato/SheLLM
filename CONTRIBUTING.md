@@ -4,7 +4,7 @@
 
 ### Prerequisites
 
-- Node.js >= 22
+- Node.js >= 24
 - Access to at least one CLI tool (Claude Code, Gemini CLI, or Codex CLI)
 - Docker and Docker Compose (optional — only for devcontainer)
 
@@ -165,7 +165,7 @@ git clone https://github.com/rodacato/SheLLM.git /tmp/shellm
 bash /tmp/shellm/scripts/setup/vps.sh
 ```
 
-The script will create the `shellmer` user, install Node.js 22, CLI tools, clone the repo, configure systemd, and set up cloudflared. Since this is a disposable container, nothing persists after you exit — safe to experiment freely.
+The script will create the `shellmer` user, install Node.js 24, CLI tools, clone the repo, configure systemd, and set up cloudflared. Since this is a disposable container, nothing persists after you exit — safe to experiment freely.
 
 > **Note:** The container won't have real CLI auth tokens, so health checks will show providers as unauthenticated. The goal is to verify the script runs without errors and all components install correctly.
 
