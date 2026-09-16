@@ -1,0 +1,28 @@
+name: CLI contract
+
+# vps.sh installs the latest claude, gemini and codex on every run, so an upstream release can
+# drop a flag the providers pass without any change in this repo. The weekly run catches it.
+on:
+  schedule:
+    - cron: "0 14 * * 1"
+  workflow_dispatch:
+  pull_request:
+    branches: [master]
+    paths:
+      - "src/providers/**"
+      - "test/cli/**"
+      - ".github/workflows/cli-contract.yml"
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm install -g @anthropic-ai/claude-code@latest @google/gemini-cli@latest @openai/codex@latest
+      - run: claude --version && gemini --version && codex --version
+      - run: npm run test:cli
