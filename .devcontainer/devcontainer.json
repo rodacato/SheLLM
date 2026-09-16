@@ -10,7 +10,7 @@
     "ghcr.io/stuartleeks/dev-container-features/shell-history:0": {},
     "ghcr.io/anthropics/devcontainer-features/claude-code:1": {},
     "ghcr.io/devcontainers/features/node:2": {
-      "version": "22"
+      "version": "24"
     }
   },
   "remoteUser": "vscode",

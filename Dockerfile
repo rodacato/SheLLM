@@ -1,4 +1,4 @@
-FROM node:22-slim
+FROM node:24-slim
 
 LABEL org.opencontainers.image.title="shellm" \
       org.opencontainers.image.description="LLM CLI services unified as a REST API"

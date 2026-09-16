@@ -4,7 +4,7 @@
 #
 # What this does:
 #   1. Creates shellmer user
-#   2. Installs Node.js 22, LLM CLIs
+#   2. Installs Node.js 24, LLM CLIs
 #   3. Clones repo, installs deps
 #   4. Installs systemd service
 #   5. Sets up cloudflared tunnel
@@ -36,11 +36,11 @@ else
 fi
 
 echo ""
-echo "==> Installing Node.js 22..."
-if node --version 2>/dev/null | grep -q "^v22"; then
-  echo "  Node.js 22 already installed — skipping"
+echo "==> Installing Node.js 24..."
+if node --version 2>/dev/null | grep -q "^v24"; then
+  echo "  Node.js 24 already installed — skipping"
 else
-  curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+  curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
   apt-get install -y nodejs
   echo "  Installed Node.js $(node --version)"
 fi

@@ -36,7 +36,7 @@ bash /home/shellmer/shellm/scripts/setup/vps.sh
 **What the script does:**
 
 1. Creates a `shellmer` system user (SheLLM never runs as root)
-2. Installs Node.js 22 via NodeSource
+2. Installs Node.js 24 via NodeSource
 3. Installs LLM CLIs globally (Claude Code, Gemini CLI, Codex CLI)
 4. Clones the repo and runs `npm ci --omit=dev`
 5. Links the `shellm` CLI
