@@ -1,0 +1,100 @@
+name: Quality
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  # Report-only: findings show in the job log without failing the check.
+  # Set to "true" to make Semgrep, Trivy and Gitleaks block a merge.
+  SECURITY_BLOCKING: "false"
+
+jobs:
+  semgrep:
+    name: semgrep (SAST)
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Scan
+        continue-on-error: ${{ env.SECURITY_BLOCKING != 'true' }}
+        run: semgrep scan --config p/default --config p/security-audit --error
+
+  trivy:
+    name: trivy (deps + secrets + IaC)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: ${{ env.SECURITY_BLOCKING != 'true' }}
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+  gitleaks:
+    name: gitleaks (secret scan)
+    runs-on: ubuntu-latest
+    # On a pull_request the action lists the PR's commits, which a private repo's token can't without this.
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Scan
+        uses: gitleaks/gitleaks-action@v3
+        continue-on-error: ${{ env.SECURITY_BLOCKING != 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Free for personal accounts; a repo under an organization needs this secret.
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  sonar:
+    # Manual, and skipped where no SonarQube server is configured (a fork, for one).
+    if: ${{ github.event_name == 'workflow_dispatch' && vars.SONAR_HOST_URL != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history → accurate "new code" / blame dates
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: SonarQube scan
+        uses: sonarsource/sonarqube-scan-action@v8.2.1
+        with:
+          args: -Dsonar.projectVersion=${{ github.sha }}
+        env:
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
