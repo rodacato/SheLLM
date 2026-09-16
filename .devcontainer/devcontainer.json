@@ -32,7 +32,8 @@
         "bradlc.vscode-tailwindcss",
         "ms-azuretools.vscode-docker",
         "editorconfig.editorconfig",
-        "redhat.vscode-yaml"
+        "redhat.vscode-yaml",
+        "highagency.pencildev"
       ],
       "settings": {
         "editor.formatOnSave": true,
