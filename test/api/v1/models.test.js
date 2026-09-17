@@ -54,18 +54,27 @@ describe('/v1/models', () => {
     assert.ok(Array.isArray(res.body.data));
   });
 
-  it('includes models from all providers', async () => {
+  it('lists only the names that map to a CLI model', async () => {
     const res = await request(app).get('/v1/models')
       .set('Authorization', `Bearer ${testKey}`);
     const ids = res.body.data.map((m) => m.id);
 
-    assert.ok(ids.includes('claude'));
-    assert.ok(ids.includes('gemini'));
-    assert.ok(ids.includes('codex'));
-    assert.ok(ids.includes('cerebras'));
+    assert.deepStrictEqual(ids, [
+      'claude', 'claude-haiku', 'claude-sonnet', 'claude-opus',
+      'gemini', 'gemini-pro', 'gemini-flash', 'gemini-flash-lite',
+    ]);
+  });
 
-    assert.ok(ids.includes('claude-opus'));
-    assert.ok(ids.includes('gemini-pro'));
+  it('omits models of a disabled provider', async () => {
+    const { updateProvider } = require('../../../src/db');
+    updateProvider('gemini', { enabled: 0 });
+    try {
+      const res = await request(app).get('/v1/models')
+        .set('Authorization', `Bearer ${testKey}`);
+      assert.ok(!res.body.data.some((m) => m.id.startsWith('gemini')));
+    } finally {
+      updateProvider('gemini', { enabled: 1 });
+    }
   });
 
   it('each model entry has correct shape', async () => {
