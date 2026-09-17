@@ -1,26 +1,10 @@
-const { listProviders } = require('../../routing');
+const { listProviders, engines } = require('../../routing');
 
-/**
- * GET /v1/models — OpenAI-compatible model list
- */
+// Any claude-* or gemini-* id also routes; these are the names SheLLM maps to CLI aliases.
 function modelsHandler(_req, res) {
-  const providers = listProviders();
-  const seen = new Set();
-  const data = [];
-
-  for (const provider of providers) {
-    for (const modelId of provider.models) {
-      if (!seen.has(modelId)) {
-        seen.add(modelId);
-        data.push({
-          id: modelId,
-          object: 'model',
-          created: 0,
-          owned_by: 'shellm',
-        });
-      }
-    }
-  }
+  const data = listProviders({ includeDisabled: false })
+    .flatMap((provider) => engines[provider.name]?.models || [])
+    .map((id) => ({ id, object: 'model', created: 0, owned_by: 'shellm' }));
 
   res.json({ object: 'list', data });
 }
