@@ -16,9 +16,11 @@ services:
       - codex-auth:/home/vscode/.codex
       # better-sqlite3 is a native module: a Linux build must never mix with the host's.
       - node_modules:/workspaces/shellm/node_modules
-    # .host.env comes from initialize.sh. See README.md.
+    # .host.env comes from initialize.sh, local.env from you; the later file wins. See README.md.
     env_file:
       - path: .host.env
+        required: false
+      - path: local.env
         required: false
     environment:
       NODE_ENV: development

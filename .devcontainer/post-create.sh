@@ -7,6 +7,8 @@ cd "$(dirname "$0")/.."
 sudo chown "$(id -u):$(id -g)" node_modules "$HOME/.claude" "$HOME/.gemini" "$HOME/.codex"
 
 npm install
+# The node_modules volume outlives Node upgrades; a native module built for another ABI fails to load.
+node -e "require('better-sqlite3')" 2>/dev/null || npm rebuild better-sqlite3
 
 # The versions production is tested against live in VERSIONS.md; claude comes from its feature.
 command -v gemini >/dev/null 2>&1 || npm install -g @google/gemini-cli
