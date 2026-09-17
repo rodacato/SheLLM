@@ -73,26 +73,14 @@ Most LLM gateways assume you're paying per-token via API. SheLLM's primary use c
 
 ```bash
 git clone git@github.com:rodacato/SheLLM.git && cd SheLLM
-bash scripts/setup/dev.sh   # install deps, create .env, link CLI
+npm install && npm link    # dependencies and the shellm command
+shellm init                # config file, Claude token, first API key, checks
+shellm start
 ```
 
-The setup script checks for CLI tools but **does not authenticate them**. You must authenticate each provider you plan to use:
-
-```bash
-claude auth login    # Opens browser → Anthropic login
-gemini auth login    # Opens browser → Google OAuth
-codex auth login     # Opens browser → OpenAI login
-```
-
-> You only need to auth the providers you'll use. SheLLM marks the rest as `unhealthy` — they won't break anything.
-
-Then verify and start:
-
-```bash
-npm run check:env            # verify binaries, config, node_modules
-npm run seed                 # (optional) load demo clients + sample logs
-shellm start                 # start the server
-```
+`shellm init` asks for the token from `claude setup-token`; skip it if `claude` is already logged in
+for your user. `shellm doctor` re-runs the checks at any time, and `shellm doctor --live` sends one
+real request.
 
 Verify it's running:
 
