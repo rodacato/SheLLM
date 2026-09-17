@@ -1,4 +1,4 @@
-require('dotenv').config({ quiet: true });
+require('dotenv').config({ path: require('./cli/paths').CONFIG_FILE, quiet: true });
 
 const logger = require('./lib/logger');
 const { initDb } = require('./db');
