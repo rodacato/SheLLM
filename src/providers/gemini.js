@@ -1,5 +1,13 @@
 const { execute } = require('./base');
 
+const MODEL_ALIASES = { 'gemini-pro': 'pro', 'gemini-flash': 'flash', 'gemini-flash-lite': 'flash-lite' };
+const models = ['gemini', ...Object.keys(MODEL_ALIASES)];
+
+function cliModel(model) {
+  if (!model || model === 'gemini') return null;
+  return MODEL_ALIASES[model] || model;
+}
+
 // Gemini CLI needs config paths for auth tokens
 const GEMINI_ENV = {
   XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME,
@@ -8,7 +16,7 @@ const GEMINI_ENV = {
 };
 
 // The gemini CLI has no temperature flag, so temperature is ignored.
-function buildArgs({ prompt, system, response_format }) {
+function buildArgs({ prompt, system, response_format, model }) {
   // Gemini has no --system-prompt flag — prepend to prompt
   let fullPrompt = '';
   const jsonMode = response_format?.type === 'json_object';
@@ -25,6 +33,7 @@ function buildArgs({ prompt, system, response_format }) {
     '--output-format', 'json',
     '--approval-mode', 'yolo',
   ];
+  if (cliModel(model)) args.push('-m', cliModel(model));
   args.push('-p', fullPrompt);
   return args;
 }
@@ -55,14 +64,15 @@ function parseOutput(stdout) {
   }
 }
 
-async function chat({ prompt, system, response_format }) {
-  const args = buildArgs({ prompt, system, response_format });
+async function chat({ prompt, system, response_format, model }) {
+  const args = buildArgs({ prompt, system, response_format, model });
   const result = await execute('gemini', args, { env: GEMINI_ENV });
   return parseOutput(result.stdout);
 }
 
 module.exports = {
   name: 'gemini',
+  models,
   chat,
   buildArgs,
   parseOutput,

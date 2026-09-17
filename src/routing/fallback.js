@@ -1,4 +1,4 @@
-const { invalidRequest, providerUnavailable } = require('../errors');
+const { invalidRequest, providerUnavailable, isClientError } = require('../errors');
 const { recordSuccess, recordFailure } = require('../infra/circuit-breaker');
 const { queue } = require('../infra/queue');
 const { engines } = require('./engines');
@@ -67,12 +67,11 @@ async function routeWithFallback({ model, prompt, system, max_tokens, temperatur
         ...(isFallback && { original_provider: primary.name }),
       };
     } catch (err) {
-      recordFailure(candidate.name);
+      if (!isClientError(err)) recordFailure(candidate.name);
       errors.push({ provider: candidate.name, error: err.message });
       logger.warn({ event: 'fallback_attempt', provider: candidate.name, error: err.message, request_id });
 
-      // Don't fallback on client errors (400-level)
-      if (err.status && err.status >= 400 && err.status < 500) {
+      if (isClientError(err)) {
         throw err;
       }
     }

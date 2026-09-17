@@ -16,6 +16,7 @@ describe('CLI environment', () => {
   let fakeBin;
 
   before(() => {
+    assert.ok(!require.cache[require.resolve('../../src/providers/base')], 'base.js already captured the real PATH');
     fakeBin = fs.mkdtempSync(path.join(os.tmpdir(), 'shellm-fakebin-'));
     for (const cli of ['claude', 'gemini']) {
       const dump = path.join(fakeBin, `${cli}.env.json`);

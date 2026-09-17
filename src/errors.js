@@ -18,6 +18,10 @@ function rateLimited(message, retryAfter) {
   return appError(429, 'rate_limited', message, retryAfter ? { retry_after: retryAfter } : undefined);
 }
 
+function modelNotFound(model) {
+  return appError(404, 'model_not_found', `The model ${model} does not exist or you do not have access to it`);
+}
+
 function cliFailed(provider, stderr) {
   return appError(502, 'cli_failed', `${provider}: ${stderr}`.slice(0, 500));
 }
@@ -28,6 +32,10 @@ function providerUnavailable(message, extra) {
 
 function timeout(provider) {
   return appError(504, 'timeout', `${provider}: process killed after timeout`);
+}
+
+function isClientError(err) {
+  return err.status >= 400 && err.status < 500;
 }
 
 // Normalize a caught error (plain object from base.js or structured appError)
@@ -59,6 +67,7 @@ const CODE_TO_TYPE = {
   invalid_request: 'invalid_request_error',
   auth_required: 'authentication_error',
   rate_limited: 'rate_limit_error',
+  model_not_found: 'invalid_request_error',
 };
 
 function sendOpenAIError(res, err) {
@@ -76,6 +85,7 @@ const CODE_TO_ANTHROPIC_TYPE = {
   invalid_request: 'invalid_request_error',
   auth_required: 'authentication_error',
   rate_limited: 'rate_limit_error',
+  model_not_found: 'not_found_error',
 };
 
 function sendAnthropicError(res, err) {
@@ -94,10 +104,12 @@ module.exports = {
   promptRejected,
   authRequired,
   rateLimited,
+  modelNotFound,
   cliFailed,
   providerUnavailable,
   timeout,
   fromCatchable,
+  isClientError,
   sendError,
   sendOpenAIError,
   sendAnthropicError,

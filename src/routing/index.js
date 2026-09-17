@@ -1,4 +1,5 @@
 const { recordSuccess, recordFailure } = require('../infra/circuit-breaker');
+const { isClientError } = require('../errors');
 const { queue } = require('../infra/queue');
 const { acquireStreamSlot, releaseStreamSlot } = require('../infra/stream-slots');
 const { engines } = require('./engines');
@@ -26,7 +27,7 @@ async function route({ model, prompt, system, max_tokens, temperature, top_p, re
     });
     recordSuccess(provider.name);
   } catch (err) {
-    recordFailure(provider.name);
+    if (!isClientError(err)) recordFailure(provider.name);
     throw err;
   }
 
