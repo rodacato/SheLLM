@@ -1,7 +1,6 @@
+# Keep this thin: language toolchains are devcontainer.json features; only search/edit tools live here.
 FROM mcr.microsoft.com/devcontainers/base:bookworm
 
-# Keep this Dockerfile thin; language toolchains come from devcontainer features.
-# Only the search/edit utilities the agent workflow leans on live here.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     neovim \
     ripgrep \
