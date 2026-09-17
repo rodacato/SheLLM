@@ -58,11 +58,11 @@ function parseOutput(stdout, stderr) {
   return { content: stripNonPrintable(content), cost_usd, usage };
 }
 
-// Claude CLI uses its own stored credentials — no API key needed in env.
-// Only pass XDG config paths so the CLI can find its auth config.
+// The token from `claude setup-token` is the only SheLLM setting the CLI may see.
 const CLAUDE_ENV = {
   XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME,
   XDG_DATA_HOME: process.env.XDG_DATA_HOME,
+  CLAUDE_CODE_OAUTH_TOKEN: process.env.CLAUDE_CODE_OAUTH_TOKEN,
 };
 
 function toProviderError(err, model) {

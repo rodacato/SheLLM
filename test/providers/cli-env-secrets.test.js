@@ -5,6 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 const ENV_EXAMPLE = path.resolve(__dirname, '../../.env.example');
+const OWN_CREDENTIALS = { claude: ['CLAUDE_CODE_OAUTH_TOKEN'], gemini: [] };
 
 function exampleConfig() {
   const lines = fs.readFileSync(ENV_EXAMPLE, 'utf8').matchAll(/^#?\s*([A-Z][A-Z0-9_]+)=(.*)$/gm);
@@ -46,8 +47,16 @@ process.stdout.write(JSON.stringify({ result: 'ok', response: 'ok' }));
     for (const cli of ['claude', 'gemini']) {
       await require(`../../src/providers/${cli}`).chat({ prompt: 'hi' });
       const childEnv = JSON.parse(fs.readFileSync(path.join(fakeBin, `${cli}.env.json`), 'utf8'));
-      const leaked = configKeys.filter((key) => key in childEnv);
+      const leaked = configKeys.filter((key) => key in childEnv && !OWN_CREDENTIALS[cli].includes(key));
       assert.deepStrictEqual(leaked, [], `${cli} received ${leaked.join(', ')}`);
+    }
+  });
+
+  it('hands claude its own token and no other provider', async () => {
+    for (const cli of ['claude', 'gemini']) {
+      await require(`../../src/providers/${cli}`).chat({ prompt: 'hi' });
+      const childEnv = JSON.parse(fs.readFileSync(path.join(fakeBin, `${cli}.env.json`), 'utf8'));
+      assert.strictEqual('CLAUDE_CODE_OAUTH_TOKEN' in childEnv, cli === 'claude', cli);
     }
   });
 });
