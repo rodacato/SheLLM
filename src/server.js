@@ -13,7 +13,14 @@ seedAliasesFromEnv();
 
 // Load app after DB is initialized
 const app = require('./app');
-const PORT = parseInt(process.env.PORT || '6100', 10);
+
+function startServer({ port = parseInt(process.env.PORT || '6100', 10), host = process.env.HOST || '127.0.0.1' } = {}, onListening) {
+  const server = app.listen(port, host, () => {
+    logger.info({ event: 'server_start', host, port: server.address().port });
+    if (onListening) onListening(server);
+  });
+  return server;
+}
 
 // Graceful shutdown: drain in-flight requests before exiting
 let shuttingDown = false;
@@ -43,16 +50,14 @@ if (require.main === module) {
       }
     }
 
-    const server = app.listen(PORT, () => {
-      logger.info({ event: 'server_start', port: PORT });
-      startHealthPoller();
-    });
+    const server = startServer({}, startHealthPoller);
 
     process.on('SIGTERM', () => gracefulShutdown(server, 'SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown(server, 'SIGINT'));
   });
 }
 
-// Export app and gracefulShutdown for CLI foreground mode
+// Export app, gracefulShutdown and startServer for CLI foreground mode
 module.exports = app;
 module.exports.gracefulShutdown = gracefulShutdown;
+module.exports.startServer = startServer;
