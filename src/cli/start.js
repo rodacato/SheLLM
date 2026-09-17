@@ -3,7 +3,6 @@
 const { parseArgs } = require('node:util');
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
-const path = require('node:path');
 const { SHELLM_DIR, LOG_DIR, LOG_FILE, PROJECT_ROOT, SERVER_SCRIPT } = require('./paths');
 const { readPid, writePid } = require('./pid');
 
@@ -41,8 +40,6 @@ function startForeground(values) {
   if (values.port) {
     process.env.PORT = values.port;
   }
-
-  require('dotenv').config({ path: path.resolve(PROJECT_ROOT, '.env'), quiet: true });
 
   const { startServer, gracefulShutdown } = require(SERVER_SCRIPT);
 

@@ -17,7 +17,8 @@ node -e "require('better-sqlite3')" 2>/dev/null || npm rebuild better-sqlite3
 command -v gemini >/dev/null 2>&1 || npm install -g @google/gemini-cli
 command -v codex >/dev/null 2>&1 || npm install -g @openai/codex
 
-[ -f .env ] || cp .env.example .env
+config="${XDG_CONFIG_HOME:-$HOME/.config}/shellm/env"
+[ -f "$config" ] || install -D -m 600 .env.example "$config"
 
 echo ""
 echo "  shellm ready — npm run dev serves :6100, npm test runs the suite."

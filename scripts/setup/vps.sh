@@ -10,7 +10,7 @@
 #   5. Sets up cloudflared tunnel
 #
 # After running, you must:
-#   - Edit ~shellmer/shellm/.env with your secrets
+#   - Edit ~shellmer/.config/shellm/env with your secrets
 #   - Authenticate each CLI (sudo -iu shellmer, then claude/gemini/codex auth login)
 #   - Start the service (systemctl start shellm)
 
@@ -91,13 +91,20 @@ cp "${APP_DIR}/config/logrotate.conf" /etc/logrotate.d/shellm
 echo "  Installed /etc/logrotate.d/shellm"
 
 echo ""
-echo "==> Setting up .env..."
-if [[ -f "${APP_DIR}/.env" ]]; then
-  echo "  .env already exists — skipping"
+CONFIG_FILE="${SHELLM_HOME}/.config/shellm/env"
+echo "==> Setting up ${CONFIG_FILE}..."
+sudo -u shellmer mkdir -p "$(dirname "${CONFIG_FILE}")"
+if [[ -f "${CONFIG_FILE}" ]]; then
+  echo "  Config already exists — skipping"
+elif [[ -f "${APP_DIR}/.env" ]]; then
+  mv "${APP_DIR}/.env" "${CONFIG_FILE}"
+  echo "  Moved ${APP_DIR}/.env out of the repository"
 else
-  sudo -u shellmer cp "${APP_DIR}/.env.example" "${APP_DIR}/.env"
-  echo "  Copied .env.example → .env (edit with your secrets)"
+  sudo -u shellmer cp "${APP_DIR}/.env.example" "${CONFIG_FILE}"
+  echo "  Copied .env.example (edit with your secrets)"
 fi
+chown shellmer:shellmer "${CONFIG_FILE}"
+chmod 600 "${CONFIG_FILE}"
 
 echo ""
 echo "==> Installing systemd service..."
@@ -145,8 +152,8 @@ echo "==========================================="
 echo ""
 echo "  Next steps:"
 echo ""
-echo "  1. [root/sudo] Edit secrets (must be inside the project dir):"
-echo "     nano ${APP_DIR}/.env    # NOT ~/. env — must be in the shellm/ folder"
+echo "  1. [root/sudo] Edit secrets:"
+echo "     nano ${CONFIG_FILE}"
 echo ""
 echo "  2. [shellmer] Authenticate CLIs:"
 echo "     sudo -iu shellmer"

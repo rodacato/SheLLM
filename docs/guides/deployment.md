@@ -50,10 +50,10 @@ After the script finishes you'll see a summary of next steps. Don't start the se
 
 ## Step 2 — Configure environment variables
 
-Edit the `.env` file:
+Edit the config file, which lives outside the repository:
 
 ```bash
-nano /home/shellmer/shellm/.env
+nano /home/shellmer/.config/shellm/env
 ```
 
 ### Required settings
@@ -614,30 +614,34 @@ source ~/.bashrc
 npm install -g @openai/codex@latest   # now works without root
 ```
 
-### .env not being loaded / "SHELLM_ADMIN_PASSWORD not configured"
+### Config not being loaded / "SHELLM_ADMIN_PASSWORD not configured"
 
-The `.env` file must be inside the project directory, not the home directory:
+SheLLM reads `~/.config/shellm/env` (or `$XDG_CONFIG_HOME/shellm/env`) and ignores any `.env` in
+the repository:
 
 ```
-/home/shellmer/shellm/.env    ← correct
-/home/shellmer/.env            ← wrong, will not be loaded
+/home/shellmer/.config/shellm/env    ← correct
+/home/shellmer/shellm/.env           ← ignored
 ```
 
-If you created it in the wrong place:
+If your config is still in the repository:
 
 ```bash
-mv /home/shellmer/.env /home/shellmer/shellm/.env
-chown shellmer:shellmer /home/shellmer/shellm/.env
-chmod 600 /home/shellmer/shellm/.env
+sudo -u shellmer mkdir -p /home/shellmer/.config/shellm
+mv /home/shellmer/shellm/.env /home/shellmer/.config/shellm/env
+chown shellmer:shellmer /home/shellmer/.config/shellm/env
+chmod 600 /home/shellmer/.config/shellm/env
+sudo cp /home/shellmer/shellm/shellm.service /etc/systemd/system/shellm.service
+sudo systemctl daemon-reload
 sudo systemctl restart shellm
 ```
 
 ### "Refusing to start: admin password is too weak"
 
-SheLLM requires the admin password to be at least 12 characters. Edit the `.env` and set a stronger password:
+SheLLM requires the admin password to be at least 12 characters. Edit the config and set a stronger password:
 
 ```bash
-nano /home/shellmer/shellm/.env
+nano /home/shellmer/.config/shellm/env
 # Change SHELLM_ADMIN_PASSWORD to something >= 12 chars
 sudo systemctl restart shellm
 ```
