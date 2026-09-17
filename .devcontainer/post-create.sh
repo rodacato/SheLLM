@@ -6,6 +6,9 @@ cd "$(dirname "$0")/.."
 # Named volumes are created root-owned; the CLIs and npm write into them as the remote user.
 sudo chown "$(id -u):$(id -g)" node_modules "$HOME/.claude" "$HOME/.gemini" "$HOME/.codex"
 
+# virtiofs intermittently reports the bind mount as foreign-owned; system scope because dotfiles rewrite ~/.gitconfig.
+git config --system --get-all safe.directory 2>/dev/null | grep -qxF "$PWD" || sudo git config --system --add safe.directory "$PWD"
+
 npm install
 # The node_modules volume outlives Node upgrades; a native module built for another ABI fails to load.
 node -e "require('better-sqlite3')" 2>/dev/null || npm rebuild better-sqlite3
