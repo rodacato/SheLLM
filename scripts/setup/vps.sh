@@ -1,174 +1,77 @@
 #!/usr/bin/env bash
-# setup/vps.sh — One-time VPS provisioning for SheLLM.
+# Provisions SheLLM on a Debian/Ubuntu VPS; safe to re-run. Undo with vps-uninstall.sh.
 # Usage: ssh root@your-vps 'bash -s' < scripts/setup/vps.sh
-#
-# What this does:
-#   1. Creates shellmer user
-#   2. Installs Node.js 24, LLM CLIs
-#   3. Clones repo, installs deps
-#   4. Installs systemd service
-#   5. Sets up cloudflared tunnel
-#
-# After running, you must:
-#   - Edit ~shellmer/.config/shellm/env with your secrets
-#   - Authenticate each CLI (sudo -iu shellmer, then claude/gemini/codex auth login)
-#   - Start the service (systemctl start shellm)
 
 set -euo pipefail
 
-REPO="https://github.com/rodacato/SheLLM.git"
-SHELLM_HOME="/home/shellmer"
-APP_DIR="${SHELLM_HOME}/shellm"
-DOMAIN="shellm.notdefined.dev"
+REPO="${SHELLM_REPO:-https://github.com/rodacato/SheLLM.git}"
+CLAUDE_VERSION="${CLAUDE_VERSION:-2.1.273}"
+SERVICE_USER="shellmer"
+SERVICE_HOME="/home/${SERVICE_USER}"
+APP_DIR="${SERVICE_HOME}/shellm"
+CONFIG_FILE="${SERVICE_HOME}/.config/shellm/env"
 
-# --- Must run as root ---
 if [[ $EUID -ne 0 ]]; then
-  echo "ERROR: Run this script as root."
+  echo "ERROR: run this script as root." >&2
   exit 1
 fi
 
-echo "==> Creating shellmer user..."
-if id shellmer &>/dev/null; then
-  echo "  User shellmer already exists — skipping"
+as_service_user() { sudo -u "${SERVICE_USER}" -H bash -c "$1"; }
+
+echo "==> Service user"
+if id "${SERVICE_USER}" &>/dev/null; then
+  echo "  ${SERVICE_USER} already exists"
 else
-  useradd -m -s /bin/bash shellmer
-  echo "  Created user shellmer"
+  useradd -m -s /bin/bash "${SERVICE_USER}"
+  echo "  created ${SERVICE_USER}"
 fi
 
-echo ""
-echo "==> Installing Node.js 24..."
+echo "==> Node.js 24"
 if node --version 2>/dev/null | grep -q "^v24"; then
-  echo "  Node.js 24 already installed — skipping"
+  echo "  $(node --version) already installed"
 else
   curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
   apt-get install -y nodejs
-  echo "  Installed Node.js $(node --version)"
+  echo "  installed $(node --version)"
 fi
 
-echo ""
-echo "==> Cleaning up root-level CLI installs (if any)..."
-npm uninstall -g @google/gemini-cli @openai/codex 2>/dev/null || true
+echo "==> Claude Code ${CLAUDE_VERSION}"
+as_service_user "curl -fsSL https://claude.ai/install.sh | bash -s ${CLAUDE_VERSION}"
 
-echo ""
-echo "==> Configuring npm for shellmer user..."
-sudo -u shellmer mkdir -p "${SHELLM_HOME}/.npm-global"
-sudo -u shellmer bash -c 'npm config set prefix ~/.npm-global'
-# Add to PATH for future sessions
-grep -q '.npm-global/bin' "${SHELLM_HOME}/.bashrc" 2>/dev/null || \
-  sudo -u shellmer bash -c 'echo "export PATH=\$HOME/.npm-global/bin:\$PATH" >> ~/.bashrc'
-
-echo ""
-echo "==> Installing LLM CLIs as shellmer user..."
-sudo -u shellmer bash -c 'export PATH=$HOME/.npm-global/bin:$PATH && npm install -g @google/gemini-cli @openai/codex@latest'
-echo "  Installed Gemini CLI and Codex CLI"
-
-sudo -u shellmer bash -c 'curl -fsSL https://claude.ai/install.sh | bash'
-echo "  Installed Claude Code"
-
-echo ""
-echo "==> Cloning repo..."
-if [[ -d "$APP_DIR" ]]; then
-  echo "  ${APP_DIR} already exists — pulling latest"
-  sudo -u shellmer git -C "$APP_DIR" pull
+echo "==> SheLLM"
+if [[ -d "${APP_DIR}/.git" ]]; then
+  as_service_user "git -C ${APP_DIR} pull --ff-only"
 else
-  sudo -u shellmer git clone "$REPO" "$APP_DIR"
-  echo "  Cloned to ${APP_DIR}"
+  as_service_user "git clone ${REPO} ${APP_DIR}"
 fi
+as_service_user "cd ${APP_DIR} && npm ci --omit=dev"
+(cd "${APP_DIR}" && npm link)
+as_service_user "mkdir -p ~/.shellm/logs"
 
-echo ""
-echo "==> Installing dependencies..."
-sudo -u shellmer bash -c "cd ${APP_DIR} && npm ci --omit=dev"
-
-echo ""
-echo "==> Setting up shellm CLI..."
-sudo -u shellmer mkdir -p "${SHELLM_HOME}/.shellm/logs"
-cd "${APP_DIR}" && npm link
-echo "  Created ~/.shellm/ dirs and linked shellm CLI"
-
-echo ""
-echo "==> Installing logrotate config..."
-cp "${APP_DIR}/config/logrotate.conf" /etc/logrotate.d/shellm
-echo "  Installed /etc/logrotate.d/shellm"
-
-echo ""
-CONFIG_FILE="${SHELLM_HOME}/.config/shellm/env"
-echo "==> Setting up ${CONFIG_FILE}..."
-sudo -u shellmer mkdir -p "$(dirname "${CONFIG_FILE}")"
-if [[ -f "${CONFIG_FILE}" ]]; then
-  echo "  Config already exists — skipping"
-elif [[ -f "${APP_DIR}/.env" ]]; then
+echo "==> Config"
+as_service_user "mkdir -p -m 700 $(dirname "${CONFIG_FILE}")"
+if [[ ! -f "${CONFIG_FILE}" && -f "${APP_DIR}/.env" ]]; then
   mv "${APP_DIR}/.env" "${CONFIG_FILE}"
-  echo "  Moved ${APP_DIR}/.env out of the repository"
-else
-  sudo -u shellmer cp "${APP_DIR}/.env.example" "${CONFIG_FILE}"
-  echo "  Copied .env.example (edit with your secrets)"
+  chown "${SERVICE_USER}:${SERVICE_USER}" "${CONFIG_FILE}"
+  chmod 600 "${CONFIG_FILE}"
+  echo "  moved ${APP_DIR}/.env to ${CONFIG_FILE}"
 fi
-chown shellmer:shellmer "${CONFIG_FILE}"
-chmod 600 "${CONFIG_FILE}"
 
-echo ""
-echo "==> Installing systemd service..."
+echo "==> systemd and logrotate"
 cp "${APP_DIR}/shellm.service" /etc/systemd/system/shellm.service
+cp "${APP_DIR}/config/logrotate.conf" /etc/logrotate.d/shellm
 systemctl daemon-reload
 systemctl enable shellm
-echo "  Service installed and enabled (not started yet)"
 
-echo ""
-echo "==> Setting up cloudflared..."
-if command -v cloudflared &>/dev/null; then
-  echo "  cloudflared already installed"
-else
-  curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb -o /tmp/cloudflared.deb
-  dpkg -i /tmp/cloudflared.deb
-  rm /tmp/cloudflared.deb
-  echo "  Installed cloudflared $(cloudflared --version 2>&1 | head -1)"
-fi
+cat <<EOF
 
-echo ""
-echo "  To create the tunnel, run:"
-echo ""
-echo "    cloudflared tunnel login"
-echo "    cloudflared tunnel create shellm"
-echo "    cloudflared tunnel route dns shellm ${DOMAIN}"
-echo ""
-echo "  Then create /etc/cloudflared/config.yml:"
-echo ""
-echo "    tunnel: shellm"
-echo "    credentials-file: /root/.cloudflared/<tunnel-id>.json"
-echo "    ingress:"
-echo "      - hostname: ${DOMAIN}"
-echo "        service: http://127.0.0.1:6100"
-echo "      - service: http_status:404"
-echo ""
-echo "  Then install as a service:"
-echo ""
-echo "    cloudflared service install"
-echo "    systemctl start cloudflared"
-echo ""
+SheLLM is installed but not started. Next:
 
-echo "==========================================="
-echo "  SheLLM VPS setup complete!"
-echo "==========================================="
-echo ""
-echo "  Next steps:"
-echo ""
-echo "  1. [root/sudo] Edit secrets:"
-echo "     nano ${CONFIG_FILE}"
-echo ""
-echo "  2. [shellmer] Authenticate CLIs:"
-echo "     sudo -iu shellmer"
-echo "     claude auth login"
-echo "     gemini auth login"
-echo "     codex auth login"
-echo "     exit"
-echo ""
-echo "  3. [root/sudo] Set up cloudflared tunnel (instructions above)"
-echo ""
-echo "  4. [root/sudo] Start the service:"
-echo "     sudo systemctl start shellm"
-echo ""
-echo "  5. [any user] Verify:"
-echo "     curl http://127.0.0.1:6100/health"
-echo "  6. [root/sudo] Watch logs:"
-echo "     sudo journalctl -u shellm -f"
-echo ""
+  1. sudo -iu ${SERVICE_USER} shellm init
+       Creates ${CONFIG_FILE}, asks for the token from \`claude setup-token\`
+       (run that as ${SERVICE_USER} too), creates the first API key and runs the checks.
+  2. sudo systemctl start shellm
+  3. sudo -iu ${SERVICE_USER} shellm doctor --live
+
+SheLLM listens on 127.0.0.1:6100. Expose it through your own tunnel or reverse proxy.
+EOF

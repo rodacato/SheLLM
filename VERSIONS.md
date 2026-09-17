@@ -12,7 +12,7 @@ This file tracks the last known-good version of each upstream CLI tool tested wi
 |---|---|:---:|---|
 | `@google/gemini-cli` | `0.60.0` | ✅ | Pinned via `ARG GEMINI_CLI_VERSION` in Dockerfile |
 | `@openai/codex` | `0.154.0` | ✅ | Pinned via `ARG CODEX_CLI_VERSION` in Dockerfile |
-| `claude` (Claude Code) | latest | ❌ | Installed via `curl \| bash` — no version pin |
+| `claude` (Claude Code) | `2.1.273` | ✅ | `CLAUDE_VERSION` in `scripts/setup/vps.sh`, passed to the official installer |
 
 ## Tested Combinations
 
@@ -27,7 +27,7 @@ This file tracks the last known-good version of each upstream CLI tool tested wi
 
 | Tool | Risk | Impact | Mitigation |
 |---|---|---|---|
-| `claude` | High — no version pin | Unsupported flags or `--print` output changes break `claude.js` | Pin version in Dockerfile once stable release tag is available |
+| `claude` | High | Unsupported flags or `--print` output changes break `claude.js` | Bump `CLAUDE_VERSION` in `vps.sh` only after `npm run test:cli` and `shellm doctor --live` pass on the new version |
 | `gemini-cli` | Medium — pinned in Docker, latest on the VPS | Unsupported flags or `--output-format json` shape changes | `npm run test:cli` weekly; e2e before bumping `GEMINI_CLI_VERSION` |
 | `codex` | Medium — pinned in Docker, latest on the VPS | `exec --json` event shape changes | `npm run test:cli` weekly; e2e before bumping `CODEX_CLI_VERSION` |
 
