@@ -1,52 +1,35 @@
 'use strict';
 
 const { readPid } = require('./pid');
+const { CONFIG_FILE } = require('./paths');
 
 async function run() {
+  require('dotenv').config({ path: CONFIG_FILE, quiet: true });
   const daemonPid = readPid();
+  const host = process.env.HOST || '127.0.0.1';
   const port = process.env.PORT || '6100';
+  const url = `http://${host}:${port}`;
 
-  let health = null;
+  let healthy = false;
   try {
-    const res = await fetch(`http://127.0.0.1:${port}/health`);
-    health = await res.json();
+    const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(3000) });
+    healthy = res.ok;
   } catch {
-    // Server not responding
+    healthy = false;
   }
 
-  if (!daemonPid && !health) {
-    console.log('SheLLM is not running.');
+  if (!healthy) {
+    console.log(`SheLLM is not responding on ${url}.`);
+    if (daemonPid) console.log(`  A daemon PID file exists (PID ${daemonPid}) but the server does not answer.`);
     console.log('');
     console.log('Start with:  shellm start -d');
     console.log('Or systemd:  sudo systemctl start shellm');
+    console.log('Diagnose:    shellm doctor');
     process.exit(1);
   }
 
-  console.log('SheLLM is running.');
-  if (daemonPid) {
-    console.log(`  Mode:      daemon (PID ${daemonPid})`);
-  } else {
-    console.log('  Mode:      systemd (or external)');
-  }
-
-  if (health) {
-    console.log(`  Uptime:    ${formatUptime(health.uptime_seconds)}`);
-    console.log(`  Queue:     ${health.queue.active} active, ${health.queue.pending} pending`);
-    console.log('  Providers:');
-    for (const [name, info] of Object.entries(health.providers)) {
-      const status = info.authenticated ? 'ok' : (info.installed ? 'not auth' : 'not installed');
-      console.log(`    ${name}: ${status}`);
-    }
-  }
-}
-
-function formatUptime(seconds) {
-  const d = Math.floor(seconds / 86400);
-  const h = Math.floor((seconds % 86400) / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  if (d > 0) return `${d}d ${h}h`;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
+  console.log(`SheLLM is running on ${url}.`);
+  console.log(daemonPid ? `  Mode: daemon (PID ${daemonPid})` : '  Mode: systemd (or external)');
 }
 
 module.exports = { run };
