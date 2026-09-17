@@ -1,4 +1,7 @@
 const { spawn } = require('node:child_process');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 
 function getTimeoutMs() {
   try {
@@ -33,11 +36,24 @@ function buildSafeEnv(providerEnv) {
   return { ...BASE_ENV, ...providerEnv };
 }
 
+// A CLI started inside the SheLLM checkout loads its CLAUDE.md and settings and can read .env.
+function spawnInWorkdir(command, args, env) {
+  const workdir = fs.mkdtempSync(path.join(os.tmpdir(), 'shellm-'));
+  const proc = spawn(command, args, {
+    stdio: ['ignore', 'pipe', 'pipe'],
+    cwd: workdir,
+    env: buildSafeEnv(env),
+    detached: true,
+  });
+  proc.on('close', () => fs.rm(workdir, { recursive: true, force: true }, () => {}));
+  return proc;
+}
+
 /**
  * Execute a CLI command as a subprocess with timeout.
  * Stdin is ignored to prevent hanging on interactive prompts.
  */
-function execute(command, args, { timeout = getTimeoutMs(), cwd, env } = {}) {
+function execute(command, args, { timeout = getTimeoutMs(), env } = {}) {
   return new Promise((resolve, reject) => {
     let settled = false;
     const startTime = Date.now();
@@ -46,12 +62,7 @@ function execute(command, args, { timeout = getTimeoutMs(), cwd, env } = {}) {
     let _stdoutTruncated = false;
     let _stderrTruncated = false;
 
-    const proc = spawn(command, args, {
-      stdio: ['ignore', 'pipe', 'pipe'],
-      cwd: cwd || undefined,
-      env: buildSafeEnv(env),
-      detached: true,
-    });
+    const proc = spawnInWorkdir(command, args, env);
 
     // Helper: kill entire process group (handles grandchild processes)
     function killGroup(signal) {
@@ -122,13 +133,8 @@ function execute(command, args, { timeout = getTimeoutMs(), cwd, env } = {}) {
  * Execute a CLI command and yield stdout chunks as they arrive.
  * Accepts an AbortSignal for client disconnect cleanup.
  */
-async function* executeStream(command, args, { timeout = getTimeoutMs(), cwd, env, signal } = {}) {
-  const proc = spawn(command, args, {
-    stdio: ['ignore', 'pipe', 'pipe'],
-    cwd: cwd || undefined,
-    env: buildSafeEnv(env),
-    detached: true,
-  });
+async function* executeStream(command, args, { timeout = getTimeoutMs(), env, signal } = {}) {
+  const proc = spawnInWorkdir(command, args, env);
 
   function killGroup(sig) {
     try { process.kill(-proc.pid, sig); } catch { /* already exited */ }
