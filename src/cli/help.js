@@ -9,6 +9,7 @@ shellm v${pkg.version} — LLM CLI services as a REST API
 Usage: shellm <command> [options]
 
 Commands:
+  init                                    Create the config file and a first API key
   start [-d|--daemon] [-p|--port PORT]   Start the server
   stop                                    Stop the daemon
   restart                                 Restart the daemon

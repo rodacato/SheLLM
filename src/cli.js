@@ -7,6 +7,7 @@ const commands = {
   restart: './cli/restart',
   status: './cli/status',
   doctor: './cli/doctor',
+  init: './cli/init',
   logs: './cli/logs',
   update: './cli/update',
   version: './cli/version',
