@@ -44,12 +44,11 @@ function startForeground(values) {
 
   require('dotenv').config({ path: path.resolve(PROJECT_ROOT, '.env'), quiet: true });
 
-  const port = parseInt(process.env.PORT || '6100', 10);
-  const app = require(SERVER_SCRIPT);
-  const { gracefulShutdown } = require(SERVER_SCRIPT);
+  const { startServer, gracefulShutdown } = require(SERVER_SCRIPT);
 
-  const server = app.listen(port, () => {
-    console.log(`SheLLM running on http://127.0.0.1:${port} (Ctrl+C to stop)`);
+  const server = startServer({}, (listening) => {
+    const { address, port } = listening.address();
+    console.log(`SheLLM running on http://${address}:${port} (Ctrl+C to stop)`);
   });
 
   process.on('SIGTERM', () => gracefulShutdown(server, 'SIGTERM'));
