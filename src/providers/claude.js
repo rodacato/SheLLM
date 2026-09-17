@@ -1,4 +1,13 @@
 const { execute, executeStream, stripNonPrintable } = require('./base');
+const { modelNotFound } = require('../errors');
+
+const MODEL_ALIASES = { 'claude-haiku': 'haiku', 'claude-sonnet': 'sonnet', 'claude-opus': 'opus' };
+const models = ['claude', ...Object.keys(MODEL_ALIASES)];
+
+function cliModel(model) {
+  if (!model || model === 'claude') return null;
+  return MODEL_ALIASES[model] || model;
+}
 
 function shouldSkipPermissions() {
   try { const { getSetting } = require('../db/settings'); return getSetting('claude_skip_permissions'); }
@@ -11,9 +20,10 @@ function systemPromptFor({ system, response_format }) {
 }
 
 // The claude CLI has no temperature flag, so temperature is ignored.
-function buildStreamArgs({ prompt, system, response_format }) {
+function buildStreamArgs({ prompt, system, response_format, model }) {
   const args = ['--print'];
   if (shouldSkipPermissions()) args.push('--dangerously-skip-permissions');
+  if (cliModel(model)) args.push('--model', cliModel(model));
   const systemPrompt = systemPromptFor({ system, response_format });
   if (systemPrompt) args.push('--system-prompt', systemPrompt);
   args.push('--', prompt);
@@ -55,15 +65,22 @@ const CLAUDE_ENV = {
   XDG_DATA_HOME: process.env.XDG_DATA_HOME,
 };
 
-async function chat({ prompt, system, response_format }) {
-  const args = buildArgs({ prompt, system, response_format });
-  const result = await execute('claude', args, { env: CLAUDE_ENV });
+function toProviderError(err, model) {
+  try {
+    if (JSON.parse(err.stdout).api_error_status === 404) return modelNotFound(model);
+  } catch { /* not a JSON result */ }
+  return err;
+}
+
+async function chat({ prompt, system, response_format, model }) {
+  const args = buildArgs({ prompt, system, response_format, model });
+  const result = await execute('claude', args, { env: CLAUDE_ENV }).catch((err) => { throw toProviderError(err, model); });
   return parseOutput(result.stdout, result.stderr);
 }
 
-async function* chatStream({ prompt, system, response_format, signal }) {
+async function* chatStream({ prompt, system, response_format, model, signal }) {
   // Without --output-format json, tokens emit incrementally
-  const args = buildStreamArgs({ prompt, system, response_format });
+  const args = buildStreamArgs({ prompt, system, response_format, model });
 
   for await (const event of executeStream('claude', args, { env: CLAUDE_ENV, signal })) {
     if (event.type === 'chunk') {
@@ -75,6 +92,7 @@ async function* chatStream({ prompt, system, response_format, signal }) {
 
 module.exports = {
   name: 'claude',
+  models,
   chat,
   chatStream,
   buildArgs,

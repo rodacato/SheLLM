@@ -7,6 +7,8 @@ function resolveProvider(model) {
   if (!isModelCacheBuilt()) buildModelMap();
   // Direct engine name match
   if (engines[model]) return engines[model];
+  const byPrefix = Object.values(engines).find((engine) => engine.models && model.startsWith(`${engine.name}-`));
+  if (byPrefix) return byPrefix;
   // Model-to-provider map (from DB)
   const modelToProvider = getModelToProvider();
   const providerName = modelToProvider[model];
