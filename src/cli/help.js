@@ -12,7 +12,8 @@ Commands:
   start [-d|--daemon] [-p|--port PORT]   Start the server
   stop                                    Stop the daemon
   restart                                 Restart the daemon
-  status                                  Show server status and health
+  status                                  Show whether the server answers
+  doctor [--live]                         Check the setup; --live sends one request to Claude
   logs [-f|--follow] [-n|--lines N]       View daemon logs
   version                                 Show version
   help                                    Show this help
