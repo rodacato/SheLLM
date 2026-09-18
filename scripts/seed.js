@@ -16,7 +16,7 @@ console.log('Seeding database...\n');
 // --- Clients ---
 const clients = [
   { name: 'demo-app', rpm: 60 },
-  { name: 'test-runner', rpm: 10, models: ['claude', 'cerebras'] },
+  { name: 'test-runner', rpm: 10, models: ['claude', 'claude-haiku'] },
   { name: 'expired-client', rpm: 5, expires_at: new Date(Date.now() - 86400000).toISOString() },
 ];
 
@@ -34,7 +34,7 @@ for (const spec of clients) {
 }
 
 // --- Request logs ---
-const providers = ['claude', 'codex', 'codex', 'cerebras'];
+const providers = ['claude', 'codex'];
 const statuses = [200, 200, 200, 200, 200, 200, 400, 400, 502, 200]; // 60% success, 20% client err, 10% server err
 const clientNames = ['demo-app', 'test-runner', null];
 

@@ -50,7 +50,7 @@ codex --version
 
 ### Architecture Rules
 
-1. **Minimal dependencies** (Express + dotenv). Don't add packages unless you can justify why a Node.js built-in won't work.
+1. **Minimal dependencies** (Express, dotenv, better-sqlite3). Don't add packages unless you can justify why a Node.js built-in won't work.
 2. **One file per provider.** Each provider is a self-contained module with the same export shape.
 3. **No classes.** Providers export plain objects with functions. No inheritance, no `this` binding issues.
 4. **Errors are objects, not strings.** Every error response has `{ error, message, request_id }`.
@@ -63,26 +63,35 @@ Every provider in `src/providers/` must export:
 ```javascript
 module.exports = {
   name: 'provider-name',
-  chat: async ({ prompt, system, max_tokens, model }) => {
-    return { content: '...', cost_usd: null };
+  // Names that map to a real CLI model. GET /v1/models lists exactly these, and any
+  // id starting with "provider-name-" routes here and is passed to the CLI as given.
+  models: ['provider-name', 'provider-name-fast'],
+  chat: async ({ prompt, system, response_format, model }) => {
+    return { content: '...', cost_usd: null, usage: null };
   },
-  validModels: ['model-a', 'model-b'],
-  capabilities: {
-    supports_system_prompt: true,
-    supports_json_output: false,
-    supports_max_tokens: true,
-    cli_command: 'cli-tool --flag',
+  chatStream: async function* ({ prompt, system, model, signal }) {
+    yield { type: 'delta', content: '...' };
+    yield { type: 'done' };
   },
+  buildArgs: (params) => ['--flag', params.prompt],
+  parseOutput: (stdout) => ({ content: stdout }),
 };
 ```
+
+`chatStream` is optional — without it, streaming requests buffer the `chat()` result and flush it
+as one chunk. `buildArgs` and `parseOutput` are exported so they can be tested as pure functions
+against recorded CLI output.
 
 ## Adding a New Provider
 
 1. Create `src/providers/<name>.js` following the contract above
 2. Register the engine in `src/routing/engines.js`
-3. Add a health check entry in the provider's DB row (see `src/infra/health.js`)
-4. Write tests in `test/providers/<name>.test.js`
-5. Update the `GET /providers` response implicitly (it reads from the routing layer)
+3. Add it to the provider list in `src/infra/health.js` and a migration that inserts its row
+4. Write tests in `test/providers/<name>.test.js`, and add it to the CLI contract suite
+   (`test/cli/contract.cli.js`) so an upstream flag change is caught
+5. Record the CLI version you tested against in `VERSIONS.md`
+6. Check the provider's terms first: SheLLM only drives official binaries with the owner's own
+   subscription, and the README's fair-use table says what that means per provider
 
 For CLI-based providers, use `execute()` from `src/providers/base.js`:
 
@@ -96,7 +105,9 @@ async function chat({ prompt, system, max_tokens }) {
 }
 ```
 
-For API-based providers, use `fetch()` directly (no SDK).
+Every CLI runs in a temporary working directory with a minimal environment: only `PATH`, `HOME`,
+`TMPDIR`, `NO_COLOR` and whatever the provider explicitly passes. A provider's own credential is
+the only configured value it may receive.
 
 ## Testing
 
