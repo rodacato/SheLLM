@@ -98,7 +98,6 @@ function closeDb() {
 const clients = require('./clients');
 const requestLogs = require('./request-logs');
 const providers = require('./providers');
-const models = require('./models');
 const audit = require('./audit');
 
 module.exports = {
@@ -112,7 +111,6 @@ module.exports = {
   // providers
   ...providers,
   // models
-  ...models,
   // audit
   ...audit,
 };

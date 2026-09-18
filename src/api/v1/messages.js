@@ -1,4 +1,4 @@
-const { route, resolveProvider, resolveUpstreamModel, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../../routing');
+const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../../routing');
 const { sanitize } = require('../../middleware/sanitize');
 const { invalidRequest, fromCatchable, sendAnthropicError } = require('../../errors');
 const { initSSE } = require('../../lib/sse');
@@ -282,7 +282,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
   res.on('finish', () => clearInterval(disconnectCheck));
 
   const id = `msg_${req.requestId}`;
-  const responseModel = resolveUpstreamModel(model);
+  const responseModel = model;
   let slotAcquired = false;
 
   try {

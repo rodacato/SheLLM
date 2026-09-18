@@ -2,14 +2,9 @@ require('dotenv').config({ path: require('./cli/paths').CONFIG_FILE, quiet: true
 
 const logger = require('./lib/logger');
 const { initDb } = require('./db');
-const { buildModelMap, seedAliasesFromEnv } = require('./routing');
 
 // Initialize SQLite (skip if already initialized, e.g. in tests)
 initDb();
-
-// Build model map from DB and seed env aliases
-buildModelMap();
-seedAliasesFromEnv();
 
 // Load app after DB is initialized
 const app = require('./app');

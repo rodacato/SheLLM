@@ -1,4 +1,4 @@
-const { route, resolveProvider, resolveUpstreamModel, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../../routing');
+const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../../routing');
 const { sanitize } = require('../../middleware/sanitize');
 const { invalidRequest, fromCatchable, sendOpenAIError } = require('../../errors');
 const { initSSE, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../lib/sse');
@@ -264,7 +264,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
 
   const id = `chatcmpl-${req.requestId}`;
   const created = Math.floor(Date.now() / 1000);
-  const responseModel = resolveUpstreamModel(model);
+  const responseModel = model;
   let sentRole = false;
   let slotAcquired = false;
 

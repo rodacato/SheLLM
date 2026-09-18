@@ -5,17 +5,14 @@ const { initDb, closeDb } = require('../../src/db');
 describe('router', () => {
   before(() => {
     initDb(':memory:');
-    // Rebuild model map now that DB is available
-    const { buildModelMap } = require('../../src/routing');
-    buildModelMap();
   });
 
   after(() => {
     closeDb();
   });
 
-  const { resolveProvider, listProviders, queue, getAliases } = require('../../src/routing');
-  it('resolveProvider resolves direct names and model aliases', () => {
+  const { resolveProvider, listProviders, queue } = require('../../src/routing');
+  it('resolveProvider resolves provider names and prefixed model ids', () => {
     assert.strictEqual(resolveProvider('claude')?.name, 'claude');
     assert.strictEqual(resolveProvider('codex')?.name, 'codex');
 
@@ -45,9 +42,4 @@ describe('router', () => {
     assert.strictEqual(stats.active, 0);
   });
 
-  it('getAliases returns an object', () => {
-    const aliases = getAliases();
-    assert.strictEqual(typeof aliases, 'object');
-    assert.ok(aliases !== null);
-  });
 });
