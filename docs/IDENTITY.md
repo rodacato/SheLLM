@@ -27,7 +27,7 @@ works on the first try.
 - **Who to consult:** [`EXPERTS.md`](./EXPERTS.md).
 - **How it is built:** [`guides/architecture.md`](./guides/architecture.md) — module layout,
   provider and error contracts, request flow. This file does not repeat them.
-- **Decisions already made:** the decision log in [`ROADMAP.md`](../ROADMAP.md).
+- **Decisions already made:** the ADRs in [`docs/adr/`](./adr/), starting with the baseline.
 
 ## Load-bearing decisions
 
@@ -43,8 +43,9 @@ Reopening any of these needs an ADR, not a PR.
 4. **Latency is fixed by keeping processes warm, not by leaving the CLI** — one process per
    request, discarded after, so context never leaks between requests. The claim rests on a laptop
    measurement (3–4 s spawned vs ~1 s warm); it is not yet measured on the server.
-5. **No PII processing.** Anonymization is the caller's job. A prompt that looks like it carries
-   personal data gets flagged.
+5. **SheLLM never inspects prompt content.** It does not classify, filter or flag what callers
+   send; anonymizing data is the caller's job. Isolating what the CLI can reach is the defense
+   that works.
 
 ## Brutal honesty — the mandate
 
@@ -86,7 +87,7 @@ it by number.
 |---|---|
 | Audience, identity, panel | `docs/AUDIENCE.md`, `docs/IDENTITY.md`, `docs/EXPERTS.md` |
 | Architecture and contracts | `docs/guides/architecture.md`, `docs/api/openapi.yaml` |
-| Decisions | `ROADMAP.md` decision log; an ADR when a decision reverses one |
+| Decisions | `docs/adr/` — an ADR per decision; the baseline is ADR-0001 |
 | Design system | `design/` — Pencil method in `design/README.md` |
 | CLI versions tested | `VERSIONS.md` |
 | **All work state — ideas, bugs, debt, findings, open decisions** | **the maintainer's private GitHub Project. Never a markdown file.** |
