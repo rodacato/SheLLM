@@ -1,6 +1,6 @@
 const { route, resolveProvider, resolveUpstreamModel, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../../routing');
-const { sanitize, checkPromptSafety } = require('../../middleware/sanitize');
-const { invalidRequest, promptRejected, fromCatchable, sendOpenAIError } = require('../../errors');
+const { sanitize } = require('../../middleware/sanitize');
+const { invalidRequest, fromCatchable, sendOpenAIError } = require('../../errors');
 const { initSSE, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../lib/sse');
 
 const MAX_PROMPT_LENGTH = 50000;
@@ -159,12 +159,6 @@ function preflight(req, res) {
   prompt = sanitize(prompt);
   if (system) system = sanitize(system);
 
-  // Prompt injection guard
-  const safety = checkPromptSafety(prompt, system, { request_id: req.id, client: req.clientName, safetyLevel: req.safetyLevel });
-  if (safety) {
-    sendOpenAIError(res, promptRejected());
-    return null;
-  }
 
   if (prompt.length > MAX_PROMPT_LENGTH) {
     sendOpenAIError(res, invalidRequest(

@@ -1,6 +1,6 @@
 const { route, resolveProvider, resolveUpstreamModel, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../../routing');
-const { sanitize, checkPromptSafety } = require('../../middleware/sanitize');
-const { invalidRequest, promptRejected, fromCatchable, sendAnthropicError } = require('../../errors');
+const { sanitize } = require('../../middleware/sanitize');
+const { invalidRequest, fromCatchable, sendAnthropicError } = require('../../errors');
 const { initSSE } = require('../../lib/sse');
 const {
   sendMessageStart, sendContentBlockStart, sendContentBlockDelta,
@@ -186,12 +186,6 @@ function preflight(req, res) {
   prompt = sanitize(prompt);
   if (system) system = sanitize(system);
 
-  // Prompt injection guard
-  const safety = checkPromptSafety(prompt, system, { request_id: req.id, client: req.clientName, safetyLevel: req.safetyLevel });
-  if (safety) {
-    sendAnthropicError(res, promptRejected());
-    return null;
-  }
 
   if (prompt.length > MAX_PROMPT_LENGTH) {
     sendAnthropicError(res, invalidRequest(
