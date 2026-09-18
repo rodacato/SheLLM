@@ -7,7 +7,6 @@ SheLLM is designed as an **internal service**. It is not intended to be exposed 
 ### Network Isolation
 
 - The service binds to `127.0.0.1` (loopback) in production — only accessible from the same host
-- When using Docker networking, the service is accessible only from containers on the same bridge network
 - **No TLS termination** is performed by SheLLM — this is the responsibility of the reverse proxy (if any)
 - **Multi-client bearer token authentication** managed via the Admin API. Set `SHELLM_REQUIRE_AUTH=true` (default) to reject all requests when no API keys are configured. Network isolation remains the primary trust boundary in production; bearer tokens add defense-in-depth.
 - **Rate limiting**: Global + per-client sliding window (requests per minute). Prevents abuse even from trusted internal clients.
@@ -83,7 +82,7 @@ All user-supplied input passes through sanitization before reaching a CLI subpro
 
 ### Health Endpoint
 
-- `GET /health` — returns only `{ status: "ok" }` (unauthenticated, for Docker healthcheck)
+- `GET /health` — returns only `{ status: "ok" }` (unauthenticated liveness probe)
 - `GET /health/detailed` — returns full provider status, queue depth, circuit breakers (requires admin auth)
 
 ## Accepted Risks
@@ -134,5 +133,4 @@ If you discover a security issue, do **not** open a public issue. Instead:
 - In production, the service runs as a dedicated **non-root user** (`shellmer`) on the VPS via systemd
 - Network access via `cloudflared` tunnel — zero open ports, Cloudflare handles TLS
 - Resource limits enforced by systemd unit configuration
-- Docker container runs with `read_only: true` filesystem, tmpfs for `/tmp` and data directories
 - `LOG_LEVEL=debug` in production emits a startup warning (may expose sensitive data)

@@ -57,41 +57,6 @@ Cross-provider fallback is off unless you turn it on. What is left to you: one l
 and not pointing a batch job at it. If you need machine-scale volume, buy API access — that is
 what it is for.
 
-## Screenshots
-
-<p align="center">
-  <img src="docs/screenshots/landing.png" alt="Landing page" width="720">
-</p>
-
-<p align="center">
-  <img src="docs/screenshots/dashboard-overview.png" alt="Admin Dashboard — Overview" width="720">
-</p>
-
-<details>
-<summary>More screenshots</summary>
-
-<p align="center">
-  <img src="docs/screenshots/dashboard-playground.png" alt="Admin Dashboard — Playground" width="720">
-</p>
-
-<p align="center">
-  <img src="docs/screenshots/dashboard-terminal.png" alt="Admin Dashboard — Terminal" width="720">
-</p>
-
-<p align="center">
-  <img src="docs/screenshots/dashboard-logs.png" alt="Admin Dashboard — Request Logs" width="720">
-</p>
-
-<p align="center">
-  <img src="docs/screenshots/dashboard-keys.png" alt="Admin Dashboard — API Keys" width="720">
-</p>
-
-<p align="center">
-  <img src="docs/screenshots/dashboard-models.png" alt="Admin Dashboard — Models" width="720">
-</p>
-
-</details>
-
 ## Getting Started
 
 ### Local development

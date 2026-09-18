@@ -6,7 +6,7 @@
 
 - Node.js >= 24
 - Access to at least one CLI tool (Claude Code or Codex CLI)
-- Docker and Docker Compose (optional — only for devcontainer)
+- Docker (optional — only for the devcontainer)
 
 ### Development Setup
 
