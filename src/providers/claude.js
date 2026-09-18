@@ -10,8 +10,7 @@ function cliModel(model) {
 }
 
 function shouldSkipPermissions() {
-  try { const { getSetting } = require('../db/settings'); return getSetting('claude_skip_permissions'); }
-  catch { return process.env.SHELLM_CLAUDE_SKIP_PERMISSIONS !== 'false'; }
+  return process.env.SHELLM_CLAUDE_SKIP_PERMISSIONS !== 'false';
 }
 
 function systemPromptFor({ system, response_format }) {

@@ -4,12 +4,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 function getTimeoutMs() {
-  try {
-    const { getSetting } = require('../db/settings');
-    return getSetting('timeout_ms');
-  } catch {
-    return parseInt(process.env.TIMEOUT_MS || '120000', 10);
-  }
+  return parseInt(process.env.TIMEOUT_MS || '120000', 10);
 }
 const MAX_OUTPUT = 1024 * 1024; // 1MB cap on stdout/stderr
 

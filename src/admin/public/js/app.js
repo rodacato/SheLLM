@@ -61,7 +61,7 @@ function statusBadgeClass(status) {
   return 'badge-5xx';
 }
 
-const VALID_PAGES = ['overview', 'playground', 'live', 'logs', 'keys', 'settings'];
+const VALID_PAGES = ['overview', 'playground', 'live', 'logs', 'keys'];
 
 function app() {
   return {
@@ -73,7 +73,6 @@ function app() {
       { id: 'live', label: 'Terminal', icon: 'stream' },
       { id: 'logs', label: 'Request Logs', icon: 'database' },
       { id: 'keys', label: 'API Keys', icon: 'key' },
-      { id: 'settings', label: 'Settings', icon: 'settings' },
     ],
     navigate(pageId) {
       this.page = pageId;

@@ -2,12 +2,10 @@ const { rateLimited } = require('../errors');
 const logger = require('../lib/logger');
 
 function getMaxConcurrent() {
-  try { const { getSetting } = require('../db/settings'); return getSetting('max_concurrent'); }
-  catch { return parseInt(process.env.MAX_CONCURRENT || '2', 10); }
+  return parseInt(process.env.MAX_CONCURRENT || '2', 10);
 }
 function getMaxQueueDepth() {
-  try { const { getSetting } = require('../db/settings'); return getSetting('max_queue_depth'); }
-  catch { return parseInt(process.env.MAX_QUEUE_DEPTH || '10', 10); }
+  return parseInt(process.env.MAX_QUEUE_DEPTH || '10', 10);
 }
 
 class RequestQueue {
