@@ -15,11 +15,11 @@
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D24-brightgreen" alt="Node.js >= 24"></a>
 </p>
 
-SheLLM turns CLI subscriptions (Claude Max, Gemini AI Plus, OpenAI Enterprise) and API providers (Cerebras) into a single HTTP endpoint. One interface, any provider.
+SheLLM turns the CLI subscriptions you already pay for (Claude Max, ChatGPT/Codex) into a single HTTP endpoint that speaks both the OpenAI and the Anthropic wire formats.
 
 ## Why SheLLM
 
-Most LLM gateways assume you're paying per-token via API. SheLLM's primary use case is the opposite: **you already have CLI subscriptions** (Claude Max, Gemini AI Plus, OpenAI Enterprise) and want to expose them as a regular HTTP API to your apps — without burning API quota.
+Most LLM gateways assume you're paying per-token via API. SheLLM's primary use case is the opposite: **you already pay for a CLI subscription** and want to use it from your own apps through a regular HTTP API, without buying API credit on top.
 
 | | SheLLM | LiteLLM | OpenRouter | Portkey |
 |---|:---:|:---:|:---:|:---:|
@@ -31,6 +31,31 @@ Most LLM gateways assume you're paying per-token via API. SheLLM's primary use c
 | SQLite — no Redis / Postgres | ✅ | ❌ | — | ❌ |
 
 [ollama](https://ollama.com) and [Jan](https://jan.ai) are complementary, not competing — they run local models; SheLLM routes to hosted CLI subscriptions and APIs.
+
+## Fair use and provider terms
+
+SheLLM runs the **official, unmodified CLI binaries** and nothing else. It never extracts OAuth
+tokens, never calls a provider's API with subscription credentials, and never pretends to be a
+different client. If a change would make SheLLM faster by leaving the official binary, the answer
+is no.
+
+It is built for **one person serving their own applications with their own subscription**. It is
+not a way to share a subscription, resell capacity, or give a team one login — those break every
+provider's terms, and they are the behaviour that gets accounts suspended.
+
+Running your own subscription through your own software still carries risk, and it is yours:
+
+| Provider | Status |
+|---|---|
+| **Claude** (Claude Code) | Supported. Anthropic's terms forbid intermediating Claude.ai credentials; SheLLM spawns the official binary, which keeps its own login. |
+| **Codex** (ChatGPT Plus/Pro/Business) | Supported, at your own risk. OpenAI documents `codex exec` for scripts and CI but recommends API keys for automation. No terms clause forbids wrapping your own subscription; anti-abuse classifiers are the real exposure, and a suspension takes the whole ChatGPT account with it. |
+| **Gemini** | Not supported. Gemini CLI stopped serving personal plans on 2026-06-18, and Antigravity's terms forbid "using the Service in connection with products not provided by us". |
+
+Keep it human-scale. SheLLM never retries a request on its own, caps concurrent CLI processes
+(`MAX_CONCURRENT`, default 2) and probes provider health with `--version`, which spends no quota.
+Cross-provider fallback is off unless you turn it on. What is left to you: one login per provider,
+and not pointing a batch job at it. If you need machine-scale volume, buy API access — that is
+what it is for.
 
 ## Screenshots
 
