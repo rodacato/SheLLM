@@ -43,21 +43,6 @@ Client API keys are managed via the Admin API (`/admin/keys`). Keys are stored h
 - **Key expiration**: Expired keys are automatically marked inactive by a daily cleanup job
 - **Pre-commit hook**: `scripts/pre-commit` scans staged changes for secret patterns (`sk-*`, `csk-*`, hardcoded keys). Install with `cp scripts/pre-commit .git/hooks/pre-commit`
 
-### Per-Client Safety Profiles
-
-Each API client has a `safety_level` that controls prompt injection detection behavior:
-
-| Level | Tier 1 (shell commands, etc.) | Tier 2 threshold | Response header | Use case |
-|---|---|---|---|---|
-| `strict` (default) | Blocks immediately | 2 patterns | `X-SheLLM-Safety: full` | External or untrusted input |
-| `standard` | Blocks immediately | 3 patterns | `X-SheLLM-Safety: standard` | Semi-trusted internal input |
-| `permissive` | Not checked | Not checked | `X-SheLLM-Safety: reduced` | Fully trusted batch jobs |
-
-- Default for new clients: `strict`
-- Changed via: `PATCH /admin/keys/:id { "safety_level": "permissive" }`
-- Every `permissive` request logs a `WARN` event (`prompt_guard_bypassed`)
-- The `X-SheLLM-Safety` response header is always present on authenticated endpoints
-
 ### Auth Token Handling
 
 SheLLM manages auth tokens for three CLI tools. These tokens are **equivalent to API keys** and must be treated accordingly.
@@ -86,18 +71,6 @@ All user-supplied input passes through sanitization before reaching a CLI subpro
 - Null bytes (`\0`) are stripped — prevents injection in C-based CLI parsers
 - Carriage returns (`\r`) are normalized — prevents log injection
 - Input is truncated to **50,000 characters** — prevents memory abuse and excessive token consumption
-
-### Prompt Injection Detection (src/middleware/prompt-guard.js)
-
-Two-tier pattern-based detection with NFKC-normalized input:
-
-- **Tier 1** (blocks immediately): shell commands, file access, env exfiltration, role override, system prompt leak
-- **Tier 2** (heuristic): base64 injection, fake delimiters, authority claims — blocks when 2+ patterns match (3+ for `standard` safety level)
-
-**Disabling the guard:**
-- `SHELLM_PROMPT_GUARD=DISABLED_UNSAFE` — disables in any environment
-- `SHELLM_PROMPT_GUARD=false` — disables in development only (ignored in production)
-- Per-client: set `safety_level: 'permissive'` via Admin API
 
 ### Subprocess Safety
 
@@ -134,7 +107,7 @@ The admin dashboard CSP allows `unsafe-inline` and `unsafe-eval` for Tailwind CS
 
 ## What This Service Does NOT Protect Against
 
-- **Prompt injection (complete)**: Pattern-based detection is defense-in-depth, not a guarantee. Motivated attackers can bypass regex patterns.
+- **Prompt injection**: SheLLM does not inspect prompt content. A pattern-based guard was removed in 2026-09 because it blocked ordinary coding prompts while missing real injections; isolating what the CLI can reach is the defense that works.
 - **PII exposure**: SheLLM does not inspect prompt content. Callers must anonymize data before sending it.
 - **Rate limiting bypass**: A compromised client key still allows requests up to its RPM limit.
 - **CLI vulnerabilities**: If a CLI tool has a vulnerability, SheLLM inherits it. Keep CLI tools updated.

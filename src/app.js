@@ -55,22 +55,15 @@ app.get('/health/detailed', adminAuth, async (req, res) => {
   }
 });
 
-// Safety level response header (per-client)
-function safetyHeader(req, res, next) {
-  const level = req.safetyLevel || 'strict';
-  const label = level === 'strict' ? 'full' : level === 'standard' ? 'standard' : 'reduced';
-  res.set('X-SheLLM-Safety', label);
-  next();
-}
 
 // --- GET /v1/models (authenticated) ---
-app.get('/v1/models', auth, safetyHeader, modelsHandler);
+app.get('/v1/models', auth, modelsHandler);
 
 // --- POST /v1/chat/completions (authenticated) ---
-app.post('/v1/chat/completions', auth, safetyHeader, chatCompletionsHandler);
+app.post('/v1/chat/completions', auth, chatCompletionsHandler);
 
 // --- POST /v1/messages (authenticated — Anthropic Messages API format) ---
-app.post('/v1/messages', auth, safetyHeader, messagesHandler);
+app.post('/v1/messages', auth, messagesHandler);
 
 // --- Admin routes (Basic auth via SHELLM_ADMIN_PASSWORD) ---
 app.use('/admin', adminAuth, adminKeysRouter);

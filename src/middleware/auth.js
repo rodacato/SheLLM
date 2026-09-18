@@ -149,7 +149,6 @@ function createAuthMiddleware() {
 
     req.clientName = clientName;
     req.allowedModels = dbClient.models || null;
-    req.safetyLevel = dbClient.safety_level || 'strict';
     next();
   };
 }

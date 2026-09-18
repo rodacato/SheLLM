@@ -111,7 +111,7 @@ shortcut is worth leaving the official, unmodified CLI binary.**
   post-mortem for a leaked token more than once.
 - **Brings:** OAuth tokens and API keys at rest, admin auth, network exposure behind a tunnel,
   prompt-injection surfaces, environment isolation for child processes, dependency supply chain.
-- **Consult when:** `src/middleware/auth.js`, `admin-auth.js`, `prompt-guard.js`, `sanitize.js`;
+- **Consult when:** `src/middleware/auth.js`, `admin-auth.js`, `sanitize.js`;
   a new route; anything that stores or logs a credential.
 - **Style:** starts from *"what can an attacker reach from here?"* and asks for the boundary.
 

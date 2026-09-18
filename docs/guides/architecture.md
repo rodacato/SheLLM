@@ -44,8 +44,7 @@ src/
 │   ├── admin-auth.js      # Basic auth for admin dashboard
 │   ├── request-id.js      # Request ID generation/pass-through
 │   ├── logging.js         # Request/response logging to DB
-│   ├── sanitize.js        # Input normalization + safety level dispatch
-│   └── prompt-guard.js    # Prompt injection detection (tier 1 + tier 2 patterns)
+│   └── sanitize.js        # Input normalization
 │
 ├── db/                    # SQLite persistence layer
 │   ├── index.js           # DB lifecycle (initDb/closeDb/getDb) + barrel re-exports
@@ -199,7 +198,6 @@ Middleware runs in order — changing the order changes behavior:
 3. `requestLogger` — Log request completion with timing, status, provider
 4. Content-Type check — Reject non-JSON POST/PATCH
 5. `auth` — Validate Bearer token, check rate limits (global + per-client)
-6. `safetyHeader` — Set `X-SheLLM-Safety` based on client safety_level
 
 ---
 
