@@ -1,640 +1,125 @@
-# VPS Deployment Guide
+# Deploying SheLLM on a server
 
-Step-by-step guide for deploying SheLLM on a VPS with cloudflared. After following this guide you'll have SheLLM running behind your own domain with TLS, authentication, and all providers ready to use.
+SheLLM runs as a systemd service under its own user, bound to `127.0.0.1`. Nothing here is
+specific to a hosting provider; it assumes a fresh Debian or Ubuntu machine you reach over SSH as
+root.
 
----
+**Before you start:** decide which account runs the CLIs. Whoever holds that login is what a
+provider suspends if something looks automated — read the fair-use section in the
+[README](../../README.md#fair-use-and-provider-terms) first.
 
-## Prerequisites
-
-| Requirement | Why |
-|---|---|
-| A VPS with Ubuntu 22.04+ (or Debian 12+) | SheLLM runs as a systemd service |
-| Root SSH access | Initial setup creates a dedicated user |
-| A Cloudflare account with a domain | cloudflared tunnel provides TLS + zero-trust access |
-| CLI subscriptions (at least one) | Claude Max, or ChatGPT Plus/Pro for Codex |
-
-> **How much VPS do you need?** SheLLM is lightweight — 1 vCPU / 1 GB RAM handles most workloads. The bottleneck is CLI subprocess concurrency (`MAX_CONCURRENT`), not SheLLM itself. A 2 vCPU / 2 GB VPS is comfortable for `MAX_CONCURRENT=4`.
-
----
-
-## Step 1 — Run the setup script
-
-SSH into your VPS as root and run:
+## 1. Provision
 
 ```bash
-# Download and run in one step
-curl -fsSL https://raw.githubusercontent.com/rodacato/SheLLM/master/scripts/setup/vps.sh | bash
+ssh root@your-server 'bash -s' < scripts/setup/vps.sh
 ```
 
-Or clone first if you prefer to inspect the script:
+The script is safe to re-run. It creates the `shellmer` user, installs Node.js 24, installs Claude
+Code pinned to `CLAUDE_VERSION` (see [`VERSIONS.md`](../../VERSIONS.md)), clones the repository to
+`/home/shellmer/shellm`, links the `shellm` command, and installs the systemd unit and the
+logrotate config. It does **not** start the service and does **not** configure a tunnel.
+
+Override defaults with environment variables:
 
 ```bash
-git clone https://github.com/rodacato/SheLLM.git /home/shellmer/shellm
-bash /home/shellmer/shellm/scripts/setup/vps.sh
+ssh root@your-server 'CLAUDE_VERSION=2.1.273 bash -s' < scripts/setup/vps.sh
 ```
 
-**What the script does:**
+## 2. Log the CLI in
 
-1. Creates a `shellmer` system user (SheLLM never runs as root)
-2. Installs Node.js 24 via NodeSource
-3. Installs the Claude Code CLI for the service user, pinned to the version in VERSIONS.md
-4. Clones the repo and runs `npm ci --omit=dev`
-5. Links the `shellm` CLI
-6. Copies `.env.example` to `.env`
-7. Installs the systemd service (`shellm.service`)
-8. Installs cloudflared
-
-After the script finishes you'll see a summary of next steps. Don't start the service yet — we need to configure secrets and authenticate the CLIs first.
-
----
-
-## Step 2 — Configure environment variables
-
-Edit the config file, which lives outside the repository:
-
-```bash
-nano /home/shellmer/.config/shellm/env
-```
-
-### Required settings
-
-```bash
-# Admin dashboard password (minimum 12 characters)
-SHELLM_ADMIN_PASSWORD=your-strong-password-here
-
-# Admin username (optional but recommended)
-SHELLM_ADMIN_USER=admin
-```
-
-> **Security note:** SheLLM refuses to start in production if the admin password is shorter than 12 characters or matches common weak passwords.
-
-### Recommended settings
-
-```bash
-# Global rate limit — adjust based on your VPS capacity
-SHELLM_GLOBAL_RPM=30
-
-# Webhook for alerts (Slack, Discord, or Uptime Kuma)
-# SheLLM posts provider health transitions and auth failure spikes here
-SHELLM_ALERT_WEBHOOK_URL=https://hooks.slack.com/services/xxx/yyy/zzz
-
-# Cerebras API key (only if you want the Cerebras provider)
-CEREBRAS_API_KEY=csk-xxx
-```
-
-### Optional tuning
-
-```bash
-# Increase concurrency if your VPS has 2+ vCPUs
-MAX_CONCURRENT=4
-MAX_QUEUE_DEPTH=20
-
-# CLI process timeout (default: 2 minutes)
-TIMEOUT_MS=120000
-
-# Log level: debug | info | warn | error
-LOG_LEVEL=info
-```
-
-See [.env.example](../../.env.example) for the full list with descriptions.
-
----
-
-## Step 3 — Authenticate CLI providers
-
-Each CLI tool needs a one-time browser-based authentication. Switch to the `shellmer` user and authenticate:
+The service user needs its own login. On a machine with no browser, use a long-lived token:
 
 ```bash
 sudo -iu shellmer
+claude setup-token        # complete the flow in any browser, then copy the token it prints
 ```
 
-### Claude Code
+Keep the token for the next step. Codex, if you use it, authenticates with `codex login`; its
+device flow is what works on a headless box.
+
+## 3. Configure
 
 ```bash
-claude auth login
+sudo -iu shellmer shellm init
 ```
 
-This opens a browser URL — copy-paste it if you're on a headless VPS. Follow the Anthropic login flow. Verify with:
+`init` writes `/home/shellmer/.config/shellm/env` with mode 600, asks for the token from the
+previous step, generates an admin password, creates the first API key — shown once — and runs the
+checks. Values you already set are never overwritten, so re-running it is safe.
 
-```bash
-claude --version
-```
+Everything else is documented in [`.env.example`](../../.env.example). What matters on a server:
 
-### Codex CLI
+| Variable | Default | Why you would change it |
+|---|---|---|
+| `HOST` | `127.0.0.1` | Keep it. Expose SheLLM through a tunnel or proxy, not by binding publicly |
+| `PORT` | `6100` | A port collision |
+| `MAX_CONCURRENT` | `2` | Each CLI process costs 100–200 MB of RAM |
+| `SHELLM_ADMIN_PASSWORD` | generated | The dashboard login |
+| `SHELLM_GLOBAL_RPM` | `30` | Requests per minute across all keys |
 
-```bash
-codex auth login
-```
-
-Follow the OpenAI login flow. Verify with:
-
-```bash
-codex --version
-```
-
-> **You only need to authenticate the providers you plan to use.** SheLLM gracefully marks unavailable providers as `unhealthy` — they won't break the service.
-
-When done, exit the shellmer session:
-
-```bash
-exit
-```
-
----
-
-## Step 4 — Run database migrations and seed data
-
-SheLLM uses SQLite. Migrations run automatically on first start, but you can run them explicitly:
-
-```bash
-sudo -iu shellmer bash -c "cd ~/shellm && npm run migrate"
-```
-
-### Seed demo data (optional but recommended for first deploy)
-
-The seed script creates demo API clients and sample request logs so the dashboard has data to display on first visit:
-
-```bash
-sudo -iu shellmer bash -c "cd ~/shellm && npm run seed"
-```
-
-This creates:
-
-| What | Details |
-|---|---|
-| `demo-app` client | 60 RPM, all providers |
-| `test-runner` client | 10 RPM, claude + cerebras only |
-| `expired-client` | Already expired (shows expiration handling) |
-| 30 request log entries | Spread across providers, mixed success/error |
-
-> **Important:** The seed script prints the raw API keys to the terminal. Copy the `demo-app` key — you'll use it in Step 7 to verify the setup.
-
-If you prefer to start clean without demo data, skip this step and create your first real API key from the admin dashboard in Step 7.
-
----
-
-## Step 5 — Start SheLLM
+## 4. Start
 
 ```bash
 sudo systemctl start shellm
-```
-
-Verify it's running:
-
-```bash
-# Check systemd status
 sudo systemctl status shellm
-
-# Check the health endpoint
-curl http://127.0.0.1:6100/health
+sudo -iu shellmer shellm doctor --live   # spends one small request
 ```
 
-You should see a JSON response with provider statuses:
+`shellm doctor` without `--live` checks Node, the config file's permissions, the bind address, the
+CLI and its login, and that an API key exists. Every failure prints the command that fixes it.
 
-```json
-{
-  "status": "healthy",
-  "providers": {
-    "claude": { "status": "healthy" },
-    "cerebras": { "status": "healthy" }
-  },
-  "queue": { "active": 0, "waiting": 0, "max": 2 }
-}
-```
+## 5. Reach it from outside
 
-If a provider shows `unhealthy`, check its auth:
+SheLLM listens on loopback only. Put it behind something that terminates TLS and authenticates:
+
+- **Cloudflare Tunnel** — `cloudflared` on the same host, with `service: http://127.0.0.1:6100`.
+  No inbound ports, TLS at the edge, and Cloudflare Access in front of `/admin/*` if you expose it.
+- **A reverse proxy** you already run (Caddy, nginx) on the same machine.
+- **A private network** (Tailscale, WireGuard) when only your own devices call it.
+
+Whatever you choose, the API key is the only thing between a caller and your subscription quota.
+Do not expose `/admin/*` to the internet without a second factor in front of it.
+
+## Operating it
 
 ```bash
-# View logs for errors
-journalctl -u shellm -n 50 --no-pager
-
-# Re-authenticate if needed
-sudo -iu shellmer
-claude auth login   # or codex
-exit
-sudo systemctl restart shellm
+sudo systemctl restart shellm           # restart
+sudo journalctl -u shellm -f            # logs (JSON lines)
+sudo -iu shellmer shellm status         # is it answering?
+sudo -iu shellmer shellm doctor         # what is broken
 ```
 
-### Enable on boot
-
-The setup script already ran `systemctl enable shellm`, so the service starts automatically after a reboot.
-
----
-
-## Step 6 — Set up cloudflared tunnel
-
-cloudflared creates a secure tunnel from Cloudflare's edge to your VPS. No ports need to be opened in your firewall — all traffic flows outbound through the tunnel.
-
-### 6.1 — Authenticate cloudflared
+**Upgrade:**
 
 ```bash
-cloudflared tunnel login
-```
-
-This opens a browser to select which Cloudflare zone (domain) to authorize.
-
-### 6.2 — Create the tunnel
-
-```bash
-cloudflared tunnel create shellm
-```
-
-Note the **Tunnel ID** in the output — you'll need it for the config.
-
-### 6.3 — Route DNS
-
-```bash
-cloudflared tunnel route dns shellm shellm.notdefined.dev
-```
-
-This creates a CNAME record pointing `shellm.notdefined.dev` to your tunnel.
-
-### 6.4 — Create the config file
-
-```bash
-mkdir -p /etc/cloudflared
-nano /etc/cloudflared/config.yml
-```
-
-```yaml
-tunnel: shellm
-credentials-file: /root/.cloudflared/<TUNNEL_ID>.json
-
-ingress:
-  - hostname: shellm.notdefined.dev
-    service: http://127.0.0.1:6100
-    originRequest:
-      noTLSVerify: true
-  - service: http_status:404
-```
-
-Replace `<TUNNEL_ID>` with the actual tunnel ID from step 6.2.
-
-> **Port note:** SheLLM defaults to port **6100**. If you changed `PORT` in `.env`, update the service URL here to match.
-
-### 6.5 — Install cloudflared as a service
-
-```bash
-cloudflared service install
-systemctl enable cloudflared
-systemctl start cloudflared
-```
-
-### 6.6 — Verify the tunnel
-
-```bash
-# Check tunnel status
-cloudflared tunnel info shellm
-
-# Test from the internet
-curl https://shellm.notdefined.dev/health
-```
-
-You should see the same health JSON, now served over HTTPS through Cloudflare.
-
----
-
-## Step 7 — First login and verification
-
-### Access the admin dashboard
-
-Open your browser and navigate to:
-
-```
-https://shellm.notdefined.dev/admin/dashboard/
-```
-
-Log in with the credentials from your `.env`:
-
-- **Username:** the value of `SHELLM_ADMIN_USER` (default: any username works)
-- **Password:** the value of `SHELLM_ADMIN_PASSWORD`
-
-### Create your first API key
-
-If you didn't run the seed script, create a key from the **Keys** page in the dashboard:
-
-1. Click **Create Key**
-2. Set a name (e.g., `my-app`)
-3. Set RPM (requests per minute) — start with `10`
-4. Copy the generated key — it's shown only once
-
-### Test from the Playground
-
-The dashboard includes an interactive **Playground** page:
-
-1. Go to the **Playground** tab in the sidebar
-2. Select a provider (e.g., `claude`)
-3. Type a prompt: `Say hello in one sentence`
-4. Click **Send**
-
-You should see the response stream in real time. This confirms the full chain works: browser → Cloudflare → tunnel → SheLLM → CLI provider → response.
-
-### Test via curl
-
-From any machine with internet access:
-
-```bash
-curl https://shellm.notdefined.dev/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <your-api-key>" \
-  -d '{
-    "model": "claude",
-    "messages": [{"role": "user", "content": "Say hello in one sentence"}]
-  }'
-```
-
----
-
-## Step 8 — Production hardening
-
-### Add Cloudflare Access (optional, recommended)
-
-Cloudflare Access adds a login wall in front of SheLLM — even before traffic reaches your VPS. This is especially useful for the admin dashboard.
-
-1. Go to **Cloudflare Zero Trust → Access → Applications**
-2. Create a **Self-hosted** application
-3. Set the domain to `shellm.notdefined.dev`
-4. Add a path rule: `/admin/*` → require email OTP or SSO
-5. Leave `/v1/*` and `/health` open (API clients use Bearer tokens)
-
-### Firewall
-
-SheLLM binds to `127.0.0.1` — it doesn't listen on public interfaces. But as a best practice, confirm no ports are exposed:
-
-```bash
-# Should show nothing listening on 0.0.0.0:6000
-ss -tlnp | grep 6100
-```
-
-Since all traffic goes through cloudflared, you can block all inbound ports except SSH:
-
-```bash
-ufw default deny incoming
-ufw allow ssh
-ufw enable
-```
-
-### Monitoring
-
-SheLLM sends webhook alerts for:
-
-- Provider health transitions (healthy → unhealthy and back)
-- Auth failure spikes (configurable threshold)
-- Prompt injection blocks
-
-Configure `SHELLM_ALERT_WEBHOOK_URL` in `.env` to receive these in Slack, Discord, or any webhook-compatible service.
-
-Check service health at any time:
-
-```bash
-# Quick status
-curl https://shellm.notdefined.dev/health
-
-# Detailed diagnostics (admin auth required)
-curl -u admin:your-password https://shellm.notdefined.dev/health/detailed
-
-# Systemd logs
-journalctl -u shellm -f
-
-# SheLLM logs
-sudo -iu shellmer shellm logs -f
-```
-
-### Log rotation
-
-The setup script installs a logrotate config at `/etc/logrotate.d/shellm`. Logs are rotated weekly, compressed, and kept for 4 weeks.
-
----
-
-## Updating SheLLM
-
-One command from the VPS:
-
-```bash
-# [deploy/root] From any directory:
-sudo shellm update
-```
-
-This automatically:
-1. Pulls latest code (`git pull --ff-only`)
-2. Installs deps if `package-lock.json` changed
-3. Runs database migrations
-4. Rebuilds API docs
-5. Updates systemd service file if changed
-6. Restarts the service
-7. Runs a health check — **auto-rollback** if it fails
-
-> **Tip:** Add an alias for convenience: `echo 'alias shellm-update="sudo /usr/bin/shellm update"' >> ~/.bashrc && source ~/.bashrc`. Then just run `shellm-update`.
-
-> **Note:** Requires `sudo` because the update restarts the systemd service. Git commands run as `shellmer` automatically.
-
-**Manual alternative** (step by step):
-
-```bash
-# [shellmer] Pull code:
 sudo -iu shellmer bash -c "cd ~/shellm && git pull && npm ci --omit=dev"
-
-# [root/sudo] Restart:
-sudo systemctl restart shellm
-
-# [any user] Verify:
-curl http://127.0.0.1:6100/health
+sudo cp /home/shellmer/shellm/shellm.service /etc/systemd/system/shellm.service
+sudo systemctl daemon-reload && sudo systemctl restart shellm
 ```
 
----
+Re-copy the unit only when it changed; `git log -- shellm.service` tells you.
+
+**Back up** `/home/shellmer/.shellm/shellm.db` (keys, request logs, audit trail) and
+`/home/shellmer/.config/shellm/env` (secrets). Both are plain files; `cp` is a valid backup.
+
+**Uninstall:**
+
+```bash
+ssh root@your-server 'bash -s' < scripts/setup/vps-uninstall.sh            # keeps the data
+ssh root@your-server 'bash -s -- --purge' < scripts/setup/vps-uninstall.sh # removes the user too
+```
 
 ## Troubleshooting
 
-### Provider shows "unhealthy"
-
-```bash
-# Check which provider is failing
-curl http://127.0.0.1:6100/health | jq .providers
-
-# Test the CLI directly
-sudo -iu shellmer
-claude --version          # should print version
-claude "test" --print     # should respond
-
-# If auth expired, re-authenticate
-claude auth login
-exit
-sudo systemctl restart shellm
-```
-
-### "Connection refused" on the tunnel
-
-```bash
-# Is SheLLM running?
-systemctl status shellm
-
-# Is cloudflared running?
-systemctl status cloudflared
-
-# Does the port match?
-curl http://127.0.0.1:6100/health
-```
-
-### Admin dashboard returns 401
-
-- Verify `SHELLM_ADMIN_PASSWORD` is set in `.env`
-- Check for IP lockout (5 failed attempts → 5 min lockout)
-- View auth failures: `journalctl -u shellm | grep "admin auth"`
-
-### High latency on first request
-
-CLI processes have cold-start overhead (2-4s for Claude). This is normal on the first request after idle. Subsequent requests within the health poll interval are faster. The background health poller keeps providers warm.
-
-### Out of memory
-
-Reduce `MAX_CONCURRENT` in the config file. Each CLI subprocess can consume 100-200 MB. With the default limit of 768 MB (Docker) or system RAM (systemd), keep concurrency low:
-
-| VPS RAM | Recommended MAX_CONCURRENT |
+| Symptom | Cause and fix |
 |---|---|
-| 1 GB | 2 |
-| 2 GB | 4 |
-| 4 GB | 6-8 |
+| `doctor` says the config is readable by other users | `chmod 600 /home/shellmer/.config/shellm/env` |
+| `Claude login: not logged in` | The token expired or was never set. Repeat step 2 and put it in `CLAUDE_CODE_OAUTH_TOKEN` |
+| `503 provider_unavailable` | The provider is disabled, unauthenticated, or its circuit is open after repeated failures. `shellm doctor --live` says which |
+| `504 timeout` | The CLI outlived `TIMEOUT_MS` (default 120 s). Cold starts are 2–4 s, so a timeout usually means the provider is degraded |
+| `429 rate_limited` | Your own limit (`SHELLM_GLOBAL_RPM`, or the key's `rpm`), not the provider's |
+| The service starts and exits immediately | `journalctl -u shellm -n 50`. A missing config file is the common cause: run `shellm init` as `shellmer` |
+| Works locally but not through the tunnel | The tunnel points at the wrong port, or `HOST` is not loopback |
 
----
-
-## Architecture recap
-
-```
-Internet
-    │
-    ▼
-┌─────────────────────────┐
-│   Cloudflare Edge       │  TLS termination, DDoS protection
-│   shellm.notdefined.dev │  (optional: Cloudflare Access)
-└───────────┬─────────────┘
-            │ encrypted tunnel
-            ▼
-┌─────────────────────────┐
-│   cloudflared           │  Runs as systemd service
-│   (outbound tunnel)     │  No inbound ports needed
-└───────────┬─────────────┘
-            │ http://127.0.0.1:6100
-            ▼
-┌─────────────────────────┐
-│   SheLLM                │  Node.js + Express
-│   (systemd service)     │  Auth, rate limiting, queue
-│                         │  Prompt guard, audit logging
-│   ┌──────┬──────┬─────┐ │
-│   │Claude│Codex│      │ │  CLI subprocesses
-│   └──────┴──────┴─────┘ │
-│   ┌────────┐            │
-│   │Cerebras│            │  HTTP API
-│   └────────┘            │
-│   ┌──────┐              │
-│   │SQLite│              │  Keys, logs, settings
-│   └──────┘              │
-└─────────────────────────┘
-```
-
----
-
-## Quick reference
-
-| Task | Command |
-|---|---|
-| Start service | `sudo systemctl start shellm` |
-| Stop service | `sudo systemctl stop shellm` |
-| Restart service | `sudo systemctl restart shellm` |
-| View logs (live) | `journalctl -u shellm -f` |
-| Check health | `curl http://127.0.0.1:6100/health` |
-| Re-auth a CLI | `sudo -iu shellmer && claude auth login && exit` |
-| Update SheLLM | `sudo shellm update` |
-| Tunnel status | `cloudflared tunnel info shellm` |
-| View admin logs | `journalctl -u shellm \| grep admin` |
-
----
-
-## FAQ
-
-### Which user do I use for what?
-
-| User | Purpose |
-|---|---|
-| **root** or **deploy** (with sudo) | systemctl, editing .env, cloudflared, firewall |
-| **shellmer** | CLI authentication (claude/codex), manual server testing |
-
-`shellmer` is intentionally unprivileged — it cannot run `sudo`. Service management always happens from a user with sudo access.
-
-### Git clone fails with "Permission denied (publickey)"
-
-The setup script uses HTTPS, not SSH. If you see this error you may be running an older version of the script, or cloning manually with `git@github.com:...`. Use HTTPS instead:
-
-```bash
-git clone https://github.com/rodacato/SheLLM.git /home/shellmer/shellm
-```
-
-### Codex CLI fails with "Missing optional dependency @openai/codex-linux-x64"
-
-The platform-specific binary wasn't installed. Reinstall as shellmer:
-
-```bash
-sudo -iu shellmer
-npm install -g @openai/codex@latest
-```
-
-### npm install -g fails with EACCES as shellmer
-
-The npm global prefix needs to be set to shellmer's home directory. The setup script does this automatically, but if you're installing manually:
-
-```bash
-sudo -iu shellmer
-mkdir -p ~/.npm-global
-npm config set prefix ~/.npm-global
-echo 'export PATH=$HOME/.npm-global/bin:$PATH' >> ~/.bashrc
-source ~/.bashrc
-npm install -g @openai/codex@latest   # now works without root
-```
-
-### Config not being loaded / "SHELLM_ADMIN_PASSWORD not configured"
-
-SheLLM reads `~/.config/shellm/env` (or `$XDG_CONFIG_HOME/shellm/env`) and ignores any `.env` in
-the repository:
-
-```
-/home/shellmer/.config/shellm/env    ← correct
-/home/shellmer/shellm/.env           ← ignored
-```
-
-If your config is still in the repository:
-
-```bash
-sudo -u shellmer mkdir -p /home/shellmer/.config/shellm
-mv /home/shellmer/shellm/.env /home/shellmer/.config/shellm/env
-chown shellmer:shellmer /home/shellmer/.config/shellm/env
-chmod 600 /home/shellmer/.config/shellm/env
-sudo cp /home/shellmer/shellm/shellm.service /etc/systemd/system/shellm.service
-sudo systemctl daemon-reload
-sudo systemctl restart shellm
-```
-
-### "Refusing to start: admin password is too weak"
-
-SheLLM requires the admin password to be at least 12 characters. Edit the config and set a stronger password:
-
-```bash
-nano /home/shellmer/.config/shellm/env
-# Change SHELLM_ADMIN_PASSWORD to something >= 12 chars
-sudo systemctl restart shellm
-```
-
-### How do I check logs after a crash?
-
-```bash
-# Last 50 lines of service logs
-sudo journalctl -u shellm -n 50 --no-pager
-
-# Service status with exit code
-sudo systemctl status shellm
-
-# Follow logs in real time
-sudo journalctl -u shellm -f
-```
-
-### Is the setup script idempotent / can I run it again?
-
-Yes. Most steps have guards (skip if already exists). It's safe to re-run after fixing an issue. It will pull latest code, reinstall deps, and update the systemd service without losing your `.env` or database.
+When the subscription's own quota runs out, the CLI says so and the error surfaces as
+`502 cli_failed` carrying the CLI's message.
