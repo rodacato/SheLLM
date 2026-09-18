@@ -4,18 +4,12 @@ const logger = require('../lib/logger');
 
 // Dynamic: reads from DB > env > default (30)
 function getGlobalRpm() {
-  try {
-    const { getSetting } = require('../db/settings');
-    return getSetting('global_rpm');
-  } catch {
-    return parseInt(process.env.SHELLM_GLOBAL_RPM || '30', 10);
-  }
+  return parseInt(process.env.SHELLM_GLOBAL_RPM || '30', 10);
 }
 const WINDOW_MS = 60_000;
 const REQUIRE_AUTH = process.env.SHELLM_REQUIRE_AUTH !== 'false';
 function getAuthAlertThreshold() {
-  try { const { getSetting } = require('../db/settings'); return getSetting('auth_alert_threshold'); }
-  catch { return parseInt(process.env.SHELLM_AUTH_ALERT_THRESHOLD || '10', 10); }
+  return parseInt(process.env.SHELLM_AUTH_ALERT_THRESHOLD || '10', 10);
 }
 
 // Track auth failures for alerting

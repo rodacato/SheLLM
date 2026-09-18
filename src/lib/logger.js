@@ -16,14 +16,7 @@ if (process.env.NODE_ENV === 'production' && startupLevel === LEVELS.debug) {
 }
 
 function getCurrentLevel() {
-  try {
-    const { getDb } = require('../db/index');
-    if (!getDb()) return startupLevel;
-    const { getSetting } = require('../db/settings');
-    return LEVELS[getSetting('log_level')] ?? startupLevel;
-  } catch {
-    return startupLevel;
-  }
+  return startupLevel;
 }
 
 function log(level, data) {

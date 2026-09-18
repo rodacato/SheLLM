@@ -5,8 +5,7 @@ const { sendError, rateLimited } = require('../errors');
 const logger = require('../lib/logger');
 
 function getAdminMaxAttempts() {
-  try { const { getSetting } = require('../db/settings'); return getSetting('admin_max_attempts'); }
-  catch { return parseInt(process.env.SHELLM_ADMIN_MAX_ATTEMPTS || '5', 10); }
+  return parseInt(process.env.SHELLM_ADMIN_MAX_ATTEMPTS || '5', 10);
 }
 const ADMIN_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
