@@ -1,8 +1,8 @@
 /**
- * CLI contract tests — spawn the real claude, gemini and codex binaries with the exact
- * arguments each provider builds, and fail if a CLI rejects any of them.
+ * CLI contract tests — spawn the real claude and codex binaries with the exact arguments
+ * each provider builds, and fail if a CLI rejects any of them.
  *
- * Needs no login: the three CLIs parse their arguments before they authenticate.
+ * Needs no login: both CLIs parse their arguments before they authenticate.
  * Run: npm run test:cli (the CLIs must be on PATH). Output formats need a login and are
  * covered by npm run test:e2e.
  */
@@ -14,10 +14,9 @@ const os = require('node:os');
 const path = require('node:path');
 
 const claude = require('../../src/providers/claude');
-const gemini = require('../../src/providers/gemini');
 const codex = require('../../src/providers/codex');
 
-// commander (claude), yargs (gemini) and clap (codex) usage errors
+// commander (claude) and clap (codex) usage errors
 const REJECTED = /unknown option|unknown arguments?:|unexpected argument|invalid value|missing required argument/i;
 const SETTLE_MS = 20000;
 
@@ -70,11 +69,6 @@ describe('claude CLI contract', () => {
   it('accepts the chat arguments', () => assertAccepted('claude', claude.buildArgs(request)));
   it('accepts the stream arguments', () => assertAccepted('claude', claude.buildStreamArgs(request)));
   it('rejects an unknown flag', () => assertRejected('claude', ['--print', '--shellm-bogus-flag', '--', 'ping']));
-});
-
-describe('gemini CLI contract', () => {
-  it('accepts the chat arguments', () => assertAccepted('gemini', gemini.buildArgs(request)));
-  it('rejects an unknown flag', () => assertRejected('gemini', ['--shellm-bogus-flag', '-p', 'ping']));
 });
 
 describe('codex CLI contract', () => {
