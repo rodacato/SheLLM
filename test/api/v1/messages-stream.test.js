@@ -122,15 +122,24 @@ describe('/v1/messages streaming', () => {
   });
 
   it('works with buffer-and-flush for non-streaming providers', async () => {
-    const res = await request(app)
-      .post('/v1/messages')
-      .set('Authorization', `Bearer ${testKey}`)
-      .send({
-        model: 'gemini',
-        max_tokens: 1024,
-        stream: true,
-        messages: [{ role: 'user', content: 'hello' }],
-      });
+    const { engines } = require('../../../src/routing');
+    const chatStream = engines.codex.chatStream;
+    delete engines.codex.chatStream;
+
+    let res;
+    try {
+      res = await request(app)
+        .post('/v1/messages')
+        .set('Authorization', `Bearer ${testKey}`)
+        .send({
+          model: 'codex',
+          max_tokens: 1024,
+          stream: true,
+          messages: [{ role: 'user', content: 'hello' }],
+        });
+    } finally {
+      engines.codex.chatStream = chatStream;
+    }
 
     assert.strictEqual(res.status, 200);
     assert.ok(res.headers['content-type'].includes('text/event-stream'));

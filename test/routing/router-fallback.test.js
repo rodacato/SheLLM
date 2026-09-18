@@ -58,8 +58,8 @@ describe('router fallback', () => {
   });
 
   it('routes directly when primary is healthy', async () => {
-    const result = await route({ model: 'gemini', prompt: 'hello' });
-    assert.strictEqual(result.provider, 'gemini');
+    const result = await route({ model: 'codex', prompt: 'hello' });
+    assert.strictEqual(result.provider, 'codex');
     assert.strictEqual(result.original_provider, undefined);
   });
 

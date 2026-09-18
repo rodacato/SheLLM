@@ -34,7 +34,7 @@ describe('health', () => {
     const status = await getHealthStatus();
     assert.strictEqual(status.status, 'ok');
     assert.ok(status.providers.claude);
-    assert.ok(status.providers.gemini);
+    assert.ok(status.providers.codex);
     assert.ok(status.providers.codex);
     assert.ok(status.providers.cerebras);
 

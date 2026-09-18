@@ -5,7 +5,7 @@
 ### Prerequisites
 
 - Node.js >= 24
-- Access to at least one CLI tool (Claude Code, Gemini CLI, or Codex CLI)
+- Access to at least one CLI tool (Claude Code or Codex CLI)
 - Docker and Docker Compose (optional — only for devcontainer)
 
 ### Development Setup
@@ -32,7 +32,6 @@ The project includes a devcontainer configuration for local development. Open in
 # The devcontainer installs all CLI tools automatically
 # After opening, verify:
 claude --version
-gemini --version
 codex --version
 ```
 
@@ -214,7 +213,7 @@ fix(queue): prevent double-resolution when subprocess times out
 
 docs(contributing): add conventional commits section
 
-chore(deps): bump @google/gemini-cli to 0.31.0
+chore(deps): bump @openai/codex to 0.155.1
 
 refactor(router): extract queue logic into separate module
 ```

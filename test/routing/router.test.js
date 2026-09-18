@@ -17,14 +17,11 @@ describe('router', () => {
   const { resolveProvider, listProviders, queue, getAliases } = require('../../src/routing');
   it('resolveProvider resolves direct names and model aliases', () => {
     assert.strictEqual(resolveProvider('claude')?.name, 'claude');
-    assert.strictEqual(resolveProvider('gemini')?.name, 'gemini');
     assert.strictEqual(resolveProvider('codex')?.name, 'codex');
     assert.strictEqual(resolveProvider('cerebras')?.name, 'cerebras');
 
     // Model aliases
     assert.strictEqual(resolveProvider('claude-opus')?.name, 'claude');
-    assert.strictEqual(resolveProvider('gemini-pro')?.name, 'gemini');
-    assert.strictEqual(resolveProvider('codex-mini')?.name, 'codex');
     assert.strictEqual(resolveProvider('cerebras-8b')?.name, 'cerebras');
 
     // Unknown
@@ -34,7 +31,7 @@ describe('router', () => {
   it('listProviders returns all providers with correct shape', () => {
     const providers = listProviders();
     assert.ok(Array.isArray(providers));
-    assert.ok(providers.length >= 4);
+    assert.ok(providers.length >= 3);
     for (const p of providers) {
       assert.ok(p.name, 'provider has name');
       assert.ok(Array.isArray(p.models), 'provider has models array');

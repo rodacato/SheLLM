@@ -36,7 +36,7 @@ describe('admin /admin/logs', () => {
 
     // Seed some log entries
     insertRequestLog({ request_id: 'req-1', client_name: 'app1', provider: 'claude', model: 'claude', status: 200, duration_ms: 1500, queued_ms: 100, tokens: 500, cost_usd: 0.01 });
-    insertRequestLog({ request_id: 'req-2', client_name: 'app1', provider: 'gemini', model: 'gemini', status: 200, duration_ms: 2000, queued_ms: 50, tokens: 300, cost_usd: 0.005 });
+    insertRequestLog({ request_id: 'req-2', client_name: 'app1', provider: 'codex', model: 'codex', status: 200, duration_ms: 2000, queued_ms: 50, tokens: 300, cost_usd: 0.005 });
     insertRequestLog({ request_id: 'req-3', client_name: 'app2', provider: 'claude', model: 'claude', status: 400, duration_ms: 10, queued_ms: null, tokens: null, cost_usd: null });
     insertRequestLog({ request_id: 'req-4', client_name: null, provider: 'cerebras', model: 'cerebras', status: 502, duration_ms: 5000, queued_ms: 200, tokens: null, cost_usd: null });
 

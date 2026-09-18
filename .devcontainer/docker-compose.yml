@@ -12,7 +12,6 @@ services:
       # Provider CLI logins are what this repo exercises; keeping them in volumes spares a
       # re-login on every rebuild. post-create.sh hands ownership to the remote user.
       - claude-auth:/home/vscode/.claude
-      - gemini-auth:/home/vscode/.gemini
       - codex-auth:/home/vscode/.codex
       # better-sqlite3 is a native module: a Linux build must never mix with the host's.
       - node_modules:/workspaces/shellm/node_modules
@@ -32,6 +31,5 @@ services:
 volumes:
   commandhistory:
   claude-auth:
-  gemini-auth:
   codex-auth:
   node_modules:

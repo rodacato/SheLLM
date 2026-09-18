@@ -6,7 +6,6 @@ describe('model routing', () => {
 
   it('routes any provider-prefixed model id to that provider', () => {
     assert.strictEqual(resolveProvider('claude-sonnet-4-5-20250929')?.name, 'claude');
-    assert.strictEqual(resolveProvider('gemini-2.5-pro')?.name, 'gemini');
   });
 
   it('does not route a model with no known prefix', () => {

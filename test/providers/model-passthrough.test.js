@@ -10,7 +10,6 @@ describe('model passthrough', () => {
   const originalPath = process.env.PATH;
   let fakeBin;
   let claude;
-  let gemini;
 
   function argsOf(cli) {
     return JSON.parse(fs.readFileSync(path.join(fakeBin, `${cli}.args.json`), 'utf8'));
@@ -27,14 +26,9 @@ const unknown = args[args.indexOf('--model') + 1] === 'claude-nonexistent-model-
 process.stdout.write(fs.readFileSync(${JSON.stringify(FIXTURES)} + (unknown ? '/result-unknown-model.json' : '/result-haiku.json')));
 process.exit(unknown ? 1 : 0);
 `, { mode: 0o755 });
-    fs.writeFileSync(path.join(fakeBin, 'gemini'), `#!/usr/bin/env node
-require('fs').writeFileSync(${JSON.stringify(path.join(fakeBin, 'gemini.args.json'))}, JSON.stringify(process.argv.slice(2)));
-process.stdout.write(JSON.stringify({ response: 'OK', stats: { models: {} } }));
-`, { mode: 0o755 });
 
     process.env.PATH = `${fakeBin}${path.delimiter}${originalPath}`;
     claude = require('../../src/providers/claude');
-    gemini = require('../../src/providers/gemini');
   });
 
   after(() => {
@@ -91,12 +85,4 @@ process.stdout.write(JSON.stringify({ response: 'OK', stats: { models: {} } }));
     }
   });
 
-  it('passes the requested model to gemini as -m', async () => {
-    await gemini.chat({ prompt: 'Reply with OK', model: 'gemini-flash' });
-    const args = argsOf('gemini');
-    assert.strictEqual(args[args.indexOf('-m') + 1], 'flash');
-
-    await gemini.chat({ prompt: 'Reply with OK', model: 'gemini' });
-    assert.ok(!argsOf('gemini').includes('-m'));
-  });
 });

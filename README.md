@@ -182,8 +182,7 @@ Response:
 
 | Provider | Type | Models |
 |---|---|---|
-| Claude Code | CLI | `claude`, `claude-sonnet`, `claude-sonnet-4-6`, `claude-haiku`, `claude-haiku-4-5`, `claude-opus`, `claude-opus-4-6` |
-| Gemini CLI | CLI | `gemini`, `gemini-pro`, `gemini-flash`, `gemini-2.0-flash`, `gemini-2.5-pro` |
+| Claude Code | CLI | `claude` (CLI default), `claude-haiku`, `claude-sonnet`, `claude-opus`, plus any `claude-*` model id the CLI accepts |
 | Codex CLI | CLI | `codex`, `codex-mini` |
 | Cerebras | API | `cerebras`, `cerebras-8b`, `cerebras-70b`, `cerebras-120b`, `cerebras-qwen` |
 
@@ -198,7 +197,6 @@ graph LR
     RateLimit --> Queue[Request Queue]
     Queue --> Router
     Router --> Claude[Claude CLI]
-    Router --> Gemini[Gemini CLI]
     Router --> Codex[Codex CLI]
     Router --> Cerebras[Cerebras API]
     Router -.->|health check| Health[Health Poller]

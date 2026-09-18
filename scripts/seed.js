@@ -34,7 +34,7 @@ for (const spec of clients) {
 }
 
 // --- Request logs ---
-const providers = ['claude', 'gemini', 'codex', 'cerebras'];
+const providers = ['claude', 'codex', 'codex', 'cerebras'];
 const statuses = [200, 200, 200, 200, 200, 200, 400, 400, 502, 200]; // 60% success, 20% client err, 10% server err
 const clientNames = ['demo-app', 'test-runner', null];
 

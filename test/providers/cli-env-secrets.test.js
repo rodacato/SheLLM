@@ -5,7 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 const ENV_EXAMPLE = path.resolve(__dirname, '../../.env.example');
-const OWN_CREDENTIALS = { claude: ['CLAUDE_CODE_OAUTH_TOKEN'], gemini: [] };
+const OWN_CREDENTIALS = { claude: ['CLAUDE_CODE_OAUTH_TOKEN'], codex: [] };
 
 function exampleConfig() {
   const lines = fs.readFileSync(ENV_EXAMPLE, 'utf8').matchAll(/^#?\s*([A-Z][A-Z0-9_]+)=(.*)$/gm);
@@ -19,7 +19,7 @@ describe('CLI environment', () => {
   before(() => {
     assert.ok(!require.cache[require.resolve('../../src/providers/base')], 'base.js already captured the real PATH');
     fakeBin = fs.mkdtempSync(path.join(os.tmpdir(), 'shellm-fakebin-'));
-    for (const cli of ['claude', 'gemini']) {
+    for (const cli of ['claude', 'codex']) {
       const dump = path.join(fakeBin, `${cli}.env.json`);
       fs.writeFileSync(path.join(fakeBin, cli), `#!/usr/bin/env node
 require('fs').writeFileSync(${JSON.stringify(dump)}, JSON.stringify(process.env));
@@ -44,7 +44,7 @@ process.stdout.write(JSON.stringify({ result: 'ok', response: 'ok' }));
     const configKeys = Object.keys(exampleConfig());
     assert.ok(configKeys.includes('SHELLM_ADMIN_PASSWORD'), '.env.example no longer lists the admin password');
 
-    for (const cli of ['claude', 'gemini']) {
+    for (const cli of ['claude', 'codex']) {
       await require(`../../src/providers/${cli}`).chat({ prompt: 'hi' });
       const childEnv = JSON.parse(fs.readFileSync(path.join(fakeBin, `${cli}.env.json`), 'utf8'));
       const leaked = configKeys.filter((key) => key in childEnv && !OWN_CREDENTIALS[cli].includes(key));
@@ -53,7 +53,7 @@ process.stdout.write(JSON.stringify({ result: 'ok', response: 'ok' }));
   });
 
   it('hands claude its own token and no other provider', async () => {
-    for (const cli of ['claude', 'gemini']) {
+    for (const cli of ['claude', 'codex']) {
       await require(`../../src/providers/${cli}`).chat({ prompt: 'hi' });
       const childEnv = JSON.parse(fs.readFileSync(path.join(fakeBin, `${cli}.env.json`), 'utf8'));
       assert.strictEqual('CLAUDE_CODE_OAUTH_TOKEN' in childEnv, cli === 'claude', cli);
