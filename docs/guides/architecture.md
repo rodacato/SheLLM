@@ -12,12 +12,11 @@ src/
 ├── app.js                 # Express app: middleware chain, route mounting, static files
 ├── errors.js              # Error factories (invalidRequest, rateLimited, etc.)
 ├── cli.js                 # CLI dispatcher (shellm command)
-├── cli/                   # CLI subcommands (start, stop, restart, status, logs, etc.)
+├── cli/                   # CLI subcommands (init, doctor, start, stop, status, logs, …)
 │
 ├── routing/               # Request routing and provider dispatch
 │   ├── index.js           # route() — main dispatch + barrel exports
-│   ├── engines.js         # Engine registry (subprocess + HTTP providers)
-│   ├── model-cache.js     # Model-to-provider mapping, aliases, cache invalidation
+│   ├── engines.js         # Engine registry (one entry per CLI provider)
 │   ├── provider-select.js # Provider selection, availability checks, fail-fast
 │   └── fallback.js        # Fallback routing across providers, provider listing
 │
@@ -49,10 +48,8 @@ src/
 │   ├── clients.js         # Client CRUD + key hashing (HMAC-SHA256, legacy SHA-256)
 │   ├── request-logs.js    # Request log insertion and pruning
 │   ├── providers.js       # Provider CRUD and settings
-│   ├── models.js          # Model CRUD and aliases
 │   ├── audit.js           # Admin audit log
-│   ├── settings.js        # Hot-reloadable settings registry (DB → env → default)
-│   └── migrations/        # SQL migration files (001–009)
+│   └── migrations/        # SQL migration files (001–013)
 │
 ├── lib/                   # Shared utilities
 │   ├── logger.js          # Structured JSON logger (level-aware)
@@ -65,10 +62,7 @@ src/
 │   ├── logs.js            # Request log query routes
 │   ├── stats.js           # Analytics routes
 │   ├── providers.js       # Provider management routes
-│   ├── settings.js        # Settings management routes
 │   └── public/            # Dashboard frontend (vanilla JS SPA)
-│
-└── public/                # Public landing page
 ```
 
 ---
@@ -86,7 +80,6 @@ HTTP Request
 │  3. requestLogger           log completion   │
 │  4. Content-Type check      POST/PATCH only  │
 │  5. auth (Bearer token)     validate + rate  │
-│  6. safetyHeader            set X-SheLLM-*   │
 └──────────────┬──────────────────────────────┘
                │
                ▼
@@ -174,8 +167,6 @@ SQLite (better-sqlite3) with synchronous API. Each domain has its own module:
 
 - **clients.js** — API key management with HMAC-SHA256 hashing. Legacy SHA-256 keys are auto-upgraded on successful auth.
 - **providers.js** — Provider registry with capabilities JSON and health check config.
-- **models.js** — Model registry with aliases and upstream model mapping.
-- **settings.js** — Hot-reloadable key-value config. Fallback chain: DB → env var → default.
 
 Migrations live in `src/db/migrations/` and run automatically on startup.
 
@@ -200,19 +191,18 @@ server.js
         ├── api/v1/*
         │     └── routing/ (route, selectProvider, queue, stream-slots)
         ├── admin/*
-        │     ├── db/* (clients, providers, models, audit)
-        │     └── routing/ (engines, invalidateModelCache)
+        │     ├── db/* (clients, providers, audit)
+        │     └── routing/ (engines)
         └── infra/health (getHealthStatus)
 
 routing/
   ├── index.js (route function)
   ├── engines.js → providers/*
-  ├── model-cache.js → engines, db/models
-  ├── provider-select.js → engines, model-cache, infra/circuit-breaker, infra/health
+  ├── provider-select.js → engines, infra/circuit-breaker, infra/health
   └── fallback.js → provider-select, engines, infra/queue, infra/circuit-breaker
 
 infra/
-  ├── queue.js → db/settings, errors
+  ├── queue.js → errors
   ├── stream-slots.js (no deps)
   ├── circuit-breaker.js → lib/logger
   └── health.js → queue, circuit-breaker, providers/base, db
@@ -222,9 +212,7 @@ db/
   ├── clients.js → index (getDb)
   ├── request-logs.js → index (getDb)
   ├── providers.js → index (getDb)
-  ├── models.js → index (getDb)
-  ├── audit.js → index (getDb)
-  └── settings.js → index (getDb)
+  └── audit.js → index (getDb)
 ```
 
 ---

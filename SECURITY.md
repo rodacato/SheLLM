@@ -50,7 +50,6 @@ SheLLM manages auth tokens for three CLI tools. These tokens are **equivalent to
 |---|---|---|
 | Claude Code | `~/.claude/` | Native home dir (`~shellmer/`) |
 | Codex CLI | `~/.codex/` | Native home dir (`~shellmer/`) |
-| Cerebras | `CEREBRAS_API_KEY` env var | Environment |
 
 **Rules:**
 
@@ -99,7 +98,7 @@ The Claude CLI provider uses `--dangerously-skip-permissions` for non-interactiv
 
 ### Claude CLI Installer
 
-The Claude CLI is installed via `curl https://claude.ai/install.sh | bash`. No official checksum is available. The installer runs during Docker build (not runtime) as non-root user `node`. Gemini and Codex CLIs are version-pinned via npm.
+`scripts/setup/vps.sh` installs Claude Code with `curl https://claude.ai/install.sh | bash -s <version>`, pinned to `CLAUDE_VERSION` and run as the unprivileged service user. The installer publishes no checksum, so the pin is what makes an install reproducible.
 
 ### CSP `unsafe-inline` / `unsafe-eval`
 

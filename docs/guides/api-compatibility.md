@@ -99,7 +99,7 @@ message = client.messages.create(
 
 ### 1. Model Names
 
-SheLLM uses its own model identifiers. Use `GET /v1/models` to see what's available. You can define custom aliases via the `SHELLM_ALIASES` env var:
+Model names map to the CLI's own aliases. `GET /v1/models` lists the ones SheLLM maps; any other id the CLI accepts is passed through unchanged. You can define custom aliases via the `SHELLM_ALIASES` env var:
 
 ```bash
 # Map OpenAI model names to SheLLM providers
@@ -117,7 +117,7 @@ SheLLM uses its own API keys (created via `/admin/keys`), not OpenAI or Anthropi
 
 If you're swapping between endpoints, be aware of the different valid ranges.
 
-Only Cerebras applies it. The claude and codex CLIs have no temperature flag, so SheLLM validates the value and ignores it for them.
+The claude and codex CLIs have no temperature flag, so SheLLM validates the value and ignores it for them.
 
 ### 4. `max_tokens` Requirement
 
@@ -200,7 +200,7 @@ These features are not implemented and will be silently ignored or rejected:
 
 Not all SheLLM providers support all parameters equally:
 
-| Capability | Claude | Codex | Cerebras |
+| Capability | Claude | Codex |
 |---|---|---|---|---|
 | System prompt | Native | Prepended to prompt | Prepended to prompt | Native |
 | Temperature | Ignored | Ignored | Ignored | Passed |

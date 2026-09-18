@@ -6,7 +6,7 @@
 
 ## Primary user — the maintainer, integrating his own work
 
-One person who pays for Claude Max, Gemini and ChatGPT/Codex subscriptions and wants to use them
+One person who pays for Claude Max and ChatGPT/Codex subscriptions and wants to use them
 from his own software instead of buying API credits on top. He reaches SheLLM in three ways:
 
 1. **His own apps**, running as services on his own server — a learning platform, a personal
@@ -57,7 +57,7 @@ own projects.
 
 ## Non-users (what SheLLM is explicitly NOT for)
 
-- ❌ **Anyone using a subscription that isn't theirs.** Sharing one person's Claude, Gemini or
+- ❌ **Anyone using a subscription that isn't theirs.** Sharing one person's Claude or
   ChatGPT login with other people, a team or paying customers breaks the providers' terms and is
   exactly how accounts get banned. No multi-tenant mode, no reselling, no "shared key pool".
 - ❌ **Teams and organizations.** One admin, one owner of the subscriptions. No roles, no orgs, no
