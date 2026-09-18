@@ -127,18 +127,18 @@ describe('circuit-breaker', () => {
     it('tracks state independently per provider', () => {
       for (let i = 0; i < 3; i++) cb.recordFailure('claude');
       assert.strictEqual(cb.getCircuitState('claude').state, 'open');
-      assert.strictEqual(cb.canSendTraffic('gemini'), true);
-      assert.strictEqual(cb.getCircuitState('gemini').state, 'closed');
+      assert.strictEqual(cb.canSendTraffic('codex'), true);
+      assert.strictEqual(cb.getCircuitState('codex').state, 'closed');
     });
   });
 
   describe('getAllCircuitStates', () => {
     it('returns states for all known providers', () => {
       cb.canSendTraffic('claude');
-      cb.canSendTraffic('gemini');
+      cb.canSendTraffic('codex');
       const states = cb.getAllCircuitStates();
       assert.ok(states.claude);
-      assert.ok(states.gemini);
+      assert.ok(states.codex);
       assert.strictEqual(states.claude.state, 'closed');
     });
   });

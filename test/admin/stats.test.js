@@ -37,7 +37,7 @@ describe('admin /admin/stats', () => {
     // Seed data
     insertRequestLog({ request_id: 'r1', client_name: 'app1', provider: 'claude', model: 'claude', status: 200, duration_ms: 1000, queued_ms: 50, tokens: 400, cost_usd: 0.01 });
     insertRequestLog({ request_id: 'r2', client_name: 'app1', provider: 'claude', model: 'claude', status: 200, duration_ms: 2000, queued_ms: 100, tokens: 600, cost_usd: 0.02 });
-    insertRequestLog({ request_id: 'r3', client_name: 'app2', provider: 'gemini', model: 'gemini', status: 400, duration_ms: 10, queued_ms: null, tokens: null, cost_usd: null });
+    insertRequestLog({ request_id: 'r3', client_name: 'app2', provider: 'codex', model: 'codex', status: 400, duration_ms: 10, queued_ms: null, tokens: null, cost_usd: null });
 
     createClient({ name: 'active-client' });
     createClient({ name: 'inactive-client' });
@@ -78,7 +78,7 @@ describe('admin /admin/stats', () => {
       .set('Authorization', `Basic ${adminCreds}`);
 
     assert.strictEqual(res.body.by_provider.claude, 2);
-    assert.strictEqual(res.body.by_provider.gemini, 1);
+    assert.strictEqual(res.body.by_provider.codex, 1);
   });
 
   it('by_status groups correctly', async () => {

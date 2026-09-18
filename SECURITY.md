@@ -50,7 +50,6 @@ SheLLM manages auth tokens for three CLI tools. These tokens are **equivalent to
 | Provider | Token Location | Persistence |
 |---|---|---|
 | Claude Code | `~/.claude/` | Native home dir (`~shellmer/`) |
-| Gemini CLI | `~/.gemini/` | Native home dir (`~shellmer/`) |
 | Codex CLI | `~/.codex/` | Native home dir (`~shellmer/`) |
 | Cerebras | `CEREBRAS_API_KEY` env var | Environment |
 

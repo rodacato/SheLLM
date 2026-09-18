@@ -71,7 +71,7 @@ shortcut is worth leaving the official, unmodified CLI binary.**
 
 - **Background:** built editor integrations on top of three vendor CLIs; keeps a diff of every
   `--help` output across versions.
-- **Brings:** how `claude`, `gemini` and `codex` really behave — `--print` vs
+- **Brings:** how `claude` and `codex` really behave — `--print` vs
   `--input-format stream-json`, what goes to stdout vs stderr, ANSI and warning noise, where each
   stores its OAuth state, what a version bump silently changed.
 - **Consult when:** touching `src/providers/`; bumping a CLI version ([`VERSIONS.md`](../VERSIONS.md));

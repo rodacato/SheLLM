@@ -563,7 +563,6 @@
             <select x-model="filterProvider" @change="applyFilters()" class="bg-[#2e3b44] border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container rounded-lg">
               <option value="">All Providers</option>
               <option value="claude">claude</option>
-              <option value="gemini">gemini</option>
               <option value="codex">codex</option>
               <option value="cerebras">cerebras</option>
             </select>
@@ -848,7 +847,7 @@
                 <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Models (comma-separated, blank = all)</label>
                 <input type="text" x-model="createForm.models"
                   class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"
-                  placeholder="claude, gemini">
+                  placeholder="claude, codex">
               </div>
               <div>
                 <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Expires At (optional)</label>

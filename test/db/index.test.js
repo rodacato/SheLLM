@@ -140,9 +140,9 @@ describe('db layer', () => {
     });
 
     it('creates a client with custom rpm and models', () => {
-      const client = createClient({ name: 'custom-app', rpm: 20, models: ['claude', 'gemini'] });
+      const client = createClient({ name: 'custom-app', rpm: 20, models: ['claude', 'codex'] });
       assert.strictEqual(client.rpm, 20);
-      assert.deepStrictEqual(client.models, ['claude', 'gemini']);
+      assert.deepStrictEqual(client.models, ['claude', 'codex']);
     });
 
     it('rejects duplicate name', () => {
@@ -294,7 +294,7 @@ describe('db layer', () => {
         request_id: 'req-2',
         client_name: null,
         provider: null,
-        model: 'gemini',
+        model: 'codex',
         status: 400,
         duration_ms: 5,
         queued_ms: null,
@@ -328,12 +328,12 @@ describe('db layer', () => {
   describe('provider_settings', () => {
     it('seeds default providers on initDb', () => {
       const settings = getProviderSettings();
-      assert.ok(settings.length >= 4);
+      assert.ok(settings.length >= 3);
       const names = settings.map((s) => s.name);
       assert.ok(names.includes('claude'));
-      assert.ok(names.includes('gemini'));
       assert.ok(names.includes('codex'));
       assert.ok(names.includes('cerebras'));
+      assert.ok(!names.includes('gemini'), 'gemini was removed');
       for (const s of settings) {
         assert.strictEqual(s.enabled, 1);
       }
@@ -351,14 +351,14 @@ describe('db layer', () => {
     });
 
     it('setProviderEnabled disables a provider', () => {
-      const updated = setProviderEnabled('gemini', false);
+      const updated = setProviderEnabled('codex', false);
       assert.ok(updated);
       assert.strictEqual(updated.enabled, 0);
-      assert.strictEqual(getProviderSetting('gemini').enabled, 0);
+      assert.strictEqual(getProviderSetting('codex').enabled, 0);
     });
 
     it('setProviderEnabled re-enables a provider', () => {
-      const updated = setProviderEnabled('gemini', true);
+      const updated = setProviderEnabled('codex', true);
       assert.ok(updated);
       assert.strictEqual(updated.enabled, 1);
     });

@@ -11,7 +11,7 @@ Step-by-step guide for deploying SheLLM on a VPS with cloudflared. After followi
 | A VPS with Ubuntu 22.04+ (or Debian 12+) | SheLLM runs as a systemd service |
 | Root SSH access | Initial setup creates a dedicated user |
 | A Cloudflare account with a domain | cloudflared tunnel provides TLS + zero-trust access |
-| CLI subscriptions (at least one) | Claude Max, Gemini AI Plus, or OpenAI Enterprise |
+| CLI subscriptions (at least one) | Claude Max, or ChatGPT Plus/Pro for Codex |
 
 > **How much VPS do you need?** SheLLM is lightweight — 1 vCPU / 1 GB RAM handles most workloads. The bottleneck is CLI subprocess concurrency (`MAX_CONCURRENT`), not SheLLM itself. A 2 vCPU / 2 GB VPS is comfortable for `MAX_CONCURRENT=4`.
 
@@ -37,7 +37,7 @@ bash /home/shellmer/shellm/scripts/setup/vps.sh
 
 1. Creates a `shellmer` system user (SheLLM never runs as root)
 2. Installs Node.js 24 via NodeSource
-3. Installs LLM CLIs globally (Claude Code, Gemini CLI, Codex CLI)
+3. Installs the Claude Code CLI for the service user, pinned to the version in VERSIONS.md
 4. Clones the repo and runs `npm ci --omit=dev`
 5. Links the `shellm` CLI
 6. Copies `.env.example` to `.env`
@@ -120,18 +120,6 @@ This opens a browser URL — copy-paste it if you're on a headless VPS. Follow t
 claude --version
 ```
 
-### Gemini CLI
-
-```bash
-gemini auth login
-```
-
-Follow the Google OAuth flow. Verify with:
-
-```bash
-gemini --version
-```
-
 ### Codex CLI
 
 ```bash
@@ -208,7 +196,6 @@ You should see a JSON response with provider statuses:
   "status": "healthy",
   "providers": {
     "claude": { "status": "healthy" },
-    "gemini": { "status": "healthy" },
     "cerebras": { "status": "healthy" }
   },
   "queue": { "active": 0, "waiting": 0, "max": 2 }
@@ -223,7 +210,7 @@ journalctl -u shellm -n 50 --no-pager
 
 # Re-authenticate if needed
 sudo -iu shellmer
-claude auth login   # or gemini/codex
+claude auth login   # or codex
 exit
 sudo systemctl restart shellm
 ```
@@ -496,7 +483,7 @@ curl http://127.0.0.1:6100/health
 
 ### High latency on first request
 
-CLI processes have cold-start overhead (2-5s for Claude, 1-3s for Gemini). This is normal on the first request after idle. Subsequent requests within the health poll interval are faster. The background health poller keeps providers warm.
+CLI processes have cold-start overhead (2-4s for Claude). This is normal on the first request after idle. Subsequent requests within the health poll interval are faster. The background health poller keeps providers warm.
 
 ### Out of memory
 
@@ -533,7 +520,7 @@ Internet
 │   (systemd service)     │  Auth, rate limiting, queue
 │                         │  Prompt guard, audit logging
 │   ┌──────┬──────┬─────┐ │
-│   │Claude│Gemini│Codex│ │  CLI subprocesses
+│   │Claude│Codex│      │ │  CLI subprocesses
 │   └──────┴──────┴─────┘ │
 │   ┌────────┐            │
 │   │Cerebras│            │  HTTP API
@@ -569,7 +556,7 @@ Internet
 | User | Purpose |
 |---|---|
 | **root** or **deploy** (with sudo) | systemctl, editing .env, cloudflared, firewall |
-| **shellmer** | CLI authentication (claude/gemini/codex), manual server testing |
+| **shellmer** | CLI authentication (claude/codex), manual server testing |
 
 `shellmer` is intentionally unprivileged — it cannot run `sudo`. Service management always happens from a user with sudo access.
 
@@ -580,17 +567,6 @@ The setup script uses HTTPS, not SSH. If you see this error you may be running a
 ```bash
 git clone https://github.com/rodacato/SheLLM.git /home/shellmer/shellm
 ```
-
-### Gemini CLI fails with "Cannot find module './v3'"
-
-Known issue with `@google/gemini-cli` on Node 22. Try reinstalling:
-
-```bash
-sudo -iu shellmer
-npm install -g @google/gemini-cli@latest
-```
-
-If it persists, Gemini CLI has open upstream issues with `googleapis` on Node 22. SheLLM will mark gemini as "Not installed" and continue working with other providers.
 
 ### Codex CLI fails with "Missing optional dependency @openai/codex-linux-x64"
 

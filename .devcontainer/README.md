@@ -22,7 +22,7 @@ from inside it. For getting the app running, see [CONTRIBUTING.md](../CONTRIBUTI
 | `GITHUB_REPOSITORY`, `GITHUB_REPOSITORY_OWNER`, `GITHUB_ACTOR` | `initialize.sh` derives them from the `origin` remote | Yes |
 | Git author name and email | VS Code copies the host's `~/.gitconfig` | Yes |
 | `HOST_IP` | `local.env`, which you write | Yes |
-| `claude`, `gemini`, `codex` logins | Not inherited — you log in once inside the container; named volumes keep `~/.claude`, `~/.gemini`, `~/.codex` | Yes |
+| `claude`, `codex` logins | Not inherited — you log in once inside the container; named volumes keep `~/.claude`, `~/.codex` | Yes |
 | Production secrets | Not inherited, by design | **No** |
 
 `initializeCommand` runs `initialize.sh` **on the host** before every start. It writes
@@ -43,14 +43,14 @@ keeps the old values; **Dev Containers: Rebuild Container** picks up new ones.
    ```
    Doing this after the container exists works too, followed by a rebuild.
 3. Open the folder in VS Code and run **Dev Containers: Reopen in Container**. `post-create.sh`
-   fixes volume ownership, runs `npm install`, installs the Gemini and Codex CLIs when missing,
+   fixes volume ownership, runs `npm install`, installs the Codex CLI when missing,
    and creates `~/.config/shellm/env` from `.env.example` on first creation.
 4. Check, in a container terminal:
    ```bash
    gh auth status          # "Logged in … (GH_TOKEN)" when the host was logged in
    env | grep ^GITHUB_     # the three derived values
    ```
-5. Log in to each provider you want to exercise — `claude`, `gemini`, `codex` — once. The
+5. Log in to each provider you want to exercise — `claude`, `codex` — once. The
    logins live in named volumes and survive rebuilds.
 
 ## Deploy tooling from the container
@@ -72,7 +72,7 @@ provisioning. No production secret lives in this container.
 - **To narrow it**, put a fine-grained personal access token scoped to this repository in
   `local.env` as `GH_TOKEN`. It overrides the inherited one in the environment; `.host.env` is
   still written.
-- **Provider logins are subscription credentials.** The `claude-auth`, `gemini-auth` and
+- **Provider logins are subscription credentials.** The `claude-auth` and
   `codex-auth` volumes hold OAuth tokens for your own subscriptions; anything running in the
   container can read them. Remove the volumes (`docker volume rm`) to log out for good.
 - **Without `gh` on the host**, `GH_TOKEN` is simply absent. `gh auth login` inside the container
@@ -92,6 +92,6 @@ provisioning. No production secret lives in this container.
 | `$HOST_IP` is empty | No `local.env`, or the container predates it | Create it from `local.env.example`, then **Rebuild Container** |
 | An edit to `local.env` has no effect | Environment files are read at creation; reopening does not recreate | **Rebuild Container** |
 | `gh` asks you to log in | The host's `gh` is not logged in, is not on the `PATH` VS Code starts with, or was logged in after the container was created | `gh auth status` on the host, then **Rebuild Container** |
-| `EACCES` writing to `~/.claude`, `~/.gemini`, `~/.codex` or `node_modules` | A volume was created root-owned and `post-create.sh` has not run since | Run `bash .devcontainer/post-create.sh` |
+| `EACCES` writing to `~/.claude`, `~/.codex` or `node_modules` | A volume was created root-owned and `post-create.sh` has not run since | Run `bash .devcontainer/post-create.sh` |
 | `better-sqlite3` fails to load (invalid ELF header, or `NODE_MODULE_VERSION` mismatch) | `node_modules` was built on the host, or under an older Node | Run `bash .devcontainer/post-create.sh`; if it persists, delete the `node_modules` volume and **Rebuild Container** |
 | `ssh-add -l` says it cannot connect to the agent, or SSH fails with `Permission denied (publickey)` | The agent is forwarded only to processes VS Code starts; `docker exec` and outside terminals have no `SSH_AUTH_SOCK`, and the host agent may hold no key | Use a VS Code terminal; on the host, `ssh-add` your key |

@@ -1,6 +1,6 @@
 name: CLI contract
 
-# vps.sh installs the latest claude, gemini and codex on every run, so an upstream release can
+# vps.sh installs a pinned claude and the latest codex, so an upstream release can
 # drop a flag the providers pass without any change in this repo. The weekly run catches it.
 on:
   schedule:
@@ -23,6 +23,6 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm install -g @anthropic-ai/claude-code@latest @google/gemini-cli@latest @openai/codex@latest
-      - run: claude --version && gemini --version && codex --version
+      - run: npm install -g @anthropic-ai/claude-code@latest @openai/codex@latest
+      - run: claude --version && codex --version
       - run: npm run test:cli

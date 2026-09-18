@@ -3,7 +3,7 @@ info:
   title: SheLLM API
   version: 0.1.0
   description: |
-    SheLLM exposes local LLM CLI tools (Claude Code, Gemini CLI, Codex CLI, Cerebras)
+    SheLLM exposes local LLM CLI tools (Claude Code, Codex CLI)
     as a unified REST API compatible with both the OpenAI and Anthropic formats.
 
     ## Authentication

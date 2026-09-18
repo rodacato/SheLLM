@@ -58,11 +58,10 @@ describe('admin /admin/providers', () => {
 
     assert.strictEqual(res.status, 200);
     assert.ok(Array.isArray(res.body.providers));
-    assert.ok(res.body.providers.length >= 4);
+    assert.ok(res.body.providers.length >= 3);
 
     const names = res.body.providers.map((p) => p.name);
     assert.ok(names.includes('claude'));
-    assert.ok(names.includes('gemini'));
     assert.ok(names.includes('codex'));
     assert.ok(names.includes('cerebras'));
 
@@ -75,18 +74,18 @@ describe('admin /admin/providers', () => {
 
   it('PATCH /admin/providers/:name disables a provider', async () => {
     const res = await request(app)
-      .patch('/admin/providers/gemini')
+      .patch('/admin/providers/codex')
       .set('Authorization', `Basic ${adminCreds}`)
       .send({ enabled: 0 });
 
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.body.provider.enabled, false);
-    assert.strictEqual(res.body.provider.name, 'gemini');
+    assert.strictEqual(res.body.provider.name, 'codex');
   });
 
   it('PATCH /admin/providers/:name re-enables a provider', async () => {
     const res = await request(app)
-      .patch('/admin/providers/gemini')
+      .patch('/admin/providers/codex')
       .set('Authorization', `Basic ${adminCreds}`)
       .send({ enabled: 1 });
 

@@ -75,7 +75,7 @@ describe('errors', () => {
     assert.strictEqual(ir.status, 400);
 
     // Default: cli_failed
-    const cf = fromCatchable({ stderr: 'crash' }, 'gemini');
+    const cf = fromCatchable({ stderr: 'crash' }, 'codex');
     assert.strictEqual(cf.status, 502);
     assert.strictEqual(cf.code, 'cli_failed');
   });

@@ -59,21 +59,18 @@ describe('/v1/models', () => {
       .set('Authorization', `Bearer ${testKey}`);
     const ids = res.body.data.map((m) => m.id);
 
-    assert.deepStrictEqual(ids, [
-      'claude', 'claude-haiku', 'claude-sonnet', 'claude-opus',
-      'gemini', 'gemini-pro', 'gemini-flash', 'gemini-flash-lite',
-    ]);
+    assert.deepStrictEqual(ids, ['claude', 'claude-haiku', 'claude-sonnet', 'claude-opus']);
   });
 
   it('omits models of a disabled provider', async () => {
     const { updateProvider } = require('../../../src/db');
-    updateProvider('gemini', { enabled: 0 });
+    updateProvider('claude', { enabled: 0 });
     try {
       const res = await request(app).get('/v1/models')
         .set('Authorization', `Bearer ${testKey}`);
-      assert.ok(!res.body.data.some((m) => m.id.startsWith('gemini')));
+      assert.deepStrictEqual(res.body.data, []);
     } finally {
-      updateProvider('gemini', { enabled: 1 });
+      updateProvider('claude', { enabled: 1 });
     }
   });
 

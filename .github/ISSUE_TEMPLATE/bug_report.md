@@ -24,9 +24,8 @@ labels: bug
 |---|---|
 | SheLLM version | <!-- run: shellm version --> |
 | Node.js version | <!-- run: node --version --> |
-| Provider | <!-- claude / gemini / codex / cerebras --> |
+| Provider | <!-- claude / codex --> |
 | claude version | <!-- run: claude --version --> |
-| gemini version | <!-- run: gemini --version --> |
 | OS | <!-- Ubuntu 22.04 / macOS 14 / etc --> |
 | Deployment | <!-- local / Docker / VPS systemd --> |
 

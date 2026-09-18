@@ -150,7 +150,7 @@ describe('handleStream', () => {
 
     const id = 'shellm-test-456';
     const created = Math.floor(Date.now() / 1000);
-    const model = 'gemini';
+    const model = 'codex';
 
     // Simulate buffer-and-flush path (provider has no chatStream)
     const result = { content: 'Full buffered response' };
@@ -376,14 +376,23 @@ describe('/v1/chat/completions streaming integration', () => {
   });
 
   it('works with buffer-and-flush for non-streaming provider', async () => {
-    const res = await request(app)
-      .post('/v1/chat/completions')
-      .set('Authorization', `Bearer ${testKey}`)
-      .send({
-        model: 'gemini',
-        stream: true,
-        messages: [{ role: 'user', content: 'hello' }],
-      });
+    const { engines } = require('../../../src/routing');
+    const chatStream = engines.codex.chatStream;
+    delete engines.codex.chatStream;
+
+    let res;
+    try {
+      res = await request(app)
+        .post('/v1/chat/completions')
+        .set('Authorization', `Bearer ${testKey}`)
+        .send({
+          model: 'codex',
+          stream: true,
+          messages: [{ role: 'user', content: 'hello' }],
+        });
+    } finally {
+      engines.codex.chatStream = chatStream;
+    }
 
     assert.strictEqual(res.status, 200);
     assert.ok(res.headers['content-type'].includes('text/event-stream'));

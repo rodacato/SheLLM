@@ -33,7 +33,6 @@ function getProviderList() {
     // Fallback for tests/early boot — hardcoded defaults
     return [
       { name: 'claude', type: 'subprocess', enabled: 1, health_check: { command: 'claude', args: ['--print', '--dangerously-skip-permissions', '--', 'test'] } },
-      { name: 'gemini', type: 'subprocess', enabled: 1, health_check: { command: 'gemini', args: ['--approval-mode', 'yolo', '-p', 'test'] } },
       { name: 'codex', type: 'subprocess', enabled: 1, health_check: { command: 'codex', args: ['exec', '--ephemeral', '--skip-git-repo-check', 'test'] } },
       { name: 'cerebras', type: 'http', enabled: 1, health_check: { url: 'https://api.cerebras.ai/v1/models', auth_env: 'CEREBRAS_API_KEY' } },
     ];
