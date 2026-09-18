@@ -1,17 +1,17 @@
 # SheLLM — CLI Versions Reference
 
-This file tracks the last known-good version of each upstream CLI tool tested with SheLLM. Before upgrading a CLI in production or in the Dockerfile, check this table and read the tool's changelog.
+The last known-good version of each upstream CLI. Read this table and the tool's changelog before upgrading one in production.
 
 > **Consult C1 `ines`** ([expert panel](docs/EXPERTS.md)) when any of these versions changes or a provider starts behaving unexpectedly.
 
 ---
 
-## Pinned Versions (Dockerfile)
+## Versions
 
 | Tool | Version | Pinned | Notes |
 |---|---|:---:|---|
-| `@openai/codex` | `0.154.0` | ✅ | Pinned via `ARG CODEX_CLI_VERSION` in Dockerfile |
 | `claude` (Claude Code) | `2.1.273` | ✅ | `CLAUDE_VERSION` in `scripts/setup/vps.sh`, passed to the official installer |
+| `codex` | `0.154.0` | ❌ | Not installed by `vps.sh`; the devcontainer installs the latest. Upstream is ahead, and the adapter is rewritten against the current CLI in phase 1b |
 
 ## Tested Combinations
 
@@ -26,14 +26,14 @@ This file tracks the last known-good version of each upstream CLI tool tested wi
 | Tool | Risk | Impact | Mitigation |
 |---|---|---|---|
 | `claude` | High | Unsupported flags or `--print` output changes break `claude.js` | Bump `CLAUDE_VERSION` in `vps.sh` only after `npm run test:cli` and `shellm doctor --live` pass on the new version |
-| `codex` | Medium — pinned in Docker, latest on the VPS | `exec --json` event shape changes | `npm run test:cli` weekly; e2e before bumping `CODEX_CLI_VERSION` |
+| `codex` | Medium — unpinned | `exec --json` event shape changes | `npm run test:cli` weekly; pin it in `vps.sh` when the adapter is rewritten |
 
 ---
 
 ## How to Update a CLI Version
 
 1. Read the tool's changelog for breaking changes to flags, output format, or auth flow.
-2. Update the version in `Dockerfile` (`ARG *_CLI_VERSION`).
+2. Update `CLAUDE_VERSION` in `scripts/setup/vps.sh`.
 3. Run `npm run test:cli` to check every flag the providers pass is still accepted, then `npm run test:e2e` with the CLIs logged in to verify output parsing.
 4. Update the **Tested Combinations** table above with the new version and date.
 5. Commit with message: `chore(deps): bump <cli> to x.y.z`.
@@ -42,8 +42,7 @@ This file tracks the last known-good version of each upstream CLI tool tested wi
 
 ## Upgrading Claude Code
 
-Claude Code has no pinnable version via the install script. When it updates automatically on the host:
-
-1. Check if `claude --version` output changed.
-2. Run `npm run smoke` to verify provider health.
-3. If parsing breaks, check `src/providers/claude.js` for assumptions about stdout format.
+`vps.sh` passes `CLAUDE_VERSION` to the official installer, so a server stays on the version in the
+table until you bump it. A developer machine usually runs whatever the CLI updated itself to: if
+parsing breaks there, compare `claude --version` against the table and check
+`src/providers/claude.js` for assumptions about stdout.
