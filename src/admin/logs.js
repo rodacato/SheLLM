@@ -2,8 +2,6 @@
 
 const { Router } = require('express');
 const { getDb } = require('../db');
-const { initSSE, sendSSEChunk } = require('../lib/sse');
-const { emitter } = require('../lib/log-emitter');
 
 const router = Router();
 
@@ -104,36 +102,6 @@ router.delete('/logs', (req, res) => {
 
   const result = db.prepare('DELETE FROM request_logs').run();
   res.json({ deleted: result.changes });
-});
-
-// --- Live log stream ---
-
-let activeStreams = 0;
-const MAX_STREAMS = 5;
-
-router.get('/logs/stream', (req, res) => {
-  if (activeStreams >= MAX_STREAMS) {
-    return res.status(429).json({ error: 'Too many active log streams' });
-  }
-
-  activeStreams++;
-  initSSE(res);
-
-  // Subscribe to all logger output (stdout/stderr)
-  const onLogs = (entries) => {
-    if (!res.writableEnded) {
-      sendSSEChunk(res, { type: 'batch', logs: entries });
-    }
-  };
-  emitter.on('logs', onLogs);
-
-  // Cleanup on disconnect
-  const cleanup = () => {
-    emitter.removeListener('logs', onLogs);
-    activeStreams--;
-  };
-  res.on('close', cleanup);
-  res.on('finish', cleanup);
 });
 
 module.exports = router;
