@@ -31,7 +31,6 @@ src/
 │   ├── base.js            # Subprocess execution (spawn, timeout, output capture, env isolation)
 │   ├── claude.js          # Claude Code CLI adapter
 │   ├── codex.js           # Codex CLI adapter
-│   └── http-generic.js    # Generic OpenAI-compatible HTTP provider factory
 │
 ├── api/v1/                # API endpoint handlers (versioned)
 │   ├── chat-completions.js # POST /v1/chat/completions (OpenAI format)
@@ -130,7 +129,7 @@ HTTP Request
 
 The routing layer maps a model name to a provider engine and dispatches the request:
 
-1. **engines.js** — Maintains the `engines` registry object. Subprocess providers (claude, codex) are registered at require-time. HTTP providers (cerebras, custom) are registered dynamically from the DB via `registerHttpProviders()`.
+1. **engines.js** — Maintains the `engines` registry object; every provider is a CLI subprocess registered at require-time.
 
 2. **model-cache.js** — Builds and caches a `modelToProvider` map from the `models` DB table. Falls back to engine `validModels` arrays when the DB isn't available (tests, early boot). Supports model aliases via SHELLM_ALIASES env var.
 
@@ -170,12 +169,6 @@ Every provider implements this interface:
 2. Register it in `src/routing/engines.js`: `const name = require('../providers/<name>'); engines[name] = ...`
 3. Add a migration to seed the provider and its models in the DB
 4. Add a health check entry in the provider's DB row
-
-**Adding a new HTTP provider:**
-
-1. Add a row to the `providers` table (type: 'http') with capabilities and health_check config
-2. Add model rows to the `models` table
-3. The `http-generic.js` factory will automatically create an engine from the DB config
 
 ### db/ — Persistence
 

@@ -63,7 +63,7 @@ describe('errors', () => {
     assert.strictEqual(to.code, 'timeout');
 
     // Provider unavailable
-    const pu = fromCatchable({ provider_unavailable: true, message: 'down' }, 'cerebras');
+    const pu = fromCatchable({ provider_unavailable: true, message: 'down' }, 'codex');
     assert.strictEqual(pu.status, 503);
 
     // Rate limited

@@ -1,11 +1,10 @@
-const { engines, registerHttpProviders } = require('./engines');
+const { engines } = require('./engines');
 
 // Model-to-provider map — built from DB, rebuilt on invalidation
 let modelToProvider = {};
 let _modelCacheBuilt = false;
 
 function buildModelMap() {
-  registerHttpProviders();
   try {
     const { getAllModels, getDb } = require('../db');
     if (!getDb()) throw new Error('DB not initialized');

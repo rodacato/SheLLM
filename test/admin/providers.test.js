@@ -58,12 +58,11 @@ describe('admin /admin/providers', () => {
 
     assert.strictEqual(res.status, 200);
     assert.ok(Array.isArray(res.body.providers));
-    assert.ok(res.body.providers.length >= 3);
+    assert.ok(res.body.providers.length >= 2);
 
     const names = res.body.providers.map((p) => p.name);
     assert.ok(names.includes('claude'));
     assert.ok(names.includes('codex'));
-    assert.ok(names.includes('cerebras'));
 
     // All enabled by default
     for (const prov of res.body.providers) {

@@ -18,7 +18,6 @@ describe('getCachedProviderStatus', () => {
       },
     });
 
-    process.env.CEREBRAS_API_KEY = 'test-key-health-cache';
 
     for (const key of Object.keys(require.cache)) {
       if (key.includes('src/providers/') || key.includes('src/routing') || key.includes('src/infra/')) {
