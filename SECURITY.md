@@ -89,6 +89,8 @@ All user-supplied input passes through sanitization before reaching a CLI subpro
 
 ## Accepted Risks
 
+- **Provider account suspension**: SheLLM drives subscription CLIs on your behalf. Volume that looks automated can get an account suspended, and with it every product tied to it. See [Fair use and provider terms](README.md#fair-use-and-provider-terms).
+
 ### Claude CLI `--dangerously-skip-permissions`
 
 The Claude CLI provider uses `--dangerously-skip-permissions` for non-interactive mode. This gives the LLM unrestricted tool use within the container. **Compensating controls:**
