@@ -2,7 +2,7 @@ const { invalidRequest, providerUnavailable, isClientError } = require('../error
 const { recordSuccess, recordFailure } = require('../infra/circuit-breaker');
 const { queue } = require('../infra/queue');
 const { engines } = require('./engines');
-const { resolveProvider, resolveUpstreamModel, checkProviderAvailability, getAvailableProviders } = require('./provider-select');
+const { resolveProvider, checkProviderAvailability, getAvailableProviders } = require('./provider-select');
 const logger = require('../lib/logger');
 
 const FALLBACK_ORDER_ENV = process.env.SHELLM_FALLBACK_ORDER || null;
@@ -58,7 +58,6 @@ async function routeWithFallback({ model, prompt, system, max_tokens, temperatur
         content: result.content,
         provider: candidate.name,
         model,
-        upstream_model: resolveUpstreamModel(model),
         duration_ms: Date.now() - startTime,
         queued_ms: result.queued_ms,
         request_id: request_id || null,
@@ -85,7 +84,7 @@ async function routeWithFallback({ model, prompt, system, max_tokens, temperatur
 
 function listProviders({ includeDisabled = true } = {}) {
   try {
-    const { getProviders, getModelsForProvider, getDb } = require('../db');
+    const { getProviders, getDb } = require('../db');
     if (!getDb()) throw new Error('DB not initialized');
     const dbProviders = getProviders();
     return dbProviders
@@ -93,7 +92,7 @@ function listProviders({ includeDisabled = true } = {}) {
       .map((p) => ({
         name: p.name,
         type: p.type,
-        models: getModelsForProvider(p.name).map((m) => m.name),
+        models: engines[p.name]?.models || [],
         ...p.capabilities,
         enabled: !!p.enabled,
         priority: p.priority,
@@ -102,7 +101,7 @@ function listProviders({ includeDisabled = true } = {}) {
     // DB not initialized (tests) — fall back to engines
     return Object.values(engines).map((p) => ({
       name: p.name,
-      models: p.validModels || [],
+      models: p.models || [],
       ...(p.capabilities || {}),
       enabled: true,
     }));

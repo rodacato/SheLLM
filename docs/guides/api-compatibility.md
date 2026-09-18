@@ -103,7 +103,7 @@ SheLLM uses its own model identifiers. Use `GET /v1/models` to see what's availa
 
 ```bash
 # Map OpenAI model names to SheLLM providers
-SHELLM_ALIASES='{"gpt-4":"claude","gpt-3.5-turbo":"cerebras"}'
+
 ```
 
 ### 2. Authentication

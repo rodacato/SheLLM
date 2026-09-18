@@ -26,7 +26,7 @@ describe('db layer', () => {
     assert.ok(names.includes('clients'));
     assert.ok(names.includes('request_logs'));
     assert.ok(names.includes('providers'));
-    assert.ok(names.includes('models'));
+
   });
 
   it('getDb returns the cached connection', () => {

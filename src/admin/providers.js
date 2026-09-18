@@ -5,10 +5,10 @@ const { sendError, invalidRequest } = require('../errors');
 const {
   getProviders, getProvider,
   setProviderEnabled, updateProvider,
-  getProviderLastUsage, getModelsForProvider, upsertModel, deleteModel,
+  getProviderLastUsage,
   insertAuditLog,
 } = require('../db');
-const { invalidateModelCache } = require('../routing');
+const { engines } = require('../routing');
 const { getHealthStatus } = require('../infra/health');
 const logger = require('../lib/logger');
 
@@ -33,19 +33,13 @@ router.get('/providers', async (req, res) => {
     type: p.type,
     enabled: !!p.enabled,
     capabilities: p.capabilities,
-    health_check: p.type === 'http' ? p.health_check : undefined,
     priority: p.priority,
     installed: healthData[p.name]?.installed ?? null,
     authenticated: healthData[p.name]?.authenticated ?? null,
     health_error: healthData[p.name]?.error || null,
     last_used_at: lastUsageMap[p.name]?.last_used_at || null,
     last_status: lastUsageMap[p.name]?.last_status || null,
-    models: getModelsForProvider(p.name).map((m) => ({
-      name: m.name,
-      upstream_model: m.upstream_model,
-      is_alias: !!m.is_alias,
-      alias_for: m.alias_for,
-    })),
+    models: engines[p.name]?.models || [],
   }));
 
   res.json({ providers: result });
@@ -72,7 +66,6 @@ router.patch('/providers/:name', (req, res) => {
       return sendError(res, { status: 404, code: 'not_found', message: `Provider "${name}" not found` }, req.requestId);
     }
     logger.info({ event: 'provider_toggled', provider: name, enabled: !!updated.enabled });
-    invalidateModelCache();
     return res.json({ provider: { ...updated, enabled: !!updated.enabled } });
   }
 
@@ -89,63 +82,7 @@ router.patch('/providers/:name', (req, res) => {
   const updated = updateProvider(name, fields);
   insertAuditLog({ action: 'update', resource: 'provider', resource_id: name, details: JSON.stringify(fields) });
   logger.info({ event: 'provider_updated', provider: name, fields: Object.keys(fields) });
-  invalidateModelCache();
   res.json({ provider: updated });
-});
-
-// GET /admin/providers/:name/models — list models for a provider
-router.get('/providers/:name/models', (req, res) => {
-  const { name } = req.params;
-  if (!getProvider(name)) {
-    return sendError(res, invalidRequest(`Unknown provider: ${name}`), req.requestId);
-  }
-  const models = getModelsForProvider(name);
-  res.json({ models });
-});
-
-// POST /admin/providers/:name/models — add a model
-router.post('/providers/:name/models', (req, res) => {
-  const { name: providerName } = req.params;
-  const { name: modelName, upstream_model, is_alias, alias_for } = req.body || {};
-
-  if (!getProvider(providerName)) {
-    return sendError(res, invalidRequest(`Unknown provider: ${providerName}`), req.requestId);
-  }
-  if (!modelName || typeof modelName !== 'string') {
-    return sendError(res, invalidRequest('Field "name" is required'), req.requestId);
-  }
-
-  const model = upsertModel({
-    name: modelName,
-    provider_name: providerName,
-    upstream_model: upstream_model || null,
-    is_alias: is_alias ? 1 : 0,
-    alias_for: alias_for || null,
-  });
-
-  insertAuditLog({ action: 'create', resource: 'model', resource_id: modelName, details: JSON.stringify({ provider: providerName }) });
-  logger.info({ event: 'model_added', model: modelName, provider: providerName });
-  invalidateModelCache();
-  res.status(201).json({ model });
-});
-
-// DELETE /admin/providers/:name/models/:modelName — remove a model
-router.delete('/providers/:name/models/:modelName', (req, res) => {
-  const { name: providerName, modelName } = req.params;
-
-  if (!getProvider(providerName)) {
-    return sendError(res, invalidRequest(`Unknown provider: ${providerName}`), req.requestId);
-  }
-
-  const deleted = deleteModel(modelName);
-  if (!deleted) {
-    return sendError(res, { status: 404, code: 'not_found', message: `Model "${modelName}" not found` }, req.requestId);
-  }
-
-  insertAuditLog({ action: 'delete', resource: 'model', resource_id: modelName, details: JSON.stringify({ provider: providerName }) });
-  logger.info({ event: 'model_deleted', model: modelName, provider: providerName });
-  invalidateModelCache();
-  res.json({ deleted: true });
 });
 
 module.exports = router;

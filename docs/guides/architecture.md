@@ -1,6 +1,6 @@
 # Architecture Guide
 
-SheLLM is a lightweight Node.js/Express service that wraps LLM CLI tools (Claude Code, Codex CLI) and HTTP APIs (Cerebras) as a unified REST API. It runs as a single process with SQLite for persistence.
+SheLLM is a lightweight Node.js/Express service that wraps LLM CLI tools (Claude Code, Codex CLI) as a unified REST API. It runs as a single process with SQLite for persistence.
 
 ---
 
@@ -130,8 +130,6 @@ HTTP Request
 The routing layer maps a model name to a provider engine and dispatches the request:
 
 1. **engines.js** — Maintains the `engines` registry object; every provider is a CLI subprocess registered at require-time.
-
-2. **model-cache.js** — Builds and caches a `modelToProvider` map from the `models` DB table. Falls back to engine `validModels` arrays when the DB isn't available (tests, early boot). Supports model aliases via SHELLM_ALIASES env var.
 
 3. **provider-select.js** — `selectProvider(model)` resolves a model to an engine, then runs fail-fast checks: is the provider enabled? Is it authenticated (from cached health)? Is the circuit breaker allowing traffic?
 

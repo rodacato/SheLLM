@@ -3,8 +3,7 @@ const { isClientError } = require('../errors');
 const { queue } = require('../infra/queue');
 const { acquireStreamSlot, releaseStreamSlot } = require('../infra/stream-slots');
 const { engines } = require('./engines');
-const { buildModelMap, invalidateModelCache, getAliases, seedAliasesFromEnv } = require('./model-cache');
-const { resolveProvider, resolveUpstreamModel, selectProvider, getAvailableProviders } = require('./provider-select');
+const { resolveProvider, selectProvider, getAvailableProviders } = require('./provider-select');
 const { routeWithFallback, listProviders } = require('./fallback');
 
 const FALLBACK_ENABLED = (process.env.SHELLM_FALLBACK_ENABLED || 'false') === 'true';
@@ -35,7 +34,6 @@ async function route({ model, prompt, system, max_tokens, temperature, top_p, re
     content: result.content,
     provider: provider.name,
     model,
-    upstream_model: resolveUpstreamModel(model),
     duration_ms: Date.now() - startTime,
     queued_ms: result.queued_ms,
     request_id: request_id || null,
@@ -49,15 +47,10 @@ module.exports = {
   queue,
   listProviders,
   resolveProvider,
-  resolveUpstreamModel,
   selectProvider,
   providers: engines,
   engines,
-  getAliases,
   getAvailableProviders,
   acquireStreamSlot,
   releaseStreamSlot,
-  buildModelMap,
-  invalidateModelCache,
-  seedAliasesFromEnv,
 };
