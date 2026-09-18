@@ -487,7 +487,7 @@ CLI processes have cold-start overhead (2-4s for Claude). This is normal on the 
 
 ### Out of memory
 
-Reduce `MAX_CONCURRENT` in `.env`. Each CLI subprocess can consume 100-200 MB. With the default limit of 768 MB (Docker) or system RAM (systemd), keep concurrency low:
+Reduce `MAX_CONCURRENT` in the config file. Each CLI subprocess can consume 100-200 MB. With the default limit of 768 MB (Docker) or system RAM (systemd), keep concurrency low:
 
 | VPS RAM | Recommended MAX_CONCURRENT |
 |---|---|

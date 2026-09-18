@@ -113,7 +113,7 @@ Open **GitHub → Releases** and confirm:
 
 ## Step 7 — Update VERSIONS.md (if CLI versions changed)
 
-If this release pins or changes a CLI version (`GEMINI_CLI_VERSION`, `CODEX_CLI_VERSION` in the Dockerfile), update the tested combinations table:
+If this release pins or changes a CLI version (`CLAUDE_VERSION` in `scripts/setup/vps.sh`), update the tested combinations table:
 
 ```
 VERSIONS.md → Tested Combinations → add a new row

@@ -9,7 +9,7 @@
   },
   "scripts": {
     "prepare": "git config core.hooksPath scripts 2>/dev/null || true",
-    "version": "node scripts/release-changelog.js && sed -i \"s/v[0-9]*\\.[0-9]*\\.[0-9]*/v$npm_package_version/\" site/index.html && git add CHANGELOG.md site/index.html",
+    "version": "node scripts/release-changelog.js && git add CHANGELOG.md",
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "seed": "node scripts/seed.js",
@@ -24,9 +24,7 @@
     "audit:security": "npm audit --audit-level=high",
     "docs:build": "redocly bundle docs/api/openapi.yaml --output docs/api/bundled.json --ext json",
     "docs:preview": "redocly preview docs/api/openapi.yaml",
-    "docs:lint": "redocly lint docs/api/openapi.yaml",
-    "release:favicons": "node scripts/release-favicons.js",
-    "release:screenshots": "node scripts/release-screenshots.js"
+    "docs:lint": "redocly lint docs/api/openapi.yaml"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1",
@@ -36,8 +34,6 @@
   "devDependencies": {
     "@redocly/cli": "^2.53.2",
     "eslint": "^10.10.0",
-    "playwright": "^1.63.0",
-    "sharp": "^0.35.4",
     "supertest": "^7.2.2"
   },
   "engines": {
