@@ -17,8 +17,6 @@ describe('health', () => {
       namedExports: { execute: mockExecute, stripNonPrintable: (t) => t },
     });
 
-    // Set CEREBRAS_API_KEY so cerebras shows as authenticated
-    process.env.CEREBRAS_API_KEY = 'test-key-for-health';
 
     // Clear cached modules so they pick up the mock
     for (const key of Object.keys(require.cache)) {
@@ -36,7 +34,6 @@ describe('health', () => {
     assert.ok(status.providers.claude);
     assert.ok(status.providers.codex);
     assert.ok(status.providers.codex);
-    assert.ok(status.providers.cerebras);
 
     // Each provider has installed and authenticated
     for (const [, p] of Object.entries(status.providers)) {

@@ -34,7 +34,6 @@ function getProviderList() {
     return [
       { name: 'claude', type: 'subprocess', enabled: 1, health_check: { command: 'claude', args: ['--print', '--dangerously-skip-permissions', '--', 'test'] } },
       { name: 'codex', type: 'subprocess', enabled: 1, health_check: { command: 'codex', args: ['exec', '--ephemeral', '--skip-git-repo-check', 'test'] } },
-      { name: 'cerebras', type: 'http', enabled: 1, health_check: { url: 'https://api.cerebras.ai/v1/models', auth_env: 'CEREBRAS_API_KEY' } },
     ];
   }
 }
@@ -61,42 +60,8 @@ async function checkSubprocessDeep(provider) {
   }
 }
 
-async function checkHttp(provider) {
-  const hc = provider.health_check || {};
-  const envKey = hc.auth_env;
-  if (envKey && !process.env[envKey]) {
-    return { installed: true, authenticated: false, error: `${envKey} not set` };
-  }
-  return { installed: true, authenticated: true };
-}
-
-async function checkHttpDeep(provider) {
-  const hc = provider.health_check || {};
-  const envKey = hc.auth_env;
-  const key = envKey ? process.env[envKey] : null;
-  if (envKey && !key) {
-    return { installed: true, authenticated: false, error: `${envKey} not set` };
-  }
-  if (!hc.url) return { installed: true, authenticated: !!key };
-  try {
-    const headers = key ? { Authorization: `Bearer ${key}` } : {};
-    const res = await fetch(hc.url, {
-      headers,
-      signal: AbortSignal.timeout(DEEP_CHECK_TIMEOUT),
-    });
-    if (res.ok) return { installed: true, authenticated: true };
-    return { installed: true, authenticated: false, error: `API returned ${res.status}` };
-  } catch {
-    return { installed: true, authenticated: false, error: 'API unreachable' };
-  }
-}
-
 // Check a single provider (shallow or deep)
 async function checkProvider(provider, { deep = false } = {}) {
-  if (provider.type === 'http') {
-    return deep ? checkHttpDeep(provider) : checkHttp(provider);
-  }
-  // Default: subprocess
   return deep ? checkSubprocessDeep(provider) : checkSubprocess(provider.name);
 }
 

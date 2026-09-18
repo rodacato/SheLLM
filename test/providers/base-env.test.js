@@ -24,17 +24,6 @@ describe('buildSafeEnv', () => {
     }
   });
 
-  it('does NOT include CEREBRAS_API_KEY', () => {
-    const original = process.env.CEREBRAS_API_KEY;
-    process.env.CEREBRAS_API_KEY = 'csk-test-key';
-    try {
-      const env = buildSafeEnv({});
-      assert.strictEqual(env.CEREBRAS_API_KEY, undefined);
-    } finally {
-      if (original === undefined) delete process.env.CEREBRAS_API_KEY;
-      else process.env.CEREBRAS_API_KEY = original;
-    }
-  });
 
   it('does NOT include ANTHROPIC_API_KEY', () => {
     const original = process.env.ANTHROPIC_API_KEY;
@@ -112,18 +101,4 @@ describe('execute env isolation', () => {
     assert.strictEqual(result.stdout, 'test-value');
   });
 
-  it('subprocess does NOT see CEREBRAS_API_KEY without explicit pass', async () => {
-    const original = process.env.CEREBRAS_API_KEY;
-    process.env.CEREBRAS_API_KEY = 'csk-leaked';
-    try {
-      const result = await execute('node', [
-        '-e',
-        'process.stdout.write(process.env.CEREBRAS_API_KEY || "NOT_FOUND")',
-      ]);
-      assert.strictEqual(result.stdout, 'NOT_FOUND');
-    } finally {
-      if (original === undefined) delete process.env.CEREBRAS_API_KEY;
-      else process.env.CEREBRAS_API_KEY = original;
-    }
-  });
 });

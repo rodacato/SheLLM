@@ -184,7 +184,6 @@ Response:
 |---|---|---|
 | Claude Code | CLI | `claude` (CLI default), `claude-haiku`, `claude-sonnet`, `claude-opus`, plus any `claude-*` model id the CLI accepts |
 | Codex CLI | CLI | `codex`, `codex-mini` |
-| Cerebras | API | `cerebras`, `cerebras-8b`, `cerebras-70b`, `cerebras-120b`, `cerebras-qwen` |
 
 See [CONTRIBUTING.md](CONTRIBUTING.md#adding-a-new-provider) to add your own.
 
@@ -198,7 +197,6 @@ graph LR
     Queue --> Router
     Router --> Claude[Claude CLI]
     Router --> Codex[Codex CLI]
-    Router --> Cerebras[Cerebras API]
     Router -.->|health check| Health[Health Poller]
 
     Admin[Admin Dashboard] -->|Basic Auth| AdminAPI[Admin API]

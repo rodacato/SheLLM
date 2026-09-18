@@ -328,12 +328,12 @@ describe('db layer', () => {
   describe('provider_settings', () => {
     it('seeds default providers on initDb', () => {
       const settings = getProviderSettings();
-      assert.ok(settings.length >= 3);
+      assert.ok(settings.length >= 2);
       const names = settings.map((s) => s.name);
       assert.ok(names.includes('claude'));
       assert.ok(names.includes('codex'));
-      assert.ok(names.includes('cerebras'));
       assert.ok(!names.includes('gemini'), 'gemini was removed');
+      assert.ok(!names.includes('cerebras'), 'cerebras was removed');
       for (const s of settings) {
         assert.strictEqual(s.enabled, 1);
       }

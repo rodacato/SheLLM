@@ -18,11 +18,9 @@ describe('router', () => {
   it('resolveProvider resolves direct names and model aliases', () => {
     assert.strictEqual(resolveProvider('claude')?.name, 'claude');
     assert.strictEqual(resolveProvider('codex')?.name, 'codex');
-    assert.strictEqual(resolveProvider('cerebras')?.name, 'cerebras');
 
     // Model aliases
     assert.strictEqual(resolveProvider('claude-opus')?.name, 'claude');
-    assert.strictEqual(resolveProvider('cerebras-8b')?.name, 'cerebras');
 
     // Unknown
     assert.strictEqual(resolveProvider('nonexistent'), null);
@@ -31,7 +29,7 @@ describe('router', () => {
   it('listProviders returns all providers with correct shape', () => {
     const providers = listProviders();
     assert.ok(Array.isArray(providers));
-    assert.ok(providers.length >= 3);
+    assert.ok(providers.length >= 2);
     for (const p of providers) {
       assert.ok(p.name, 'provider has name');
       assert.ok(Array.isArray(p.models), 'provider has models array');
