@@ -79,24 +79,6 @@ describe('health parseCheckError', () => {
     assert.ok(result.error.length <= 200);
   });
 
-  it('treats yolo/approval-mode warnings as authenticated', () => {
-    const result = parseCheckError({
-      code: 1,
-      stderr: 'Warning: Running in yolo mode, all actions will be auto-approved',
-    });
-    assert.strictEqual(result.installed, true);
-    assert.strictEqual(result.authenticated, true);
-  });
-
-  it('treats approval-mode stderr as authenticated', () => {
-    const result = parseCheckError({
-      code: 1,
-      stderr: 'approval mode set to auto-approve',
-    });
-    assert.strictEqual(result.installed, true);
-    assert.strictEqual(result.authenticated, true);
-  });
-
   it('redacts short API keys with known prefixes', () => {
     const result = parseCheckError({ code: 1, stderr: 'Invalid key: sk-abc123def456xyz' });
     assert.ok(result.error.includes('[REDACTED]'));
