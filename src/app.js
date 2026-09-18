@@ -70,9 +70,6 @@ app.use('/admin', adminAuth, adminLogsRouter);
 app.use('/admin', adminAuth, adminStatsRouter);
 app.use('/admin', adminAuth, adminProvidersRouter);
 
-// Admin models endpoint (avoids needing Bearer auth for dashboard)
-app.get('/admin/models', adminAuth, modelsHandler);
-
 // Admin health endpoint (detailed, for dashboard)
 app.get('/admin/health', adminAuth, async (req, res) => {
   try {

@@ -3,8 +3,8 @@ required: [model, messages]
 properties:
   model:
     type: string
-    description: Provider name or alias
-    example: claude
+    description: Provider name, or a model id the provider's CLI accepts
+    example: claude-haiku
   messages:
     type: array
     minItems: 1

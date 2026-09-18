@@ -3,13 +3,15 @@ info:
   title: SheLLM API
   version: 0.1.0
   description: |
-    SheLLM exposes local LLM CLI tools (Claude Code, Codex CLI)
-    as a unified REST API compatible with both the OpenAI and Anthropic formats.
+    SheLLM exposes the owner's own LLM CLI subscriptions (Claude Code, Codex)
+    as one REST API that answers in both the OpenAI and the Anthropic formats.
+    It spawns the official CLI binary per request; see the repository README for
+    the fair-use position on provider terms.
 
     ## Authentication
 
-    **Client endpoints** (`/v1/*`) use Bearer token authentication.
-    Tokens are managed via the Admin API.
+    **Client endpoints** (`/v1/*`) take an API key as `Authorization: Bearer <key>`
+    or `x-api-key`. Keys are created by `shellm init` and managed through the Admin API.
 
     **Admin endpoints** (`/admin/*`) use HTTP Basic authentication.
     The password is set via the `SHELLM_ADMIN_PASSWORD` environment variable.
@@ -80,8 +82,6 @@ paths:
     $ref: "./paths/admin_logs.yaml"
   /admin/stats:
     $ref: "./paths/admin_stats.yaml"
-  /admin/models:
-    $ref: "./paths/admin_models.yaml"
 
 components:
   securitySchemes:

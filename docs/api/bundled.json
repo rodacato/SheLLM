@@ -3,7 +3,7 @@
   "info": {
     "title": "SheLLM API",
     "version": "0.1.0",
-    "description": "SheLLM exposes local LLM CLI tools (Claude Code, Gemini CLI, Codex CLI, Cerebras)\nas a unified REST API compatible with both the OpenAI and Anthropic formats.\n\n## Authentication\n\n**Client endpoints** (`/v1/*`) use Bearer token authentication.\nTokens are managed via the Admin API.\n\n**Admin endpoints** (`/admin/*`) use HTTP Basic authentication.\nThe password is set via the `SHELLM_ADMIN_PASSWORD` environment variable.\n\n## Rate Limiting\n\nWhen rate-limited, responses include a `Retry-After` header (seconds).\n- **Global limit**: configurable via `SHELLM_GLOBAL_RPM` (default 30 RPM)\n- **Per-client limit**: configurable per API key (default 10 RPM)\n- **Admin brute-force**: 5 failed attempts per IP triggers a 5-minute lockout\n",
+    "description": "SheLLM exposes the owner's own LLM CLI subscriptions (Claude Code, Codex)\nas one REST API that answers in both the OpenAI and the Anthropic formats.\nIt spawns the official CLI binary per request; see the repository README for\nthe fair-use position on provider terms.\n\n## Authentication\n\n**Client endpoints** (`/v1/*`) take an API key as `Authorization: Bearer <key>`\nor `x-api-key`. Keys are created by `shellm init` and managed through the Admin API.\n\n**Admin endpoints** (`/admin/*`) use HTTP Basic authentication.\nThe password is set via the `SHELLM_ADMIN_PASSWORD` environment variable.\n\n## Rate Limiting\n\nWhen rate-limited, responses include a `Retry-After` header (seconds).\n- **Global limit**: configurable via `SHELLM_GLOBAL_RPM` (default 30 RPM)\n- **Per-client limit**: configurable per API key (default 10 RPM)\n- **Admin brute-force**: 5 failed attempts per IP triggers a 5-minute lockout\n",
     "x-logo": {
       "url": "logo.svg",
       "altText": "SheLLM",
@@ -91,7 +91,7 @@
           "Models"
         ],
         "summary": "List available models",
-        "description": "Returns all configured providers and model aliases.",
+        "description": "Model names that map to a real CLI model on an enabled provider. Any other id the\nprovider's CLI accepts also routes (for example `claude-sonnet-4-5-20250929`) but is\nnot listed here.\n",
         "security": [
           {
             "BearerAuth": []
@@ -672,39 +672,6 @@
           }
         }
       }
-    },
-    "/admin/models": {
-      "get": {
-        "operationId": "listModelsAdmin",
-        "tags": [
-          "Models"
-        ],
-        "summary": "List models (admin)",
-        "description": "Same as `/v1/models` but uses Basic auth (for the admin dashboard).",
-        "security": [
-          {
-            "BasicAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Model list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ModelList"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimited"
-          }
-        }
-      }
     }
   },
   "components": {
@@ -816,8 +783,8 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "Provider name or alias",
-            "example": "claude"
+            "description": "Provider name, or a model id the provider's CLI accepts",
+            "example": "claude-haiku"
           },
           "messages": {
             "type": "array",

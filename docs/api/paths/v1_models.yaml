@@ -2,7 +2,10 @@ get:
   operationId: listModels
   tags: [Models]
   summary: List available models
-  description: Returns all configured providers and model aliases.
+  description: |
+    Model names that map to a real CLI model on an enabled provider. Any other id the
+    provider's CLI accepts also routes (for example `claude-sonnet-4-5-20250929`) but is
+    not listed here.
   security:
     - BearerAuth: []
   responses:
