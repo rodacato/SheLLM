@@ -305,7 +305,6 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
         logger.debug({ event: 'stream_generator_done', chunkCount, request_id: req.requestId });
       } else {
         logger.debug({ event: 'stream_fallback', provider: provider.name });
-        // Buffer-and-flush fallback (e.g., Gemini)
         const result = await provider.chat({ prompt, system, max_tokens, temperature, top_p, response_format, model });
         sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model: responseModel, choices: [{ index: 0, delta: { role: 'assistant' }, finish_reason: null }] });
         sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model: responseModel, choices: [{ index: 0, delta: { content: result.content }, finish_reason: null }] });

@@ -76,11 +76,6 @@ function parseCheckError(err) {
   if (lower.includes('not authenticated') || lower.includes('please login') || lower.includes('auth required') || lower.includes('unauthenticated')) {
     return { installed: true, authenticated: false };
   }
-  // Gemini yolo/approval-mode warnings are harmless — process exited non-zero
-  // but stderr only contains mode warnings, not auth errors
-  if (lower.includes('yolo') || lower.includes('approval') || lower.includes('auto-approv')) {
-    return { installed: true, authenticated: true };
-  }
   const redacted = stderr
     .replace(/(sk-|csk-|key-|shellm-)[A-Za-z0-9_-]{10,}/gi, '[REDACTED]')
     .replace(/Bearer\s+[A-Za-z0-9._-]+/gi, 'Bearer [REDACTED]')
