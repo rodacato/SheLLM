@@ -97,7 +97,7 @@ function startFakeShellm() {
       if (body.stream) {
         return sse(res, [
           'event: message_start\ndata: {}\n\n',
-          `event: content_block_delta\ndata: ${JSON.stringify({ delta: { text: answer } })}\n\n`,
+          `event: content_block_delta\ndata: ${JSON.stringify({ type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: answer } })}\n\n`,
           'event: message_stop\ndata: {}\n\n',
         ]);
       }
@@ -156,6 +156,27 @@ test('measures latency and probes capabilities against a real server', async (t)
   assert.ok(row('overhead', 'GET /health').median >= 0);
   assert.equal(row('concurrency', '3 parallel').n, 3);
   assert.ok(row('streaming', 'claude-haiku').ttfb_median >= 0, 'streaming records a time to first chunk');
+  assert.ok(row('streaming', 'claude-haiku').ttft_median >= 0, 'streaming records a time to first token');
+  assert.ok(row('streaming', 'claude-sonnet (stream, /v1/messages)').ttft_median >= 0, 'the Anthropic stream is measured too');
+});
+
+test('--only runs a single scenario, so a fix can be re-measured cheaply', async (t) => {
+  const { server, port } = await startFakeShellm();
+  const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'shellm-bench-')), 'only.json');
+  t.after(() => server.close());
+
+  await run(process.execPath, [
+    path.join(__dirname, '..', 'scripts', 'bench.js'),
+    '--base', `http://127.0.0.1:${port}`,
+    '--key', 'test-key',
+    '--suite', 'latency',
+    '--only', 'streaming',
+    '--iterations', '1',
+    '--out', out,
+  ], { encoding: 'utf8' });
+
+  const report = JSON.parse(fs.readFileSync(out, 'utf8'));
+  assert.deepEqual([...new Set(report.records.map((r) => r.scenario))], ['streaming']);
 });
 
 test('refuses to run without an API key', async () => {

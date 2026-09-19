@@ -27,6 +27,7 @@ const ITERATIONS = parseInt(flag('iterations', '3'), 10);
 const CONCURRENCY = parseInt(flag('concurrency', '6'), 10);
 const TIMEOUT_MS = parseInt(flag('timeout', '180000'), 10);
 const OUT = flag('out', '');
+const ONLY = flag('only', '').split(',').filter(Boolean);
 const MODELS = flag('models', 'claude,claude-haiku,claude-sonnet,claude-opus').split(',');
 
 if (!KEY) {
@@ -43,6 +44,7 @@ const RESET = '\x1b[0m';
 
 const records = [];
 const probes = [];
+let rateLimited = 0;
 
 // Prompt sizes use the 4-chars-per-token rule of thumb, not a tokenizer.
 const FILLER =
@@ -110,9 +112,16 @@ async function get(path, { headers } = {}) {
   }
 }
 
+const FIRST_CONTENT = {
+  '/v1/chat/completions': /"delta":\s*{[^}]*"content":\s*"[^"]/,
+  '/v1/messages': /"type":\s*"content_block_delta"/,
+};
+
 async function postStream(path, body) {
   const started = performance.now();
+  const isContent = FIRST_CONTENT[path];
   let ttfb = null;
+  let ttft = null;
   let chunks = 0;
   let payload = '';
   try {
@@ -124,19 +133,20 @@ async function postStream(path, body) {
     });
     if (!res.ok || !res.body) {
       const text = await res.text();
-      return { ok: false, status: res.status, text, ttfb: null, chunks: 0, ms: performance.now() - started };
+      return { ok: false, status: res.status, text, ttfb: null, ttft: null, chunks: 0, ms: performance.now() - started };
     }
     const decoder = new TextDecoder();
     for await (const part of res.body) {
       const piece = decoder.decode(part, { stream: true });
       if (piece.trim().length === 0) continue;
       if (ttfb === null) ttfb = performance.now() - started;
+      if (ttft === null && isContent?.test(piece)) ttft = performance.now() - started;
       chunks++;
       payload += piece;
     }
-    return { ok: true, status: res.status, text: payload, ttfb, chunks, ms: performance.now() - started };
+    return { ok: true, status: res.status, text: payload, ttfb, ttft, chunks, ms: performance.now() - started };
   } catch (err) {
-    return { ok: false, status: 0, error: err.message, text: payload, ttfb, chunks, ms: performance.now() - started };
+    return { ok: false, status: 0, error: err.message, text: payload, ttfb, ttft, chunks, ms: performance.now() - started };
   }
 }
 
@@ -175,7 +185,12 @@ function summarize(samples) {
   };
 }
 
+function wanted(scenario) {
+  return ONLY.length === 0 || ONLY.includes(scenario);
+}
+
 function record(scenario, label, samples, extra = {}) {
+  rateLimited += samples.filter((s) => s.status === 429).length;
   const row = { scenario, label, ...summarize(samples), ...extra };
   records.push(row);
   const failed = row.failed ? `${RED} ${row.failed} failed${RESET}` : '';
@@ -266,9 +281,9 @@ async function capabilitySuite(model) {
     'Streaming on /v1/chat/completions (SSE)',
     sseOpenai.ok && sseOpenai.text.includes('data:') ? 'works' : 'broken',
     sseOpenai.ok
-      ? `${sseOpenai.chunks} chunks, first at ${(sseOpenai.ttfb / 1000).toFixed(2)}s, done in ${(sseOpenai.ms / 1000).toFixed(2)}s`
+      ? `${sseOpenai.chunks} chunks, first text at ${(sseOpenai.ttft / 1000).toFixed(2)}s, done in ${(sseOpenai.ms / 1000).toFixed(2)}s`
       : `HTTP ${sseOpenai.status}`,
-    { status: sseOpenai.status, ttfb: Math.round(sseOpenai.ttfb || 0), chunks: sseOpenai.chunks },
+    { status: sseOpenai.status, ttfb: Math.round(sseOpenai.ttfb || 0), ttft: Math.round(sseOpenai.ttft || 0), chunks: sseOpenai.chunks },
   );
 
   const sseAnthropic = await postStream('/v1/messages', anthropicBody(model, OUTPUTS.paragraph, { stream: true }));
@@ -277,9 +292,9 @@ async function capabilitySuite(model) {
     'Streaming on /v1/messages (named SSE events)',
     sseAnthropic.ok && sseAnthropic.text.includes('event: content_block_delta') ? 'works' : 'broken',
     sseAnthropic.ok
-      ? `${sseAnthropic.chunks} chunks, first at ${(sseAnthropic.ttfb / 1000).toFixed(2)}s, done in ${(sseAnthropic.ms / 1000).toFixed(2)}s`
+      ? `${sseAnthropic.chunks} chunks, first text at ${(sseAnthropic.ttft / 1000).toFixed(2)}s, done in ${(sseAnthropic.ms / 1000).toFixed(2)}s`
       : `HTTP ${sseAnthropic.status}`,
-    { status: sseAnthropic.status, ttfb: Math.round(sseAnthropic.ttfb || 0), chunks: sseAnthropic.chunks },
+    { status: sseAnthropic.status, ttfb: Math.round(sseAnthropic.ttfb || 0), ttft: Math.round(sseAnthropic.ttft || 0), chunks: sseAnthropic.chunks },
   );
 
   const long = await post('/v1/chat/completions', openaiBody(model, PROMPTS.large));
@@ -433,54 +448,86 @@ async function capabilitySuite(model) {
   );
 }
 
+const LATENCY_SCENARIOS = {
+  overhead: async () => {
+    console.log(`\n${BOLD}Overhead floor${RESET} ${DIM}(no CLI, no quota)${RESET}`);
+    record('overhead', 'GET /health', await repeat(5, () => get('/health', { headers: {} })));
+    record('overhead', 'GET /v1/models', await repeat(5, () => get('/v1/models')));
+  },
+
+  model: async () => {
+    console.log(`\n${BOLD}Model sweep${RESET} ${DIM}(tiny prompt, one-word answer, n=${ITERATIONS})${RESET}`);
+    for (const m of MODELS) {
+      const samples = await repeat(ITERATIONS, () => post('/v1/chat/completions', openaiBody(m, PROMPTS.tiny)));
+      record('model', m, samples, { model: m });
+    }
+  },
+
+  'prompt-length': async (model) => {
+    console.log(`\n${BOLD}Prompt length${RESET} ${DIM}(${model}, one-word answer, n=${ITERATIONS})${RESET}`);
+    for (const [name, prompt] of Object.entries(PROMPTS)) {
+      const samples = await repeat(ITERATIONS, () => post('/v1/chat/completions', openaiBody(model, prompt)));
+      record('prompt-length', `${name} (~${Math.round(prompt.length / 4)} tok in)`, samples, { model, chars_in: prompt.length });
+    }
+  },
+
+  'output-length': async (model) => {
+    console.log(`\n${BOLD}Output length${RESET} ${DIM}(${model}, tiny prompt, n=${ITERATIONS})${RESET}`);
+    for (const [name, instruction] of Object.entries(OUTPUTS)) {
+      const samples = await repeat(ITERATIONS, () => post('/v1/chat/completions', openaiBody(model, instruction)));
+      const chars = samples.map((s) => openaiText(s.json).length).filter(Boolean);
+      const avgChars = chars.length ? Math.round(chars.reduce((a, b) => a + b, 0) / chars.length) : 0;
+      record('output-length', `${name} (~${avgChars} chars out)`, samples, { model, chars_out: avgChars });
+    }
+  },
+
+  streaming: async (model) => {
+    console.log(`\n${BOLD}Streaming${RESET} ${DIM}(100-word answer, time to first text, n=${ITERATIONS})${RESET}`);
+    for (const m of ['claude-haiku', 'claude-sonnet']) {
+      const samples = await repeat(ITERATIONS, () => postStream('/v1/chat/completions', openaiBody(m, OUTPUTS.paragraph, { stream: true })));
+      recordStream('/v1/chat/completions', `${m} (stream)`, samples, m);
+    }
+    const anthropic = await repeat(ITERATIONS, () => postStream('/v1/messages', anthropicBody(model, OUTPUTS.paragraph, { stream: true })));
+    recordStream('/v1/messages', `${model} (stream, /v1/messages)`, anthropic, model);
+  },
+
+  endpoint: async (model) => {
+    console.log(`\n${BOLD}Endpoint parity${RESET} ${DIM}(${model}, tiny prompt, n=${ITERATIONS})${RESET}`);
+    record('endpoint', 'POST /v1/chat/completions', await repeat(ITERATIONS, () => post('/v1/chat/completions', openaiBody(model, PROMPTS.tiny))), { model });
+    record('endpoint', 'POST /v1/messages', await repeat(ITERATIONS, () => post('/v1/messages', anthropicBody(model, PROMPTS.tiny))), { model });
+  },
+
+  concurrency: async () => {
+    console.log(`\n${BOLD}Concurrency${RESET} ${DIM}(${CONCURRENCY} at once against MAX_CONCURRENT)${RESET}`);
+    const wallStart = performance.now();
+    const burst = await Promise.all(
+      Array.from({ length: CONCURRENCY }, () => post('/v1/chat/completions', openaiBody('claude-haiku', PROMPTS.tiny))),
+    );
+    const wall = performance.now() - wallStart;
+    const row = record('concurrency', `${CONCURRENCY} parallel (claude-haiku)`, burst, { model: 'claude-haiku', wall_ms: Math.round(wall) });
+    row.statuses = burst.map((b) => b.status);
+    console.log(`  ${DIM}↳ wall clock ${(wall / 1000).toFixed(2)}s, statuses ${row.statuses.join(' ')}${RESET}`);
+  },
+};
+
+function recordStream(path, label, samples, model) {
+  const medianOf = (key) => {
+    const values = samples.filter((s) => s.ok && s[key] !== null).map((s) => s[key]);
+    return values.length ? Math.round(percentile(values, 50)) : null;
+  };
+  const ttfb = medianOf('ttfb');
+  const ttft = medianOf('ttft');
+  record('streaming', label, samples, { model, endpoint: path, ttfb_median: ttfb, ttft_median: ttft });
+  if (ttft !== null) {
+    console.log(`  ${DIM}↳ first event after ${(ttfb / 1000).toFixed(2)}s, first text after ${(ttft / 1000).toFixed(2)}s${RESET}`);
+  }
+}
+
 async function latencySuite(model) {
-  console.log(`\n${BOLD}Overhead floor${RESET} ${DIM}(no CLI, no quota)${RESET}`);
-  record('overhead', 'GET /health', await repeat(5, () => get('/health', { headers: {} })));
-  record('overhead', 'GET /v1/models', await repeat(5, () => get('/v1/models')));
-
-  console.log(`\n${BOLD}Model sweep${RESET} ${DIM}(tiny prompt, one-word answer, n=${ITERATIONS})${RESET}`);
-  for (const m of MODELS) {
-    const samples = await repeat(ITERATIONS, () => post('/v1/chat/completions', openaiBody(m, PROMPTS.tiny)));
-    record('model', m, samples, { model: m });
+  for (const [name, scenario] of Object.entries(LATENCY_SCENARIOS)) {
+    if (!wanted(name)) continue;
+    await scenario(model);
   }
-
-  console.log(`\n${BOLD}Prompt length${RESET} ${DIM}(${model}, one-word answer, n=${ITERATIONS})${RESET}`);
-  for (const [name, prompt] of Object.entries(PROMPTS)) {
-    const samples = await repeat(ITERATIONS, () => post('/v1/chat/completions', openaiBody(model, prompt)));
-    record('prompt-length', `${name} (~${Math.round(prompt.length / 4)} tok in)`, samples, { model, chars_in: prompt.length });
-  }
-
-  console.log(`\n${BOLD}Output length${RESET} ${DIM}(${model}, tiny prompt, n=${ITERATIONS})${RESET}`);
-  for (const [name, instruction] of Object.entries(OUTPUTS)) {
-    const samples = await repeat(ITERATIONS, () => post('/v1/chat/completions', openaiBody(model, instruction)));
-    const chars = samples.map((s) => openaiText(s.json).length).filter(Boolean);
-    const avgChars = chars.length ? Math.round(chars.reduce((a, b) => a + b, 0) / chars.length) : 0;
-    record('output-length', `${name} (~${avgChars} chars out)`, samples, { model, chars_out: avgChars });
-  }
-
-  console.log(`\n${BOLD}Streaming${RESET} ${DIM}(100-word answer, time to first chunk, n=${ITERATIONS})${RESET}`);
-  for (const m of ['claude-haiku', 'claude-sonnet']) {
-    const samples = await repeat(ITERATIONS, () => postStream('/v1/chat/completions', openaiBody(m, OUTPUTS.paragraph, { stream: true })));
-    const ttfbs = samples.filter((s) => s.ok && s.ttfb !== null).map((s) => s.ttfb);
-    const ttfb = ttfbs.length ? Math.round(percentile(ttfbs, 50)) : null;
-    record('streaming', `${m} (stream)`, samples, { model: m, ttfb_median: ttfb });
-    if (ttfb !== null) console.log(`  ${DIM}↳ first chunk after ${(ttfb / 1000).toFixed(2)}s${RESET}`);
-  }
-
-  console.log(`\n${BOLD}Endpoint parity${RESET} ${DIM}(${model}, tiny prompt, n=${ITERATIONS})${RESET}`);
-  record('endpoint', 'POST /v1/chat/completions', await repeat(ITERATIONS, () => post('/v1/chat/completions', openaiBody(model, PROMPTS.tiny))), { model });
-  record('endpoint', 'POST /v1/messages', await repeat(ITERATIONS, () => post('/v1/messages', anthropicBody(model, PROMPTS.tiny))), { model });
-
-  console.log(`\n${BOLD}Concurrency${RESET} ${DIM}(${CONCURRENCY} at once against MAX_CONCURRENT)${RESET}`);
-  const wallStart = performance.now();
-  const burst = await Promise.all(
-    Array.from({ length: CONCURRENCY }, () => post('/v1/chat/completions', openaiBody('claude-haiku', PROMPTS.tiny))),
-  );
-  const wall = performance.now() - wallStart;
-  const row = record('concurrency', `${CONCURRENCY} parallel (claude-haiku)`, burst, { model: 'claude-haiku', wall_ms: Math.round(wall) });
-  const statuses = burst.map((b) => b.status);
-  row.statuses = statuses;
-  console.log(`  ${DIM}↳ wall clock ${(wall / 1000).toFixed(2)}s, statuses ${statuses.join(' ')}${RESET}`);
 }
 
 async function main() {
@@ -513,7 +560,12 @@ async function main() {
 
   const broken = probes.filter((p) => p.verdict === 'broken').length;
   const failed = records.reduce((n, r) => n + r.failed, 0);
-  console.log(`\n${BOLD}BENCH_RUN_COMPLETE${RESET} ${DIM}probes=${probes.length} broken=${broken} rows=${records.length} failed_requests=${failed}${RESET}`);
+  if (rateLimited > 0) {
+    console.log(`\n${YELLOW}${rateLimited} requests were rate limited (429).${RESET} The rows above are incomplete: a`
+      + ' benchmark outruns the default 30 req/min. Raise SHELLM_GLOBAL_RPM on the server, or run one'
+      + ' --only scenario at a time.');
+  }
+  console.log(`\n${BOLD}BENCH_RUN_COMPLETE${RESET} ${DIM}probes=${probes.length} broken=${broken} rows=${records.length} failed_requests=${failed} rate_limited=${rateLimited}${RESET}`);
 }
 
 main().catch((err) => {
