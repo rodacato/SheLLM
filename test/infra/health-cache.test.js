@@ -41,7 +41,7 @@ describe('getCachedProviderStatus', () => {
     const claude = getCachedProviderStatus('claude');
     assert.ok(claude);
     assert.strictEqual(typeof claude.installed, 'boolean');
-    assert.strictEqual(typeof claude.authenticated, 'boolean');
+    assert.ok([true, false, null].includes(claude.authenticated), 'authenticated is a verdict or an honest unknown');
   });
 
   it('returns null for unknown provider name', async () => {

@@ -3,7 +3,7 @@ const { queue } = require('./queue');
 const { getAllCircuitStates, resetCircuit } = require('./circuit-breaker');
 const logger = require('../lib/logger');
 
-const DEEP_CHECK_TIMEOUT = 15000;
+const PROBE_TIMEOUT = 15000;
 
 function getCacheTtl() {
   return parseInt(process.env.HEALTH_CACHE_TTL_MS || '30000', 10);
@@ -28,9 +28,11 @@ function getProviderList() {
     return getProviders();
   } catch {
     // Fallback for tests/early boot — hardcoded defaults
+    // The probe command is the provider module's, not this list's: the `health_check` column in
+    // the providers table is left over and no longer read.
     return [
-      { name: 'claude', type: 'subprocess', enabled: 1, health_check: { command: 'claude', args: ['--print', '--dangerously-skip-permissions', '--', 'test'] } },
-      { name: 'codex', type: 'subprocess', enabled: 1, health_check: { command: 'codex', args: ['exec', '--ephemeral', '--skip-git-repo-check', 'test'] } },
+      { name: 'claude', type: 'subprocess', enabled: 1 },
+      { name: 'codex', type: 'subprocess', enabled: 1 },
     ];
   }
 }
@@ -49,51 +51,57 @@ function providerSecrets(name) {
   return Object.values(providerEnv(name) || {}).filter((value) => typeof value === 'string' && value.length >= 8);
 }
 
-async function checkSubprocess(name, { timeout = 10000 } = {}) {
+function providerModule(name) {
+  const { engines } = require('../routing/engines');
+  return engines[name];
+}
+
+// A probe asks the provider how to check itself, because only the provider knows which of its
+// commands costs nothing. Spending a real request to find out whether requests work is a bill,
+// not a health check.
+async function checkProvider(provider) {
+  const name = provider.name;
+  const module = providerModule(name);
+  const probe = module?.authProbe;
+  const args = probe ? probe.args : ['--version'];
+  const run = () => execute(name, args, { timeout: PROBE_TIMEOUT, env: providerEnv(name) });
+
   try {
-    await execute(name, ['--version'], { timeout, env: providerEnv(name) });
-    return { installed: true, authenticated: true };
+    const result = module?.withLock ? await module.withLock(run) : await run();
+    if (!probe) return { installed: true, authenticated: null };
+    const loggedIn = probe.parse(result.stdout);
+    return { installed: true, authenticated: loggedIn === null ? null : loggedIn };
   } catch (err) {
     return parseCheckError(err, providerSecrets(name));
   }
 }
 
-async function checkSubprocessDeep(provider) {
-  const hc = provider.health_check || {};
-  if (!hc.command) return checkSubprocess(provider.name);
-  try {
-    await execute(hc.command, hc.args || [], { timeout: DEEP_CHECK_TIMEOUT, env: providerEnv(provider.name) });
-    return { installed: true, authenticated: true };
-  } catch (err) {
-    return parseCheckError(err, providerSecrets(provider.name));
-  }
-}
-
-// Check a single provider (shallow or deep)
-async function checkProvider(provider, { deep = false } = {}) {
-  return deep ? checkSubprocessDeep(provider) : checkSubprocess(provider.name);
-}
+// Only these mean "the credentials are the problem". Everything else is a probe that failed for
+// a reason we cannot name, and guessing "logged out" there took a whole provider offline: an
+// unsupported default model answered 400 and every request to codex got 503 until the next poll.
+const AUTH_FAILURE = /not authenticated|please login|please log ?out|auth required|unauthenticated|unauthorized|invalid bearer token|failed to authenticate|could not be refreshed|401/;
 
 function parseCheckError(err, secrets = []) {
   const stderr = secrets.reduce((text, secret) => text.split(secret).join('[REDACTED]'), err.stderr || '');
   const lower = stderr.toLowerCase();
+  const error = stderr
+    .replace(/(sk-|csk-|key-|shellm-)[A-Za-z0-9_-]{10,}/gi, '[REDACTED]')
+    .replace(/Bearer\s+[A-Za-z0-9._-]+/gi, 'Bearer [REDACTED]')
+    .replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]')
+    .slice(0, 200);
+
   // Keychain fallback with cached credentials means auth works — check first
   // because the message may contain "not found" for libsecret
   if (lower.includes('loaded cached credentials') || lower.includes('filekeychain fallback')) {
     return { installed: true, authenticated: true };
   }
   if (err.code === -1 || stderr.includes('ENOENT') || lower.includes('command not found')) {
-    return { installed: false, authenticated: false };
+    return { installed: false, authenticated: false, error };
   }
-  if (lower.includes('not authenticated') || lower.includes('please login') || lower.includes('auth required') || lower.includes('unauthenticated')) {
-    return { installed: true, authenticated: false };
+  if (AUTH_FAILURE.test(lower)) {
+    return { installed: true, authenticated: false, error };
   }
-  const redacted = stderr
-    .replace(/(sk-|csk-|key-|shellm-)[A-Za-z0-9_-]{10,}/gi, '[REDACTED]')
-    .replace(/Bearer\s+[A-Za-z0-9._-]+/gi, 'Bearer [REDACTED]')
-    .replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]')
-    .slice(0, 200);
-  return { installed: true, authenticated: false, error: redacted };
+  return { installed: true, authenticated: null, error };
 }
 
 // --- Health status ---
@@ -110,9 +118,7 @@ async function getHealthStatus() {
   }
 
   const providerList = getProviderList();
-  const results = await Promise.all(
-    providerList.map((p) => checkProvider(p, { deep: false }))
-  );
+  const results = await Promise.all(providerList.map((p) => checkProvider(p)));
 
   const providers = {};
   for (let i = 0; i < providerList.length; i++) {
@@ -169,12 +175,10 @@ function sendAlertWebhook(provider, from, to) {
   }).catch((err) => logger.error({ event: 'alert_webhook_error', error: err.message }));
 }
 
-async function pollAllProviders({ deep = false } = {}) {
+async function pollAllProviders() {
   try {
     const providerList = getProviderList();
-    const results = await Promise.allSettled(
-      providerList.map((p) => checkProvider(p, { deep }))
-    );
+    const results = await Promise.allSettled(providerList.map((p) => checkProvider(p)));
 
     const statuses = {};
     for (let i = 0; i < providerList.length; i++) {
@@ -213,8 +217,8 @@ async function pollAllProviders({ deep = false } = {}) {
 }
 
 function startHealthPoller() {
-  pollAllProviders({ deep: true });
-  pollerInterval = setInterval(() => pollAllProviders({ deep: false }), getPollInterval());
+  pollAllProviders();
+  pollerInterval = setInterval(() => pollAllProviders(), getPollInterval());
   pollerInterval.unref();
   return pollerInterval;
 }

@@ -38,7 +38,7 @@ describe('health', () => {
     // Each provider has installed and authenticated
     for (const [, p] of Object.entries(status.providers)) {
       assert.strictEqual(typeof p.installed, 'boolean');
-      assert.strictEqual(typeof p.authenticated, 'boolean');
+      assert.ok([true, false, null].includes(p.authenticated), 'authenticated is a verdict or an honest unknown');
     }
 
     assert.ok(status.queue);
