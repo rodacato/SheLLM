@@ -11,13 +11,13 @@ The last known-good version of each upstream CLI. Read this table and the tool's
 | Tool | Version | Pinned | Notes |
 |---|---|:---:|---|
 | `claude` (Claude Code) | `2.1.273` | ✅ | `CLAUDE_VERSION` in `scripts/setup/vps.sh`, passed to the official installer |
-| `codex` | `0.154.0` | ❌ | Not installed by `vps.sh`; the devcontainer installs the latest. Upstream is ahead, and the adapter is rewritten against the current CLI in phase 1b |
+| `codex` | `0.154.0` | ❌ | Not installed by `vps.sh`; the devcontainer installs the latest. The adapter was rewritten against this version on 2026-09-19 and its event output is recorded in `test/fixtures/codex/0.154.0/` |
 
 ## Tested Combinations
 
 | SheLLM | claude | codex | Node.js | Last tested |
 |---|---|---|---|---|---|
-| v0.5.0 | 2.1.273 | 0.154.0 | 24.x | 2026-09-16 — CLI flags only (`npm run test:cli`); output formats not yet run through `npm run test:e2e` |
+| v0.5.0 | 2.1.273 | 0.154.0 | 24.x | 2026-09-19 — `npm run test:cli` for both CLIs; codex `exec --json` output recorded from the real binary; claude stream-json output recorded too |
 
 ---
 

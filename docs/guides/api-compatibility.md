@@ -206,7 +206,9 @@ Not all SheLLM providers support all parameters equally:
 | JSON mode | Appends an instruction | Appends an instruction |
 | Streaming | Token deltas (`--output-format stream-json`) | Whole messages — it yields on `item.completed`, not per token |
 
-Codex is registered as an engine but its adapter still ignores the requested model, so it is absent from `GET /v1/models` until it is rewritten.
+Codex runs `codex exec --ephemeral --skip-git-repo-check -s read-only --json`, one process at a time: concurrent processes race on its OAuth refresh (openai/codex#17340). A failed turn is read from the events, never from the exit code, which can be 0 on a failure (openai/codex#1018).
+
+`codex` uses the model in `~/.codex/config.toml`; `codex-<model>` passes `<model>` to `-m`. If the configured default is one your account cannot use, the bare `codex` id fails and the prefixed form is the way in.
 
 ---
 

@@ -94,7 +94,7 @@ will hit — read [`docs/guides/usage.md`](docs/guides/usage.md).
 | Provider | Models |
 |---|---|
 | Claude | `claude` (the CLI's default), `claude-haiku`, `claude-sonnet`, `claude-opus`, and any other `claude-*` id the CLI accepts, passed through as `--model` |
-| Codex | `codex` — the adapter still ignores the requested model, so it is absent from `GET /v1/models` until it is rewritten |
+| Codex | `codex` (the CLI's configured default) and any `codex-<model>` id, passed through as `-m <model>` — for example `codex-gpt-5.6-sol`. The CLI runs `--ephemeral` and `-s read-only`, one process at a time |
 
 A model the CLI rejects comes back as `404 model_not_found`.
 
