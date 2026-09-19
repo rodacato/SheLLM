@@ -60,7 +60,7 @@ message = client.messages.create(
 | `model` | **Required** | Must be a SheLLM model name (see `/v1/models`) |
 | `messages` | **Required** | Array of `{ role, content }`. Content can be a string or array of `{ type: "text", text: "..." }` objects |
 | `messages[].role` | **Supported** | `system`, `user`, `assistant` |
-| `max_tokens` | **Accepted** | Integer 1-128000. Only passed to providers that support it (Cerebras) |
+| `max_tokens` | **Accepted** | Integer 1-128000. Validated, then ignored — no CLI has a token-cap flag, so it does not shorten the answer |
 | `temperature` | **Accepted** | Number 0-2 |
 | `top_p` | **Accepted** | Number 0-1 |
 | `stream` | **Supported** | `true` enables SSE streaming |
@@ -99,12 +99,9 @@ message = client.messages.create(
 
 ### 1. Model Names
 
-Model names map to the CLI's own aliases. `GET /v1/models` lists the ones SheLLM maps; any other id the CLI accepts is passed through unchanged. You can define custom aliases via the `SHELLM_ALIASES` env var:
+Model names map to the CLI's own aliases — `claude-haiku` becomes `--model haiku`. `GET /v1/models` lists the ones SheLLM maps; any other `claude-*` id is passed through to the CLI unchanged.
 
-```bash
-# Map OpenAI model names to SheLLM providers
-
-```
+A name no provider owns (`gpt-4o`) is rejected with 400 `invalid_request` before any process starts. A `claude-*` name the CLI itself rejects comes back as 404 `model_not_found`.
 
 ### 2. Authentication
 
@@ -126,8 +123,8 @@ The claude and codex CLIs have no temperature flag, so SheLLM validates the valu
 
 ### 5. Token Usage
 
-- **Non-streaming**: Both endpoints return token counts when available from the provider. Values may be `null` if the provider doesn't report them.
-- **Streaming (Anthropic)**: The `message_delta` event includes an estimated `output_tokens` count based on response length (~4 chars per token). This is an approximation, not an exact count.
+- **Non-streaming**: Both endpoints return the token counts the CLI reports. Values may be `null` if the provider doesn't report them.
+- **Streaming (Anthropic)**: `message_start` carries an *estimated* `input_tokens` (~4 chars per token) because the real count is not known when the stream opens. `message_delta` carries the CLI's own `output_tokens`, and falls back to the same estimate only if the provider reports none.
 
 ### 6. Content Format
 
@@ -201,15 +198,15 @@ These features are not implemented and will be silently ignored or rejected:
 Not all SheLLM providers support all parameters equally:
 
 | Capability | Claude | Codex |
-|---|---|---|---|---|
-| System prompt | Native | Prepended to prompt | Prepended to prompt | Native |
-| Temperature | Ignored | Ignored | Ignored | Passed |
-| Top P | Ignored | Ignored | Ignored | Passed |
-| Max tokens | Ignored | Ignored | Ignored | Passed |
-| JSON mode | Appends instruction | Appends instruction | Appends instruction | API parameter |
-| Streaming | Native | Buffer-and-flush | Native | Native |
+|---|---|---|
+| System prompt | Native (`--system-prompt`) | Prepended to the prompt |
+| Temperature | Ignored — no CLI flag | Ignored — no CLI flag |
+| Top P | Ignored — no CLI flag | Ignored — no CLI flag |
+| Max tokens | Ignored — no CLI flag | Ignored — no CLI flag |
+| JSON mode | Appends an instruction | Appends an instruction |
+| Streaming | Token deltas (`--output-format stream-json`) | Whole messages — it yields on `item.completed`, not per token |
 
-"Buffer-and-flush" means the provider doesn't support true streaming — SheLLM waits for the full response, then sends it as a single SSE chunk.
+Codex is registered as an engine but its adapter still ignores the requested model, so it is absent from `GET /v1/models` until it is rewritten.
 
 ---
 

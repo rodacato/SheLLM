@@ -3,10 +3,12 @@
 You have a running SheLLM, its base URL and an API key. This guide takes you from there to a
 working call, and says plainly what the API can and cannot do today.
 
-Everything below was verified against a live instance on **2026-09-19**, with **Claude as the only
-provider** (`GET /v1/models` returns `claude`, `claude-haiku`, `claude-sonnet`, `claude-opus`).
-The probes that produced the verdicts are in [`scripts/bench.js`](../../scripts/bench.js); the
-latency numbers behind the guidance are in [`benchmarks.md`](./benchmarks.md).
+Everything below was probed against a running instance of **this** build on **2026-09-19**, with
+**Claude as the only provider** (`GET /v1/models` returns `claude`, `claude-haiku`,
+`claude-sonnet`, `claude-opus`). The probes that produced the verdicts are in
+[`scripts/bench.js`](../../scripts/bench.js); the latency numbers are in
+[`benchmarks.md`](./benchmarks.md). Re-run them after a deploy:
+`node scripts/bench.js --suite capabilities`.
 
 - Installing a server: [`../../README.md`](../../README.md) and [`deployment.md`](./deployment.md)
 - Parameter-by-parameter mapping: [`api-compatibility.md`](./api-compatibility.md)
@@ -112,16 +114,17 @@ Each row is a probe that ran against a live instance, not a reading of the code.
 | Send an image (`images`) | rejected | 400, text blocks only |
 | Use a model no provider owns (`unknown-model`) | rejected | 400 `invalid_request` — e.g. `gpt-4o` |
 | Use a `claude-*` name the CLI rejects (`unknown-claude-model`) | rejected | 404 `model_not_found` |
-| Call without a key (`auth`) | rejected | 401 |
+| Call without a key (`auth`) | rejected | 401 in your endpoint's own error shape |
 | POST more than 256 kB (`payload-limit`) | rejected | 413 |
 | Get embeddings (`embeddings`) | rejected | 404, there is no embeddings endpoint |
 
-Two error-shape probes are part of the same suite; the second one is a known divergence:
+Two error-shape probes are part of the same suite, because an SDK reads the error body, not just
+the status:
 
 | Probe | Verdict | Detail |
 |---|---|---|
 | Validation errors keep each endpoint's shape (`error-format-4xx`) | works | OpenAI errors on `/v1/chat/completions`, Anthropic errors on `/v1/messages` |
-| A 401 keeps each endpoint's shape (`error-format-401`) | broken | both endpoints answer `{"error": "auth_required", "message": …}` — SheLLM's own shape, not the SDK's. An SDK still raises an auth error from the status code, but reading `error.message` from it gives nothing |
+| A 401 keeps each endpoint's shape (`error-format-401`) | works | it did not until 2026-09-19: both endpoints used to answer `{"error": "auth_required", …}`, SheLLM's own shape, so `error.message` read through an SDK came back empty |
 
 ## 5. Streaming
 
@@ -131,18 +134,26 @@ curl -N "$SHELLM_BASE/v1/chat/completions" \
   -d '{"model": "claude", "stream": true, "messages": [{"role": "user", "content": "Cuenta hasta diez"}]}'
 ```
 
-Both endpoints stream, but not identically: on `/v1/messages` the first event arrives in under a
-second, while `/v1/chat/completions` sends nothing until the CLI has finished. If you are
-streaming to show progress to a person, use `/v1/messages`.
+Both endpoints stream the answer as the model writes it: with `claude-sonnet`, the first text
+reaches the client about 1.7 s into a 5.5 s request, in dozens of chunks.
+
+Two caveats:
+
+- On `/v1/messages` the `message_start` event arrives immediately, before the CLI has produced
+  anything. Do not treat it as the first token — wait for `content_block_delta`.
+- `claude-haiku` is the exception: its first text still arrives at the very end, for reasons that
+  are not SheLLM's and not yet understood ([`benchmarks.md`](./benchmarks.md)). Stream with
+  `claude-sonnet`.
 
 ## 6. Errors
 
-`request_id` is in every error body and in the server logs — quote it when something is wrong.
+Every response carries an `x-request-id` header, and the server logs the same id — quote it when
+something is wrong. You can also set it yourself to correlate with your own logs.
 
 | Status | Code | What it means | What to do |
 |---|---|---|---|
 | 400 | `invalid_request` | bad field, unknown model name, or an image block | fix the request; the message names the field |
-| 401 | `auth_required` | missing, unknown or deactivated key | check the key (note the shape divergence in §4) |
+| 401 | `auth_required` | missing, unknown or deactivated key | check the key |
 | 404 | `model_not_found` | the CLI does not know that `claude-*` model | use one from `GET /v1/models` |
 | 413 | — | body over 256 kB | send less; a 4k-token prompt is nowhere near this |
 | 429 | `rate_limited` | per-key or global rate limit, or the queue is full | honor `Retry-After`; do not hammer |
@@ -176,7 +187,7 @@ Measured on the production server through a Cloudflare Tunnel, median of 3 ([`be
 - A short answer costs about **3 s**, whichever model you pick — the CLI's startup dominates.
 - Prompt size barely matters: a ~4k-token prompt lands within a second of a ten-token one.
 - Answer length is what costs: a 100-word answer ~6 s, a 500-word answer considerably more.
-- Streaming on `/v1/messages` shows the first token in about **0.8 s**.
+- Streaming shows the first text at about **1.7 s** with `claude-sonnet`, on either endpoint.
 
 So: pick the model for quality, not for speed, and stream when a person is watching.
 
