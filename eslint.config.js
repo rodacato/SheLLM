@@ -95,7 +95,6 @@ module.exports = [
     },
   },
   {
-    // release-changelog.js is ESM in a CommonJS package; linting it needs a parser exception
-    ignores: ['node_modules/', 'docs/', 'scripts/release-changelog.js', '*.config.js'],
+    ignores: ['node_modules/', 'docs/', '*.config.js'],
   },
 ];

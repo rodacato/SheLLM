@@ -3,11 +3,11 @@
 // Invoked automatically by `npm version` via the "version" lifecycle script.
 // Can also be run manually: node scripts/release-changelog.js [--dry-run]
 
-import { execSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+const { execSync } = require('node:child_process');
+const { readFileSync, writeFileSync } = require('node:fs');
+const { join } = require('node:path');
 
-const ROOT    = new URL('..', import.meta.url).pathname;
+const ROOT    = join(__dirname, '..');
 const DRY_RUN = process.argv.includes('--dry-run');
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
