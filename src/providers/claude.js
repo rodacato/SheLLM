@@ -18,9 +18,17 @@ function systemPromptFor({ system, response_format }) {
   return system ? system + '\n\nRespond with valid JSON only.' : 'Respond with valid JSON only.';
 }
 
+// An HTTP service must not run whatever the server user has configured for their own shell:
+// slash commands, MCP servers from ~/.claude.json, and hooks all execute code we never reviewed.
+const ISOLATION_ARGS = [
+  '--disable-slash-commands',
+  '--strict-mcp-config',
+  '--settings', '{"disableAllHooks":true}',
+];
+
 // The claude CLI has no temperature flag, so temperature is ignored.
 function buildBaseArgs({ prompt, system, response_format, model }) {
-  const args = ['--print'];
+  const args = ['--print', ...ISOLATION_ARGS];
   if (shouldSkipPermissions()) args.push('--dangerously-skip-permissions');
   if (cliModel(model)) args.push('--model', cliModel(model));
   const systemPrompt = systemPromptFor({ system, response_format });
@@ -141,6 +149,7 @@ module.exports = {
   chatStream,
   buildArgs,
   buildStreamArgs,
+  ISOLATION_ARGS,
   parseOutput,
   parseStreamLine,
 };
