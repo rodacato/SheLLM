@@ -164,7 +164,13 @@ describe('admin /admin/logs', () => {
     assert.ok(res.headers['content-disposition'].startsWith('attachment; filename="shellm-logs-'));
 
     const lines = res.text.trim().split('\n');
-    assert.strictEqual(lines[0], 'id,request_id,client_name,provider,model,status,duration_ms,queued_ms,tokens,cost_usd,created_at');
+    const header = lines[0].split(',');
+    assert.deepStrictEqual(
+      header,
+      ['id', ...require('../../src/db/request-logs').LOG_FIELDS, 'created_at'],
+      'the export carries every stored column, in insert order',
+    );
+    assert.ok(header.includes('cache_read_tokens'), 'cache counters are exportable for offline analysis');
     // 4 seeded rows + 1 header
     assert.strictEqual(lines.length, 5);
   });
