@@ -217,6 +217,7 @@ async function messagesHandler(req, res) {
     res.locals.queued_ms = result.queued_ms ?? null;
     res.locals.cost_usd = result.cost_usd ?? null;
     res.locals.usage = result.usage ?? null;
+    res.locals.metrics = result.metrics ?? null;
 
     res.set('X-Powered-By', 'SheLLM');
     res.set('X-Queue-Depth', String(queue.stats.pending));
@@ -262,6 +263,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
 
   res.locals.provider = provider.name;
   res.locals.model = model;
+  res.locals.streamed = 1;
 
   logger.debug({ event: 'stream_start', format: 'anthropic', provider: provider.name, model, request_id: req.requestId });
 
@@ -307,7 +309,12 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
         logger.debug({ event: 'stream_calling_provider', format: 'anthropic', provider: provider.name, hasChatStream: true });
         for await (const event of streamFn({ prompt, system, max_tokens, temperature, top_p, model, signal: ac.signal })) {
           if (ac.signal.aborted) { logger.debug({ event: 'stream_aborted', chunkCount }); break; }
-          if (event.type === 'usage') reportedUsage = event.usage;
+          if (event.type === 'usage') {
+            reportedUsage = event.usage;
+            res.locals.usage = event.usage ?? null;
+            res.locals.cost_usd = event.cost_usd ?? null;
+            res.locals.metrics = event.metrics ?? null;
+          }
           if (event.type === 'delta') {
             chunkCount++;
             totalChars += event.content.length;

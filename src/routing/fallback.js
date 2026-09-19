@@ -63,6 +63,7 @@ async function routeWithFallback({ model, prompt, system, max_tokens, temperatur
         request_id: request_id || null,
         ...(result.cost_usd != null && { cost_usd: result.cost_usd }),
         ...(result.usage && { usage: result.usage }),
+        ...(result.metrics && { metrics: result.metrics }),
         ...(isFallback && { original_provider: primary.name }),
       };
     } catch (err) {

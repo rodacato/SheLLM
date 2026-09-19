@@ -5,7 +5,9 @@ const { getDb } = require('../db');
 
 const router = Router();
 
-const LOG_COLUMNS = 'id, request_id, client_name, provider, model, status, duration_ms, queued_ms, tokens, cost_usd, created_at';
+const { LOG_FIELDS } = require('../db/request-logs');
+
+const LOG_COLUMNS = ['id', ...LOG_FIELDS, 'created_at'].join(', ');
 
 function buildWhereClause(query) {
   const conditions = [];

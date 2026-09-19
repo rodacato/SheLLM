@@ -193,6 +193,7 @@ async function chatCompletionsHandler(req, res) {
     res.locals.queued_ms = result.queued_ms ?? null;
     res.locals.cost_usd = result.cost_usd ?? null;
     res.locals.usage = result.usage ?? null;
+    res.locals.metrics = result.metrics ?? null;
 
     res.set('X-Powered-By', 'SheLLM');
     res.set('X-Queue-Depth', String(queue.stats.pending));
@@ -242,6 +243,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
 
   res.locals.provider = provider.name;
   res.locals.model = model;
+  res.locals.streamed = 1;
 
   logger.debug({ event: 'stream_start', provider: provider.name, model, request_id: req.requestId });
 
@@ -300,6 +302,11 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
               sentRole = true;
             }
             sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model: responseModel, choices: [{ index: 0, delta: { content: event.content }, finish_reason: null }] });
+          }
+          if (event.type === 'usage') {
+            res.locals.usage = event.usage ?? null;
+            res.locals.cost_usd = event.cost_usd ?? null;
+            res.locals.metrics = event.metrics ?? null;
           }
         }
         logger.debug({ event: 'stream_generator_done', chunkCount, request_id: req.requestId });
