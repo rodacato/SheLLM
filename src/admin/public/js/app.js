@@ -73,10 +73,15 @@ function app() {
       { id: 'logs', label: 'Request Logs', icon: 'database' },
       { id: 'keys', label: 'API Keys', icon: 'key' },
     ],
+    pendingLogFilter: null,
     navigate(pageId) {
       this.page = pageId;
       this.sidebarOpen = false;
       location.hash = pageId;
+    },
+    openLogsFiltered(status) {
+      this.pendingLogFilter = String(status);
+      this.navigate('logs');
     },
     formatUptime,
     async init() {

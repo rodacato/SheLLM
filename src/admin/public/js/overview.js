@@ -1,10 +1,17 @@
+const STATUS_COLORS = { ok: '#22c55e', client: '#ffb800', server: '#ef4444' };
+
+function statusColor(status) {
+  if (status < 400) return STATUS_COLORS.ok;
+  return status < 500 ? STATUS_COLORS.client : STATUS_COLORS.server;
+}
+
 function overviewPage() {
   return {
     stats: null,
     period: '24h',
     loading: true,
     providers: [],
-    _charts: {},
+    _chart: null,
     _refreshInterval: null,
 
     async fetchStats() {
@@ -13,7 +20,7 @@ function overviewPage() {
         const res = await apiFetch(`${API_BASE}/stats?period=${this.period}`);
         if (res.ok) {
           this.stats = await res.json();
-          this.$nextTick(() => this.renderSparklines());
+          this.$nextTick(() => this.renderScatter());
         }
       } catch { /* ignore */ }
       this.loading = false;
@@ -31,63 +38,95 @@ function overviewPage() {
       }
     },
 
-    renderSparklines() {
-      if (!this.stats?.timeline || this.stats.timeline.length < 2) return;
-      if (typeof Chart === 'undefined') return;
-
-      const labels = this.stats.timeline.map(t => t.bucket);
-      const baseConfig = {
-        type: 'line',
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { enabled: false } },
-          scales: {
-            x: { display: false },
-            y: { display: false, beginAtZero: true },
-          },
-          elements: { point: { radius: 0 }, line: { tension: 0.3, borderWidth: 1.5 } },
-          animation: false,
-        },
-      };
-
-      this._renderChart('sparkRequests', labels,
-        this.stats.timeline.map(t => t.requests), '#03e3ff', 'rgba(3,227,255,0.1)');
-      this._renderChart('sparkErrors', labels,
-        this.stats.timeline.map(t => t.errors), '#ef4444', 'rgba(239,68,68,0.1)');
-      this._renderChart('sparkCost', labels,
-        this.stats.timeline.map(t => t.cost), '#03e3ff', 'rgba(3,227,255,0.1)');
+    queueSaturation() {
+      const q = this.$root.health?.queue;
+      if (!q || !q.max_concurrent) return 0;
+      return Math.min(100, Math.round((q.active / q.max_concurrent) * 100));
     },
 
-    _renderChart(refName, labels, data, borderColor, bgColor) {
-      const canvas = this.$refs[refName];
-      if (!canvas) return;
+    layerPct(layer) {
+      const l = this.stats?.latency;
+      if (!l) return 0;
+      const queued = l.queued_ms?.p95 || 0;
+      const execution = l.execution_ms?.p95 || 0;
+      const total = queued + execution;
+      if (total === 0) return layer === 'execution_ms' ? 100 : 0;
+      return Math.round(((layer === 'queued_ms' ? queued : execution) / total) * 100);
+    },
 
-      if (this._charts[refName]) {
-        this._charts[refName].destroy();
-      }
+    // The whole point of the split: queueing is fixed by raising concurrency, execution is not.
+    lagVerdict() {
+      const queuedPct = this.layerPct('queued_ms');
+      if (!this.stats?.latency?.total_ms?.p95) return 'no data yet';
+      if (queuedPct >= 40) return `${queuedPct}% spent queueing — raise MAX_CONCURRENT`;
+      if (queuedPct >= 15) return `${queuedPct}% queueing — concurrency is starting to bite`;
+      return 'the CLI, not the queue';
+    },
 
-      this._charts[refName] = new Chart(canvas, {
-        type: 'line',
+    renderScatter() {
+      const rows = this.stats?.recent_requests;
+      const canvas = this.$refs.scatter;
+      if (!canvas || !rows || rows.length < 2 || typeof Chart === 'undefined') return;
+
+      if (this._chart) this._chart.destroy();
+
+      const points = rows.map((r) => ({
+        x: new Date(r.created_at + 'Z').getTime(),
+        y: r.duration_ms,
+        status: r.status,
+        model: r.model,
+        queued: r.queued_ms,
+      }));
+
+      this._chart = new Chart(canvas, {
+        type: 'scatter',
         data: {
-          labels,
           datasets: [{
-            data,
-            borderColor,
-            backgroundColor: bgColor,
-            fill: true,
+            data: points,
+            pointBackgroundColor: points.map((p) => statusColor(p.status)),
+            pointBorderColor: 'transparent',
+            pointRadius: 3,
+            pointHoverRadius: 5,
           }],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { enabled: false } },
-          scales: {
-            x: { display: false },
-            y: { display: false, beginAtZero: true },
-          },
-          elements: { point: { radius: 0 }, line: { tension: 0.3, borderWidth: 1.5 } },
           animation: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const p = ctx.raw;
+                  const queued = p.queued ? ` · ${p.queued}ms queued` : '';
+                  return `${p.status} · ${formatDuration(p.y)}${queued} · ${p.model || 'unknown'}`;
+                },
+                title: (items) => new Date(items[0].raw.x).toLocaleString(),
+              },
+            },
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              grid: { color: 'rgba(132,147,151,0.1)' },
+              ticks: {
+                color: '#849397',
+                font: { size: 10, family: 'monospace' },
+                maxTicksLimit: 6,
+                callback: (value) => new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              },
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(132,147,151,0.1)' },
+              ticks: {
+                color: '#849397',
+                font: { size: 10, family: 'monospace' },
+                callback: (value) => formatDuration(value),
+              },
+            },
+          },
         },
       });
     },
