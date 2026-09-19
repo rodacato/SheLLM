@@ -6,4 +6,4 @@ headers:
 content:
   application/json:
     schema:
-      $ref: "../schemas/Error.yaml"
+      $ref: "../schemas/OpenAIError.yaml"

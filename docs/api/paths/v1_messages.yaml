@@ -29,11 +29,11 @@ post:
           schema:
             $ref: "../schemas/MessagesResponse.yaml"
     '400':
-      $ref: "../responses/BadRequest.yaml"
+      $ref: "../responses/BadRequestAnthropic.yaml"
     '401':
-      $ref: "../responses/Unauthorized.yaml"
+      $ref: "../responses/UnauthorizedAnthropic.yaml"
     '429':
-      $ref: "../responses/RateLimited.yaml"
+      $ref: "../responses/RateLimitedAnthropic.yaml"
     '502':
       description: Provider CLI failed
       content:

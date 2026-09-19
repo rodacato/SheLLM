@@ -16,4 +16,4 @@ get:
           schema:
             $ref: "../schemas/ModelList.yaml"
     '401':
-      $ref: "../responses/Unauthorized.yaml"
+      $ref: "../responses/UnauthorizedOpenAI.yaml"

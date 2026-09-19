@@ -109,7 +109,7 @@
             }
           },
           "401": {
-            "$ref": "#/components/responses/Unauthorized"
+            "$ref": "#/components/responses/UnauthorizedOpenAI"
           }
         }
       }
@@ -161,13 +161,13 @@
             }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "$ref": "#/components/responses/BadRequestOpenAI"
           },
           "401": {
-            "$ref": "#/components/responses/Unauthorized"
+            "$ref": "#/components/responses/UnauthorizedOpenAI"
           },
           "429": {
-            "$ref": "#/components/responses/RateLimited"
+            "$ref": "#/components/responses/RateLimitedOpenAI"
           },
           "502": {
             "description": "Provider CLI failed",
@@ -249,13 +249,13 @@
             }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "$ref": "#/components/responses/BadRequestAnthropic"
           },
           "401": {
-            "$ref": "#/components/responses/Unauthorized"
+            "$ref": "#/components/responses/UnauthorizedAnthropic"
           },
           "429": {
-            "$ref": "#/components/responses/RateLimited"
+            "$ref": "#/components/responses/RateLimitedAnthropic"
           },
           "502": {
             "description": "Provider CLI failed",
@@ -1375,6 +1375,13 @@
     "responses": {
       "Unauthorized": {
         "description": "Missing or invalid credentials",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
         "content": {
           "application/json": {
             "schema": {
@@ -1386,6 +1393,11 @@
       "RateLimited": {
         "description": "Rate limit exceeded",
         "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          },
           "Retry-After": {
             "schema": {
               "type": "integer"
@@ -1402,6 +1414,13 @@
       },
       "BadRequest": {
         "description": "Invalid request",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
         "content": {
           "application/json": {
             "schema": {
@@ -1412,10 +1431,129 @@
       },
       "NotFound": {
         "description": "Resource not found",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
         "content": {
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "UnauthorizedOpenAI": {
+        "description": "Missing or invalid credentials",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/OpenAIError"
+            }
+          }
+        }
+      },
+      "BadRequestOpenAI": {
+        "description": "Invalid request",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/OpenAIError"
+            }
+          }
+        }
+      },
+      "RateLimitedOpenAI": {
+        "description": "Rate limit exceeded",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          },
+          "Retry-After": {
+            "schema": {
+              "type": "integer"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/OpenAIError"
+            }
+          }
+        }
+      },
+      "BadRequestAnthropic": {
+        "description": "Invalid request",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AnthropicError"
+            }
+          }
+        }
+      },
+      "UnauthorizedAnthropic": {
+        "description": "Missing or invalid credentials",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AnthropicError"
+            }
+          }
+        }
+      },
+      "RateLimitedAnthropic": {
+        "description": "Rate limit exceeded",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          },
+          "Retry-After": {
+            "schema": {
+              "type": "integer"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AnthropicError"
             }
           }
         }
