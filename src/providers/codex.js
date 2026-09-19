@@ -85,6 +85,7 @@ async function* chatStream({ prompt, system, signal }) {
 
 module.exports = {
   name: 'codex',
+  env: CODEX_ENV,
   chat,
   chatStream,
   buildArgs,

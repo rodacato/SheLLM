@@ -37,12 +37,24 @@ function getProviderList() {
 
 // --- Checks by provider type ---
 
+// Probes must run with the same environment as real calls, or a provider authenticated by
+// token reports itself as logged out. The provider module owns that environment.
+function providerEnv(name) {
+  const { engines } = require('../routing/engines');
+  return engines[name]?.env;
+}
+
+// Pattern matching cannot know what a provider's credential looks like; its own value can.
+function providerSecrets(name) {
+  return Object.values(providerEnv(name) || {}).filter((value) => typeof value === 'string' && value.length >= 8);
+}
+
 async function checkSubprocess(name, { timeout = 10000 } = {}) {
   try {
-    await execute(name, ['--version'], { timeout });
+    await execute(name, ['--version'], { timeout, env: providerEnv(name) });
     return { installed: true, authenticated: true };
   } catch (err) {
-    return parseCheckError(err);
+    return parseCheckError(err, providerSecrets(name));
   }
 }
 
@@ -50,10 +62,10 @@ async function checkSubprocessDeep(provider) {
   const hc = provider.health_check || {};
   if (!hc.command) return checkSubprocess(provider.name);
   try {
-    await execute(hc.command, hc.args || [], { timeout: DEEP_CHECK_TIMEOUT });
+    await execute(hc.command, hc.args || [], { timeout: DEEP_CHECK_TIMEOUT, env: providerEnv(provider.name) });
     return { installed: true, authenticated: true };
   } catch (err) {
-    return parseCheckError(err);
+    return parseCheckError(err, providerSecrets(provider.name));
   }
 }
 
@@ -62,8 +74,8 @@ async function checkProvider(provider, { deep = false } = {}) {
   return deep ? checkSubprocessDeep(provider) : checkSubprocess(provider.name);
 }
 
-function parseCheckError(err) {
-  const stderr = err.stderr || '';
+function parseCheckError(err, secrets = []) {
+  const stderr = secrets.reduce((text, secret) => text.split(secret).join('[REDACTED]'), err.stderr || '');
   const lower = stderr.toLowerCase();
   // Keychain fallback with cached credentials means auth works — check first
   // because the message may contain "not found" for libsecret
@@ -214,4 +226,4 @@ function stopHealthPoller() {
   }
 }
 
-module.exports = { getHealthStatus, getCachedProviderStatus, startHealthPoller, stopHealthPoller, parseCheckError };
+module.exports = { getHealthStatus, getCachedProviderStatus, startHealthPoller, stopHealthPoller, parseCheckError, checkProvider };
