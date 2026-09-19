@@ -2,7 +2,7 @@
 
 module.exports = [
   {
-    files: ['src/**/*.js', 'test/**/*.js'],
+    files: ['src/**/*.js', 'test/**/*.js', 'scripts/**/*.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'commonjs',
@@ -95,6 +95,7 @@ module.exports = [
     },
   },
   {
-    ignores: ['node_modules/', 'docs/', 'scripts/', '*.config.js'],
+    // release-changelog.js is ESM in a CommonJS package; linting it needs a parser exception
+    ignores: ['node_modules/', 'docs/', 'scripts/release-changelog.js', '*.config.js'],
   },
 ];
