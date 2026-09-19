@@ -1,191 +1,67 @@
 # Release Guide
 
-Step-by-step instructions for cutting a SheLLM release. Follow this in order — each step depends on the previous one.
+Cutting a release is one decision — which part of the version number moves — and one review.
+Everything else is done by CI.
 
-> **This is the current procedure, and it is the one being replaced.**
-> [ADR-0003](../adr/0003-release-and-update-cycle.md) moves the bump and the tag into a
-> `workflow_dispatch` job, so that cutting a release is a decision rather than seven steps. Until
-> that job exists, everything below is what actually happens. The guide changes in the pull
-> request that ships the job, not before.
+## Cut it
 
----
+**GitHub → Actions → Release → Run workflow**, pick the bump, run it.
 
-## Before you start
-
-- [ ] You are on `master` and your working tree is clean (`git status`)
-- [ ] All tests pass locally (`npm test`)
-- [ ] The features or fixes you want in the release are merged
-
----
-
-## Step 1 — Decide the version bump
-
-| What changed | Command |
+| What changed | Bump |
 |---|---|
-| Bug fixes only | `npm version patch` |
-| New features, backwards-compatible | `npm version minor` |
-| Breaking API change | `npm version major` |
+| Bug fixes only | `patch` |
+| New features, nothing breaks | `minor` |
+| Something existing installs depend on is gone or behaves differently | `major` |
 
-**Not sure?** Check [Semantic Versioning](https://semver.org): MAJOR.MINOR.PATCH.
+The workflow bumps `package.json`, generates the `CHANGELOG.md` entry from the conventional
+commits since the last tag, and opens a pull request titled `Release vX.Y.Z`. It does not push to
+`master` and it does not tag anything yet.
 
----
+## Review the changelog before merging
 
-## Step 2 — Preview the CHANGELOG entry (optional)
+This is the only manual step, and it is the one worth doing carefully, because the entry is what
+people read to decide whether upgrading is safe.
 
-Before actually bumping, see what the generated entry will look like:
+**Check that anything breaking is under `### Breaking Changes`.** The generator puts it there when
+the commit was written as `type!: description` or carried a `BREAKING CHANGE:` footer
+([CONTRIBUTING.md](../../CONTRIBUTING.md#commit-messages)). A breaking change committed without
+that marker lands in `Changed`, indistinguishable from a refactor. If you find one, move it by
+hand in the pull request — nothing downstream can infer it.
+
+Fix wording, reorder, or delete noise in the same pull request. It is an ordinary branch.
+
+## Merge it
+
+Merging publishes the release: the workflow runs the test suite, creates an annotated tag, and
+publishes a GitHub Release carrying the changelog entry. If the suite fails, no tag is created
+and nothing is published.
+
+The tag is what a deployment follows, so the release is not cosmetic: it is what gets installed.
+
+## Then
+
+- If the release pins a different CLI version (`CLAUDE_VERSION` in
+  [`scripts/setup/vps.sh`](../../scripts/setup/vps.sh)), update the tested-combinations table in
+  [`VERSIONS.md`](../../VERSIONS.md).
+- Deploy it on the host — see [deployment.md](./deployment.md).
+
+## Things worth knowing
+
+**The release pull request does not run CI.** It is opened by the workflow using the repository
+token, and GitHub deliberately does not trigger workflows from token-authored events, to avoid
+loops. The suite runs on merge, before the tag is created, so nothing is published untested —
+but do not read an absent check as a passing one.
+
+**Publishing is decided from the manifest, not from the pull request.** Any push to `master` that
+changes `package.json` to a version with no tag publishes that version. That is what makes the
+merge work, and it means a hand-edited version bump merged through an ordinary pull request also
+releases.
+
+**To preview an entry without releasing anything:**
 
 ```bash
 node scripts/release-changelog.js --dry-run
 ```
 
-This parses all conventional commits since the last tag and prints the CHANGELOG section without touching any file. If the output looks wrong, check your commit messages — they need to follow the `type(scope): description` format documented in [CONTRIBUTING.md](../../CONTRIBUTING.md#commit-messages).
-
----
-
-## Step 3 — Bump the version
-
-```bash
-npm version patch   # replace with minor or major as needed
-```
-
-This single command does four things automatically:
-
-1. Bumps `version` in `package.json`
-2. Runs `scripts/release-changelog.js` → prepends the new entry to `CHANGELOG.md`
-3. Stages `CHANGELOG.md` (`git add`)
-4. Creates a git commit `v0.x.y` and a git tag `v0.x.y`
-
-After it runs, verify the result:
-
-```bash
-git log --oneline -3          # should show the version commit at the top
-git tag --list | tail -5      # should show the new tag
-```
-
-Open `CHANGELOG.md` and confirm the new entry looks correct. If it doesn't, you can:
-
-```bash
-# Edit CHANGELOG.md manually, then amend the commit (before pushing)
-git add CHANGELOG.md
-git commit --amend --no-edit
-```
-
----
-
-## Step 4 — Push the commit and the tag
-
-```bash
-git push && git push --tags
-```
-
-> **Order matters.** Push the commit first, then the tags. The tag push triggers the release CI — you want the commit already on `master` before that happens.
-
----
-
-## Step 5 — Watch the release CI
-
-Go to **GitHub → Actions → Release** workflow. The job:
-
-1. Checks out the repo
-2. Runs `npm ci && npm test` — if tests fail, the release is **not** created
-3. Extracts the release notes for this version from `CHANGELOG.md`
-4. Creates a GitHub Release with those notes
-
-Expected duration: ~1 minute.
-
-If it fails:
-- Fix the issue on `master`
-- Delete the tag locally and remotely, then re-tag:
-
-```bash
-git tag -d v0.x.y
-git push origin :refs/tags/v0.x.y
-# fix the issue, commit, then re-tag
-git tag v0.x.y
-git push --tags
-```
-
----
-
-## Step 6 — Verify the GitHub Release
-
-Open **GitHub → Releases** and confirm:
-
-- [ ] Title: `SheLLM v0.x.y`
-- [ ] Release notes match the CHANGELOG entry
-- [ ] Tag points to the right commit
-
----
-
-## Step 7 — Update VERSIONS.md (if CLI versions changed)
-
-If this release pins or changes a CLI version (`CLAUDE_VERSION` in `scripts/setup/vps.sh`), update the tested combinations table:
-
-```
-VERSIONS.md → Tested Combinations → add a new row
-```
-
----
-
-## Full example — patch release
-
-```bash
-# 1. Confirm clean state
-git status
-npm test
-
-# 2. Preview
-node scripts/release-changelog.js --dry-run
-
-# 3. Bump
-npm version patch
-
-# 4. Review
-git log --oneline -3
-# open CHANGELOG.md and check the new entry
-
-# 5. Push
-git push && git push --tags
-
-# 6. Check GitHub Actions → Release
-# 7. Check GitHub → Releases
-```
-
----
-
-## Hotfix on a released version
-
-If you need to patch a released version that is behind `master`:
-
-```bash
-# Create a branch from the tag
-git checkout -b hotfix/v0.1.1 v0.1.0
-
-# Apply the fix
-# ... edit files ...
-git add .
-git commit -m "fix(router): prevent double-resolution on timeout"
-
-# Bump patch version from that branch
-npm version patch
-git push origin hotfix/v0.1.1 --tags
-
-# CI will run and create the release from the tag
-# Then merge the fix back to master
-git checkout master
-git merge hotfix/v0.1.1
-git push
-```
-
----
-
-## Reference
-
-| File | Purpose |
-|---|---|
-| `scripts/release-changelog.js` | Generates CHANGELOG entry from git log |
-| `scripts/release-changelog.js --dry-run` | Preview without writing |
-| `.github/workflows/release.yml` | CI job that creates the GitHub Release |
-| `CHANGELOG.md` | Human-readable release history |
-| `VERSIONS.md` | CLI versions tested with each SheLLM release |
-| `CONTRIBUTING.md#commit-messages` | Conventional commit format |
+**If a release goes out wrong**, do not delete and re-push the tag: an install may already point
+at it. Cut the next patch instead.
