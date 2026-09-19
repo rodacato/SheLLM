@@ -104,7 +104,7 @@ A model the CLI rejects comes back as `404 model_not_found`.
 | `POST /v1/messages` | Anthropic format. `model`, `max_tokens` and `messages` required, top-level `system` optional |
 | `GET /v1/models` | OpenAI model list of the names that map to a real CLI model |
 | `GET /health` | `{ "status": "ok" }`, unauthenticated |
-| `/admin/*` | Keys, request logs and provider status. Browsers sign in at `/admin/login`; scripts use HTTP Basic with `SHELLM_ADMIN_PASSWORD` |
+| `/admin/*` | Keys, request logs and provider status. Browsers sign in at `/admin/login`; scripts use HTTP Basic with `SHELLM_ADMIN_PASSWORD`. The dashboard installs as a PWA over HTTPS |
 
 Requests to `/v1/*` need `Authorization: Bearer <key>` or `x-api-key`. Errors come back in the
 format of the endpoint you called:

@@ -21,6 +21,10 @@ The admin dashboard (`/admin/*`) authenticates in two ways against the same `SHE
 
 A cookie-authenticated request that is not a GET is refused when the browser reports `Sec-Fetch-Site` as anything but `same-origin`, which is what stops a cross-site form from using the session.
 
+### Dashboard assets and the service worker
+
+The SPA's own files (JS, CSS, images, the manifest and the worker) are served without a session — they carry no account data — while `/admin/dashboard/` itself and every `/admin/*` API route need one. The service worker caches that shell and nothing else: it ignores non-GET requests, anything cross-origin, and any path outside its hardcoded shell list, so no key, log or provider response is ever written to a device's cache.
+
 **Brute-force protection:** Failed login attempts are tracked per IP address using an in-memory sliding window. After 5 failures within 5 minutes (configurable via `SHELLM_ADMIN_MAX_ATTEMPTS`), further attempts from that IP are rejected with `429 Too Many Requests` and a `Retry-After` header.
 
 **Audit logging:** All admin authentication attempts (success and failure) are logged via the structured JSON logger. Failed attempts include: IP address, attempted username, and failure reason (`missing_header`, `invalid_encoding`, `invalid_format`, `wrong_password`, `wrong_username`). Successful attempts log the IP and username at `info` level.

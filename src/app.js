@@ -65,6 +65,20 @@ app.post('/v1/chat/completions', auth, chatCompletionsHandler);
 app.post('/v1/messages', auth, messagesHandler);
 
 // --- Admin routes (Basic auth via SHELLM_ADMIN_PASSWORD) ---
+// The SPA's own assets carry no account data; only the page behind them needs a session.
+// This mount goes before the authenticated routers, or every asset would answer 401.
+app.use('/admin/dashboard', adminSecurityHeaders, express.static(path.join(__dirname, 'admin/public'), {
+  index: false,
+}));
+
+// PWA files: no account data, and both must sit at /admin/ for the worker to claim that scope
+app.get('/admin/manifest.webmanifest', (_req, res) => {
+  res.type('application/manifest+json').sendFile(path.join(__dirname, 'admin/public/manifest.webmanifest'));
+});
+app.get('/admin/sw.js', (_req, res) => {
+  res.type('application/javascript').set('Cache-Control', 'no-cache').sendFile(path.join(__dirname, 'admin/public/sw.js'));
+});
+
 app.use('/admin', adminLoginRouter);
 app.use('/admin', adminAuth, adminKeysRouter);
 app.use('/admin', adminAuth, adminLogsRouter);
@@ -96,18 +110,14 @@ function adminSecurityHeaders(req, res, next) {
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self'",
       "connect-src 'self'",
+      "manifest-src 'self'",
+      "worker-src 'self'",
       "frame-ancestors 'none'",
     ].join('; '),
   );
   next();
 }
 
-// Static dashboard files
-// Static assets (JS, CSS, images) don't need auth — no sensitive data
-app.use('/admin/dashboard', adminSecurityHeaders, express.static(path.join(__dirname, 'admin/public'), {
-  // Only serve the index.html behind auth
-  index: false,
-}));
 // The dashboard page itself requires auth
 app.get('/admin/dashboard/', adminAuth, adminSecurityHeaders, (_req, res) => {
   res.sendFile(path.join(__dirname, 'admin/public/index.html'));
