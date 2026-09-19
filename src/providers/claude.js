@@ -128,6 +128,19 @@ const CLAUDE_ENV = {
   CLAUDE_CODE_OAUTH_TOKEN: process.env.CLAUDE_CODE_OAUTH_TOKEN,
 };
 
+// `auth status` reads the stored credentials and prints JSON. It spends no quota, which is the
+// whole point: a health probe must not cost a request.
+const authProbe = {
+  args: ['auth', 'status'],
+  parse(stdout) {
+    try {
+      return JSON.parse(stdout).loggedIn === true;
+    } catch {
+      return null;
+    }
+  },
+};
+
 function toProviderError(err, model) {
   try {
     if (JSON.parse(err.stdout).api_error_status === 404) return modelNotFound(model);
@@ -170,6 +183,7 @@ module.exports = {
   buildArgs,
   buildStreamArgs,
   ISOLATION_ARGS,
+  authProbe,
   parseOutput,
   parseStreamLine,
 };

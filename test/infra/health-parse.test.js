@@ -108,10 +108,27 @@ describe('health parseCheckError', () => {
     assert.strictEqual(result.error, 'Error code: 42');
   });
 
-  it('unknown error returns installed but not authenticated', () => {
+  it('an unrecognised error is unknown, not a logout', () => {
     const result = parseCheckError({ code: 1, stderr: 'some random error' });
     assert.strictEqual(result.installed, true);
-    assert.strictEqual(result.authenticated, false);
+    assert.strictEqual(result.authenticated, null, 'guessing "logged out" here took a provider offline');
     assert.strictEqual(result.error, 'some random error');
+  });
+
+  it('a model the account cannot use is not an auth failure', () => {
+    const stderr = "ERROR: The 'gpt-5.4' model is not supported when using Codex with a ChatGPT account.";
+    assert.strictEqual(parseCheckError({ code: 1, stderr }).authenticated, null);
+  });
+
+  it('classifies the auth failures the CLIs actually print', () => {
+    const messages = [
+      'Failed to authenticate. API Error: 401 Invalid bearer token',
+      'Your access token could not be refreshed. Please log out and sign in again.',
+      'Error: not authenticated',
+      'please login first',
+    ];
+    for (const stderr of messages) {
+      assert.strictEqual(parseCheckError({ code: 1, stderr }).authenticated, false, stderr);
+    }
   });
 });

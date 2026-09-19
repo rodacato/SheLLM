@@ -14,6 +14,25 @@ const models = ['codex'];
 // Two codex processes race on the OAuth refresh and corrupt it (openai/codex#17340).
 const lock = createMutex();
 
+// Runs fn with the provider's process slot held. Health probes spawn codex too, so they take
+// the same lock or they race the refresh they are supposed to be reporting on.
+async function withLock(fn) {
+  const release = await lock();
+  try {
+    return await fn();
+  } finally {
+    release();
+  }
+}
+
+// `login status` proves credentials are stored, not that they still refresh: it answered
+// "Logged in using ChatGPT" here while every call failed with an expired refresh token. That is
+// the honest limit of a free probe — a dead token surfaces on the first real request instead.
+const authProbe = {
+  args: ['login', 'status'],
+  parse: () => true,
+};
+
 function cliModel(model) {
   if (!model || model === 'codex') return null;
   return model.startsWith(MODEL_PREFIX) ? model.slice(MODEL_PREFIX.length) : model;
@@ -106,16 +125,13 @@ function toProviderError(err, model) {
 
 async function chat({ prompt, system, response_format, model }) {
   const args = buildArgs({ prompt, system, response_format, model });
-  const release = await lock();
-  try {
+  return withLock(async () => {
     const result = await execute('codex', args, { env: CODEX_ENV })
       .catch((err) => { throw toProviderError(err, model); });
     const { failure, ...parsed } = parseOutput(result.stdout, model);
     if (failure) throw failure;
     return parsed;
-  } finally {
-    release();
-  }
+  });
 }
 
 async function* chatStream({ prompt, system, response_format, model, signal }) {
@@ -161,4 +177,6 @@ module.exports = {
   buildArgs,
   parseOutput,
   failureFrom,
+  authProbe,
+  withLock,
 };

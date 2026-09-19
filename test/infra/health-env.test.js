@@ -16,6 +16,10 @@ describe('health probes and provider credentials', () => {
     return JSON.parse(fs.readFileSync(path.join(fakeBin, `${cli}.env.json`), 'utf8'));
   }
 
+  function argvOf(cli) {
+    return JSON.parse(fs.readFileSync(path.join(fakeBin, `${cli}.argv.json`), 'utf8'));
+  }
+
   before(() => {
     assert.ok(!require.cache[require.resolve('../../src/providers/base')], 'base.js already captured the real PATH');
 
@@ -25,11 +29,13 @@ describe('health probes and provider credentials', () => {
       fs.writeFileSync(path.join(fakeBin, cli), `#!${process.execPath}
 const fs = require('fs');
 fs.writeFileSync(${JSON.stringify(path.join(fakeBin, 'CLI.env.json'))}.replace('CLI', '${cli}'), JSON.stringify(process.env));
-if (!process.env.CLAUDE_CODE_OAUTH_TOKEN || fs.existsSync(${JSON.stringify(path.join(fakeBin, 'REVOKED'))})) {
+fs.writeFileSync(${JSON.stringify(path.join(fakeBin, 'CLI.argv.json'))}.replace('CLI', '${cli}'), JSON.stringify(process.argv.slice(2)));
+const revoked = fs.existsSync(${JSON.stringify(path.join(fakeBin, 'REVOKED'))});
+if ('${cli}' === 'claude' && (!process.env.CLAUDE_CODE_OAUTH_TOKEN || revoked)) {
   process.stderr.write('Failed to authenticate. API Error: 401 Invalid bearer token ' + (process.env.CLAUDE_CODE_OAUTH_TOKEN || 'none') + '\\n');
   process.exit(1);
 }
-process.stdout.write('ok');
+process.stdout.write('${cli}' === 'claude' ? JSON.stringify({ loggedIn: true, authMethod: 'oauth_token' }) : 'Logged in using ChatGPT');
 `, { mode: 0o755 });
     }
 
@@ -54,24 +60,16 @@ process.stdout.write('ok');
     assert.ok('XDG_CONFIG_HOME' in envDump('codex') || Object.keys(envDump('codex')).length > 0);
   });
 
-  it('reports a token-authenticated provider as authenticated', async () => {
-    const deep = await health.checkProvider(
-      { name: 'claude', type: 'subprocess', health_check: { command: 'claude', args: ['--print', '--', 'test'] } },
-      { deep: true },
-    );
-    assert.deepStrictEqual(deep, { installed: true, authenticated: true });
-
-    const shallow = await health.checkProvider({ name: 'claude', type: 'subprocess' });
-    assert.strictEqual(shallow.authenticated, true);
+  it('reads the login state the CLI reports', async () => {
+    const result = await health.checkProvider({ name: 'claude', type: 'subprocess' });
+    assert.deepStrictEqual(result, { installed: true, authenticated: true });
+    assert.deepStrictEqual(argvOf('claude'), ['auth', 'status']);
   });
 
   it('reports a revoked token as unauthenticated without echoing it back', async () => {
     fs.writeFileSync(path.join(fakeBin, 'REVOKED'), '');
     try {
-      const result = await health.checkProvider(
-        { name: 'claude', type: 'subprocess', health_check: { command: 'claude', args: ['--print', '--', 'test'] } },
-        { deep: true },
-      );
+      const result = await health.checkProvider({ name: 'claude', type: 'subprocess' });
       assert.strictEqual(result.authenticated, false);
       assert.ok(!JSON.stringify(result).includes(TOKEN), 'the token reached health_error');
       assert.match(result.error, /REDACTED/);
