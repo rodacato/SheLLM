@@ -697,11 +697,11 @@
               <tr>
                 <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Name</th>
                 <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Key Prefix</th>
-                <th class="px-4 py-3 text-center text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">RPM</th>
-                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Models</th>
+                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Limits</th>
+                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline"><span x-text="'Usage (' + usagePeriod + ')'"></span></th>
+                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Last used</th>
                 <th class="px-4 py-3 text-center text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Status</th>
-                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Expires</th>
-                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Created</th>
+                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Created / expires</th>
                 <th class="px-4 py-3 text-right text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Actions</th>
               </tr>
             </thead>
@@ -716,8 +716,26 @@
                     <span x-show="key.description" class="text-outline text-xs block mt-0.5" x-text="key.description"></span>
                   </td>
                   <td class="px-4 py-3 font-mono text-outline text-xs" x-text="key.key_prefix + '...'"></td>
-                  <td class="px-4 py-3 text-center text-on-surface font-mono text-xs" x-text="key.rpm"></td>
-                  <td class="px-4 py-3 text-on-surface-variant text-xs font-mono" x-text="key.models ? key.models.join(', ') : 'All'"></td>
+                  <td class="px-4 py-3 font-mono text-xs">
+                    <span class="text-on-surface" x-text="key.rpm + ' rpm'"></span>
+                    <span class="text-outline block mt-0.5" x-text="key.models ? key.models.join(', ') : 'all models'"></span>
+                  </td>
+                  <td class="px-4 py-3 font-mono text-xs">
+                    <template x-if="key.usage && key.usage.requests > 0">
+                      <div>
+                        <button @click="openKeyLogs(key)" class="link-brand" x-text="key.usage.requests + ' req'"></button>
+                        <span x-show="key.usage.errors > 0" class="text-[#ffb4ab] ml-1" x-text="errorRate(key) + '% err'"></span>
+                        <span class="text-outline block mt-0.5">
+                          <span x-text="formatCompactNumber(key.usage.tokens)"></span> tok ·
+                          <span x-text="formatCost(key.usage.cost_usd)"></span>
+                        </span>
+                      </div>
+                    </template>
+                    <span x-show="!key.usage || key.usage.requests === 0" class="text-outline">unused</span>
+                  </td>
+                  <td class="px-4 py-3 text-xs font-mono whitespace-nowrap"
+                    :class="key.usage && key.usage.last_used_at ? 'text-on-surface-variant' : 'text-outline'"
+                    x-text="key.usage && key.usage.last_used_at ? formatTime(key.usage.last_used_at) : 'never'"></td>
                   <td class="px-4 py-3 text-center">
                     <button @click="toggleActive(key)" class="inline-flex items-center gap-2" :title="key.active ? 'Disable this key' : 'Enable this key'">
                       <div class="toggle-track" :class="{ 'active': key.active }">
@@ -728,13 +746,49 @@
                         x-text="key.active ? 'Active' : 'Off'"></span>
                     </button>
                   </td>
-                  <td class="px-4 py-3 text-xs font-mono whitespace-nowrap"
-                    :class="isExpired(key) ? 'text-error' : isExpiringSoon(key) ? 'text-[#ffb800]' : 'text-outline'"
-                    x-text="formatExpiry(key)"></td>
-                  <td class="px-4 py-3 text-outline text-xs font-mono whitespace-nowrap" x-text="formatTime(key.created_at)"></td>
+                  <td class="px-4 py-3 text-xs font-mono whitespace-nowrap">
+                    <span class="text-outline" x-text="formatTime(key.created_at)"></span>
+                    <span class="block mt-0.5"
+                      :class="isExpired(key) ? 'text-error' : isExpiringSoon(key) ? 'text-[#ffb800]' : 'text-outline'"
+                      x-text="formatExpiry(key)"></span>
+                  </td>
                   <td class="px-4 py-3 text-right whitespace-nowrap">
+                    <button @click="startEdit(key)" class="link-brand text-xs font-headline font-bold uppercase mr-3">Edit</button>
                     <button @click="rotateKey(key)" class="link-brand text-xs font-headline font-bold uppercase mr-3">Rotate</button>
                     <button @click="deleteKey(key)" class="text-error/70 hover:text-error text-xs font-headline font-bold uppercase transition-colors duration-100">Delete</button>
+                  </td>
+                </tr>
+              </template>
+              <template x-for="key in keys" :key="'edit-' + key.id">
+                <tr x-show="editing === key.id" class="border-t border-outline-variant/20 bg-surface-container-lowest">
+                  <td colspan="8" class="px-4 py-4">
+                    <p class="text-[10px] font-mono text-outline mb-3">
+                      The secret itself cannot be changed here — rotate replaces it.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div>
+                        <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">RPM</label>
+                        <input type="number" min="1" x-model="editForm.rpm" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                      </div>
+                      <div>
+                        <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Models (blank = all)</label>
+                        <input type="text" x-model="editForm.models" placeholder="claude, claude-haiku" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                      </div>
+                      <div>
+                        <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Expires (UTC, blank = never)</label>
+                        <input type="datetime-local" x-model="editForm.expires_at" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                      </div>
+                      <div>
+                        <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Description</label>
+                        <input type="text" x-model="editForm.description" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                      </div>
+                    </div>
+                    <div class="flex gap-3 mt-4">
+                      <button @click="saveEdit(key)"
+                        class="px-4 py-2 text-xs font-headline font-bold uppercase tracking-widest bg-primary-container text-surface-container-lowest">Save</button>
+                      <button @click="cancelEdit()"
+                        class="px-4 py-2 text-xs font-headline font-bold uppercase tracking-widest text-outline hover:text-on-surface">Cancel</button>
+                    </div>
                   </td>
                 </tr>
               </template>

@@ -4,7 +4,7 @@ const LOG_FIELDS = [
   'request_id', 'client_name', 'provider', 'model', 'status', 'duration_ms', 'queued_ms',
   'tokens', 'cost_usd', 'tokens_in', 'tokens_out', 'cache_write_tokens', 'cache_read_tokens',
   'ttft_ms', 'api_ms', 'upstream_model', 'streamed', 'api_error_status',
-  'method', 'path', 'error_code',
+  'method', 'path', 'error_code', 'client_id',
 ];
 
 function insertRequestLog(entry) {

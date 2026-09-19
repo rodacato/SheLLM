@@ -226,4 +226,52 @@ describe('admin /admin/keys', () => {
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.body.object, 'list');
   });
+  describe('usage per key', () => {
+    it('reports requests, spend and last use for a key', async () => {
+      const created = await request(app)
+        .post('/admin/keys')
+        .set('Authorization', `Basic ${adminCreds}`)
+        .send({ name: 'usage-reported' });
+
+      const { insertRequestLog } = require('../../src/db');
+      insertRequestLog({ client_id: created.body.key.id, client_name: 'usage-reported', status: 200, tokens: 120, cost_usd: 0.02 });
+      insertRequestLog({ client_id: created.body.key.id, client_name: 'usage-reported', status: 400, error_code: 'invalid_request' });
+
+      const res = await request(app).get('/admin/keys').set('Authorization', `Basic ${adminCreds}`);
+      const key = res.body.keys.find((k) => k.name === 'usage-reported');
+
+      assert.strictEqual(key.usage.requests, 2);
+      assert.strictEqual(key.usage.errors, 1);
+      assert.strictEqual(key.usage.tokens, 120);
+      assert.ok(key.usage.last_used_at, 'expected a last use timestamp');
+    });
+
+    it('gives a recreated name inherits no usage from the key it replaced', async () => {
+      const db = require('../../src/db');
+      const first = await request(app)
+        .post('/admin/keys')
+        .set('Authorization', `Basic ${adminCreds}`)
+        .send({ name: 'recycled' });
+
+      db.insertRequestLog({ client_id: first.body.key.id, client_name: 'recycled', status: 200, tokens: 999, cost_usd: 5 });
+
+      await request(app)
+        .delete(`/admin/keys/${first.body.key.id}`)
+        .set('Authorization', `Basic ${adminCreds}`)
+        .expect(200);
+
+      const second = await request(app)
+        .post('/admin/keys')
+        .set('Authorization', `Basic ${adminCreds}`)
+        .send({ name: 'recycled' })
+        .expect(201);
+
+      const res = await request(app).get('/admin/keys').set('Authorization', `Basic ${adminCreds}`);
+      const key = res.body.keys.find((k) => k.id === second.body.key.id);
+
+      assert.strictEqual(key.usage.requests, 0, 'the replacement starts empty');
+      assert.strictEqual(key.usage.tokens, 0);
+      assert.strictEqual(key.usage.last_used_at, null);
+    });
+  });
 });
