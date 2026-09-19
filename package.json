@@ -3,6 +3,10 @@
   "version": "0.5.0",
   "license": "MIT",
   "description": "Your LLM services — unified as a REST API",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rodacato/SheLLM.git"
+  },
   "main": "src/server.js",
   "bin": {
     "shellm": "src/cli.js"

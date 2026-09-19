@@ -1,11 +1,12 @@
 // Shell cache only: every /admin/* response carries account data or a session, so none is stored.
-const CACHE = 'shellm-admin-v1';
+const CACHE = 'shellm-admin-v2';
 const SHELL = [
   '/admin/dashboard/',
   '/admin/dashboard/js/app.js',
   '/admin/dashboard/js/overview.js',
   '/admin/dashboard/js/logs.js',
   '/admin/dashboard/js/keys.js',
+  '/admin/dashboard/js/system.js',
   '/admin/dashboard/img/favicon.svg',
   '/admin/dashboard/img/icon-192.png',
   '/admin/dashboard/img/icon-512.png',
