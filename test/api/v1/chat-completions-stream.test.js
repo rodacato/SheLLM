@@ -4,6 +4,19 @@ const path = require('node:path');
 
 // --- Unit tests for SSE helpers ---
 
+function claudeStreamLines(...texts) {
+  const deltas = texts.map((text) => JSON.stringify({
+    type: 'stream_event',
+    event: { type: 'content_block_delta', delta: { type: 'text_delta', text } },
+  }));
+  const result = JSON.stringify({
+    type: 'result',
+    total_cost_usd: 0.001,
+    usage: { input_tokens: 10, output_tokens: 7 },
+  });
+  return [...deltas, result].map((line) => `${line}\n`);
+}
+
 describe('SSE helpers', () => {
   const { initSSE, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../../src/lib/sse');
 
@@ -280,8 +293,7 @@ describe('/v1/chat/completions streaming integration', () => {
           duration_ms: 10,
         })),
         executeStream: mock.fn(async function* () {
-          yield { type: 'chunk', data: 'Hello' };
-          yield { type: 'chunk', data: ' world' };
+          for (const line of claudeStreamLines('Hello', ' world')) yield { type: 'chunk', data: line };
           yield { type: 'done', stderr: '' };
         }),
         stripNonPrintable: (t) => t,

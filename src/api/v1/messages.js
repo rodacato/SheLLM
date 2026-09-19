@@ -301,11 +301,13 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
       const streamFn = provider.chatStream;
       let chunkCount = 0;
       let totalChars = 0;
+      let reportedUsage = null;
 
       if (streamFn) {
         logger.debug({ event: 'stream_calling_provider', format: 'anthropic', provider: provider.name, hasChatStream: true });
         for await (const event of streamFn({ prompt, system, max_tokens, temperature, top_p, model, signal: ac.signal })) {
           if (ac.signal.aborted) { logger.debug({ event: 'stream_aborted', chunkCount }); break; }
+          if (event.type === 'usage') reportedUsage = event.usage;
           if (event.type === 'delta') {
             chunkCount++;
             totalChars += event.content.length;
@@ -326,9 +328,9 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
       }
 
       if (!ac.signal.aborted) {
-        const estimatedOutputTokens = Math.ceil(totalChars / 4);
+        const outputTokens = reportedUsage?.output_tokens ?? Math.ceil(totalChars / 4);
         sendContentBlockStop(res, 0);
-        sendMessageDelta(res, 'end_turn', estimatedOutputTokens, ttftMs);
+        sendMessageDelta(res, 'end_turn', outputTokens, ttftMs);
         sendMessageStop(res);
         logger.debug({ event: 'stream_complete', format: 'anthropic', ttft_ms: ttftMs, request_id: req.requestId });
       }
