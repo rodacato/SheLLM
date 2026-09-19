@@ -109,7 +109,9 @@ function adminSecurityHeaders(req, res, next) {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self'",
-      "connect-src 'self'",
+      // The System page asks GitHub for the newest release from the browser, so the service
+      // needs no outbound network to report what it is running.
+      "connect-src 'self' https://api.github.com",
       "manifest-src 'self'",
       "worker-src 'self'",
       "frame-ancestors 'none'",
