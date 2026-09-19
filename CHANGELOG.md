@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0] - 2026-09-19
 
+### Breaking Changes
+
+Upgrading from `0.5.0` meets all of these at once. None of the commits behind them carried a
+`!` marker, so they are recorded here by hand.
+
+- **Gemini is gone.** The provider was removed after Gemini CLI stopped serving personal Google
+  plans; requests naming a gemini model now fail.
+- **The generic HTTP provider and Cerebras are gone.** SheLLM drives CLI subprocesses only.
+- **The models table was dropped.** Model names map to CLI aliases in code, so a model added by
+  editing the database is no longer recognised.
+- **Configuration moved out of SQLite** into `~/.config/shellm/env`. Settings written to the
+  database are ignored; the migration drops that table.
+- **The prompt injection guard was removed.** SheLLM does not inspect prompt content — isolating
+  what the CLI can reach is the defense that works.
+- **The dashboard was trimmed** to keys, logs and provider status; the models page it used to
+  carry no longer exists.
+
 ### Added
 
 - **admin:** report the running build and let a provider be paused
@@ -49,12 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - drop the Gemini-only health heuristic
-- trim the dashboard to keys, logs and provider status
-- keep configuration in the config file, not SQLite
-- drop the models table and model aliases
-- remove the generic HTTP provider and Cerebras
-- remove the Gemini provider
-- remove the prompt injection guard
 
 ### Documentation
 

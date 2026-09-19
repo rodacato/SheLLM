@@ -14,8 +14,13 @@ Everything else is done by CI.
 | Something existing installs depend on is gone or behaves differently | `major` |
 
 The workflow bumps `package.json`, generates the `CHANGELOG.md` entry from the conventional
-commits since the last tag, and opens a pull request titled `Release vX.Y.Z`. It does not push to
-`master` and it does not tag anything yet.
+commits since the last tag, and pushes a `release/vX.Y.Z` branch. It does not push to `master`
+and it does not tag anything yet.
+
+**Open the pull request yourself** — the run's summary links straight to it. The workflow
+deliberately does not: letting Actions open pull requests needs a repository setting that also
+lets it approve them, and a pull request authored by the repository token runs no CI. Opening it
+by hand is what gives the release branch its checks.
 
 ## Review the changelog before merging
 
@@ -46,11 +51,6 @@ The tag is what a deployment follows, so the release is not cosmetic: it is what
 - Deploy it on the host — see [deployment.md](./deployment.md).
 
 ## Things worth knowing
-
-**The release pull request does not run CI.** It is opened by the workflow using the repository
-token, and GitHub deliberately does not trigger workflows from token-authored events, to avoid
-loops. The suite runs on merge, before the tag is created, so nothing is published untested —
-but do not read an absent check as a passing one.
 
 **Publishing is decided from the manifest, not from the pull request.** Any push to `master` that
 changes `package.json` to a version with no tag publishes that version. That is what makes the
