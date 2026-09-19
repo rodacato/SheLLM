@@ -134,33 +134,62 @@ removes a runtime directory when its unit stops, and the updater stops the servi
 its own sequence. Both paths are a contract between the dashboard and the updater, so they are
 documented here rather than left to whoever writes each half.
 
-The updater is a root-owned script at a fixed path, not writable by `shellmer`, started by a path
-unit — no `sudoers` entry exists:
+**The updater is `shellm update`, run by a root unit.** It already exists and already implements
+the split this decision needs:
 
 ```
-shellm-update.path      (root)   watches /run/shellm/update-request.json
+shellm-update.path       (root)   watches /run/shellm/update-request.json
 └─ shellm-update.service (root, Type=oneshot)
-   └─ /usr/local/sbin/shellm-update
-      ├─ validate the requested tag, then snapshot the database with SQLite's .backup
-      ├─ runuser -l shellmer -c 'git fetch --tags && git checkout <tag> && npm ci --omit=dev'
-      ├─ systemctl restart shellm
-      └─ poll /health for 60s; on failure restore the previous tag and reinstall
-      └─ write ~/.shellm/update-status.json either way
+   └─ validate the requested tag, snapshot the database with SQLite's .backup
+   └─ shellm update
+      ├─ exec()        drops to shellmer: git fetch, checkout, npm ci, migrations
+      └─ execAsRoot()  stays root: cp the unit, daemon-reload, restart, restart on rollback
 ```
 
-**Nothing touching the checkout runs as root, and no standing privilege is granted.** Running
-`git` or `npm` as root inside a tree that `shellmer` owns hands root that user's code:
-`.git/config` is writable by its owner and defines `core.hooksPath`, which this repository's own
-`prepare` script already repoints at `scripts/`, so a planted `post-checkout` hook would execute
-as root. Dropping to `shellmer` for those steps grants nothing new — that user already owns every
-file involved. A `sudoers` entry for the restart was the first design and was dropped because it
-hands `shellmer` a permanent capability that any process of that user can invoke, which
-contradicts binding the privilege to a fixed sequence. The root-owned script *is* that sequence.
+`src/cli/update.js` branches on `getuid()`: `exec` shells down to `shellmer` when it is root,
+`execAsRoot` runs directly. So the privileged surface is exactly four commands — and nothing that
+touches the checkout is one of them.
 
-The mitigations for a root-side checkout were considered and rejected: `git -c
-core.hooksPath=/dev/null` is a denylist to maintain, and `npm ci --ignore-scripts` does not work
-here at all — `better-sqlite3` is the only dependency with an install script and it is a native
-module, so skipping it leaves the service unable to open its database.
+It cannot run inside `shellm.service` under any uid: `ReadOnlyPaths` makes the checkout read-only
+inside that namespace, and the updater writes to it on nearly every step. A separate unit is a
+constraint here, not a preference.
+
+**Two alternatives were rejected.** Splitting the CLI so it stops before restarting does not
+work: the privileged calls are four, not three — the fourth is the restart on the rollback path
+(`update.js:100`) — and the rollback also needs an unprivileged `git checkout`, so root would
+have to call back into the CLI to finish. That is a circular dependency. Reimplementing the
+sequence in a root-owned script avoids it, but duplicates logic the CLI already has, starting
+with "did the unit change between these two commits"; two copies of that will diverge.
+
+**What this concedes, and it should be read before it is relied on.** The root unit executes
+`src/cli/update.js` from a checkout that `shellmer` owns. That is the same shape as the
+`core.hooksPath` problem that ruled out running `git` as root in that tree — a privileged process
+executing code a less privileged user can write — and here it is the whole program rather than a
+hook.
+
+What makes it acceptable is a premise, not a control: with part 1 in place the service cannot
+write the checkout, and no request can reach a write ([ADR-0002](./0002-cli-internal-tools-off.md)
+leaves the model with no tools). Writing there needs a `shellmer` process outside the service,
+which has no known path today.
+
+**That premise now carries three decisions**: the threat this ADR was argued from, the writable
+CLI entrypoints on the unit's `PATH`, and this updater. If it stops holding — the agentic
+endpoint ADR-0002 anticipates is the way that happens — all three need revisiting together, not
+one at a time.
+
+The alternative that does not concede it is a root-owned script that never executes anything from
+the checkout, reimplementing the sequence and calling `git` and `npm` through `runuser`. It costs
+a duplicate of the update logic, permanently. That trade is worth reopening the day the premise
+weakens, and not before.
+
+A `sudoers` entry for the restart was the first design and was dropped for a different reason: it
+hands `shellmer` a standing capability any process of that user can invoke, which contradicts
+binding privilege to a fixed sequence. `NoNewPrivileges=yes` also makes it useless from inside the
+service, which is where the request originates.
+
+One mitigation worth recording as unavailable: `npm ci --ignore-scripts` does not work here.
+`better-sqlite3` is the only dependency with an install script and it is a native module, so
+skipping it leaves the service unable to open its database.
 
 **The request file is untrusted input consumed by a root process**, which is the one place this
 design concentrates risk. Checking the tag's shape and asking whether it exists is necessary and
@@ -208,16 +237,24 @@ Two details that make the difference between this working and only appearing to:
   single clean answer. When something does not add up the update fails, the same direction of
   failure as the `-` on `ReadWritePaths`.
 
-Two failure modes worth writing down, because both look like working code:
-`runuser -u shellmer` does **not** change `HOME` — it inherits root's, and `npm` would write to
-`/root/.npm` — so the login form `runuser -l` is what the script uses. And the script sets an
-absolute `PATH` and never sources anything from the checkout, which `shellmer` can write.
+**The root branch of the CLI has never run.** `shellm update` has only ever been invoked from a
+terminal as `shellmer`, where `getuid() !== 0` and every command runs directly. Choosing it as the
+updater means the `isRoot` path — `sudo -u shellmer` for the unprivileged half, direct execution
+for the privileged one — goes to production having never executed. It should be exercised on the
+host before a button can trigger it, not after.
 
-The script, both units and the `tmpfiles.d` entry ship in this repository beside `shellm.service`
-and are installed by `vps.sh`. None of them contains anything specific to one machine, and a
-self-hosted install that had to reinvent the privileged wiring would either go without the
-feature or improvise something weaker. What stays with the operator is the decision to enable
-them, the webhook URL, and their own backup schedule.
+One thing to check when it is: whether `sudo -u shellmer` gives `npm` the right `HOME`. `sudo`
+resets it to the target user only when sudoers says so (`always_set_home`, or `-H`), and
+otherwise `npm` writes to `/root/.npm` while running as `shellmer` — which fails in a way that
+reads like a permissions problem rather than a configuration one. It is the same trap the
+original root-owned-script design had with `runuser -u` versus `runuser -l`, arriving through a
+different door.
+
+Both units and the `tmpfiles.d` entry ship in this repository beside `shellm.service` and are
+installed by `vps.sh`. None of them contains anything specific to one machine, and a self-hosted
+install that had to reinvent the privileged wiring would either go without the feature or
+improvise something weaker. What stays with the operator is the decision to enable them, the
+webhook URL, and their own backup schedule.
 
 What makes this safe is not the mechanism but step 2: the updater deploys a published tag from
 the remote, never the working tree. Code that a prompt injection wrote to `src/` is **discarded**
