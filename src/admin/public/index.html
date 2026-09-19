@@ -392,23 +392,49 @@
               </div>
             </div>
 
-            <!-- Exact status codes, each one a link into the filtered log -->
-            <div class="bg-surface-container p-5" x-show="stats.by_status_code && stats.by_status_code.length > 0">
+            <!-- Traffic over the period: how many, and how many of them failed -->
+            <div class="bg-surface-container p-5" x-show="stats.timeline && stats.timeline.length > 1">
               <div class="flex items-baseline justify-between mb-4">
-                <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Responses</p>
+                <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Traffic</p>
                 <span class="text-[10px] font-mono text-outline" x-text="stats.error_rate.success_pct + '% ok'"></span>
               </div>
-              <div class="flex flex-wrap gap-2">
-                <template x-for="s in stats.by_status_code" :key="s.status">
-                  <button @click="openLogsFiltered(s.status)"
-                    class="px-3 py-2 bg-surface-container-high hover:bg-surface-container-highest transition-colors duration-100 text-left">
-                    <span class="text-xs font-mono font-bold"
-                      :class="s.status < 400 ? 'text-[#22c55e]' : (s.status < 500 ? 'text-[#ffb800]' : 'text-[#ef4444]')"
-                      x-text="s.status"></span>
-                    <span class="text-xs font-mono text-outline ml-2" x-text="s.count"></span>
-                  </button>
-                </template>
+              <div class="h-[180px]"><canvas x-ref="timeline"></canvas></div>
+            </div>
+
+            <!-- What failed: a count alone cannot say whose it was or which route -->
+            <div class="bg-surface-container p-5">
+              <div class="flex items-baseline justify-between mb-4">
+                <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Errors</p>
+                <span class="text-[10px] font-mono text-outline" x-text="stats.error_rate.success_pct + '% ok'"></span>
               </div>
+              <table class="w-full text-xs font-mono" x-show="errorRows.length > 0">
+                <thead>
+                  <tr class="text-outline text-[10px] uppercase tracking-widest">
+                    <th class="text-left pb-2 font-headline">Last seen</th>
+                    <th class="text-left pb-2 font-headline">Status</th>
+                    <th class="text-left pb-2 font-headline">Error</th>
+                    <th class="text-left pb-2 font-headline">Client</th>
+                    <th class="text-left pb-2 font-headline">Route</th>
+                    <th class="text-right pb-2 font-headline">Count</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="row in errorRows" :key="row.status + row.error_code + row.client_name + row.path">
+                    <tr @click="openErrorLogs(row)"
+                      class="border-t border-outline-variant/20 cursor-pointer hover:bg-surface-container-high transition-colors duration-100">
+                      <td class="py-2 text-outline whitespace-nowrap" x-text="formatTime(row.last_seen_at)"></td>
+                      <td class="py-2 font-bold"
+                        :class="row.status < 500 ? 'text-[#ffb800]' : 'text-[#ef4444]'"
+                        x-text="row.status"></td>
+                      <td class="py-2 text-on-surface-variant" x-text="row.error_code"></td>
+                      <td class="py-2 text-on-surface-variant" x-text="row.client_name"></td>
+                      <td class="py-2 text-outline" x-text="row.path"></td>
+                      <td class="py-2 text-right text-white font-bold" x-text="row.count"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+              <p x-show="errorRows.length === 0" class="text-outline text-xs font-mono">Nothing failed in this period.</p>
             </div>
           </div>
         </template>
@@ -914,6 +940,33 @@
           </div>
         </div>
 
+        <!-- ================= QUEUE ================= -->
+        <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase block mb-3">Concurrency</span>
+        <div class="bg-surface-container p-5 mb-8">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-[11px] font-mono">
+            <div>
+              <span class="text-outline uppercase block text-[10px]">Running</span>
+              <span class="text-white text-lg font-headline font-bold" x-text="(health?.queue?.active ?? 0) + ' / ' + (health?.queue?.max_concurrent ?? 0)"></span>
+            </div>
+            <div>
+              <span class="text-outline uppercase block text-[10px]">Waiting</span>
+              <span class="text-lg font-headline font-bold"
+                :class="(health?.queue?.pending ?? 0) > 0 ? 'text-[#ffb800]' : 'text-white'"
+                x-text="health?.queue?.pending ?? 0"></span>
+            </div>
+            <div>
+              <span class="text-outline uppercase block text-[10px]">Streams</span>
+              <span class="text-white text-lg font-headline font-bold" x-text="(health?.queue?.active_streams ?? 0) + ' / ' + (health?.queue?.max_stream_concurrent ?? 0)"></span>
+            </div>
+            <div>
+              <span class="text-outline uppercase block text-[10px]">Open circuits</span>
+              <span class="text-lg font-headline font-bold"
+                :class="openCircuits.length > 0 ? 'text-[#ef4444]' : 'text-white'"
+                x-text="openCircuits.length > 0 ? openCircuits.join(', ') : 'none'"></span>
+            </div>
+          </div>
+        </div>
+
         <!-- ================= PROVIDERS ================= -->
         <div class="flex items-baseline gap-3 mb-3">
           <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Providers</span>
@@ -949,7 +1002,7 @@
                 <div>
                   <span class="text-outline uppercase block text-[10px]">CLI version</span>
                   <span class="text-on-surface-variant"
-                    x-text="health?.providers?.[prov.name]?.version || 'unknown'"></span>
+                    x-text="prov.version || health?.providers?.[prov.name]?.version || 'unknown'"></span>
                 </div>
                 <div>
                   <span class="text-outline uppercase block text-[10px]">Last used</span>
@@ -963,6 +1016,10 @@
                   <span x-show="!prov.last_status" class="text-outline">—</span>
                 </div>
                 <div>
+                  <span class="text-outline uppercase block text-[10px]">Circuit</span>
+                  <span :class="circuitClass(prov)" x-text="circuitLabel(prov)"></span>
+                </div>
+                <div class="col-span-2 md:col-span-4">
                   <span class="text-outline uppercase block text-[10px]">Models</span>
                   <span class="text-on-surface-variant" x-text="(prov.models || []).join(', ') || '—'"></span>
                 </div>

@@ -10,6 +10,7 @@ const {
 } = require('../db');
 const { engines } = require('../routing');
 const { getHealthStatus } = require('../infra/health');
+const { getCircuitState } = require('../infra/circuit-breaker');
 const logger = require('../lib/logger');
 
 const router = Router();
@@ -37,8 +38,10 @@ router.get('/providers', async (req, res) => {
     installed: healthData[p.name]?.installed ?? null,
     authenticated: healthData[p.name]?.authenticated ?? null,
     health_error: healthData[p.name]?.error || null,
+    version: healthData[p.name]?.version || null,
     last_used_at: lastUsageMap[p.name]?.last_used_at || null,
     last_status: lastUsageMap[p.name]?.last_status || null,
+    circuit: getCircuitState(p.name),
     models: engines[p.name]?.models || [],
   }));
 

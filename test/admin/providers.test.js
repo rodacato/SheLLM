@@ -135,4 +135,16 @@ describe('admin /admin/providers', () => {
     const res = await request(app).get('/admin/providers');
     assert.strictEqual(res.status, 401);
   });
+  it('reports the circuit breaker state for every provider', async () => {
+    const res = await request(app)
+      .get('/admin/providers')
+      .set('Authorization', `Basic ${adminCreds}`);
+
+    assert.ok(res.body.providers.length > 0, 'no providers came back — this check proves nothing');
+    for (const provider of res.body.providers) {
+      assert.ok(provider.circuit, `${provider.name} reports no circuit`);
+      assert.ok(['closed', 'open', 'half-open'].includes(provider.circuit.state), `unexpected state ${provider.circuit.state}`);
+      assert.strictEqual(typeof provider.circuit.failures, 'number');
+    }
+  });
 });

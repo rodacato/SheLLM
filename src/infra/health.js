@@ -138,6 +138,7 @@ async function getHealthStatus() {
     return {
       ...cache.data,
       build: getBuildInfo(),
+      circuit_breakers: getAllCircuitStates(),
       queue: queue.stats,
       uptime_seconds: Math.floor(process.uptime()),
     };
