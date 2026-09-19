@@ -17,14 +17,20 @@ function run() {
   const prevCommit = exec('git rev-parse HEAD').trim();
   console.log(`  current: ${prevCommit.slice(0, 8)}`);
 
-  // 1. Git pull
-  step('Pulling latest code');
-  const pullOutput = exec('git pull --ff-only');
-  if (pullOutput.includes('Already up to date')) {
-    console.log('  Already up to date — nothing to do.');
+  // 1. Move to the release being deployed
+  step('Fetching releases');
+  exec('git fetch --tags --force --prune origin');
+  const ref = resolveRef();
+  const target = exec(`git rev-parse ${ref}^{commit}`).trim();
+
+  if (target === prevCommit) {
+    console.log(`  Already on ${ref} — nothing to do.`);
     return;
   }
-  const newCommit = exec('git rev-parse HEAD').trim();
+
+  console.log(`  checking out ${ref}`);
+  exec(`git checkout --detach ${target}`);
+  const newCommit = target;
   console.log(`  updated: ${prevCommit.slice(0, 8)} → ${newCommit.slice(0, 8)}`);
 
   // 2. npm ci only if lockfile changed
@@ -95,6 +101,14 @@ function run() {
     console.error('Rollback complete. Check logs: journalctl -u shellm -n 50');
     process.exit(1);
   }
+}
+
+// The host follows published releases; SHELLM_REF deploys a specific one, or a branch.
+function resolveRef() {
+  if (process.env.SHELLM_REF) return process.env.SHELLM_REF;
+  const latest = exec("git tag -l 'v*' --sort=-v:refname").split('\n')[0].trim();
+  if (latest) return latest;
+  return exec('git symbolic-ref --short refs/remotes/origin/HEAD').trim().replace(/^origin\//, '');
 }
 
 function exec(cmd) {

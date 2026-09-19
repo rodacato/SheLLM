@@ -5,6 +5,7 @@
 set -euo pipefail
 
 REPO="${SHELLM_REPO:-https://github.com/rodacato/SheLLM.git}"
+SHELLM_REF="${SHELLM_REF:-}"
 CLAUDE_VERSION="${CLAUDE_VERSION:-2.1.273}"
 SERVICE_USER="shellmer"
 SERVICE_HOME="/home/${SERVICE_USER}"
@@ -38,12 +39,27 @@ fi
 echo "==> Claude Code ${CLAUDE_VERSION}"
 as_service_user "curl -fsSL https://claude.ai/install.sh | bash -s ${CLAUDE_VERSION}"
 
+# A host follows published releases, not the tip of a branch, so what it runs has a name and
+# release notes. SHELLM_REF deploys a branch or an older tag deliberately.
+resolve_ref() {
+  if [[ -n "${SHELLM_REF}" ]]; then
+    echo "${SHELLM_REF}"
+    return
+  fi
+  local latest
+  latest=$(as_service_user "git -C ${APP_DIR} tag -l 'v*' --sort=-v:refname" | head -1)
+  # A repository with no tags yet still has to install; it follows the default branch.
+  echo "${latest:-$(as_service_user "git -C ${APP_DIR} symbolic-ref --short refs/remotes/origin/HEAD" | sed 's|^origin/||')}"
+}
+
 echo "==> SheLLM"
-if [[ -d "${APP_DIR}/.git" ]]; then
-  as_service_user "git -C ${APP_DIR} pull --ff-only"
-else
+if [[ ! -d "${APP_DIR}/.git" ]]; then
   as_service_user "git clone ${REPO} ${APP_DIR}"
 fi
+as_service_user "git -C ${APP_DIR} fetch --tags --force --prune origin"
+REF=$(resolve_ref)
+echo "  checking out ${REF}"
+as_service_user "git -C ${APP_DIR} checkout --detach ${REF}"
 as_service_user "cd ${APP_DIR} && npm ci --omit=dev"
 (cd "${APP_DIR}" && npm link)
 as_service_user "mkdir -p ~/.shellm/logs"

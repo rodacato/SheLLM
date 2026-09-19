@@ -19,10 +19,16 @@ Code pinned to `CLAUDE_VERSION` (see [`VERSIONS.md`](../../VERSIONS.md)), clones
 `/home/shellmer/shellm`, links the `shellm` command, and installs the systemd unit and the
 logrotate config. It does **not** start the service and does **not** configure a tunnel.
 
+**It installs the newest published release**, not the tip of the default branch, so the host runs
+something with a version number and release notes. A repository with no tags yet falls back to the
+default branch.
+
 Override defaults with environment variables:
 
 ```bash
 ssh root@your-server 'CLAUDE_VERSION=2.1.273 bash -s' < scripts/setup/vps.sh
+ssh root@your-server 'SHELLM_REF=v1.0.0 bash -s' < scripts/setup/vps.sh   # a specific release
+ssh root@your-server 'SHELLM_REF=master bash -s' < scripts/setup/vps.sh   # or a branch, deliberately
 ```
 
 ## 2. Log the CLI in
@@ -93,20 +99,29 @@ sudo -iu shellmer shellm status         # is it answering?
 sudo -iu shellmer shellm doctor         # what is broken
 ```
 
-**Upgrade:**
+**Upgrade:** re-run the provisioning script. It is idempotent, and it fetches and checks out the
+newest published release:
 
 ```bash
-sudo -iu shellmer bash -c "cd ~/shellm && git pull && npm ci --omit=dev"
+ssh root@your-server 'bash -s' < scripts/setup/vps.sh
+sudo systemctl restart shellm
+```
+
+To move to a specific release, or back to one, name it:
+
+```bash
+ssh root@your-server 'SHELLM_REF=v1.0.0 bash -s' < scripts/setup/vps.sh
+```
+
+The checkout is left detached at a tag, so `git pull` inside it does nothing useful — the ref is
+chosen by the script, not by a tracking branch.
+
+Re-copy the unit only when it changed; `git log -- shellm.service` tells you:
+
+```bash
 sudo cp /home/shellmer/shellm/shellm.service /etc/systemd/system/shellm.service
 sudo systemctl daemon-reload && sudo systemctl restart shellm
 ```
-
-Re-copy the unit only when it changed; `git log -- shellm.service` tells you.
-
-> This upgrades to the tip of the default branch, which is what the host follows today.
-> [ADR-0003](../adr/0003-release-and-update-cycle.md) makes a published tag the unit of
-> deployment and moves the upgrade behind a privileged updater the service itself cannot run.
-> The commands above remain correct until those pieces ship.
 
 **The service runs confined.** The unit mounts the filesystem read-only, grants
 `/home/shellmer` back, and then makes the checkout itself read-only — so neither the service nor
