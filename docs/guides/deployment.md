@@ -102,31 +102,42 @@ sudo systemctl restart shellm           # restart
 sudo journalctl -u shellm -f            # logs (JSON lines)
 sudo -iu shellmer shellm status         # is it answering?
 sudo -iu shellmer shellm doctor         # what is broken
+sudo shellm update                      # move to the newest release
 ```
 
-**Upgrade:** re-run the provisioning script. It is idempotent, and it fetches and checks out the
-newest published release:
+**Knowing there is something to upgrade to** is the dashboard's job: the System page shows the
+version and commit the service is running, and compares them against the newest published
+release. That comparison is made by your browser, not by the server — SheLLM needs no outbound
+network to report what it is.
+
+**Upgrade:**
 
 ```bash
-ssh root@your-server 'bash -s' < scripts/setup/vps.sh
-sudo systemctl restart shellm
+sudo shellm update
 ```
 
-To move to a specific release, or back to one, name it:
+That is the whole thing. It moves to the newest published release and does the rest in order:
+installs dependencies only if `package-lock.json` changed, runs migrations, re-installs the
+systemd unit if it changed, restarts, and then polls `/health`. **If the service does not answer,
+it checks out the previous commit, restarts again, and exits non-zero** — so a bad release leaves
+you where you were rather than with a service that will not start.
+
+It takes a few seconds, and prints each step.
+
+To move to a specific release, or back to an earlier one:
 
 ```bash
-ssh root@your-server 'SHELLM_REF=v1.0.0 bash -s' < scripts/setup/vps.sh
+SHELLM_REF=v1.0.0 sudo shellm update
 ```
 
-The checkout is left detached at a tag, so `git pull` inside it does nothing useful — the ref is
-chosen by the script, not by a tracking branch.
+**Re-run `scripts/setup/vps.sh` instead when** you are installing for the first time, changing
+`CLAUDE_VERSION` or `CODEX_VERSION`, or repairing an install — it is idempotent and rebuilds
+everything it manages, including the unit. It does **not** restart the service or verify
+anything, so follow it with `sudo systemctl restart shellm`.
 
-Re-copy the unit only when it changed; `git log -- shellm.service` tells you:
-
-```bash
-sudo cp /home/shellmer/shellm/shellm.service /etc/systemd/system/shellm.service
-sudo systemctl daemon-reload && sudo systemctl restart shellm
-```
+The checkout is left detached at a tag either way, so `git pull` inside it does nothing useful:
+the ref is chosen by the tooling, not by a tracking branch. A repository with no tags at all
+falls back to the default branch.
 
 **The service runs confined.** The unit mounts the filesystem read-only, grants
 `/home/shellmer` back, and then makes the checkout itself read-only — so neither the service nor
