@@ -1,0 +1,5 @@
+{"type":"thread.started","thread_id":"01a0ba02-4003-7f12-8924-35625fb34285"}
+{"type":"item.completed","item":{"id":"item_0","type":"error","message":"Model metadata for `shellm-no-such-model` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."}}
+{"type":"turn.started"}
+{"type":"error","message":"{\"type\":\"error\",\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The 'shellm-no-such-model' model is not supported when using Codex with a ChatGPT account.\"}}"}
+{"type":"turn.failed","error":{"message":"{\"type\":\"error\",\"status\":400,\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The 'shellm-no-such-model' model is not supported when using Codex with a ChatGPT account.\"}}"}}

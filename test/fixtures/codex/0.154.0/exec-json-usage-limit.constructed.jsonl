@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a0ba02-0000-7000-0000-000000000000"}
+{"type":"turn.started"}
+{"type":"error","message":"{\"type\":\"error\",\"status\":429,\"error\":{\"type\":\"usage_limit_reached\",\"message\":\"You have hit your usage limit. Try again later.\"}}"}
+{"type":"turn.failed","error":{"message":"{\"type\":\"error\",\"status\":429,\"error\":{\"type\":\"usage_limit_reached\",\"message\":\"You have hit your usage limit. Try again later.\"}}"}}

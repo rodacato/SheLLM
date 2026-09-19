@@ -59,7 +59,7 @@ describe('/v1/models', () => {
       .set('Authorization', `Bearer ${testKey}`);
     const ids = res.body.data.map((m) => m.id);
 
-    assert.deepStrictEqual(ids, ['claude', 'claude-haiku', 'claude-sonnet', 'claude-opus']);
+    assert.deepStrictEqual(ids, ['claude', 'claude-haiku', 'claude-sonnet', 'claude-opus', 'codex']);
   });
 
   it('omits models of a disabled provider', async () => {
@@ -68,7 +68,7 @@ describe('/v1/models', () => {
     try {
       const res = await request(app).get('/v1/models')
         .set('Authorization', `Bearer ${testKey}`);
-      assert.deepStrictEqual(res.body.data, []);
+      assert.deepStrictEqual(res.body.data.map((m) => m.id), ['codex']);
     } finally {
       updateProvider('claude', { enabled: 1 });
     }

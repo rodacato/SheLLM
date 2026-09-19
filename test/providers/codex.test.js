@@ -1,66 +1,100 @@
-const { describe, it, mock } = require('node:test');
+const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 
-const { buildArgs, parseOutput } = require('../../src/providers/codex');
+const FIXTURES = path.resolve(__dirname, '../fixtures/codex/0.154.0');
 
 describe('codex provider', () => {
-  it('buildArgs includes exec flags and prepends system', () => {
-    const args = buildArgs({ prompt: 'hello', system: 'context' });
-    assert.ok(args.includes('exec'));
-    assert.ok(args.includes('--ephemeral'));
-    assert.ok(args.includes('--json'));
-    assert.ok(!args.includes('--quiet'), 'codex CLI does not support --quiet');
+  const originalPath = process.env.PATH;
+  let fakeBin;
+  let codex;
 
-    const fullPrompt = args[args.length - 1];
-    assert.ok(fullPrompt.startsWith('context\n\n---\n\nhello'));
+  function argsOf() {
+    return JSON.parse(fs.readFileSync(path.join(fakeBin, 'codex.args.json'), 'utf8'));
+  }
 
-    // Without system
-    const args2 = buildArgs({ prompt: 'just prompt' });
-    assert.strictEqual(args2[args2.length - 1], 'just prompt');
+  before(() => {
+    assert.ok(!require.cache[require.resolve('../../src/providers/base')], 'base.js already captured the real PATH');
+    fakeBin = fs.mkdtempSync(path.join(os.tmpdir(), 'shellm-fakebin-'));
+    // Replays a recorded transcript chosen by the requested model, and exits the way the real
+    // CLI does: 0 for a served turn, 1 for a rejected model.
+    fs.writeFileSync(path.join(fakeBin, 'codex'), `#!/usr/bin/env node
+const fs = require('fs');
+const args = process.argv.slice(2);
+fs.writeFileSync(${JSON.stringify(path.join(fakeBin, 'codex.args.json'))}, JSON.stringify(args));
+const model = args[args.indexOf('-m') + 1];
+const file = model === 'over-quota' ? 'exec-json-usage-limit.constructed.jsonl'
+  : model === 'no-such-model' ? 'exec-json-unknown-model.jsonl'
+  : 'exec-json.jsonl';
+process.stdout.write(fs.readFileSync(${JSON.stringify(FIXTURES)} + '/' + file, 'utf8'));
+process.exit(file === 'exec-json-unknown-model.jsonl' ? 1 : 0);
+`, { mode: 0o755 });
+
+    process.env.PATH = `${fakeBin}${path.delimiter}${originalPath}`;
+    codex = require('../../src/providers/codex');
   });
 
-  it('parseOutput parses JSONL with item.completed and turn.completed', () => {
-    const jsonlOutput = [
-      JSON.stringify({ type: 'item.completed', item: { type: 'agent_message', text: 'hello world' } }),
-      JSON.stringify({ type: 'turn.completed', usage: { input_tokens: 10, output_tokens: 20 } }),
-    ].join('\n');
-
-    const result = parseOutput(jsonlOutput);
-    assert.strictEqual(result.content, 'hello world');
-    assert.deepStrictEqual(result.usage, { input_tokens: 10, output_tokens: 20 });
-    assert.strictEqual(result.cost_usd, null);
-
-    // Fallback to raw stdout when no events found
-    const plain = parseOutput('not json at all');
-    assert.strictEqual(plain.content, 'not json at all');
-    assert.strictEqual(plain.usage, null);
+  after(() => {
+    process.env.PATH = originalPath;
+    fs.rmSync(fakeBin, { recursive: true, force: true });
   });
 
-  it('chat() calls execute with correct command', async () => {
-    const jsonlResponse = [
-      JSON.stringify({ type: 'item.completed', item: { type: 'agent_message', text: 'mocked codex reply' } }),
-    ].join('\n');
+  it('runs the CLI read-only, ephemeral and with the requested model', async () => {
+    const result = await codex.chat({ prompt: 'ping', model: 'codex-gpt-5.6-sol' });
+    assert.equal(result.content, 'OK');
 
-    const mockExecute = mock.fn(async () => ({
-      stdout: jsonlResponse,
-      stderr: '',
-      duration_ms: 40,
-    }));
+    const args = argsOf();
+    assert.equal(args[args.indexOf('-m') + 1], 'gpt-5.6-sol', 'the codex- prefix is stripped for the CLI');
+    assert.equal(args[args.indexOf('-s') + 1], 'read-only');
+    assert.ok(args.includes('--ephemeral'), 'no session files survive the request');
+    assert.ok(args.includes('--skip-git-repo-check'));
+    assert.equal(args.at(-1), 'ping', 'the prompt is the last argument');
+  });
 
-    mock.module(path.resolve(__dirname, '../../src/providers/base.js'), {
-      namedExports: { execute: mockExecute, stripNonPrintable: (t) => t },
-    });
+  it('leaves the CLI default model alone when the id is the provider name', async () => {
+    await codex.chat({ prompt: 'ping', model: 'codex' });
+    assert.ok(!argsOf().includes('-m'));
+  });
 
-    delete require.cache[require.resolve('../../src/providers/codex')];
-    const codex = require('../../src/providers/codex');
+  it('prepends the system prompt and the JSON-mode instruction the CLI has no flag for', async () => {
+    await codex.chat({ prompt: 'ping', system: 'Be terse.', response_format: { type: 'json_object' }, model: 'codex' });
+    const sent = argsOf().at(-1);
+    assert.match(sent, /^Be terse\.\n\nRespond with valid JSON only\.\n\n---\n\nping$/);
+  });
 
-    const result = await codex.chat({ prompt: 'test' });
-    assert.strictEqual(result.content, 'mocked codex reply');
+  it('reports the token usage the CLI reported', async () => {
+    const result = await codex.chat({ prompt: 'ping', model: 'codex' });
+    assert.deepEqual(result.usage, { input_tokens: 12683, output_tokens: 5 });
+    assert.equal(result.cost_usd, null);
+  });
 
-    const call = mockExecute.mock.calls[0];
-    assert.strictEqual(call.arguments[0], 'codex');
+  it('maps a model the account cannot use to model_not_found', async () => {
+    await assert.rejects(
+      () => codex.chat({ prompt: 'ping', model: 'codex-no-such-model' }),
+      (err) => err.status === 404 && err.code === 'model_not_found',
+    );
+  });
 
-    mock.restoreAll();
+  it('reports a usage limit from the events even when the CLI exits 0', async () => {
+    await assert.rejects(
+      () => codex.chat({ prompt: 'ping', model: 'codex-over-quota' }),
+      (err) => err.status === 429 && err.code === 'rate_limited' && /usage limit/i.test(err.message),
+    );
+  });
+
+  it('streams the agent message and the usage, then finishes', async () => {
+    const events = [];
+    for await (const event of codex.chatStream({ prompt: 'ping', model: 'codex' })) events.push(event);
+    assert.deepEqual(events.filter((e) => e.type === 'delta').map((e) => e.content), ['OK']);
+    assert.deepEqual(events.find((e) => e.type === 'usage').usage, { input_tokens: 12683, output_tokens: 5 });
+    assert.equal(events.at(-1).type, 'done');
+  });
+
+  it('surfaces a usage limit on the streaming path too', async () => {
+    await assert.rejects(async () => {
+      for await (const _event of codex.chatStream({ prompt: 'ping', model: 'codex-over-quota' })) { /* drain */ }
+    }, (err) => err.status === 429);
   });
 });

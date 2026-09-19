@@ -1,4 +1,6 @@
-const { execute, executeStream } = require('./base');
+const { execute, executeStream, stripNonPrintable } = require('./base');
+const { modelNotFound, rateLimited, cliFailed } = require('../errors');
+const { createMutex } = require('../infra/provider-lock');
 
 // Codex CLI needs config/data paths for auth tokens
 const CODEX_ENV = {
@@ -6,88 +8,157 @@ const CODEX_ENV = {
   XDG_DATA_HOME: process.env.XDG_DATA_HOME,
 };
 
-function buildArgs({ prompt, system, response_format }) {
-  // Codex has no --system-prompt flag — prepend to prompt
-  let fullPrompt = '';
+const MODEL_PREFIX = 'codex-';
+const models = ['codex'];
+
+// Two codex processes race on the OAuth refresh and corrupt it (openai/codex#17340).
+const lock = createMutex();
+
+function cliModel(model) {
+  if (!model || model === 'codex') return null;
+  return model.startsWith(MODEL_PREFIX) ? model.slice(MODEL_PREFIX.length) : model;
+}
+
+// Codex has no --system-prompt flag — prepend to prompt
+function buildPrompt({ prompt, system, response_format }) {
   const jsonMode = response_format?.type === 'json_object';
   const systemText = jsonMode && system
     ? system + '\n\nRespond with valid JSON only.'
     : jsonMode ? 'Respond with valid JSON only.'
     : system;
-  if (systemText) {
-    fullPrompt += systemText + '\n\n---\n\n';
-  }
-  fullPrompt += prompt;
-
-  return [
-    'exec',
-    '--ephemeral',
-    '--skip-git-repo-check',
-    '--json',
-    fullPrompt,
-  ];
+  return systemText ? `${systemText}\n\n---\n\n${prompt}` : prompt;
 }
 
-function parseOutput(stdout) {
-  // Codex --json outputs JSONL events, one per line
+function buildArgs({ prompt, system, response_format, model }) {
+  const args = ['exec', '--ephemeral', '--skip-git-repo-check', '-s', 'read-only', '--json'];
+  if (cliModel(model)) args.push('-m', cliModel(model));
+  args.push(buildPrompt({ prompt, system, response_format }));
+  return args;
+}
+
+// A JSONL line is a codex event only if it carries an event type; anything else is output
+// from some other shape entirely, and parseOutput falls back to the raw text for it.
+function parseLine(line) {
+  if (!line.trim()) return null;
+  try {
+    const parsed = JSON.parse(line);
+    return typeof parsed?.type === 'string' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+// A failed turn is reported as an event and the process can still exit 0
+// (openai/codex#1018), so the events decide what went wrong, never the exit code.
+function failureFrom(event, model) {
+  const raw = event.type === 'turn.failed' ? event.error?.message
+    : event.type === 'error' ? event.message
+    : null;
+  if (!raw) return null;
+
+  let status = null;
+  let message = raw;
+  try {
+    const payload = JSON.parse(raw);
+    status = payload.status ?? null;
+    message = payload.error?.message || raw;
+  } catch { /* the message is plain text */ }
+
+  if (status === 429 || /usage limit|rate limit|quota/i.test(message)) {
+    return rateLimited(`codex: ${message}`);
+  }
+  if (/not supported|model metadata/i.test(message)) return modelNotFound(model);
+  return cliFailed('codex', message);
+}
+
+function usageFrom(event) {
+  if (!event.usage) return null;
+  return {
+    input_tokens: event.usage.input_tokens || 0,
+    output_tokens: event.usage.output_tokens || 0,
+  };
+}
+
+function parseOutput(stdout, model) {
   let content = '';
   let usage = null;
+  let failure = null;
+  let sawEvent = false;
 
   for (const line of stdout.split('\n')) {
-    if (!line.trim()) continue;
+    const event = parseLine(line);
+    if (!event) continue;
+    sawEvent = true;
+    if (event.type === 'item.completed' && event.item?.type === 'agent_message') {
+      content = event.item.text || '';
+    }
+    if (event.type === 'turn.completed') usage = usageFrom(event);
+    failure = failure || failureFrom(event, model);
+  }
+
+  return { content: stripNonPrintable(sawEvent ? content : stdout), cost_usd: null, usage, failure };
+}
+
+function toProviderError(err, model) {
+  const failure = err.stdout ? parseOutput(err.stdout, model).failure : null;
+  return failure || err;
+}
+
+async function chat({ prompt, system, response_format, model }) {
+  const args = buildArgs({ prompt, system, response_format, model });
+  const release = await lock();
+  try {
+    const result = await execute('codex', args, { env: CODEX_ENV })
+      .catch((err) => { throw toProviderError(err, model); });
+    const { failure, ...parsed } = parseOutput(result.stdout, model);
+    if (failure) throw failure;
+    return parsed;
+  } finally {
+    release();
+  }
+}
+
+async function* chatStream({ prompt, system, response_format, model, signal }) {
+  const args = buildArgs({ prompt, system, response_format, model });
+  const release = await lock();
+  let failure = null;
+  try {
+    let pending = '';
     try {
-      const event = JSON.parse(line);
-      if (event.type === 'item.completed' && event.item?.type === 'agent_message') {
-        content = event.item.text || '';
-      }
-      if (event.type === 'turn.completed' && event.usage) {
-        usage = {
-          input_tokens: event.usage.input_tokens || 0,
-          output_tokens: event.usage.output_tokens || 0,
-        };
-      }
-    } catch {
-      // Skip non-JSON lines
-    }
-  }
-
-  return { content: content || stdout, cost_usd: null, usage };
-}
-
-async function chat({ prompt, system }) {
-  const args = buildArgs({ prompt, system });
-  const result = await execute('codex', args, { env: CODEX_ENV });
-  return parseOutput(result.stdout);
-}
-
-async function* chatStream({ prompt, system, signal }) {
-  const args = buildArgs({ prompt, system });
-  let buffer = '';
-
-  for await (const event of executeStream('codex', args, { env: CODEX_ENV, signal })) {
-    if (event.type === 'chunk') {
-      buffer += event.data;
-      const lines = buffer.split('\n');
-      buffer = lines.pop(); // keep incomplete line in buffer
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        try {
-          const evt = JSON.parse(line);
-          if (evt.type === 'item.completed' && evt.item?.type === 'agent_message' && evt.item.text) {
-            yield { type: 'delta', content: evt.item.text };
+      for await (const chunk of executeStream('codex', args, { env: CODEX_ENV, signal })) {
+        if (chunk.type !== 'chunk') continue;
+        pending += chunk.data;
+        const lines = pending.split('\n');
+        pending = lines.pop();
+        for (const line of lines) {
+          const event = parseLine(line);
+          if (!event) continue;
+          failure = failure || failureFrom(event, model);
+          if (event.type === 'item.completed' && event.item?.type === 'agent_message' && event.item.text) {
+            yield { type: 'delta', content: stripNonPrintable(event.item.text) };
           }
-        } catch { /* skip non-JSON */ }
+          if (event.type === 'turn.completed' && event.usage) {
+            yield { type: 'usage', usage: usageFrom(event), cost_usd: null };
+          }
+        }
       }
+    } catch (err) {
+      throw failure || toProviderError(err, model);
     }
+    if (failure) throw failure;
+    yield { type: 'done' };
+  } finally {
+    release();
   }
-  yield { type: 'done' };
 }
 
 module.exports = {
   name: 'codex',
+  models,
   env: CODEX_ENV,
   chat,
   chatStream,
   buildArgs,
   parseOutput,
+  failureFrom,
 };
