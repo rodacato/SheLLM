@@ -19,15 +19,24 @@ Four facts, all measured on the only real instance on 2026-09-19, not impression
 - **The running service cannot say what it is.** `GET /health` answers `{"status":"ok"}`.
   `/health/detailed` reports providers, circuit breakers, queue and uptime — but no version, no
   commit, and no CLI versions. The host once ran 52 commits behind for months and nothing said so.
-- **The service can already rewrite itself.** The CLI runs as `shellmer`, which owns
-  `/home/shellmer/shellm`, so a prompt injection with `--dangerously-skip-permissions` can write
-  to `src/`. `shellm.service` carries `Restart=on-failure` with `RestartSec=5s`, so a crash — one
-  the same uid is allowed to cause — reloads the modified code five seconds later. The human
-  restart that was assumed to be the control is not one.
+- **The service can rewrite the code it runs.** Everything in the service — the Node process and
+  every CLI it spawns — runs as `shellmer`, which owns `/home/shellmer/shellm`. `shellm.service`
+  carries `Restart=on-failure` with `RestartSec=5s`, so a crash that the same uid is allowed to
+  cause reloads whatever is on disk five seconds later. The human restart that was assumed to be
+  the control is not one.
 
-The last fact is the load-bearing one. The isolation that compensates for running the CLI with
-`--dangerously-skip-permissions` is weaker than it was believed to be, and it is weaker today,
-before any update button exists.
+The last fact is the load-bearing one for the decision below. **How it was first written here was
+wrong, and the correction matters more than the original claim:** this ADR argued that a prompt
+injection could write to `src/`, which it cannot. [ADR-0002](./0002-cli-internal-tools-off.md),
+accepted the same day, gives every request `--tools ''`, `--permission-mode dontAsk` and
+`--settings '{"disableAllHooks":true}'` — the model has no file, shell or web tool, and no hooks
+run. There is no known path today from a request to a write.
+
+So part 1 is not closing an exploitable hole. It narrows what a compromise of the service process
+can reach, and it removes a step that a future agentic endpoint would restore — ADR-0002 says
+such a feature supersedes it rather than flipping the flag, and the day it lands, an unconfined
+checkout is a real hole rather than a theoretical one. That is a good reason to have done it, and
+a different one from the reason first given.
 
 ## Decision
 
