@@ -236,9 +236,10 @@ async function pollAllProviders() {
     const providers = {};
     for (let i = 0; i < providerList.length; i++) {
       const p = providerList[i];
-      providers[p.name] = { ...statuses[p.name], enabled: !!p.enabled };
+      const version = statuses[p.name].installed ? await getProviderVersion(p.name) : null;
+      providers[p.name] = { ...statuses[p.name], enabled: !!p.enabled, version };
     }
-    cache = { data: { status: 'ok', providers }, expires: Date.now() + getPollInterval() + 5000 };
+    cache = { data: { status: computeHealthStatus(providers), providers }, expires: Date.now() + getPollInterval() + 5000 };
   } catch (err) {
     logger.error({ event: 'health_poll_error', error: err.message });
   }
@@ -258,4 +259,4 @@ function stopHealthPoller() {
   }
 }
 
-module.exports = { getHealthStatus, getCachedProviderStatus, startHealthPoller, stopHealthPoller, parseCheckError, checkProvider, getProviderVersion, resetProviderVersions };
+module.exports = { getHealthStatus, getCachedProviderStatus, startHealthPoller, stopHealthPoller, parseCheckError, checkProvider, getProviderVersion, resetProviderVersions, pollAllProviders };
