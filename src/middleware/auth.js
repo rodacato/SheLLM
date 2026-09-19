@@ -1,4 +1,4 @@
-const { sendError, authRequired, rateLimited } = require('../errors');
+const { sendApiError, authRequired, rateLimited } = require('../errors');
 const { findClientByKey, listClients } = require('../db');
 const logger = require('../lib/logger');
 
@@ -108,13 +108,13 @@ function createAuthMiddleware() {
         } catch { /* fall through to reject */ }
       }
       recordAuthFailure();
-      return sendError(res, authRequired(), req.requestId);
+      return sendApiError(req, res, authRequired(), req.requestId);
     }
     const dbClient = findClientByKey(token);
 
     if (!dbClient || !dbClient.active) {
       recordAuthFailure();
-      return sendError(res, authRequired(), req.requestId);
+      return sendApiError(req, res, authRequired(), req.requestId);
     }
 
     const clientName = dbClient.name;
@@ -123,7 +123,8 @@ function createAuthMiddleware() {
     // Check global rate limit
     const globalRetry = checkRateLimit(globalTimestamps, getGlobalRpm());
     if (globalRetry > 0) {
-      return sendError(
+      return sendApiError(
+        req,
         res,
         rateLimited('Global rate limit exceeded', globalRetry),
         req.requestId,
@@ -134,7 +135,8 @@ function createAuthMiddleware() {
     const timestamps = getOrCreateTimestamps(clientName);
     const clientRetry = checkRateLimit(timestamps, clientRpm);
     if (clientRetry > 0) {
-      return sendError(
+      return sendApiError(
+        req,
         res,
         rateLimited(`Rate limit exceeded for client: ${clientName}`, clientRetry),
         req.requestId,

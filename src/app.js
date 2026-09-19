@@ -12,7 +12,7 @@ const adminKeysRouter = require('./admin/keys');
 const adminLogsRouter = require('./admin/logs');
 const adminStatsRouter = require('./admin/stats');
 const adminProvidersRouter = require('./admin/providers');
-const { sendError, invalidRequest } = require('./errors');
+const { sendApiError, invalidRequest } = require('./errors');
 const path = require('node:path');
 
 const app = express();
@@ -27,7 +27,7 @@ app.use(requestLogger);
 app.use((req, res, next) => {
   if (req.path.startsWith('/admin/login') || req.path.startsWith('/admin/logout')) return next();
   if ((req.method === 'POST' || req.method === 'PATCH') && req.headers['content-length'] > 0 && !req.is('json')) {
-    return sendError(res, invalidRequest('Content-Type must be application/json'), req.requestId);
+    return sendApiError(req, res, invalidRequest('Content-Type must be application/json'), req.requestId);
   }
   next();
 });
@@ -50,7 +50,7 @@ app.get('/health/detailed', adminAuth, async (req, res) => {
     const status = await getHealthStatus();
     res.json(status);
   } catch (err) {
-    sendError(res, { status: 500, code: 'internal_error', message: err.message }, req.requestId);
+    sendApiError(req, res, { status: 500, code: 'internal_error', message: err.message }, req.requestId);
   }
 });
 

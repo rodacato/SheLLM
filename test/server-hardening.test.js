@@ -57,8 +57,8 @@ describe('server hardening (Phase 7)', () => {
       .send('hello');
 
     assert.strictEqual(res.status, 400);
-    assert.strictEqual(res.body.error, 'invalid_request');
-    assert.match(res.body.message, /Content-Type/);
+    assert.strictEqual(res.body.error.code, 'invalid_request', 'a /v1 caller gets the OpenAI error shape');
+    assert.match(res.body.error.message, /Content-Type/);
   });
 
   it('rejects body exceeding 256kb limit', async () => {
