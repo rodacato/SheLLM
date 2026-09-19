@@ -2,7 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1a1e21">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SheLLM">
+  <link rel="manifest" href="/admin/manifest.webmanifest">
   <title>SheLLM Admin</title>
   <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-dark-32.png">
@@ -54,8 +60,20 @@
 </head>
 <body x-data="app()" x-init="init()" class="bg-surface text-on-surface min-h-screen flex font-body">
 
+  <!-- Mobile top bar -->
+  <div class="md:hidden fixed top-0 inset-x-0 h-14 z-40 bg-[#1a1e21] border-b border-outline-variant/20 flex items-center gap-3 px-4">
+    <button @click="sidebarOpen = !sidebarOpen" class="text-on-surface-variant hover:text-primary-container" :aria-expanded="sidebarOpen" aria-label="Toggle navigation">
+      <span class="material-symbols-outlined" x-text="sidebarOpen ? 'close' : 'menu'"></span>
+    </button>
+    <img src="img/logo-dark.svg" alt="SheLLM" class="h-6 w-auto">
+  </div>
+
+  <!-- Backdrop, mobile only -->
+  <div x-show="sidebarOpen" x-transition.opacity @click="sidebarOpen = false" class="md:hidden fixed inset-0 bg-black/60 z-40" x-cloak></div>
+
   <!-- Sidebar -->
-  <aside class="w-64 bg-[#1a1e21] min-h-screen flex flex-col shrink-0 fixed left-0 top-0 h-full z-50">
+  <aside class="w-64 bg-[#1a1e21] min-h-screen flex flex-col shrink-0 fixed left-0 top-0 h-full z-50 transition-transform duration-200 md:translate-x-0"
+    :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
     <!-- Brand -->
     <div class="p-6">
       <img src="img/logo-dark.svg" alt="SheLLM" class="h-8 w-auto">
@@ -103,10 +121,10 @@
   </aside>
 
   <!-- Main -->
-  <div class="ml-64 flex-1 flex flex-col min-h-screen">
+  <div class="md:ml-64 flex-1 flex flex-col min-h-screen pt-14 md:pt-0">
 
     <!-- Content -->
-    <main class="flex-1 p-8 overflow-auto">
+    <main class="flex-1 p-4 md:p-8 overflow-auto">
 
       <!-- OVERVIEW PAGE -->
       <div x-show="page === 'overview'" x-data="overviewPage()" x-effect="if (page === 'overview') { if (!stats) fetchStats(); if (providers.length === 0) fetchProviders(); startAutoRefresh(); } else { stopAutoRefresh(); }">
@@ -631,5 +649,10 @@
   <script src="js/overview.js"></script>
   <script src="js/logs.js"></script>
   <script src="js/keys.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('/admin/sw.js'));
+    }
+  </script>
 </body>
 </html>

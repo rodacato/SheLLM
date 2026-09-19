@@ -66,6 +66,7 @@ const VALID_PAGES = ['overview', 'logs', 'keys'];
 function app() {
   return {
     page: VALID_PAGES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview',
+    sidebarOpen: false,
     health: { uptime: null, providers: {}, queue: {} },
     nav: [
       { id: 'overview', label: 'Overview', icon: 'dashboard' },
@@ -74,6 +75,7 @@ function app() {
     ],
     navigate(pageId) {
       this.page = pageId;
+      this.sidebarOpen = false;
       location.hash = pageId;
     },
     formatUptime,

@@ -81,6 +81,20 @@ module.exports = [
     },
   },
   {
+    // Service worker — its own global scope, no DOM
+    files: ['src/admin/public/sw.js'],
+    languageOptions: {
+      sourceType: 'script',
+      globals: {
+        self: 'readonly',
+        caches: 'readonly',
+        fetch: 'readonly',
+        Response: 'readonly',
+        URL: 'readonly',
+      },
+    },
+  },
+  {
     ignores: ['node_modules/', 'docs/', 'scripts/', '*.config.js'],
   },
 ];
