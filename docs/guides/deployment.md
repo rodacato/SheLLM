@@ -103,8 +103,24 @@ sudo systemctl daemon-reload && sudo systemctl restart shellm
 
 Re-copy the unit only when it changed; `git log -- shellm.service` tells you.
 
+> This upgrades to the tip of the default branch, which is what the host follows today.
+> [ADR-0003](../adr/0003-release-and-update-cycle.md) makes a published tag the unit of
+> deployment and moves the upgrade behind a privileged updater the service itself cannot run.
+> The commands above remain correct until those pieces ship.
+
 **Back up** `/home/shellmer/.shellm/shellm.db` (keys, request logs, audit trail) and
-`/home/shellmer/.config/shellm/env` (secrets). Both are plain files; `cp` is a valid backup.
+`/home/shellmer/.config/shellm/env` (secrets).
+
+The database runs in WAL mode, so **copying the `.db` file is not a valid backup** — the copy
+comes out torn or missing recent writes, and the `-wal` file beside it routinely holds hundreds
+of kilobytes that a `cp` leaves behind. Use SQLite's online backup, which is safe while the
+service is running:
+
+```bash
+sudo -iu shellmer sqlite3 ~/.shellm/shellm.db ".backup '/var/backups/shellm.db'"
+```
+
+The config file is a plain file and `cp` is fine for it.
 
 **Uninstall:**
 

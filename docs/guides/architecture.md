@@ -226,5 +226,8 @@ db/
 - **Subprocess providers** — CLI tools are invoked via `spawn()`, not SDK imports. This keeps auth isolated to the host (CLI subscriptions, not API keys).
 - **No TypeScript** — The codebase is ~3000 lines. TypeScript would add a build step for a project that fits in your head.
 - **Debuggability > simplicity > elegance** — When in doubt, choose the option that's easiest to debug at 2 AM.
+- **The service does not deploy itself** — It reports what it is running and can request an
+  update; a privileged component outside the process performs one, checking out a published tag.
+  See [ADR-0003](../adr/0003-release-and-update-cycle.md) for why the two halves are separate.
 
 See [IDENTITY.md](../IDENTITY.md) for the full decision-making framework and project principles.

@@ -2,6 +2,12 @@
 
 Step-by-step instructions for cutting a SheLLM release. Follow this in order — each step depends on the previous one.
 
+> **This is the current procedure, and it is the one being replaced.**
+> [ADR-0003](../adr/0003-release-and-update-cycle.md) moves the bump and the tag into a
+> `workflow_dispatch` job, so that cutting a release is a decision rather than seven steps. Until
+> that job exists, everything below is what actually happens. The guide changes in the pull
+> request that ships the job, not before.
+
 ---
 
 ## Before you start
