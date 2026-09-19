@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-19
+
+### Added
+
+- **setup:** install codex on the host, pinned to CODEX_VERSION
+- **setup:** deploy a published release instead of a branch tip
+
+### Fixed
+
+- **admin:** read shared state from the scope, not from $root
+- **health:** serve the real status and the CLI versions from the poller's cache
+- **release:** stop CI from opening the pull request, and surface the breaking changes
+
+### Documentation
+
+- **adr:** correct the threat this decision was argued from
+
+### CI
+
+- fail the audit on advisories, not on the registry being down
+
+
 ## [1.0.0] - 2026-09-19
 
 ### Breaking Changes
@@ -353,5 +375,5 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/rodacato/SheLLM/compare/v0.5.0...v1.0.0
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/rodacato/SheLLM/compare/v1.0.0...v1.1.0
