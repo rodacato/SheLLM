@@ -61,6 +61,24 @@ function usageFrom(data) {
   return {
     input_tokens: data.usage.input_tokens || 0,
     output_tokens: data.usage.output_tokens || 0,
+    cache_creation_input_tokens: data.usage.cache_creation_input_tokens || 0,
+    cache_read_input_tokens: data.usage.cache_read_input_tokens || 0,
+  };
+}
+
+// modelUsage lists every model a turn touched; the costliest one did the work.
+function upstreamModelFrom(data) {
+  const entries = Object.entries(data.modelUsage || {});
+  if (entries.length === 0) return null;
+  return entries.reduce((a, b) => ((b[1]?.costUSD || 0) > (a[1]?.costUSD || 0) ? b : a))[0];
+}
+
+function metricsFrom(data) {
+  return {
+    ttft_ms: data.ttft_ms ?? null,
+    api_ms: data.duration_api_ms ?? null,
+    upstream_model: upstreamModelFrom(data),
+    api_error_status: data.api_error_status ?? null,
   };
 }
 
@@ -68,17 +86,19 @@ function parseOutput(stdout, stderr) {
   let content = stdout;
   let cost_usd = null;
   let usage = null;
+  let metrics = null;
 
   try {
     const data = JSON.parse(stdout || stderr);
     content = data.result || data.content || stdout;
     cost_usd = data.total_cost_usd || data.cost_usd || null;
     usage = usageFrom(data);
+    metrics = metricsFrom(data);
   } catch {
     // Not JSON — use raw stdout as content
   }
 
-  return { content: stripNonPrintable(content), cost_usd, usage };
+  return { content: stripNonPrintable(content), cost_usd, usage, metrics };
 }
 
 // One NDJSON line of `--output-format stream-json`; anything else is progress noise.
@@ -96,7 +116,7 @@ function parseStreamLine(line) {
     return text ? { type: 'delta', content: stripNonPrintable(text) } : null;
   }
   if (event.type === 'result') {
-    return { type: 'usage', usage: usageFrom(event), cost_usd: event.total_cost_usd ?? null };
+    return { type: 'usage', usage: usageFrom(event), cost_usd: event.total_cost_usd ?? null, metrics: metricsFrom(event) };
   }
   return null;
 }

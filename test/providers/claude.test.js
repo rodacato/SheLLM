@@ -1,6 +1,7 @@
 const { describe, it, mock } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const { readFileSync } = require('node:fs');
 
 // Pure function tests — import directly (no mock needed)
 const { buildArgs, parseOutput } = require('../../src/providers/claude');
@@ -38,7 +39,35 @@ describe('claude provider', () => {
     const parsed = parseOutput(stdout, 'warning: something on stderr');
     assert.strictEqual(parsed.content, 'hello');
     assert.strictEqual(parsed.cost_usd, 0.019);
-    assert.deepStrictEqual(parsed.usage, { input_tokens: 10, output_tokens: 24 });
+    assert.deepStrictEqual(parsed.usage, {
+      input_tokens: 10, output_tokens: 24,
+      cache_creation_input_tokens: 0, cache_read_input_tokens: 0,
+    });
+  });
+
+  it('parseOutput keeps the cache counters that make tokens match cost', () => {
+    const real = readFileSync(
+      path.join(__dirname, '../fixtures/claude/2.1.273/result-haiku.json'), 'utf8',
+    );
+    const { usage, metrics } = parseOutput(real, '');
+
+    assert.strictEqual(usage.cache_creation_input_tokens, 8190);
+    assert.strictEqual(usage.cache_read_input_tokens, 20828);
+    const billable = usage.input_tokens + usage.output_tokens
+      + usage.cache_creation_input_tokens + usage.cache_read_input_tokens;
+    assert.strictEqual(billable, 29089, 'summing only in/out would report 71');
+
+    assert.strictEqual(metrics.ttft_ms, 1387, 'the CLI already measures time to first token');
+    assert.strictEqual(metrics.api_ms, 2147);
+    assert.strictEqual(metrics.upstream_model, 'claude-haiku-4-5-20251001',
+      'the model that ran, not the alias the caller asked for');
+  });
+
+  it('metrics carry the API error status that signals a usage limit', () => {
+    const errored = readFileSync(
+      path.join(__dirname, '../fixtures/claude/2.1.273/result-unknown-model.json'), 'utf8',
+    );
+    assert.strictEqual(parseOutput(errored, '').metrics.api_error_status, 404);
   });
 
   it('parseOutput falls back to stderr JSON when stdout is empty', () => {

@@ -39,6 +39,7 @@ async function route({ model, prompt, system, max_tokens, temperature, top_p, re
     request_id: request_id || null,
     ...(result.cost_usd != null && { cost_usd: result.cost_usd }),
     ...(result.usage && { usage: result.usage }),
+    ...(result.metrics && { metrics: result.metrics }),
   };
 }
 
