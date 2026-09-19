@@ -15,9 +15,13 @@ ssh root@your-server 'bash -s' < scripts/setup/vps.sh
 ```
 
 The script is safe to re-run. It creates the `shellmer` user, installs Node.js 24, installs Claude
-Code pinned to `CLAUDE_VERSION` (see [`VERSIONS.md`](../../VERSIONS.md)), clones the repository to
-`/home/shellmer/shellm`, links the `shellm` command, and installs the systemd unit and the
-logrotate config. It does **not** start the service and does **not** configure a tunnel.
+Code pinned to `CLAUDE_VERSION` and Codex pinned to `CODEX_VERSION` (see
+[`VERSIONS.md`](../../VERSIONS.md)), clones the repository to `/home/shellmer/shellm`, links the
+`shellm` command, and installs the systemd unit and the logrotate config. It does **not** start
+the service and does **not** configure a tunnel.
+
+Both CLIs are installed as `shellmer`, not system-wide: Claude Code under `~/.local/bin` and Codex
+under `~/.npm-global/bin`, the two paths the systemd unit puts on `PATH`.
 
 **It installs the newest published release**, not the tip of the default branch, so the host runs
 something with a version number and release notes. A repository with no tags yet falls back to the
@@ -27,6 +31,7 @@ Override defaults with environment variables:
 
 ```bash
 ssh root@your-server 'CLAUDE_VERSION=2.1.273 bash -s' < scripts/setup/vps.sh
+ssh root@your-server 'CODEX_VERSION=0.154.0 bash -s' < scripts/setup/vps.sh
 ssh root@your-server 'SHELLM_REF=v1.0.0 bash -s' < scripts/setup/vps.sh   # a specific release
 ssh root@your-server 'SHELLM_REF=master bash -s' < scripts/setup/vps.sh   # or a branch, deliberately
 ```
