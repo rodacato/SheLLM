@@ -162,19 +162,25 @@ on each side, tiny prompt and a one-word answer, **10 samples each**, run back t
 |---|---|---|---|
 | `claude` as on master, before the change | 2.53 s | 2.37–2.82 s | n=10 |
 | `claude` with the three isolation flags, after the change | 2.51 s | 2.10–4.36 s | n=10 |
-| `claude` with t3code's full set, **not adopted** | 2.28 s | 2.00–2.76 s | n=10 |
+| `claude` with t3code's full set, on a throwaway build | 2.28 s | 2.00–2.76 s | n=10 |
+| `claude` as shipped, the full set on this branch | 2.12 s | 1.93–2.23 s | n=10 |
 
 **20 ms on a 2.5 s median is nothing**, and the spread after the change is wider, not narrower.
 Whatever those three flags cost the CLI to honor, it is below this measurement's noise. They ship
 because a served request must not execute the operator's hooks and MCP servers, which is true
-whether or not it is faster.
+whether or not it is faster. That nil result stands: the speed that arrived later came from a
+different flag entirely.
 
-The third row is where the speed is. It adds `--tools ""` and `--permission-mode dontAsk` to the
-same three, and lands **~250 ms (10 %) below the baseline**. `--permission-mode dontAsk` is
-redundant with the `--dangerously-skip-permissions` already passed, so the saving is almost
-certainly `--tools ""` — a shorter system prompt for the model to read. ADR-0001 decision 2 keeps
-the CLI's internal tools on, so that flag is not ours to take until phase 3, when a request
-carrying `tools` will turn them off anyway. Measured here so the decision is priced.
+The last two rows are where the speed is. They add `--tools ""` and `--permission-mode dontAsk`
+to the same three and land **0.2–0.4 s below the baseline**, with the tightest spread of any row
+here. `--permission-mode dontAsk` is redundant with the `--dangerously-skip-permissions` already
+passed, so the saving is `--tools ""`: a shorter system prompt for the model to read. Both flags
+shipped on 2026-09-19 under [ADR-0002](../adr/0002-cli-internal-tools-off.md), which reverses the
+revamp log's "CLI internal tools stay ON".
+
+Those two rows measure the same flags on different builds twenty minutes apart and differ by
+160 ms. That is the honest resolution of this method: read them as "roughly a fifth of a second
+saved", not as three significant figures.
 
 One caveat about a number from elsewhere: the 2026-09-18 audit recorded 1952–2462 ms for t3code's
 set against 2631–3179 ms for ours. Neither end reproduces here — our own baseline now measures
@@ -200,23 +206,23 @@ falls back to its configured default. The fix is not that SheLLM got faster, it 
 can now name a model the account can actually use — which is also why codex can appear in
 `GET /v1/models` at all.
 
-**Two things this measurement uncovered, neither fixed here.**
+**Two things this measurement uncovered. Both were fixed on 2026-09-19, right after.**
 
-1. `src/infra/health.js` runs one *deep* probe at startup: for codex that is
-   `codex exec --ephemeral --skip-git-repo-check test`, a real model call on every boot, against
-   this project's rule that health checks spend no quota. It also calls the CLI directly, so it
-   sidesteps the adapter's one-process-at-a-time lock.
-2. `parseCheckError` ends with `{ installed: true, authenticated: false }` for **any** failure it
-   does not recognise. The 400 above is a model problem, not an auth problem, but it marked codex
-   as logged out — and `checkProviderAvailability` then refused every codex request with 503,
-   including the ones naming a model that works. The shallow `--version` poll heals it at the next
-   interval (5 minutes by default), so the symptom is "codex is dead for five minutes after every
-   restart, then recovers".
+1. The startup probe was a real model call — for codex,
+   `codex exec --ephemeral --skip-git-repo-check test` on every boot — and it ran outside the
+   adapter's lock, racing the OAuth refresh it was supposed to report on. Providers now answer a
+   free command instead (`claude auth status`, `codex login status`), and codex's runs inside the
+   same lock its requests use.
+2. `parseCheckError` ended with "not authenticated" for any failure it could not classify. The
+   400 above is a model problem, so codex was marked logged out and `checkProviderAvailability`
+   refused **every** codex request with 503 — including ones naming a model that works — until the
+   next poll. Unclassified is now an explicit unknown, which does not block traffic, and the
+   messages the CLIs really print on an auth failure are matched instead of caught by a default.
 
-Both were reproduced while measuring, and both need a decision rather than a patch: what a free,
-honest codex auth probe looks like (`codex login status` exits 0 on stored-but-dead credentials —
-it reported "Logged in using ChatGPT" while every call failed to refresh), and whether an
-unclassified probe failure should fail closed at all.
+The free probe has a limit worth stating: `codex login status` proves credentials are *stored*,
+not that they still refresh. It answered "Logged in using ChatGPT" here while every call failed.
+A dead token now surfaces on the first real request instead of on a probe — which is the same
+place it surfaced before, only without a blanket 503 in front of it.
 
 ## Reproduce it
 

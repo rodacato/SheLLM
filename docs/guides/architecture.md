@@ -136,7 +136,7 @@ The routing layer maps a model name to a provider engine and dispatches the requ
 
 3. **stream-slots.js** — Separate concurrency counter for streaming requests (default: 2). Prevents streams from monopolizing all queue slots.
 
-4. **health.js** — Background polling of provider health. Subprocess providers: run `--version`. HTTP providers: check env var + optional URL fetch. Caches results with configurable TTL. Fires webhook alerts on status transitions.
+4. **health.js** — Background polling of provider health. It asks the provider module for a probe that spends no quota (`authProbe`) and runs it through the provider's own lock when it has one; a provider without a probe falls back to `--version`, which proves installation only. A failure it cannot classify is recorded as an unknown, never as a logout. Caches results with configurable TTL. Fires webhook alerts on status transitions.
 
 ### providers/ — Provider Adapters
 
@@ -159,7 +159,7 @@ Every provider implements this interface:
 1. Create `src/providers/<name>.js` implementing the interface above
 2. Register it in `src/routing/engines.js`: `const name = require('../providers/<name>'); engines[name] = ...`
 3. Add a migration to seed the provider and its models in the DB
-4. Add a health check entry in the provider's DB row
+4. Export an `authProbe` (a free command plus a parser) from the provider module
 
 ### db/ — Persistence
 
