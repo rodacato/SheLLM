@@ -98,6 +98,7 @@ router.get('/stats', (req, res) => {
     by_provider: Object.fromEntries(providerRows.map((r) => [r.provider, r.requests])),
     by_status,
     by_status_code: byStatusCode,
+    error_breakdown: stats.errorBreakdown(interval),
     error_rate: errorRate(byStatusCode, agg.total_requests),
     cost_by_provider: Object.fromEntries(providerRows.map((r) => [r.provider, r.cost_usd])),
     cost_burn_rate: Math.round((agg.total_cost_usd / hours) * 10000) / 10000,

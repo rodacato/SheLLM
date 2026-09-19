@@ -6,6 +6,24 @@ function systemPage() {
     loading: true,
     busy: null,
 
+    get openCircuits() {
+      return this.providers.filter((p) => p.circuit && p.circuit.state !== 'closed').map((p) => p.name);
+    },
+
+    circuitLabel(prov) {
+      const circuit = prov.circuit;
+      if (!circuit) return '—';
+      if (circuit.state === 'closed') return circuit.failures > 0 ? `closed · ${circuit.failures} recent failures` : 'closed';
+      return `${circuit.state} · ${circuit.failures} failures`;
+    },
+
+    circuitClass(prov) {
+      const state = prov.circuit?.state;
+      if (state === 'open') return 'text-[#ef4444] font-bold';
+      if (state === 'half-open') return 'text-[#ffb800] font-bold';
+      return 'text-on-surface-variant';
+    },
+
     async load() {
       this.loading = true;
       await Promise.all([this.fetchProviders(), this.fetchLatestRelease()]);

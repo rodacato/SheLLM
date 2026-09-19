@@ -128,4 +128,41 @@ describe('admin /admin/stats', () => {
     const res = await request(app).get('/admin/stats');
     assert.strictEqual(res.status, 401);
   });
+  it('groups the error breakdown by who, what and which route', async () => {
+    const { insertRequestLog } = require('../../src/db');
+    insertRequestLog({ client_name: 'app2', model: 'claude', status: 400, error_code: 'invalid_request', method: 'POST', path: '/v1/chat/completions' });
+    insertRequestLog({ client_name: 'app2', model: 'claude', status: 400, error_code: 'invalid_request', method: 'POST', path: '/v1/chat/completions' });
+    insertRequestLog({ client_name: null, status: 401, error_code: 'auth_required', method: 'POST', path: '/v1/messages' });
+
+    const res = await request(app)
+      .get('/admin/stats?period=24h')
+      .set('Authorization', `Basic ${adminCreds}`);
+
+    const rows = res.body.error_breakdown;
+    assert.ok(Array.isArray(rows), 'expected an error_breakdown array');
+
+    const invalid = rows.find((r) => r.error_code === 'invalid_request' && r.client_name === 'app2');
+    assert.strictEqual(invalid.count, 2);
+    assert.strictEqual(invalid.path, '/v1/chat/completions');
+    assert.ok(invalid.last_seen_at, 'expected the last occurrence');
+
+    const unauthenticated = rows.find((r) => r.error_code === 'auth_required');
+    assert.strictEqual(unauthenticated.client_name, '(unauthenticated)');
+
+    assert.ok(!rows.some((r) => r.status < 400), 'successful requests are not errors');
+  });
+
+  it('returns timeline buckets a chart can be drawn from', async () => {
+    const res = await request(app)
+      .get('/admin/stats?period=24h')
+      .set('Authorization', `Basic ${adminCreds}`);
+
+    const timeline = res.body.timeline;
+    assert.ok(timeline.length > 0, 'expected at least one bucket');
+    for (const bucket of timeline) {
+      assert.ok(bucket.bucket, 'every bucket names its period');
+      assert.strictEqual(typeof bucket.requests, 'number');
+      assert.strictEqual(typeof bucket.errors, 'number');
+    }
+  });
 });

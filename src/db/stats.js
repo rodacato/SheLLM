@@ -150,6 +150,26 @@ function byStatusCode(interval) {
 }
 
 // A usage limit is observed, never estimated: the CLI reports it and the row keeps the code.
+// The status-code counters said how many failed and nothing else. Grouping adds the four things
+// the count cannot answer: when, whose, which route and what the caller was told.
+function errorBreakdown(interval, limit = 20) {
+  return db().prepare(`
+    SELECT
+      status,
+      COALESCE(error_code, '(none)') AS error_code,
+      COALESCE(client_name, '(unauthenticated)') AS client_name,
+      COALESCE(upstream_model, model, '-') AS model,
+      COALESCE(path, '-') AS path,
+      COUNT(*) AS count,
+      MAX(created_at) AS last_seen_at
+    FROM request_logs
+    WHERE ${LOGGED} AND status >= 400
+    GROUP BY status, error_code, client_name, model, path
+    ORDER BY count DESC, last_seen_at DESC
+    LIMIT ?
+  `).all(interval, limit);
+}
+
 function limitState(interval) {
   const row = db().prepare(`
     SELECT created_at, provider, api_error_status, status
@@ -201,6 +221,7 @@ module.exports = {
   byClient,
   usageByKey,
   byStatusCode,
+  errorBreakdown,
   limitState,
   timeline,
   recentRequests,

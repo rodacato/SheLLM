@@ -1,3 +1,4 @@
+/* global Alpine */
 const STATUS_COLORS = { ok: '#22c55e', client: '#ffb800', server: '#ef4444' };
 
 function statusColor(status) {
@@ -12,6 +13,7 @@ function overviewPage() {
     loading: true,
     providers: [],
     _chart: null,
+    _timelineChart: null,
     _refreshInterval: null,
 
     async fetchStats() {
@@ -20,7 +22,10 @@ function overviewPage() {
         const res = await apiFetch(`${API_BASE}/stats?period=${this.period}`);
         if (res.ok) {
           this.stats = await res.json();
-          this.$nextTick(() => this.renderScatter());
+          this.$nextTick(() => {
+            this.renderScatter();
+            this.renderTimeline();
+          });
         }
       } catch { /* ignore */ }
       this.loading = false;
@@ -61,6 +66,79 @@ function overviewPage() {
       if (queuedPct >= 40) return `${queuedPct}% spent queueing — raise MAX_CONCURRENT`;
       if (queuedPct >= 15) return `${queuedPct}% queueing — concurrency is starting to bite`;
       return 'the CLI, not the queue';
+    },
+
+    get errorRows() {
+      return this.stats?.error_breakdown || [];
+    },
+
+    openErrorLogs(row) {
+      Alpine.store('nav').pendingLogFilter = {
+        status: String(row.status),
+        error_code: row.error_code === '(none)' ? '' : row.error_code,
+        client: row.client_name === '(unauthenticated)' ? '' : row.client_name,
+      };
+      location.hash = 'logs';
+    },
+
+    renderTimeline() {
+      const rows = this.stats?.timeline;
+      const canvas = this.$refs.timeline;
+      if (!canvas || !rows || rows.length < 2 || typeof Chart === 'undefined') return;
+
+      if (this._timelineChart) this._timelineChart.destroy();
+
+      const labels = rows.map((r) => r.bucket);
+      this._timelineChart = new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'requests',
+              data: rows.map((r) => r.requests),
+              borderColor: STATUS_COLORS.ok,
+              backgroundColor: 'rgba(34,197,94,0.12)',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 0,
+              pointHoverRadius: 4,
+            },
+            {
+              label: 'errors',
+              data: rows.map((r) => r.errors),
+              borderColor: STATUS_COLORS.server,
+              backgroundColor: 'transparent',
+              tension: 0.3,
+              pointRadius: 0,
+              pointHoverRadius: 4,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: {
+              display: true,
+              labels: { color: '#849397', font: { size: 10, family: 'monospace' }, boxWidth: 10 },
+            },
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(132,147,151,0.1)' },
+              ticks: { color: '#849397', font: { size: 10, family: 'monospace' }, maxTicksLimit: 8 },
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(132,147,151,0.1)' },
+              ticks: { color: '#849397', font: { size: 10, family: 'monospace' }, precision: 0 },
+            },
+          },
+        },
+      });
     },
 
     renderScatter() {
