@@ -181,6 +181,43 @@ set against 2631–3179 ms for ours. Neither end reproduces here — our own bas
 2.53 s, inside their "fast" band. The gap between the two flag sets is real and about a quarter of
 the size that comparison suggested.
 
+## Codex adapter — 2026-09-19, local
+
+The adapter never passed `-m`, so every call used whatever `~/.codex/config.toml` names as the
+default. On this machine that is `gpt-5.4`, and the account gets back
+`The 'gpt-5.4' model is not supported when using Codex with a ChatGPT account`. So the "before"
+column is not a latency number: **codex could not serve a single request**.
+
+Dev container, `codex` 0.154.0, tiny prompt and a one-word answer, **5 samples each**.
+
+| Configuration | Median | Range | Result |
+|---|---|---|---|
+| `codex` on master, before the change | — | — | 5 of 5 failed, n=5 |
+| `codex-gpt-5.6-sol` after the change | 4.49 s | 3.88–5.34 s | 5 of 5 answered, n=5 |
+
+`codex` with no suffix still fails after the change, for the same reason: with no `-m` the CLI
+falls back to its configured default. The fix is not that SheLLM got faster, it is that a caller
+can now name a model the account can actually use — which is also why codex can appear in
+`GET /v1/models` at all.
+
+**Two things this measurement uncovered, neither fixed here.**
+
+1. `src/infra/health.js` runs one *deep* probe at startup: for codex that is
+   `codex exec --ephemeral --skip-git-repo-check test`, a real model call on every boot, against
+   this project's rule that health checks spend no quota. It also calls the CLI directly, so it
+   sidesteps the adapter's one-process-at-a-time lock.
+2. `parseCheckError` ends with `{ installed: true, authenticated: false }` for **any** failure it
+   does not recognise. The 400 above is a model problem, not an auth problem, but it marked codex
+   as logged out — and `checkProviderAvailability` then refused every codex request with 503,
+   including the ones naming a model that works. The shallow `--version` poll heals it at the next
+   interval (5 minutes by default), so the symptom is "codex is dead for five minutes after every
+   restart, then recovers".
+
+Both were reproduced while measuring, and both need a decision rather than a patch: what a free,
+honest codex auth probe looks like (`codex login status` exits 0 on stored-but-dead credentials —
+it reported "Logged in using ChatGPT" while every call failed to refresh), and whether an
+unclassified probe failure should fail closed at all.
+
 ## Reproduce it
 
 ```bash
