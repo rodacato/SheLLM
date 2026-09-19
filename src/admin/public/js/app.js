@@ -4,14 +4,27 @@
 const API_BASE = '/admin';
 const HEALTH_URL = `${API_BASE}/health`;
 
+let redirectingToLogin = false;
+
+// Without this the session simply expires under an open tab: the browser answers the 401 with its
+// own credential prompt, and the page keeps showing data from before the session died.
+function redirectToLogin() {
+  if (redirectingToLogin) return;
+  redirectingToLogin = true;
+  const next = encodeURIComponent(location.pathname + location.hash);
+  location.replace(`/admin/login?next=${next}`);
+}
+
 async function apiFetch(url, options = {}) {
   const res = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      Accept: 'application/json',
       ...options.headers,
     },
   });
+  if (res.status === 401) redirectToLogin();
   return res;
 }
 

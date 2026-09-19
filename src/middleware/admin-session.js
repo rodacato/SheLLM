@@ -83,4 +83,13 @@ function wantsHtml(req) {
   return (req.headers.accept || '').includes('text/html');
 }
 
-module.exports = { COOKIE_NAME, TTL_MS, issue, verify, readCookie, setSession, clearSession, isCrossSiteWrite, wantsHtml };
+// Only a browser sends the Sec-Fetch metadata headers. Their absence means curl, an SDK or a
+// script — the clients a Basic auth challenge is still meant for.
+function isBrowserRequest(req) {
+  return !!(req.headers['sec-fetch-site'] || req.headers['sec-fetch-mode'] || req.headers['sec-fetch-dest']);
+}
+
+module.exports = {
+  COOKIE_NAME, TTL_MS, issue, verify, readCookie, setSession, clearSession,
+  isCrossSiteWrite, wantsHtml, isBrowserRequest,
+};
