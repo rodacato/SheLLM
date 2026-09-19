@@ -7,6 +7,108 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-19
+
+### Added
+
+- **admin:** report the running build and let a provider be paused
+- **service:** stop the service from writing the code it runs
+- **claude:** run one-shot requests with the CLI's internal tools off
+- **admin:** rebuild the overview around capacity, latency and usage
+- **admin:** aggregate capacity, latency layers and per-model usage
+- **codex:** pass the model, sandbox the run, and serialize the CLI
+- **claude:** stop the CLI from inheriting the operator's setup
+- **bench:** measure time to first text, and re-measure one scenario
+- **bench:** add a capability and latency runner for a live instance
+- **admin:** make the dashboard installable on a phone
+- **admin:** sign in on a login page instead of the browser dialog
+- **setup:** slim vps.sh down to provisioning and add vps-uninstall.sh
+- **cli:** add shellm init
+- **cli:** add shellm doctor
+- **providers:** pass CLAUDE_CODE_OAUTH_TOKEN to the claude CLI
+- **providers:** pass the requested model to the CLI
+
+### Fixed
+
+- **health:** probe with a free command and stop guessing a logout
+- **metrics:** record every billable token and the CLI's own timings
+- **errors:** answer /v1 errors in the format the caller speaks
+- **claude:** stream the CLI's tokens instead of flushing at the end
+- **health:** probe providers with their own environment
+- **test:** drop gemini from the CLI contract suite
+- **cli:** make shellm status work against the minimal /health
+- **api:** list only models that map to a CLI model in /v1/models
+- **config:** read configuration from ~/.config/shellm/env
+- **providers:** run each CLI in its own temporary directory
+- **server:** bind to 127.0.0.1 by default
+- **devcontainer:** trust the workspace mount for git
+- **devcontainer:** regenerate from the baseline templates with local.env
+- **providers:** stop passing temperature flags the CLIs reject
+- **devcontainer:** resolve node_modules permissions and rename service to workspace
+
+### Changed
+
+- drop the Gemini-only health heuristic
+- trim the dashboard to keys, logs and provider status
+- keep configuration in the config file, not SQLite
+- drop the models table and model aliases
+- remove the generic HTTP provider and Cerebras
+- remove the Gemini provider
+- remove the prompt injection guard
+
+### Documentation
+
+- **adr:** decide how releases are cut, deployed and applied
+- describe the probe the providers now own
+- **audience:** record knowing the quota as a need of its own
+- publish the codex measurement and correct what the docs claimed
+- **benchmarks:** publish the flag measurement, including the nil result
+- **api:** describe /v1 errors in the caller's format
+- **guides:** correct the streaming finding and refresh the guides
+- **guides:** add a usage guide and the first production benchmark
+- regroup .env.example and drop the settings nothing reads
+- point VERSIONS.md at vps.sh instead of the deleted Dockerfile
+- correct the architecture guide and drop the served landing page
+- update the contributor guide and the seed script
+- rewrite the deployment guide for the current setup
+- **api:** align the OpenAPI spec with the real surface
+- rewrite the README around what SheLLM does today
+- replace ROADMAP.md with ADR-0001 and refresh the agent instructions
+- state the fair-use position on provider subscriptions
+- move work tracking to the private project board
+- rewrite identity and expert panel around a new audience doc
+- add .notdefined.yml project metadata
+
+### Maintenance
+
+- **scripts:** convert release-changelog to CommonJS
+- **lint:** lint the scripts directory
+- remove Docker, the landing page and the screenshot tooling
+- **setup:** replace dev.sh and check-env.js with init and doctor
+- remove the unused .notdefined.yml
+- **deps:** refresh transitive dependencies with npm update
+- allow better-sqlite3's install script
+- **devcontainer:** add the Pencil extension and commit the lockfile
+- **docker:** bump gemini-cli to 0.60.0 and codex to 0.154.0
+- **deps:** update dependencies to their latest releases
+- ignore only the local agent and devcontainer files
+- **devcontainer:** align with the shared baseline
+
+### Testing
+
+- **admin:** assert the CSV export against the stored columns
+- **providers:** keep every configured variable out of the CLI env
+- **cli:** check provider arguments against the real CLI binaries
+
+### CI
+
+- **release:** cut a release from a dispatch instead of seven local steps
+- bump the GitHub Pages actions to their Node 24 majors
+- run every workflow on Node 24 with the v7 actions
+- add the security and quality gate
+- name the test job and bound its runs
+
+
 ## [0.5.0] - 2026-03-25
 
 ### Added
@@ -240,5 +342,5 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v0.5.0...HEAD
-[0.5.0]: https://github.com/rodacato/SheLLM/compare/v0.4.1...v0.5.0
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/rodacato/SheLLM/compare/v0.5.0...v1.0.0
