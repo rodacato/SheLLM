@@ -108,6 +108,17 @@ Re-copy the unit only when it changed; `git log -- shellm.service` tells you.
 > deployment and moves the upgrade behind a privileged updater the service itself cannot run.
 > The commands above remain correct until those pieces ship.
 
+**The service runs confined.** The unit mounts the filesystem read-only, grants
+`/home/shellmer` back, and then makes the checkout itself read-only — so neither the service nor
+the CLIs it spawns can modify the code being executed. Two consequences worth knowing before you
+debug something strange:
+
+- **Editing files under `/home/shellmer/shellm` while the service runs has no effect on it**, and
+  a process inside the service that tries will get a read-only filesystem error. Upgrades work
+  because they run outside the unit.
+- **Anything that stores state inside the checkout will fail.** The CLIs do not — they write to
+  the home directory — but a new provider that did would need its path added to the unit.
+
 **Back up** `/home/shellmer/.shellm/shellm.db` (keys, request logs, audit trail) and
 `/home/shellmer/.config/shellm/env` (secrets).
 
@@ -139,6 +150,8 @@ ssh root@your-server 'bash -s -- --purge' < scripts/setup/vps-uninstall.sh # rem
 | `504 timeout` | The CLI outlived `TIMEOUT_MS` (default 120 s). Cold starts are 2–4 s, so a timeout usually means the provider is degraded |
 | `429 rate_limited` | Your own limit (`SHELLM_GLOBAL_RPM`, or the key's `rpm`), not the provider's |
 | The service starts and exits immediately | `journalctl -u shellm -n 50`. A missing config file is the common cause: run `shellm init` as `shellmer` |
+| `Failed to set up mount namespacing` and the service will not start | A path the unit grants does not exist. The unit tolerates `/run/shellm` being absent; a hand-edited `ReadWritePaths` naming something else does not |
+| `EROFS` or "read-only file system" in the logs | Something tried to write inside the checkout, which the unit mounts read-only on purpose. State belongs under `/home/shellmer`, not next to the code |
 | Works locally but not through the tunnel | The tunnel points at the wrong port, or `HOST` is not loopback |
 
 When the subscription's own quota runs out, the CLI says so and the error surfaces as
