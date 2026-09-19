@@ -1,7 +1,7 @@
 name: CLI contract
 
-# vps.sh installs a pinned claude and the latest codex, so an upstream release can
-# drop a flag the providers pass without any change in this repo. The weekly run catches it.
+# vps.sh pins both CLIs, so an upstream release can drop a flag the providers pass long before
+# the pin moves. This runs against the latest of each, weekly, to catch it before the bump.
 on:
   schedule:
     - cron: "0 14 * * 1"

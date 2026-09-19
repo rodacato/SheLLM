@@ -7,9 +7,12 @@ set -euo pipefail
 REPO="${SHELLM_REPO:-https://github.com/rodacato/SheLLM.git}"
 SHELLM_REF="${SHELLM_REF:-}"
 CLAUDE_VERSION="${CLAUDE_VERSION:-2.1.273}"
+CODEX_VERSION="${CODEX_VERSION:-0.154.0}"
 SERVICE_USER="shellmer"
 SERVICE_HOME="/home/${SERVICE_USER}"
 APP_DIR="${SERVICE_HOME}/shellm"
+# The service user cannot write a root-owned global prefix; this one is already on the unit's PATH.
+NPM_PREFIX="${SERVICE_HOME}/.npm-global"
 CONFIG_FILE="${SERVICE_HOME}/.config/shellm/env"
 
 if [[ $EUID -ne 0 ]]; then
@@ -38,6 +41,14 @@ fi
 
 echo "==> Claude Code ${CLAUDE_VERSION}"
 as_service_user "curl -fsSL https://claude.ai/install.sh | bash -s ${CLAUDE_VERSION}"
+
+echo "==> Codex ${CODEX_VERSION}"
+if as_service_user "${NPM_PREFIX}/bin/codex --version 2>/dev/null" | grep -qFw "${CODEX_VERSION}"; then
+  echo "  codex ${CODEX_VERSION} already installed"
+else
+  as_service_user "npm install -g --prefix ${NPM_PREFIX} @openai/codex@${CODEX_VERSION}"
+  echo "  installed codex ${CODEX_VERSION}"
+fi
 
 # A host follows published releases, not the tip of a branch, so what it runs has a name and
 # release notes. SHELLM_REF deploys a branch or an older tag deliberately.
