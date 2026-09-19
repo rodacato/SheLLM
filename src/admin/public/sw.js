@@ -6,6 +6,7 @@ const SHELL = [
   '/admin/dashboard/js/overview.js',
   '/admin/dashboard/js/logs.js',
   '/admin/dashboard/js/keys.js',
+  '/admin/dashboard/js/playground.js',
   '/admin/dashboard/js/system.js',
   '/admin/dashboard/img/favicon.svg',
   '/admin/dashboard/img/icon-192.png',

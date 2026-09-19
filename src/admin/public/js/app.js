@@ -74,7 +74,7 @@ function statusBadgeClass(status) {
   return 'badge-5xx';
 }
 
-const VALID_PAGES = ['overview', 'logs', 'keys', 'system'];
+const VALID_PAGES = ['overview', 'logs', 'keys', 'playground', 'system'];
 
 // Read-only state crosses component boundaries through Alpine's scope inheritance, but a write
 // from a child would shadow the parent's property instead of changing it. A store is the only
@@ -92,6 +92,7 @@ function app() {
       { id: 'overview', label: 'Overview', icon: 'dashboard' },
       { id: 'logs', label: 'Request Logs', icon: 'database' },
       { id: 'keys', label: 'API Keys', icon: 'key' },
+      { id: 'playground', label: 'Playground', icon: 'terminal' },
       { id: 'system', label: 'System', icon: 'settings_heart' },
     ],
     navigate(pageId) {
