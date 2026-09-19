@@ -443,4 +443,66 @@ describe('admin-auth middleware', () => {
       assert.strictEqual(call.arguments[0].username, 'wronguser');
     });
   });
+  describe('an expired session under an open dashboard tab', () => {
+    let middleware;
+    let originalPassword;
+
+    const browserFetch = () => mockReq({
+      cookie: 'shellm_admin=stale-payload.stale-signature',
+      accept: '*/*',
+      'sec-fetch-site': 'same-origin',
+      'sec-fetch-mode': 'cors',
+      'sec-fetch-dest': 'empty',
+    });
+
+    before(() => {
+      originalPassword = process.env.SHELLM_ADMIN_PASSWORD;
+      process.env.SHELLM_ADMIN_PASSWORD = 'test-secret-long-password';
+      middleware = createAdminAuth();
+    });
+
+    after(() => {
+      if (originalPassword !== undefined) {
+        process.env.SHELLM_ADMIN_PASSWORD = originalPassword;
+      } else {
+        delete process.env.SHELLM_ADMIN_PASSWORD;
+      }
+    });
+
+    it('gets no Basic challenge, so the browser never opens its native prompt', () => {
+      const res = mockRes();
+      middleware(browserFetch(), res, () => {});
+
+      assert.strictEqual(res.statusCode, 401);
+      assert.strictEqual(res._headers['WWW-Authenticate'], undefined);
+      assert.match(res._body.message, /session expired/i);
+    });
+
+    it('is not counted as a failed attempt, so polling cannot lock the admin out', () => {
+      for (let i = 0; i < 10; i++) {
+        middleware(browserFetch(), mockRes(), () => {});
+      }
+      assert.strictEqual(failedAttempts.size, 0);
+
+      const res = mockRes();
+      middleware(browserFetch(), res, () => {});
+      assert.strictEqual(res.statusCode, 401, 'still 401, never 429');
+    });
+
+    it('still counts a wrong password sent from a browser', () => {
+      const encoded = Buffer.from('admin:wrong').toString('base64');
+      const req = mockReq({ authorization: `Basic ${encoded}`, 'sec-fetch-site': 'same-origin' }, { ip: '10.0.0.9' });
+      middleware(req, mockRes(), () => {});
+
+      assert.strictEqual(failedAttempts.get('10.0.0.9').length, 1);
+    });
+
+    it('still challenges a non-browser client that sends no credentials', () => {
+      const res = mockRes();
+      middleware(mockReq({ accept: '*/*' }), res, () => {});
+
+      assert.strictEqual(res.statusCode, 401);
+      assert.ok(res._headers['WWW-Authenticate'], 'curl and SDKs keep the Basic challenge');
+    });
+  });
 });

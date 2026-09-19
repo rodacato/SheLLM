@@ -47,8 +47,10 @@ const PAGE = (error, next) => `<!DOCTYPE html>
 </html>
 `;
 
+// The fragment is allowed so an expired session returns to the tab it died on; the leading
+// /admin/ and the character class are what keep this from becoming an open redirect.
 function safeNext(value) {
-  return typeof value === 'string' && /^\/admin\/[\w\-./]*$/.test(value) ? value : '/admin/dashboard/';
+  return typeof value === 'string' && /^\/admin\/[\w\-./]*(#[\w-]*)?$/.test(value) ? value : '/admin/dashboard/';
 }
 
 function escapeHtml(value) {

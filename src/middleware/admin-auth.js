@@ -2,7 +2,7 @@
 
 const { timingSafeEqual } = require('node:crypto');
 const { sendError, rateLimited } = require('../errors');
-const { verify, readCookie, isCrossSiteWrite, wantsHtml } = require('./admin-session');
+const { verify, readCookie, isCrossSiteWrite, wantsHtml, isBrowserRequest } = require('./admin-session');
 const logger = require('../lib/logger');
 
 function getAdminMaxAttempts() {
@@ -91,6 +91,12 @@ function adminEnabled() {
   return !!credentials.password;
 }
 
+// A browser answers this header with its native credential prompt, which is not the admin login
+// page and cannot renew a session cookie.
+function challenge(req, res) {
+  if (!isBrowserRequest(req)) res.set('WWW-Authenticate', 'Basic realm="shellm-admin"');
+}
+
 function createAdminAuth() {
   const { password, expectedUser } = loadCredentials();
 
@@ -138,10 +144,14 @@ function createAdminAuth() {
 
     if (!match) {
       if (wantsHtml(req)) return res.redirect(302, `/admin/login?next=${encodeURIComponent(req.originalUrl)}`);
-      recordFailedAttempt(ip);
-      logger.warn({ event: 'admin_auth_failure', ip, username: null, reason: 'missing_header' });
-      res.set('WWW-Authenticate', 'Basic realm="shellm-admin"');
-      return sendError(res, { status: 401, code: 'auth_required', message: 'Missing or invalid Authorization header' }, req.requestId);
+      // No credentials were offered, so there is nothing to guess and nothing to rate limit.
+      // Counting it would let the dashboard's own polling lock the maintainer out once its
+      // session cookie expires.
+      const expired = !!readCookie(req);
+      logger.warn({ event: 'admin_auth_failure', ip, username: null, reason: expired ? 'session_expired' : 'missing_header' });
+      challenge(req, res);
+      const message = expired ? 'Admin session expired' : 'Missing or invalid Authorization header';
+      return sendError(res, { status: 401, code: 'auth_required', message }, req.requestId);
     }
 
     let decoded;
@@ -150,7 +160,7 @@ function createAdminAuth() {
     } catch {
       recordFailedAttempt(ip);
       logger.warn({ event: 'admin_auth_failure', ip, username: null, reason: 'invalid_encoding' });
-      res.set('WWW-Authenticate', 'Basic realm="shellm-admin"');
+      challenge(req, res);
       return sendError(res, { status: 401, code: 'auth_required', message: 'Invalid Basic auth encoding' }, req.requestId);
     }
 
@@ -158,7 +168,7 @@ function createAdminAuth() {
     if (colonIdx === -1) {
       recordFailedAttempt(ip);
       logger.warn({ event: 'admin_auth_failure', ip, username: null, reason: 'invalid_format' });
-      res.set('WWW-Authenticate', 'Basic realm="shellm-admin"');
+      challenge(req, res);
       return sendError(res, { status: 401, code: 'auth_required', message: 'Invalid Basic auth format' }, req.requestId);
     }
 
@@ -169,7 +179,7 @@ function createAdminAuth() {
     if (providedBuf.length !== expectedBuf.length || !timingSafeEqual(providedBuf, expectedBuf)) {
       recordFailedAttempt(ip);
       logger.warn({ event: 'admin_auth_failure', ip, username, reason: 'wrong_password' });
-      res.set('WWW-Authenticate', 'Basic realm="shellm-admin"');
+      challenge(req, res);
       return sendError(res, { status: 401, code: 'auth_required', message: 'Invalid credentials' }, req.requestId);
     }
 
@@ -179,7 +189,7 @@ function createAdminAuth() {
       if (usernameBuf.length !== expectedUserBuf.length || !timingSafeEqual(usernameBuf, expectedUserBuf)) {
         recordFailedAttempt(ip);
         logger.warn({ event: 'admin_auth_failure', ip, username, reason: 'wrong_username' });
-        res.set('WWW-Authenticate', 'Basic realm="shellm-admin"');
+        challenge(req, res);
         return sendError(res, { status: 401, code: 'auth_required', message: 'Invalid credentials' }, req.requestId);
       }
     }
