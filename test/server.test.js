@@ -60,12 +60,35 @@ describe('server integration', () => {
     assert.strictEqual(res.body.uptime_seconds, undefined);
   });
 
-  it('POST /v1/chat/completions without auth returns 401', async () => {
+  it('POST /v1/chat/completions without auth returns 401 in the OpenAI error shape', async () => {
     const res = await request(app)
       .post('/v1/chat/completions')
       .send({ messages: [{ role: 'user', content: 'hello' }] });
 
     assert.strictEqual(res.status, 401);
+    assert.strictEqual(res.body.error.type, 'authentication_error');
+    assert.strictEqual(res.body.error.code, 'auth_required');
+    assert.ok(res.body.error.message, 'an SDK reading error.message finds one');
+    assert.ok(res.headers['x-request-id'], 'the request id moves to the header');
+  });
+
+  it('POST /v1/messages without auth returns 401 in the Anthropic error shape', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .send({ model: 'claude', max_tokens: 16, messages: [{ role: 'user', content: 'hello' }] });
+
+    assert.strictEqual(res.status, 401);
+    assert.strictEqual(res.body.type, 'error');
+    assert.strictEqual(res.body.error.type, 'authentication_error');
+    assert.ok(res.body.error.message);
+  });
+
+  it('GET /admin/keys keeps SheLLM\'s own error shape', async () => {
+    const res = await request(app).get('/admin/keys');
+
+    assert.ok(res.status >= 400);
+    assert.strictEqual(typeof res.body.error, 'string', 'admin errors are not reshaped for SDKs');
+    assert.ok(res.body.request_id, 'admin callers read the id from the body');
   });
 
   it('POST /v1/chat/completions with auth but missing model returns 400', async () => {

@@ -95,6 +95,13 @@ function sendAnthropicError(res, err) {
   res.status(err.status || 500).json(body);
 }
 
+// A /v1 caller parses errors with an OpenAI or Anthropic SDK; anything else gets SheLLM's shape.
+function sendApiError(req, res, err, requestId) {
+  if (req.path === '/v1/messages') return sendAnthropicError(res, err);
+  if (req.path?.startsWith('/v1/')) return sendOpenAIError(res, err);
+  return sendError(res, err, requestId);
+}
+
 module.exports = {
   invalidRequest,
   authRequired,
@@ -106,6 +113,7 @@ module.exports = {
   fromCatchable,
   isClientError,
   sendError,
+  sendApiError,
   sendOpenAIError,
   sendAnthropicError,
 };
