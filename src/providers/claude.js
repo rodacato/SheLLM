@@ -20,10 +20,14 @@ function systemPromptFor({ system, response_format }) {
 
 // An HTTP service must not run whatever the server user has configured for their own shell:
 // slash commands, MCP servers from ~/.claude.json, and hooks all execute code we never reviewed.
+// The CLI's own tools go with them (ADR-0002): a one-shot request has an empty working directory
+// and nothing to use them on, and their definitions are what costs latency in this set.
 const ISOLATION_ARGS = [
+  '--tools', '',
   '--disable-slash-commands',
   '--strict-mcp-config',
   '--settings', '{"disableAllHooks":true}',
+  '--permission-mode', 'dontAsk',
 ];
 
 // The claude CLI has no temperature flag, so temperature is ignored.
