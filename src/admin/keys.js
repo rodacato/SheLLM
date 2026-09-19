@@ -6,13 +6,18 @@ const {
   createClient, listClients, updateClient, deleteClient, rotateClientKey,
   insertAuditLog, getAuditLogs,
 } = require('../db');
+const stats = require('../db/stats');
 
 const router = Router();
 
+const USAGE_PERIOD = '7d';
+const USAGE_INTERVAL = '-7 days';
+
 // GET /admin/keys
 router.get('/keys', (req, res) => {
-  const keys = listClients();
-  res.json({ keys });
+  const usage = new Map(stats.usageByKey(USAGE_INTERVAL).map(({ id, ...row }) => [id, row]));
+  const keys = listClients().map((key) => ({ ...key, usage: usage.get(key.id) || null }));
+  res.json({ keys, usage_period: USAGE_PERIOD });
 });
 
 // POST /admin/keys

@@ -1,3 +1,5 @@
+/* global Alpine */
+
 function keysPage() {
   return {
     keys: [],
@@ -5,6 +7,9 @@ function keysPage() {
     showCreateModal: false,
     newKeyResult: null,
     createForm: { name: '', rpm: 10, models: '', expires_at: '', description: '' },
+    editing: null,
+    editForm: { rpm: 10, models: '', expires_at: '', description: '' },
+    usagePeriod: '7d',
     auditLogs: [],
     showAudit: false,
 
@@ -15,6 +20,7 @@ function keysPage() {
         if (res.ok) {
           const data = await res.json();
           this.keys = data.keys;
+          this.usagePeriod = data.usage_period || '7d';
         }
       } catch { /* ignore */ }
       this.loading = false;
@@ -62,6 +68,57 @@ function keysPage() {
           alert(err.message || 'Failed to create key');
         }
       } catch { alert('Network error'); }
+    },
+
+    startEdit(key) {
+      this.editing = key.id;
+      this.editForm = {
+        rpm: key.rpm,
+        models: (key.models || []).join(', '),
+        // datetime-local wants no zone and no seconds, and the API stores UTC without the marker.
+        expires_at: key.expires_at ? key.expires_at.replace(' ', 'T').slice(0, 16) : '',
+        description: key.description || '',
+      };
+    },
+
+    cancelEdit() {
+      this.editing = null;
+    },
+
+    async saveEdit(key) {
+      const body = {
+        rpm: parseInt(this.editForm.rpm, 10) || key.rpm,
+        models: this.editForm.models.trim()
+          ? this.editForm.models.split(',').map((m) => m.trim()).filter(Boolean)
+          : null,
+        expires_at: this.editForm.expires_at ? new Date(this.editForm.expires_at + 'Z').toISOString() : null,
+        description: this.editForm.description.trim() || null,
+      };
+
+      try {
+        const res = await apiFetch(`${API_BASE}/keys/${key.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          return alert(err.message || 'Failed to update key');
+        }
+        this.editing = null;
+        await this.fetchKeys();
+        await this.fetchAuditLogs();
+      } catch { alert('Network error'); }
+    },
+
+    errorRate(key) {
+      const usage = key.usage;
+      if (!usage || !usage.requests) return null;
+      return Math.round((usage.errors / usage.requests) * 100);
+    },
+
+    openKeyLogs(key) {
+      Alpine.store('nav').pendingLogFilter = { client: key.name };
+      location.hash = 'logs';
     },
 
     async toggleActive(key) {
@@ -115,5 +172,7 @@ function keysPage() {
     },
 
     formatTime,
+    formatCost,
+    formatCompactNumber,
   };
 }

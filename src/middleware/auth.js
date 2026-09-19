@@ -144,6 +144,7 @@ function createAuthMiddleware() {
     }
 
     req.clientName = clientName;
+    req.clientId = dbClient.id;
     req.allowedModels = dbClient.models || null;
     next();
   };

@@ -120,6 +120,25 @@ function byClient(interval) {
   `).all(interval);
 }
 
+// Per-key usage, matched by id alone. Matching by name is what let a recreated key inherit the
+// history of the one it replaced; migration 016 backfilled the rows that predate the column.
+function usageByKey(interval) {
+  return db().prepare(`
+    SELECT
+      c.id,
+      COUNT(r.id) AS requests,
+      COALESCE(SUM(r.tokens), 0) AS tokens,
+      COALESCE(ROUND(SUM(r.cost_usd), 4), 0) AS cost_usd,
+      SUM(CASE WHEN r.status >= 400 THEN 1 ELSE 0 END) AS errors,
+      MAX(r.created_at) AS last_used_at
+    FROM clients c
+    LEFT JOIN request_logs r
+      ON r.client_id = c.id
+      AND r.${LOGGED}
+    GROUP BY c.id
+  `).all(interval);
+}
+
 function byStatusCode(interval) {
   return db().prepare(`
     SELECT status, COUNT(*) AS count
@@ -180,6 +199,7 @@ module.exports = {
   usageByProvider,
   byModel,
   byClient,
+  usageByKey,
   byStatusCode,
   limitState,
   timeline,
