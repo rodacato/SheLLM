@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0] - 2026-09-19
 
+### Breaking Changes
+
+- **A host now follows published releases, not a branch.** `vps.sh` checks out the newest tag
+  and leaves the checkout detached, so on an existing install `git pull` stops updating
+  anything — it reports success and changes nothing. Upgrade by re-running `vps.sh`, or with
+  `shellm update`, which resolves the same ref. `SHELLM_REF` pins a specific release, or a
+  branch on purpose.
+
 ### Added
 
 - **setup:** install codex on the host, pinned to CODEX_VERSION
@@ -16,8 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **admin:** read shared state from the scope, not from $root
-- **health:** serve the real status and the CLI versions from the poller's cache
+- **admin:** read shared state from the scope, not from $root — the dashboard's version, uptime,
+  status and queue panels were reading an element instead of the data, and showed empty or zero
+- **health:** serve the real status and the CLI versions from the poller's cache — `/admin/health`
+  reported `ok` regardless of provider state, so anything trusting it as a health signal was
+  trusting a constant
 - **release:** stop CI from opening the pull request, and surface the breaking changes
 
 ### Documentation
