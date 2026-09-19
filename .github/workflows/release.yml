@@ -1,52 +1,117 @@
 name: Release
 
+# Cutting a release is a decision, not seven steps. `prepare` opens a pull request carrying the
+# version bump and the generated CHANGELOG entry; `publish` tags and publishes once that lands on
+# master. Nothing here pushes to master directly.
 on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump
+        required: true
+        type: choice
+        options: [patch, minor, major]
   push:
-    tags:
-      - 'v*'
+    branches: [master]
+    paths: [package.json]   # the only push that can carry a new version
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
-  test:
+  prepare:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # the changelog is generated from the commits since the last tag
+
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
-      - run: npm test
 
-  release:
-    needs: test
+      - run: npm ci
+
+      # npm's own "version" lifecycle script already writes the CHANGELOG entry; calling the
+      # generator again here produced a second copy of it.
+      - name: Bump the version and generate the changelog entry
+        id: bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          npm version "${{ inputs.bump }}" --no-git-tag-version
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Open the release pull request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.bump.outputs.version }}"
+          BRANCH="release/v$VERSION"
+          git checkout -b "$BRANCH"
+          git add package.json package-lock.json CHANGELOG.md
+          git commit -m "chore(release): v$VERSION"
+          git push origin "$BRANCH:$BRANCH"
+          gh pr create --base master --head "$BRANCH" \
+            --title "Release v$VERSION" \
+            --body "Version bump and changelog for v\`$VERSION\`, generated from the conventional commits since the last tag.
+
+          Merging this publishes the tag and the GitHub release. Read the changelog entry before merging: anything that breaks an existing install belongs under **Breaking Changes**, and it only lands there when the commit was marked \`type!:\`."
+
+  publish:
+    # Runs on every push to master and decides for itself whether there is a release to cut:
+    # a version in the manifest that has no tag yet.
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0   # full history needed to extract CHANGELOG entry
+          fetch-depth: 0
 
-      - name: Extract release notes from CHANGELOG
-        id: notes
+      - name: Decide whether this version is already released
+        id: check
         run: |
-          # Extract the block for this tag version from CHANGELOG.md
-          VERSION="${GITHUB_REF_NAME#v}"
-          # Grab lines between ## [X.Y.Z] and the next ## [
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v7
+        if: steps.check.outputs.publish == 'true'
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+        if: steps.check.outputs.publish == 'true'
+
+      - run: npm test
+        if: steps.check.outputs.publish == 'true'
+
+      - name: Tag and publish
+        if: steps.check.outputs.publish == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.check.outputs.version }}"
           NOTES=$(awk "/^## \[${VERSION}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
           if [ -z "$NOTES" ]; then
             NOTES="See [CHANGELOG.md](https://github.com/rodacato/SheLLM/blob/master/CHANGELOG.md) for details."
           fi
-          # Write to a temp file to handle multiline correctly
-          echo "$NOTES" > /tmp/release-notes.md
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$NOTES" > /tmp/release-notes.md
 
-      - name: Create GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create "$GITHUB_REF_NAME" \
-            --title "SheLLM $GITHUB_REF_NAME" \
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$VERSION" -m "SheLLM v$VERSION"
+          git push origin "refs/tags/v$VERSION"
+
+          gh release create "v$VERSION" \
+            --title "SheLLM v$VERSION" \
             --notes-file /tmp/release-notes.md \
             --verify-tag

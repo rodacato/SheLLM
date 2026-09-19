@@ -82,9 +82,16 @@ something to hand out.
 
 ### 3. Releases are cut by CI, not from a laptop
 
-A `workflow_dispatch` job takes a bump level, runs `npm version`, and pushes the commit and the
-tag. The first release cut this way is **`1.0.0`**: the repository is on `0.5.0`, and leaving
-`0.x` is what semver calls that, whatever the prose around the revamp calls the product. The existing tag-triggered `release.yml` then publishes the GitHub Release with the notes
+A `workflow_dispatch` job takes a bump level and runs `npm version`. The first release cut this
+way is **`1.0.0`**: the repository is on `0.5.0`, and leaving `0.x` is what semver calls that,
+whatever the prose around the revamp calls the product.
+
+**Refined while implementing (2026-09-19):** this was written as CI pushing the commit and the
+tag to the default branch. It opens a pull request instead. The changelog entry is the thing
+people read before upgrading, and it needs a human between generation and publication — a
+breaking change committed without its `!` marker lands under `Changed` and only a reader can
+move it. Publication is then decided from the manifest: a push to the default branch carrying a
+version that has no tag is what tags and publishes. The existing tag-triggered `release.yml` then publishes the GitHub Release with the notes
 that `scripts/release-changelog.js` generates from conventional commits. The decision to cut a
 release stays human; the seven steps stop being.
 
