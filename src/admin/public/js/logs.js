@@ -1,3 +1,5 @@
+/* global Alpine */
+
 function logsPage() {
   return {
     logs: [],
@@ -10,11 +12,11 @@ function logsPage() {
     stats: null,
 
     applyPendingFilter() {
-      const pending = this.$root.pendingLogFilter;
-      if (!pending) return false;
-      this.filterStatus = pending;
+      const nav = Alpine.store('nav');
+      if (!nav.pendingLogFilter) return false;
+      this.filterStatus = nav.pendingLogFilter;
       this.offset = 0;
-      this.$root.pendingLogFilter = null;
+      nav.pendingLogFilter = null;
       this.fetchLogs();
       return true;
     },

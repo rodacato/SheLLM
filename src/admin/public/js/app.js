@@ -63,6 +63,13 @@ function statusBadgeClass(status) {
 
 const VALID_PAGES = ['overview', 'logs', 'keys', 'system'];
 
+// Read-only state crosses component boundaries through Alpine's scope inheritance, but a write
+// from a child would shadow the parent's property instead of changing it. A store is the only
+// shared state here for that reason.
+document.addEventListener('alpine:init', () => {
+  Alpine.store('nav', { pendingLogFilter: null });
+});
+
 function app() {
   return {
     page: VALID_PAGES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview',
@@ -74,14 +81,13 @@ function app() {
       { id: 'keys', label: 'API Keys', icon: 'key' },
       { id: 'system', label: 'System', icon: 'settings_heart' },
     ],
-    pendingLogFilter: null,
     navigate(pageId) {
       this.page = pageId;
       this.sidebarOpen = false;
       location.hash = pageId;
     },
     openLogsFiltered(status) {
-      this.pendingLogFilter = String(status);
+      Alpine.store('nav').pendingLogFilter = String(status);
       this.navigate('logs');
     },
     formatUptime,

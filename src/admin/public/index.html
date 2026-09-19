@@ -132,10 +132,10 @@
         <header class="mb-10">
           <div class="flex items-baseline justify-between gap-4 flex-wrap">
             <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">OVERVIEW<span class="text-primary-container">_</span></h2>
-            <button @click="$root.navigate('system')" x-show="$root.health?.build"
+            <button @click="navigate('system')" x-show="health?.build"
               class="text-[11px] font-mono text-outline hover:text-primary-container transition-colors duration-100">
-              <span x-text="'v' + ($root.health?.build?.version || '?')"></span>
-              <span class="text-outline/60" x-text="$root.health?.build?.commit ? '· ' + $root.health.build.commit : ''"></span>
+              <span x-text="'v' + (health?.build?.version || '?')"></span>
+              <span class="text-outline/60" x-text="health?.build?.commit ? '· ' + health.build.commit : ''"></span>
               <span class="ml-1">→</span>
             </button>
           </div>
@@ -231,24 +231,24 @@
             <div class="flex items-end gap-8 mb-3">
               <div>
                 <span class="text-[10px] font-mono text-outline uppercase block">Active</span>
-                <span class="font-headline font-bold text-white text-lg" x-text="$root.health?.queue?.active ?? 0"></span>
-                <span class="text-outline text-sm">/ <span x-text="$root.health?.queue?.max_concurrent ?? 0"></span></span>
+                <span class="font-headline font-bold text-white text-lg" x-text="health?.queue?.active ?? 0"></span>
+                <span class="text-outline text-sm">/ <span x-text="health?.queue?.max_concurrent ?? 0"></span></span>
               </div>
               <div>
                 <span class="text-[10px] font-mono text-outline uppercase block">Pending</span>
                 <span class="font-headline font-bold text-lg"
-                  :class="($root.health?.queue?.pending ?? 0) > 0 ? 'text-[#ffb800]' : 'text-white'"
-                  x-text="$root.health?.queue?.pending ?? 0"></span>
+                  :class="(health?.queue?.pending ?? 0) > 0 ? 'text-[#ffb800]' : 'text-white'"
+                  x-text="health?.queue?.pending ?? 0"></span>
               </div>
               <div>
                 <span class="text-[10px] font-mono text-outline uppercase block">Streams</span>
-                <span class="font-headline font-bold text-white text-lg" x-text="$root.health?.queue?.active_streams ?? 0"></span>
-                <span class="text-outline text-sm">/ <span x-text="$root.health?.queue?.max_stream_concurrent ?? 0"></span></span>
+                <span class="font-headline font-bold text-white text-lg" x-text="health?.queue?.active_streams ?? 0"></span>
+                <span class="text-outline text-sm">/ <span x-text="health?.queue?.max_stream_concurrent ?? 0"></span></span>
               </div>
             </div>
             <div class="bg-surface-container-lowest h-1.5">
               <div class="h-1.5 transition-all duration-300"
-                :class="($root.health?.queue?.pending ?? 0) > 0 ? 'bg-[#ffb800]' : 'bar-brand'"
+                :class="(health?.queue?.pending ?? 0) > 0 ? 'bg-[#ffb800]' : 'bar-brand'"
                 :style="'width:' + queueSaturation() + '%'"></div>
             </div>
             <p class="text-[10px] font-mono text-outline mt-2" x-text="queueSaturation() + '% of concurrency in use'"></p>
@@ -400,7 +400,7 @@
               </div>
               <div class="flex flex-wrap gap-2">
                 <template x-for="s in stats.by_status_code" :key="s.status">
-                  <button @click="$root.openLogsFiltered(s.status)"
+                  <button @click="openLogsFiltered(s.status)"
                     class="px-3 py-2 bg-surface-container-high hover:bg-surface-container-highest transition-colors duration-100 text-left">
                     <span class="text-xs font-mono font-bold"
                       :class="s.status < 400 ? 'text-[#22c55e]' : (s.status < 500 ? 'text-[#ffb800]' : 'text-[#ef4444]')"
@@ -760,17 +760,17 @@
             <div>
               <p class="text-[10px] font-mono text-outline uppercase mb-1">Commit</p>
               <p class="text-2xl font-headline font-black text-white font-mono"
-                x-text="$root.health?.build?.commit || 'unknown'"></p>
+                x-text="health?.build?.commit || 'unknown'"></p>
             </div>
             <div>
               <p class="text-[10px] font-mono text-outline uppercase mb-1">Uptime</p>
-              <p class="text-2xl font-headline font-black text-white" x-text="formatUptime($root.health?.uptime) || '—'"></p>
+              <p class="text-2xl font-headline font-black text-white" x-text="formatUptime(health?.uptime) || '—'"></p>
             </div>
             <div>
               <p class="text-[10px] font-mono text-outline uppercase mb-1">Status</p>
               <p class="text-2xl font-headline font-black"
-                :class="$root.health?.status === 'ok' ? 'text-[#22c55e]' : ($root.health?.status === 'degraded' ? 'text-[#ffb800]' : 'text-[#ef4444]')"
-                x-text="$root.health?.status || '—'"></p>
+                :class="health?.status === 'ok' ? 'text-[#22c55e]' : (health?.status === 'degraded' ? 'text-[#ffb800]' : 'text-[#ef4444]')"
+                x-text="health?.status || '—'"></p>
             </div>
           </div>
 
@@ -825,7 +825,7 @@
                 <div>
                   <span class="text-outline uppercase block text-[10px]">CLI version</span>
                   <span class="text-on-surface-variant"
-                    x-text="$root.health?.providers?.[prov.name]?.version || 'unknown'"></span>
+                    x-text="health?.providers?.[prov.name]?.version || 'unknown'"></span>
                 </div>
                 <div>
                   <span class="text-outline uppercase block text-[10px]">Last used</span>
