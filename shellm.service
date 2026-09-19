@@ -14,5 +14,18 @@ RestartSec=5s
 StandardOutput=journal
 StandardError=journal
 
+# The service must not be able to write the code it runs: the CLIs it spawns inherit this
+# sandbox, and Restart=on-failure would reload anything they wrote. See docs/adr/0003.
+ProtectSystem=strict
+# The home is granted whole because the CLIs keep their state below it and rewrite
+# ~/.claude.json by atomic rename, which needs the home itself writable.
+ReadWritePaths=/home/shellmer
+# Ignored while absent, so a missing tmpfiles entry leaves the update button inert
+# rather than refusing to start the service.
+ReadWritePaths=-/run/shellm
+ReadOnlyPaths=/home/shellmer/shellm
+PrivateTmp=yes
+NoNewPrivileges=yes
+
 [Install]
 WantedBy=multi-user.target
