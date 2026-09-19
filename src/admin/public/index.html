@@ -443,6 +443,26 @@
               <option value="5">5xx (Server Err)</option>
             </select>
           </div>
+          <div>
+            <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Client</label>
+            <select x-model="filterClient" @change="applyFilters()" class="bg-[#2e3b44] border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container rounded-lg">
+              <option value="">All Clients</option>
+              <template x-for="name in clientOptions" :key="name">
+                <option :value="name" x-text="name"></option>
+              </template>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Model</label>
+            <select x-model="filterModel" @change="applyFilters()" class="bg-[#2e3b44] border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container rounded-lg">
+              <option value="">All Models</option>
+              <template x-for="name in modelOptions" :key="name">
+                <option :value="name" x-text="name"></option>
+              </template>
+            </select>
+          </div>
+          <button x-show="hasFilters" @click="clearFilters()"
+            class="self-end pb-2 text-[11px] font-mono text-primary-container hover:underline">clear filters</button>
           <div class="text-[11px] font-mono text-outline/70 italic self-end pb-2" x-text="total + ' total logs found'"></div>
           <div class="ml-auto flex gap-2 self-end">
             <button x-show="total > 0" @click="exportCSV()"
@@ -465,6 +485,7 @@
                 <tr>
                   <th class="px-6 py-4 text-left text-[0.7rem] font-headline font-bold uppercase tracking-[0.08em] text-outline">Time</th>
                   <th class="px-6 py-4 text-left text-[0.7rem] font-headline font-bold uppercase tracking-[0.08em] text-outline">Status</th>
+                  <th class="px-6 py-4 text-left text-[0.7rem] font-headline font-bold uppercase tracking-[0.08em] text-outline">Request</th>
                   <th class="px-6 py-4 text-left text-[0.7rem] font-headline font-bold uppercase tracking-[0.08em] text-outline">Client</th>
                   <th class="px-6 py-4 text-left text-[0.7rem] font-headline font-bold uppercase tracking-[0.08em] text-outline">Provider</th>
                   <th class="px-6 py-4 text-left text-[0.7rem] font-headline font-bold uppercase tracking-[0.08em] text-outline">Model</th>
@@ -475,14 +496,19 @@
               </thead>
               <tbody class="divide-y divide-[#2a3038]">
                 <tr x-show="logs.length === 0">
-                  <td colspan="8" class="px-6 py-10 text-center text-outline font-mono text-sm" x-text="loading ? 'Loading...' : 'No logs found'"></td>
+                  <td colspan="9" class="px-6 py-10 text-center text-outline font-mono text-sm" x-text="loading ? 'Loading...' : 'No logs found'"></td>
                 </tr>
                 <template x-for="log in logs" :key="log.id">
-                  <tr class="hover:bg-[#1a1e21] transition-colors duration-100">
+                  <tr @click="toggleRow(log.id)" class="hover:bg-[#1a1e21] transition-colors duration-100 cursor-pointer">
                     <td class="px-6 py-4 text-on-surface font-mono text-sm whitespace-nowrap" x-text="formatTime(log.created_at)"></td>
                     <td class="px-6 py-4">
                       <span class="px-2 py-0.5 text-[10px] font-bold font-mono"
                         :class="statusBadgeClass(log.status)" x-text="log.status"></span>
+                      <span x-show="log.error_code" class="block mt-1 text-[10px] font-mono text-[#ffb4ab]" x-text="log.error_code"></span>
+                    </td>
+                    <td class="px-6 py-4 font-mono text-[11px] whitespace-nowrap">
+                      <span class="text-outline" x-text="log.method || '-'"></span>
+                      <span class="text-on-surface-variant ml-1" x-text="log.path || '-'"></span>
                     </td>
                     <td class="px-6 py-4 text-on-surface text-sm font-medium" x-text="log.client_name || '-'"></td>
                     <td class="px-6 py-4 text-outline text-sm" x-text="log.provider || '-'"></td>
@@ -495,6 +521,50 @@
                     <td class="px-6 py-4 font-mono text-sm font-bold"
                       :class="log.cost_usd > 0 ? 'text-primary-container' : 'text-outline'"
                       x-text="formatCost(log.cost_usd)"></td>
+                  </tr>
+                </template>
+                <template x-for="log in logs" :key="'detail-' + log.id">
+                  <tr x-show="expandedId === log.id" class="bg-[#1a1e21]">
+                    <td colspan="9" class="px-6 py-4">
+                      <dl class="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] font-mono">
+                        <div>
+                          <dt class="text-outline uppercase text-[10px]">Request id</dt>
+                          <dd class="text-on-surface-variant break-all" x-text="log.request_id || '-'"></dd>
+                        </div>
+                        <div>
+                          <dt class="text-outline uppercase text-[10px]">Error</dt>
+                          <dd class="text-on-surface-variant" x-text="log.error_code || 'none'"></dd>
+                        </div>
+                        <div>
+                          <dt class="text-outline uppercase text-[10px]">Upstream model</dt>
+                          <dd class="text-on-surface-variant" x-text="log.upstream_model || '-'"></dd>
+                        </div>
+                        <div>
+                          <dt class="text-outline uppercase text-[10px]">Upstream status</dt>
+                          <dd class="text-on-surface-variant" x-text="log.api_error_status || '-'"></dd>
+                        </div>
+                        <div>
+                          <dt class="text-outline uppercase text-[10px]">Queued</dt>
+                          <dd class="text-on-surface-variant" x-text="log.queued_ms != null ? formatDuration(log.queued_ms) : '-'"></dd>
+                        </div>
+                        <div>
+                          <dt class="text-outline uppercase text-[10px]">Time to first token</dt>
+                          <dd class="text-on-surface-variant" x-text="log.ttft_ms != null ? formatDuration(log.ttft_ms) : '-'"></dd>
+                        </div>
+                        <div>
+                          <dt class="text-outline uppercase text-[10px]">Tokens in / out</dt>
+                          <dd class="text-on-surface-variant">
+                            <span x-text="log.tokens_in ?? '-'"></span> / <span x-text="log.tokens_out ?? '-'"></span>
+                          </dd>
+                        </div>
+                        <div>
+                          <dt class="text-outline uppercase text-[10px]">Cache write / read</dt>
+                          <dd class="text-on-surface-variant">
+                            <span x-text="log.cache_write_tokens ?? '-'"></span> / <span x-text="log.cache_read_tokens ?? '-'"></span>
+                          </dd>
+                        </div>
+                      </dl>
+                    </td>
                   </tr>
                 </template>
               </tbody>

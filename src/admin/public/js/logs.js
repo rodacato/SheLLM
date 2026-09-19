@@ -8,17 +8,29 @@ function logsPage() {
     offset: 0,
     filterProvider: '',
     filterStatus: '',
+    filterClient: '',
+    filterModel: '',
+    filterErrorCode: '',
+    expandedId: null,
     loading: true,
     stats: null,
 
     applyPendingFilter() {
       const nav = Alpine.store('nav');
       if (!nav.pendingLogFilter) return false;
-      this.filterStatus = nav.pendingLogFilter;
+      const wanted = nav.pendingLogFilter;
+      this.filterStatus = wanted.status || '';
+      this.filterClient = wanted.client || '';
+      this.filterModel = wanted.model || '';
+      this.filterErrorCode = wanted.error_code || '';
       this.offset = 0;
       nav.pendingLogFilter = null;
       this.fetchLogs();
       return true;
+    },
+
+    toggleRow(id) {
+      this.expandedId = this.expandedId === id ? null : id;
     },
 
     async fetchLogs() {
@@ -26,8 +38,7 @@ function logsPage() {
       const params = new URLSearchParams();
       params.set('limit', this.limit);
       params.set('offset', this.offset);
-      if (this.filterProvider) params.set('provider', this.filterProvider);
-      if (this.filterStatus) params.set('status', this.filterStatus);
+      this.appendFilters(params);
 
       try {
         const res = await apiFetch(`${API_BASE}/logs?${params}`);
@@ -38,6 +49,35 @@ function logsPage() {
         }
       } catch { /* ignore */ }
       this.loading = false;
+    },
+
+    appendFilters(params) {
+      if (this.filterProvider) params.set('provider', this.filterProvider);
+      if (this.filterStatus) params.set('status', this.filterStatus);
+      if (this.filterClient) params.set('client', this.filterClient);
+      if (this.filterModel) params.set('model', this.filterModel);
+      if (this.filterErrorCode) params.set('error_code', this.filterErrorCode);
+    },
+
+    clearFilters() {
+      this.filterProvider = '';
+      this.filterStatus = '';
+      this.filterClient = '';
+      this.filterModel = '';
+      this.filterErrorCode = '';
+      this.applyFilters();
+    },
+
+    get hasFilters() {
+      return !!(this.filterProvider || this.filterStatus || this.filterClient || this.filterModel || this.filterErrorCode);
+    },
+
+    get clientOptions() {
+      return (this.stats?.by_client || []).map((c) => c.client_name).filter((n) => n && n !== '(unknown)');
+    },
+
+    get modelOptions() {
+      return (this.stats?.by_model || []).map((m) => m.model).filter(Boolean);
     },
 
     async fetchStats() {
@@ -118,8 +158,7 @@ function logsPage() {
     exportCSV() {
       const params = new URLSearchParams();
       params.set('format', 'csv');
-      if (this.filterProvider) params.set('provider', this.filterProvider);
-      if (this.filterStatus) params.set('status', this.filterStatus);
+      this.appendFilters(params);
       window.location.href = `${API_BASE}/logs/export?${params}`;
     },
 

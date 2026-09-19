@@ -21,6 +21,14 @@ function buildWhereClause(query) {
     conditions.push('client_name = ?');
     params.push(query.client);
   }
+  if (query.model) {
+    conditions.push('(model = ? OR upstream_model = ?)');
+    params.push(query.model, query.model);
+  }
+  if (query.error_code) {
+    conditions.push('error_code = ?');
+    params.push(query.error_code);
+  }
   if (query.status) {
     const s = query.status;
     if (/^\d$/.test(s)) {
