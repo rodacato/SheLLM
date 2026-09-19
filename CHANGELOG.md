@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-09-19
+
+### Fixed
+
+- **admin:** allow the release check the dashboard's own CSP was blocking
+
+### Documentation
+
+- **adr:** decide the privilege split for the update button
+
+
 ## [1.1.0] - 2026-09-19
 
 ### Breaking Changes
@@ -386,5 +397,5 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.1.0...HEAD
-[1.1.0]: https://github.com/rodacato/SheLLM/compare/v1.0.0...v1.1.0
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/rodacato/SheLLM/compare/v1.1.0...v1.1.1
