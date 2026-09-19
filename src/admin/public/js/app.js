@@ -61,7 +61,7 @@ function statusBadgeClass(status) {
   return 'badge-5xx';
 }
 
-const VALID_PAGES = ['overview', 'logs', 'keys'];
+const VALID_PAGES = ['overview', 'logs', 'keys', 'system'];
 
 function app() {
   return {
@@ -72,6 +72,7 @@ function app() {
       { id: 'overview', label: 'Overview', icon: 'dashboard' },
       { id: 'logs', label: 'Request Logs', icon: 'database' },
       { id: 'keys', label: 'API Keys', icon: 'key' },
+      { id: 'system', label: 'System', icon: 'settings_heart' },
     ],
     pendingLogFilter: null,
     navigate(pageId) {
@@ -102,6 +103,7 @@ function app() {
             providers: data.providers || {},
             queue: data.queue || {},
             status: data.status,
+            build: data.build || null,
           };
         }
       } catch { /* ignore */ }

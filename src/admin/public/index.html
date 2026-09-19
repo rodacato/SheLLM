@@ -130,7 +130,15 @@
       <div x-show="page === 'overview'" x-data="overviewPage()" x-effect="if (page === 'overview') { if (!stats) fetchStats(); if (providers.length === 0) fetchProviders(); startAutoRefresh(); } else { stopAutoRefresh(); }">
 
         <header class="mb-10">
-          <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">OVERVIEW<span class="text-primary-container">_</span></h2>
+          <div class="flex items-baseline justify-between gap-4 flex-wrap">
+            <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">OVERVIEW<span class="text-primary-container">_</span></h2>
+            <button @click="$root.navigate('system')" x-show="$root.health?.build"
+              class="text-[11px] font-mono text-outline hover:text-primary-container transition-colors duration-100">
+              <span x-text="'v' + ($root.health?.build?.version || '?')"></span>
+              <span class="text-outline/60" x-text="$root.health?.build?.commit ? '· ' + $root.health.build.commit : ''"></span>
+              <span class="ml-1">→</span>
+            </button>
+          </div>
           <p class="text-on-surface-variant">System health, provider status, and request metrics at a glance.</p>
         </header>
 
@@ -733,6 +741,115 @@
         </div>
       </div>
 
+      <!-- SYSTEM PAGE -->
+      <div x-show="page === 'system'" x-data="systemPage()" x-effect="if (page === 'system' && loading) load()">
+
+        <header class="mb-10">
+          <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">SYSTEM<span class="text-primary-container">_</span></h2>
+          <p class="text-on-surface-variant">What is running, and which providers are allowed to answer.</p>
+        </header>
+
+        <!-- ================= BUILD ================= -->
+        <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase block mb-3">Build</span>
+        <div class="bg-surface-container p-5 mb-8">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-4">
+            <div>
+              <p class="text-[10px] font-mono text-outline uppercase mb-1">Version</p>
+              <p class="text-2xl font-headline font-black text-white" x-text="runningVersion || '—'"></p>
+            </div>
+            <div>
+              <p class="text-[10px] font-mono text-outline uppercase mb-1">Commit</p>
+              <p class="text-2xl font-headline font-black text-white font-mono"
+                x-text="$root.health?.build?.commit || 'unknown'"></p>
+            </div>
+            <div>
+              <p class="text-[10px] font-mono text-outline uppercase mb-1">Uptime</p>
+              <p class="text-2xl font-headline font-black text-white" x-text="formatUptime($root.health?.uptime) || '—'"></p>
+            </div>
+            <div>
+              <p class="text-[10px] font-mono text-outline uppercase mb-1">Status</p>
+              <p class="text-2xl font-headline font-black"
+                :class="$root.health?.status === 'ok' ? 'text-[#22c55e]' : ($root.health?.status === 'degraded' ? 'text-[#ffb800]' : 'text-[#ef4444]')"
+                x-text="$root.health?.status || '—'"></p>
+            </div>
+          </div>
+
+          <div class="border-t border-outline-variant/30 pt-4">
+            <template x-if="updateAvailable">
+              <p class="text-xs font-mono text-[#ffb800]">
+                <span x-text="'v' + updateAvailable + ' is published — this host runs v' + runningVersion"></span>
+                <a :href="latestRelease.html_url" target="_blank" rel="noopener" class="underline ml-2">release notes</a>
+              </p>
+            </template>
+            <template x-if="!updateAvailable && latestRelease">
+              <p class="text-xs font-mono text-outline">Running the latest published release.</p>
+            </template>
+            <template x-if="releaseError">
+              <p class="text-xs font-mono text-outline" x-text="'Latest release unknown — ' + releaseError"></p>
+            </template>
+          </div>
+        </div>
+
+        <!-- ================= PROVIDERS ================= -->
+        <div class="flex items-baseline gap-3 mb-3">
+          <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Providers</span>
+          <span class="text-[10px] text-outline">Pausing one takes it out of routing; it does not sign it out.</span>
+        </div>
+
+        <div class="space-y-4">
+          <template x-for="prov in providers" :key="prov.name">
+            <div class="bg-surface-container p-5">
+              <div class="flex items-start justify-between gap-4 mb-4">
+                <div class="flex items-center gap-3">
+                  <span class="w-2 h-2 inline-block"
+                    :class="!prov.enabled ? 'dot-gray' : (prov.installed && prov.authenticated ? 'dot-green' : (prov.installed ? 'dot-red' : 'dot-gray'))"></span>
+                  <div>
+                    <span class="font-headline font-bold text-white text-sm" x-text="prov.name"></span>
+                    <span class="text-[10px] font-mono text-outline ml-2" x-text="providerState(prov)"></span>
+                  </div>
+                </div>
+
+                <button @click="toggleProvider(prov)" :disabled="busy === prov.name"
+                  class="px-4 py-1.5 text-xs font-headline uppercase tracking-wide transition-colors duration-100 disabled:opacity-40"
+                  :class="prov.enabled
+                    ? 'bg-surface-container-high text-outline hover:text-white hover:bg-surface-container-highest'
+                    : 'bg-primary-container text-on-primary font-bold'"
+                  x-text="busy === prov.name ? '···' : (prov.enabled ? 'Pause' : 'Enable')"></button>
+              </div>
+
+              <div x-show="prov.health_error" class="bg-surface-container-lowest p-3 mb-4">
+                <p class="text-[10px] font-mono text-[#ffb4ab] break-all" x-text="prov.health_error"></p>
+              </div>
+
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] font-mono">
+                <div>
+                  <span class="text-outline uppercase block text-[10px]">CLI version</span>
+                  <span class="text-on-surface-variant"
+                    x-text="$root.health?.providers?.[prov.name]?.version || 'unknown'"></span>
+                </div>
+                <div>
+                  <span class="text-outline uppercase block text-[10px]">Last used</span>
+                  <span class="text-on-surface-variant" x-text="prov.last_used_at ? formatTime(prov.last_used_at) : 'never'"></span>
+                </div>
+                <div>
+                  <span class="text-outline uppercase block text-[10px]">Last status</span>
+                  <span x-show="prov.last_status" class="px-1.5 py-0.5 text-[10px] font-bold"
+                    :class="prov.last_status >= 200 && prov.last_status < 300 ? 'badge-2xx' : 'badge-5xx'"
+                    x-text="prov.last_status"></span>
+                  <span x-show="!prov.last_status" class="text-outline">—</span>
+                </div>
+                <div>
+                  <span class="text-outline uppercase block text-[10px]">Models</span>
+                  <span class="text-on-surface-variant" x-text="(prov.models || []).join(', ') || '—'"></span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+        <p x-show="loading && providers.length === 0" class="text-outline text-sm font-mono">Loading…</p>
+      </div>
+
+
     </main>
 
     <!-- Footer -->
@@ -746,6 +863,7 @@
   <script src="js/overview.js"></script>
   <script src="js/logs.js"></script>
   <script src="js/keys.js"></script>
+  <script src="js/system.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('/admin/sw.js'));

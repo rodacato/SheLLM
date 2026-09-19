@@ -50,6 +50,23 @@ describe('installable dashboard', () => {
     assert.match(worker, /if \(request\.method !== 'GET'\) return;/);
   });
 
+  // A page added to index.html without its script in the shell leaves an installed PWA serving
+  // markup that asks for a file it never cached.
+  it('caches every script the page loads', async () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const dir = path.join(__dirname, '../../src/admin/public');
+    const html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
+    const worker = fs.readFileSync(path.join(dir, 'sw.js'), 'utf8');
+
+    const scripts = [...html.matchAll(/<script src="(js\/[^"]+)"/g)].map((m) => m[1]);
+    assert.ok(scripts.length > 0, 'found no local scripts — this check proves nothing');
+
+    for (const src of scripts) {
+      assert.ok(worker.includes(`/admin/dashboard/${src}`), `${src} is loaded by the page but absent from the shell cache`);
+    }
+  });
+
   it('serves the SPA assets without a session but never the page itself', async () => {
     const asset = await request(app).get('/admin/dashboard/js/app.js');
     assert.strictEqual(asset.status, 200);

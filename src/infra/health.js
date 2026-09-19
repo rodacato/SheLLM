@@ -1,4 +1,5 @@
 const { execute } = require('../providers/base');
+const { getBuildInfo } = require('./build-info');
 const { queue } = require('./queue');
 const { getAllCircuitStates, resetCircuit } = require('./circuit-breaker');
 const logger = require('../lib/logger');
@@ -54,6 +55,30 @@ function providerSecrets(name) {
 function providerModule(name) {
   const { engines } = require('../routing/engines');
   return engines[name];
+}
+
+const VERSION_PATTERN = /\d+\.\d+\.\d+/;
+const versions = new Map();
+
+// Kept for the life of the process rather than polled: a binary's version changes when someone
+// installs a new one, which restarts the service anyway. Health is volatile, this is not.
+async function getProviderVersion(name) {
+  if (versions.has(name)) return versions.get(name);
+
+  const module = providerModule(name);
+  const run = () => execute(name, ['--version'], { timeout: PROBE_TIMEOUT, env: providerEnv(name) });
+  let version = null;
+  try {
+    const result = module?.withLock ? await module.withLock(run) : await run();
+    version = VERSION_PATTERN.exec(result.stdout)?.[0] ?? null;
+  } catch { /* an uninstalled or broken CLI has no version to report */ }
+
+  versions.set(name, version);
+  return version;
+}
+
+function resetProviderVersions() {
+  versions.clear();
 }
 
 // A probe asks the provider how to check itself, because only the provider knows which of its
@@ -112,6 +137,7 @@ async function getHealthStatus() {
   if (cache.data && now < cache.expires) {
     return {
       ...cache.data,
+      build: getBuildInfo(),
       queue: queue.stats,
       uptime_seconds: Math.floor(process.uptime()),
     };
@@ -123,7 +149,8 @@ async function getHealthStatus() {
   const providers = {};
   for (let i = 0; i < providerList.length; i++) {
     const p = providerList[i];
-    providers[p.name] = { ...results[i], enabled: !!p.enabled };
+    const version = results[i].installed ? await getProviderVersion(p.name) : null;
+    providers[p.name] = { ...results[i], enabled: !!p.enabled, version };
   }
 
   const status = computeHealthStatus(providers);
@@ -131,6 +158,7 @@ async function getHealthStatus() {
 
   return {
     ...cache.data,
+    build: getBuildInfo(),
     circuit_breakers: getAllCircuitStates(),
     queue: queue.stats,
     uptime_seconds: Math.floor(process.uptime()),
@@ -230,4 +258,4 @@ function stopHealthPoller() {
   }
 }
 
-module.exports = { getHealthStatus, getCachedProviderStatus, startHealthPoller, stopHealthPoller, parseCheckError, checkProvider };
+module.exports = { getHealthStatus, getCachedProviderStatus, startHealthPoller, stopHealthPoller, parseCheckError, checkProvider, getProviderVersion, resetProviderVersions };
