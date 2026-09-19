@@ -87,11 +87,16 @@ way is **`1.0.0`**: the repository is on `0.5.0`, and leaving `0.x` is what semv
 whatever the prose around the revamp calls the product.
 
 **Refined while implementing (2026-09-19):** this was written as CI pushing the commit and the
-tag to the default branch. It opens a pull request instead. The changelog entry is the thing
-people read before upgrading, and it needs a human between generation and publication — a
-breaking change committed without its `!` marker lands under `Changed` and only a reader can
-move it. Publication is then decided from the manifest: a push to the default branch carrying a
-version that has no tag is what tags and publishes. The existing tag-triggered `release.yml` then publishes the GitHub Release with the notes
+tag to the default branch. CI pushes a release branch instead, and a person opens the pull
+request from it. The changelog entry is the thing people read before upgrading, and it needs a
+human between generation and publication — a breaking change committed without its `!` marker
+lands under `Changed` and only a reader can move it. Cutting `1.0.0` proved that on the first
+run: six removals went out under `Changed` because no commit had marked them.
+
+Actions does not open the pull request itself, because the repository setting that allows it
+also allows Actions to *approve* pull requests, and a token-authored pull request runs no CI.
+Publication is then decided from the manifest: a push to the default branch carrying a version
+that has no tag is what tags and publishes. The existing tag-triggered `release.yml` then publishes the GitHub Release with the notes
 that `scripts/release-changelog.js` generates from conventional commits. The decision to cut a
 release stays human; the seven steps stop being.
 

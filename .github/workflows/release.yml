@@ -17,7 +17,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   prepare:
@@ -45,9 +44,11 @@ jobs:
           npm version "${{ inputs.bump }}" --no-git-tag-version
           echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
 
-      - name: Open the release pull request
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # The branch is pushed and the pull request is opened by a person. Letting Actions open it
+      # needs a repository setting that also lets Actions *approve* pull requests, which is more
+      # than this needs — and a token-authored pull request runs no CI, so opening it by hand is
+      # what gives the release branch its checks.
+      - name: Push the release branch
         run: |
           VERSION="${{ steps.bump.outputs.version }}"
           BRANCH="release/v$VERSION"
@@ -55,11 +56,19 @@ jobs:
           git add package.json package-lock.json CHANGELOG.md
           git commit -m "chore(release): v$VERSION"
           git push origin "$BRANCH:$BRANCH"
-          gh pr create --base master --head "$BRANCH" \
-            --title "Release v$VERSION" \
-            --body "Version bump and changelog for v\`$VERSION\`, generated from the conventional commits since the last tag.
 
-          Merging this publishes the tag and the GitHub release. Read the changelog entry before merging: anything that breaks an existing install belongs under **Breaking Changes**, and it only lands there when the commit was marked \`type!:\`."
+      - name: Say what to do next
+        run: |
+          VERSION="${{ steps.bump.outputs.version }}"
+          {
+            echo "## Release v$VERSION is ready for review"
+            echo
+            echo "[Open the pull request](${{ github.server_url }}/${{ github.repository }}/compare/master...release/v$VERSION?expand=1)"
+            echo
+            echo "Read the changelog entry before merging: anything that breaks an existing"
+            echo "install belongs under **Breaking Changes**, and it only lands there when the"
+            echo "commit was written as \`type!:\`. Merging publishes the tag and the release."
+          } >> "$GITHUB_STEP_SUMMARY"
 
   publish:
     # Runs on every push to master and decides for itself whether there is a release to cut:
