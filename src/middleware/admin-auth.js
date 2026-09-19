@@ -2,6 +2,7 @@
 
 const { timingSafeEqual } = require('node:crypto');
 const { sendError, rateLimited } = require('../errors');
+const { verify, readCookie, isCrossSiteWrite, wantsHtml } = require('./admin-session');
 const logger = require('../lib/logger');
 
 function getAdminMaxAttempts() {
@@ -61,9 +62,37 @@ function recordFailedAttempt(ip) {
   failedAttempts.get(ip).push(Date.now());
 }
 
+let credentials = { password: undefined, expectedUser: null };
+
+// Read from the environment and drop the password from it, so a subprocess cannot inherit it.
+// Called once at boot; the login route reuses what it captured.
+function loadCredentials() {
+  credentials = {
+    password: process.env.SHELLM_ADMIN_PASSWORD,
+    expectedUser: process.env.SHELLM_ADMIN_USER || null,
+  };
+  delete process.env.SHELLM_ADMIN_PASSWORD;
+  return credentials;
+}
+
+function matches(provided, expected) {
+  const providedBuf = Buffer.from(provided);
+  const expectedBuf = Buffer.from(expected);
+  return providedBuf.length === expectedBuf.length && timingSafeEqual(providedBuf, expectedBuf);
+}
+
+function checkCredentials(username, password) {
+  const { password: expected, expectedUser } = credentials;
+  if (!expected || !matches(password, expected)) return false;
+  return !expectedUser || matches(username, expectedUser);
+}
+
+function adminEnabled() {
+  return !!credentials.password;
+}
+
 function createAdminAuth() {
-  const password = process.env.SHELLM_ADMIN_PASSWORD;
-  const expectedUser = process.env.SHELLM_ADMIN_USER || null;
+  const { password, expectedUser } = loadCredentials();
 
   // Password strength check at startup
   if (password) {
@@ -77,9 +106,6 @@ function createAdminAuth() {
     }
   }
 
-  // F-03: Remove password from process.env after reading into closure
-  delete process.env.SHELLM_ADMIN_PASSWORD;
-
   if (!password) {
     return (req, res, _next) => {
       sendError(res, { status: 501, code: 'admin_disabled', message: 'SHELLM_ADMIN_PASSWORD not configured' }, req.requestId);
@@ -92,6 +118,14 @@ function createAdminAuth() {
   return (req, res, next) => {
     const ip = req.ip || req.socket?.remoteAddress || 'unknown';
 
+    if (verify(readCookie(req))) {
+      if (isCrossSiteWrite(req)) {
+        logger.warn({ event: 'admin_auth_failure', ip, username: null, reason: 'cross_site' });
+        return sendError(res, { status: 403, code: 'forbidden', message: 'Cross-site request refused' }, req.requestId);
+      }
+      return next();
+    }
+
     // Brute-force protection: check rate limit before credential validation
     const retryAfter = isRateLimited(ip);
     if (retryAfter > 0) {
@@ -103,6 +137,7 @@ function createAdminAuth() {
     const match = header.match(/^Basic\s+(.+)$/i);
 
     if (!match) {
+      if (wantsHtml(req)) return res.redirect(302, `/admin/login?next=${encodeURIComponent(req.originalUrl)}`);
       recordFailedAttempt(ip);
       logger.warn({ event: 'admin_auth_failure', ip, username: null, reason: 'missing_header' });
       res.set('WWW-Authenticate', 'Basic realm="shellm-admin"');
@@ -154,4 +189,7 @@ function createAdminAuth() {
   };
 }
 
-module.exports = { createAdminAuth, failedAttempts, validatePasswordStrength };
+module.exports = {
+  createAdminAuth, failedAttempts, validatePasswordStrength,
+  isRateLimited, recordFailedAttempt, checkCredentials, adminEnabled,
+};

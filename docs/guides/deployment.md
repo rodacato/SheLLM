@@ -54,7 +54,7 @@ Everything else is documented in [`.env.example`](../../.env.example). What matt
 | `HOST` | `127.0.0.1` | Keep it. Expose SheLLM through a tunnel or proxy, not by binding publicly |
 | `PORT` | `6100` | A port collision |
 | `MAX_CONCURRENT` | `2` | Each CLI process costs 100–200 MB of RAM |
-| `SHELLM_ADMIN_PASSWORD` | generated | The dashboard login |
+| `SHELLM_ADMIN_PASSWORD` | generated | The dashboard login, at `/admin/login` |
 | `SHELLM_GLOBAL_RPM` | `30` | Requests per minute across all keys |
 
 ## 4. Start
