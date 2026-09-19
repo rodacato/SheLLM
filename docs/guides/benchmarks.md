@@ -148,6 +148,39 @@ long ones. **The streaming fix was the cheaper win, and it is already taken** �
 `claude-sonnet` it moved perceived latency from 5.17 s to 1.71 s by changing two CLI flags,
 without touching process lifetime or the ban-risk boundary.
 
+## CLI startup flags — 2026-09-19, local
+
+`claude` was started with whatever the server user had configured for their own shell. Three flags
+close that (`--disable-slash-commands`, `--strict-mcp-config`,
+`--settings '{"disableAllHooks":true}'`). The argument for them is isolation; the speed was
+expected to be a bonus. **It was not.**
+
+Measured in the dev container, not on the production server: one `claude` 2.1.273, a local SheLLM
+on each side, tiny prompt and a one-word answer, **10 samples each**, run back to back.
+
+| Flag set | Median | Range | Samples |
+|---|---|---|---|
+| `claude` as on master, before the change | 2.53 s | 2.37–2.82 s | n=10 |
+| `claude` with the three isolation flags, after the change | 2.51 s | 2.10–4.36 s | n=10 |
+| `claude` with t3code's full set, **not adopted** | 2.28 s | 2.00–2.76 s | n=10 |
+
+**20 ms on a 2.5 s median is nothing**, and the spread after the change is wider, not narrower.
+Whatever those three flags cost the CLI to honor, it is below this measurement's noise. They ship
+because a served request must not execute the operator's hooks and MCP servers, which is true
+whether or not it is faster.
+
+The third row is where the speed is. It adds `--tools ""` and `--permission-mode dontAsk` to the
+same three, and lands **~250 ms (10 %) below the baseline**. `--permission-mode dontAsk` is
+redundant with the `--dangerously-skip-permissions` already passed, so the saving is almost
+certainly `--tools ""` — a shorter system prompt for the model to read. ADR-0001 decision 2 keeps
+the CLI's internal tools on, so that flag is not ours to take until phase 3, when a request
+carrying `tools` will turn them off anyway. Measured here so the decision is priced.
+
+One caveat about a number from elsewhere: the 2026-09-18 audit recorded 1952–2462 ms for t3code's
+set against 2631–3179 ms for ours. Neither end reproduces here — our own baseline now measures
+2.53 s, inside their "fast" band. The gap between the two flag sets is real and about a quarter of
+the size that comparison suggested.
+
 ## Reproduce it
 
 ```bash
