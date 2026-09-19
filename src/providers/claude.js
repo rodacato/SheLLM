@@ -19,7 +19,7 @@ function systemPromptFor({ system, response_format }) {
 }
 
 // The claude CLI has no temperature flag, so temperature is ignored.
-function buildStreamArgs({ prompt, system, response_format, model }) {
+function buildBaseArgs({ prompt, system, response_format, model }) {
   const args = ['--print'];
   if (shouldSkipPermissions()) args.push('--dangerously-skip-permissions');
   if (cliModel(model)) args.push('--model', cliModel(model));
@@ -29,10 +29,31 @@ function buildStreamArgs({ prompt, system, response_format, model }) {
   return args;
 }
 
+function withOutputFormat(args, format) {
+  const formatted = [...args];
+  formatted.splice(formatted.indexOf('--'), 0, ...format);
+  return formatted;
+}
+
 function buildArgs(params) {
-  const args = buildStreamArgs(params);
-  args.splice(args.indexOf('--'), 0, '--output-format', 'json');
-  return args;
+  return withOutputFormat(buildBaseArgs(params), ['--output-format', 'json']);
+}
+
+// --verbose is not optional: under --print the CLI refuses stream-json without it.
+function buildStreamArgs(params) {
+  return withOutputFormat(buildBaseArgs(params), [
+    '--output-format', 'stream-json',
+    '--verbose',
+    '--include-partial-messages',
+  ]);
+}
+
+function usageFrom(data) {
+  if (!data.usage) return null;
+  return {
+    input_tokens: data.usage.input_tokens || 0,
+    output_tokens: data.usage.output_tokens || 0,
+  };
 }
 
 function parseOutput(stdout, stderr) {
@@ -44,17 +65,32 @@ function parseOutput(stdout, stderr) {
     const data = JSON.parse(stdout || stderr);
     content = data.result || data.content || stdout;
     cost_usd = data.total_cost_usd || data.cost_usd || null;
-    if (data.usage) {
-      usage = {
-        input_tokens: data.usage.input_tokens || 0,
-        output_tokens: data.usage.output_tokens || 0,
-      };
-    }
+    usage = usageFrom(data);
   } catch {
     // Not JSON — use raw stdout as content
   }
 
   return { content: stripNonPrintable(content), cost_usd, usage };
+}
+
+// One NDJSON line of `--output-format stream-json`; anything else is progress noise.
+function parseStreamLine(line) {
+  if (!line.trim()) return null;
+  let event;
+  try {
+    event = JSON.parse(line);
+  } catch {
+    return null;
+  }
+
+  if (event.type === 'stream_event' && event.event?.type === 'content_block_delta') {
+    const text = event.event.delta?.text;
+    return text ? { type: 'delta', content: stripNonPrintable(text) } : null;
+  }
+  if (event.type === 'result') {
+    return { type: 'usage', usage: usageFrom(event), cost_usd: event.total_cost_usd ?? null };
+  }
+  return null;
 }
 
 // The token from `claude setup-token` is the only SheLLM setting the CLI may see.
@@ -78,14 +114,22 @@ async function chat({ prompt, system, response_format, model }) {
 }
 
 async function* chatStream({ prompt, system, response_format, model, signal }) {
-  // Without --output-format json, tokens emit incrementally
   const args = buildStreamArgs({ prompt, system, response_format, model });
+  let pending = '';
 
   for await (const event of executeStream('claude', args, { env: CLAUDE_ENV, signal })) {
-    if (event.type === 'chunk') {
-      yield { type: 'delta', content: event.data };
+    if (event.type !== 'chunk') continue;
+    pending += event.data;
+    const lines = pending.split('\n');
+    pending = lines.pop();
+    for (const line of lines) {
+      const parsed = parseStreamLine(line);
+      if (parsed) yield parsed;
     }
   }
+
+  const last = parseStreamLine(pending);
+  if (last) yield last;
   yield { type: 'done' };
 }
 
@@ -98,4 +142,5 @@ module.exports = {
   buildArgs,
   buildStreamArgs,
   parseOutput,
+  parseStreamLine,
 };

@@ -2,6 +2,19 @@ const { describe, it, mock, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 
+function claudeStreamLines(...texts) {
+  const deltas = texts.map((text) => JSON.stringify({
+    type: 'stream_event',
+    event: { type: 'content_block_delta', delta: { type: 'text_delta', text } },
+  }));
+  const result = JSON.stringify({
+    type: 'result',
+    total_cost_usd: 0.001,
+    usage: { input_tokens: 10, output_tokens: 7 },
+  });
+  return [...deltas, result].map((line) => `${line}\n`);
+}
+
 describe('/v1/messages streaming', () => {
   let request;
   let app;
@@ -17,9 +30,8 @@ describe('/v1/messages streaming', () => {
           stderr: '',
           duration_ms: 10,
         })),
-        executeStream: mock.fn(async function* (cmd, args, { signal: _signal } = {}) {
-          yield { type: 'chunk', data: 'Hello' };
-          yield { type: 'chunk', data: ' world' };
+        executeStream: mock.fn(async function* () {
+          for (const line of claudeStreamLines('Hello', ' world')) yield { type: 'chunk', data: line };
           yield { type: 'done', stderr: '' };
         }),
         stripNonPrintable: (t) => t,
