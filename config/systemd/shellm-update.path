@@ -1,0 +1,30 @@
+# Watches for the file the dashboard writes when someone presses "update".
+# Installed by scripts/setup/vps.sh but NOT enabled by it: this is the trigger for a root unit,
+# and turning it on is a decision the operator makes, not one a provisioning script makes for
+# them. See docs/adr/0003-release-and-update-cycle.md.
+#
+#   sudo systemctl enable --now shellm-update.path
+
+[Unit]
+Description=Watch for a SheLLM update request
+Documentation=https://github.com/rodacato/SheLLM/blob/master/docs/adr/0003-release-and-update-cycle.md
+# /run/shellm is created by tmpfiles.d. Without this ordering the unit can start before the
+# directory exists and has to fall back to watching /run itself.
+After=systemd-tmpfiles-setup.service
+
+[Path]
+# PathExists=, not PathChanged=, and that is the whole reliability argument:
+#
+# PathExists= is level-triggered. A request written while an update is already running is not
+# lost — systemd re-evaluates when shellm-update.service deactivates, and starts it again. The
+# writer is the dashboard, inside a confined service, with no way to know the updater is busy,
+# so silently dropping a request is the worse failure. PathChanged= is edge-triggered and drops
+# exactly that one.
+#
+# The price is that a request left on disk re-triggers forever, which is why the runner deletes
+# it before it does any work, and why the service carries a start rate limit.
+PathExists=/run/shellm/update-request.json
+Unit=shellm-update.service
+
+[Install]
+WantedBy=multi-user.target

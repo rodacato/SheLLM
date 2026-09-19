@@ -1,0 +1,35 @@
+# The privileged half of the dashboard's update button. Started by shellm-update.path.
+# Nothing enables this directly; enabling the .path unit is what turns the feature on.
+
+[Unit]
+Description=Apply a SheLLM update requested from the dashboard
+Documentation=https://github.com/rodacato/SheLLM/blob/master/docs/adr/0003-release-and-update-cycle.md
+# Deliberately NO After= or Requires=shellm.service. This unit restarts that one, and
+# `systemctl restart` waits for the job to finish — an ordering dependency on the unit being
+# restarted is how that turns into a deadlock. Without one, the restart job is independent and
+# returns.
+#
+# A request the runner somehow fails to delete would re-trigger without end. The runner deletes
+# it first, and this is the net under that: a loop hits the limiter instead of the box.
+StartLimitIntervalSec=600
+StartLimitBurst=5
+
+[Service]
+Type=oneshot
+# Root-owned, and outside /home/shellmer/shellm on purpose: the service user must not be able to
+# rewrite what a root unit executes. What the runner then calls — `shellm update` — does live in
+# the checkout, which is the concession ADR-0003 records and argues.
+ExecStart=/usr/local/lib/shellm/shellm-update-runner.sh
+
+# A oneshot inherits DefaultTimeoutStartUSec, which is 90 s on a stock box. An update with a
+# cold npm cache or a slow registry passes that easily, and the timeout is a SIGTERM in the
+# middle of the sequence — plausibly between the checkout and the restart, which leaves new code
+# on disk and the old process serving it. That is the exact state this whole cycle exists to
+# avoid, so the timeout is set explicitly and generously rather than left to the default.
+TimeoutStartSec=900
+
+# The runner looks `shellm` up on PATH, so PATH must contain only root-owned directories.
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=NO_COLOR=1
+StandardOutput=journal
+StandardError=journal

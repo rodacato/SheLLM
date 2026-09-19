@@ -15,8 +15,12 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 echo "==> systemd and logrotate"
+systemctl disable --now shellm-update.path 2>/dev/null || true
 systemctl disable --now shellm 2>/dev/null || true
 rm -f /etc/systemd/system/shellm.service /etc/logrotate.d/shellm
+rm -f /etc/systemd/system/shellm-update.path /etc/systemd/system/shellm-update.service
+rm -f /etc/tmpfiles.d/shellm.conf
+rm -rf /usr/local/lib/shellm /run/shellm
 systemctl daemon-reload
 
 echo "==> shellm command"
@@ -27,6 +31,7 @@ if [[ "${PURGE}" == true ]]; then
   pkill -u "${SERVICE_USER}" 2>/dev/null || true
   userdel -r "${SERVICE_USER}"
   echo "  removed ${SERVICE_HOME}: repository, config, database, logs and Claude credentials"
+  echo "  kept /var/backups/shellm — delete it yourself if you meant the snapshots too"
 else
   cat <<EOF
 

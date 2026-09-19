@@ -140,10 +140,13 @@ the split this decision needs:
 ```
 shellm-update.path       (root)   watches /run/shellm/update-request.json
 └─ shellm-update.service (root, Type=oneshot)
-   └─ validate the requested tag, snapshot the database with SQLite's .backup
-   └─ shellm update
-      ├─ exec()        drops to shellmer: git fetch, checkout, npm ci, migrations
-      └─ execAsRoot()  stays root: cp the unit, daemon-reload, restart, restart on rollback
+   └─ shellm-update-runner.sh     installed to /usr/local/lib/shellm, outside the checkout
+      └─ delete the request, validate the tag, resolve it to a commit id against the
+         literal repository URL, snapshot the database with SQLite's .backup
+      └─ shellm update            SHELLM_REF=<commit id>
+         ├─ exec()        drops to shellmer: git fetch, checkout, npm ci, migrations
+         └─ execAsRoot()  stays root: cp the unit, daemon-reload, restart, restart on rollback
+      └─ confirm HEAD is the id that was resolved, and write update-status.json
 ```
 
 `src/cli/update.js` branches on `getuid()`: `exec` shells down to `shellmer` when it is root,
@@ -161,6 +164,15 @@ have to call back into the CLI to finish. That is a circular dependency. Reimple
 sequence in a root-owned script avoids it, but duplicates logic the CLI already has, starting
 with "did the unit change between these two commits"; two copies of that will diverge.
 
+**There is a root-owned script, and rejecting one was never the claim.** What was rejected is a
+root-owned script that *replaces* the update sequence. `shellm-update-runner.sh` is a wrapper
+around it: everything it does — deleting the request, validating the tag, resolving it to a
+commit id, snapshotting the database, reporting the outcome — is work the CLI does not do and
+should not, because none of it belongs in a command an operator runs over SSH. It never decides
+whether the unit changed, whether the lockfile moved, or when to roll back. Those stay in one
+place. The line to hold on any future edit is that the runner may add checks around the sequence
+and may not start performing it.
+
 **What this concedes, and it should be read before it is relied on.** The root unit executes
 `src/cli/update.js` from a checkout that `shellmer` owns. That is the same shape as the
 `core.hooksPath` problem that ruled out running `git` as root in that tree — a privileged process
@@ -177,10 +189,12 @@ CLI entrypoints on the unit's `PATH`, and this updater. If it stops holding — 
 endpoint ADR-0002 anticipates is the way that happens — all three need revisiting together, not
 one at a time.
 
-The alternative that does not concede it is a root-owned script that never executes anything from
-the checkout, reimplementing the sequence and calling `git` and `npm` through `runuser`. It costs
-a duplicate of the update logic, permanently. That trade is worth reopening the day the premise
-weakens, and not before.
+The alternative that does not concede it is a root-owned script that goes further than the wrapper
+above and never executes anything from the checkout at all — reimplementing the sequence and
+calling `git` and `npm` through `runuser`. It costs a duplicate of the update logic, permanently.
+That trade is worth reopening the day the premise weakens, and not before. The wrapper narrows the
+concession without removing it: the runner itself is root-owned and outside the checkout, so what
+the unit starts cannot be rewritten by `shellmer`; what that program then calls still can.
 
 A `sudoers` entry for the restart was the first design and was dropped for a different reason: it
 hands `shellmer` a standing capability any process of that user can invoke, which contradicts
@@ -237,24 +251,75 @@ Two details that make the difference between this working and only appearing to:
   single clean answer. When something does not add up the update fails, the same direction of
   failure as the `-` on `ReadWritePaths`.
 
-**The root branch of the CLI has never run.** `shellm update` has only ever been invoked from a
-terminal as `shellmer`, where `getuid() !== 0` and every command runs directly. Choosing it as the
-updater means the `isRoot` path — `sudo -u shellmer` for the unprivileged half, direct execution
-for the privileged one — goes to production having never executed. It should be exercised on the
-host before a button can trigger it, not after.
+**The root branch of the CLI had never run, and now has.** `shellm update` had only ever been
+invoked from a terminal as `shellmer`, where `getuid() !== 0` and every command runs directly.
+Choosing it as the updater meant the `isRoot` path — `sudo -u shellmer` for the unprivileged half,
+direct execution for the privileged one — would reach production having never executed, so it was
+exercised on the host first: `sudo shellm update` moved it from v1.1.0 to v1.1.1 in 3.8 s,
+including the privileged restart and the health check.
 
-One thing to check when it is: whether `sudo -u shellmer` gives `npm` the right `HOME`. `sudo`
-resets it to the target user only when sudoers says so (`always_set_home`, or `-H`), and
-otherwise `npm` writes to `/root/.npm` while running as `shellmer` — which fails in a way that
-reads like a permissions problem rather than a configuration one. It is the same trap the
-original root-owned-script design had with `runuser -u` versus `runuser -l`, arriving through a
-different door.
+That run also answered the question this section used to leave open, which was whether
+`sudo -u shellmer` gives `npm` the right `HOME` — `sudo` resets it to the target user only when
+sudoers says so (`always_set_home`, or `-H`), and otherwise `npm` writes to `/root/.npm` while
+running as `shellmer`, failing in a way that reads like a permissions problem rather than a
+configuration one. It was expected to stay untested, because the release was thought not to touch
+the lockfile. `npm version` bumps `package-lock.json`, so `npm ci` ran, and it worked. On that box
+the trap is not armed. It is the same trap the original root-owned-script design had with
+`runuser -u` versus `runuser -l`, arriving through a different door, and it is a property of
+sudoers rather than of this repository — a host configured differently can still hit it.
 
-Both units and the `tmpfiles.d` entry ship in this repository beside `shellm.service` and are
-installed by `vps.sh`. None of them contains anything specific to one machine, and a self-hosted
-install that had to reinvent the privileged wiring would either go without the feature or
-improvise something weaker. What stays with the operator is the decision to enable them, the
+Two things the run did not exercise, and neither can be forced from a terminal: reinstalling
+`shellm.service` and reloading systemd, which only happens when the unit changes between two
+releases, and the rollback, which only happens when the health check fails. The release that adds
+the units below is itself the first case.
+
+Both units, the runner and the `tmpfiles.d` entry ship in this repository beside `shellm.service`
+and are installed by `vps.sh`. None of them contains anything specific to one machine, and a
+self-hosted install that had to reinvent the privileged wiring would either go without the feature
+or improvise something weaker. What stays with the operator is the decision to enable them, the
 webhook URL, and their own backup schedule.
+
+`vps.sh` installs the units but does **not** enable them. Enabling the trigger is what arms a root
+unit that the dashboard can reach, and a provisioning script should not make that choice on an
+operator's behalf — least of all one who never read this document. `sudo shellm update` over SSH
+works without it. Whether the trigger is armed is readable from inside the confined service
+(`systemctl is-active` answers there), so the dashboard can say the updater is not enabled instead
+of offering a button that silently does nothing.
+
+**Four properties of the units decide whether this works or only appears to.** Each was found on
+a host rather than reasoned out, and each fails quietly:
+
+- **`/run` is read-only inside the service's namespace, and granting it back is conditional.**
+  `ProtectSystem=strict` mounts the whole hierarchy read-only; `ReadWritePaths=-/run/shellm` is the
+  exception, and the leading `-` skips it while the directory does not exist. The namespace is
+  built when the service starts. So installing the `tmpfiles.d` entry on a host where
+  `shellm.service` is already running leaves that service still unable to write there — the button
+  writes nothing, reports no useful error, and reads as a dashboard bug. At boot the ordering is
+  fine, because `systemd-tmpfiles-setup` runs before the services; it is the **upgrade** path that
+  needs a restart after the directory first appears, and that is the path every existing install
+  takes. `vps.sh` does that restart, guarded so it does not start a host that was deliberately
+  stopped.
+- **`PathExists=` is level-triggered, and that is the reason to keep it.** A request written while
+  an update is running is not lost: systemd re-evaluates when the service deactivates. The writer
+  has no way to know the updater is busy, so dropping that request — which is what the
+  edge-triggered `PathChanged=` does — is the worse failure. The cost is that a request left on
+  disk re-triggers without end, so **the runner deletes it before it does any work**. Deleting it
+  at the end would loop forever on any crash before that line. `StartLimitIntervalSec=` and
+  `StartLimitBurst=` on the service are the net under that rule.
+- **A `Type=oneshot` inherits `DefaultTimeoutStartUSec`, which is 90 seconds.** The measured run
+  took 3.8 s with a warm npm cache; a cold cache or a slow registry passes 90 s easily, and the
+  timeout arrives as a `SIGTERM` in the middle of the sequence — plausibly between the checkout and
+  the restart, which is exactly the state this cycle exists to prevent: new code on disk, old
+  process serving it. `TimeoutStartSec=` is set explicitly.
+- **The updater must not be ordered against the service it restarts.** `systemctl restart` waits
+  for its job; an `After=` or `Requires=shellm.service` on the updater invites a deadlock on
+  itself. Without one the restart job is independent and returns. There is no risk in the other
+  direction — the two units live in separate cgroups under `system.slice`, and `KillMode` reaches
+  only its own.
+
+`update-status.json` is written by root into a directory that belongs to `shellmer`, so its mode
+is set explicitly (`0640 shellmer:shellmer`) rather than inherited: a status file the confined
+service cannot read is a rollback nobody sees.
 
 What makes this safe is not the mechanism but step 2: the updater deploys a published tag from
 the remote, never the working tree. Code that a prompt injection wrote to `src/` is **discarded**

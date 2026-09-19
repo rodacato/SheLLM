@@ -90,6 +90,32 @@ cp "${APP_DIR}/config/logrotate.conf" /etc/logrotate.d/shellm
 systemctl daemon-reload
 systemctl enable shellm
 
+echo "==> Update trigger"
+# The units are installed but not enabled: they are how the dashboard reaches a root process,
+# and that is the operator's decision to make. The runner goes outside the checkout, where
+# shellmer cannot rewrite what a root unit executes.
+cp "${APP_DIR}/config/systemd/shellm-update.service" /etc/systemd/system/shellm-update.service
+cp "${APP_DIR}/config/systemd/shellm-update.path" /etc/systemd/system/shellm-update.path
+install -D -m 0755 -o root -g root \
+  "${APP_DIR}/scripts/setup/shellm-update-runner.sh" /usr/local/lib/shellm/shellm-update-runner.sh
+cp "${APP_DIR}/config/tmpfiles.d/shellm.conf" /etc/tmpfiles.d/shellm.conf
+systemctl daemon-reload
+
+# ProtectSystem=strict mounts the whole of /run read-only inside the service's namespace, and
+# ReadWritePaths=-/run/shellm is skipped while the directory does not exist. The namespace is
+# built when the service starts — so a service that was already running when /run/shellm first
+# appeared still cannot write there, and the update request fails silently rather than loudly.
+# At boot this never happens: systemd-tmpfiles-setup runs before the services. The upgrade path
+# is the one that needs the restart, and it is the path every existing install takes.
+RUNDIR_EXISTED=true
+[[ -d /run/shellm ]] || RUNDIR_EXISTED=false
+systemd-tmpfiles --create /etc/tmpfiles.d/shellm.conf
+if [[ "${RUNDIR_EXISTED}" == false ]] && systemctl is-active --quiet shellm; then
+  echo "  /run/shellm is new — restarting shellm so its sandbox includes it"
+  systemctl restart shellm
+fi
+echo "  installed; enable it with: systemctl enable --now shellm-update.path"
+
 cat <<EOF
 
 SheLLM is installed but not started. Next:
@@ -101,4 +127,11 @@ SheLLM is installed but not started. Next:
   3. sudo -iu ${SERVICE_USER} shellm doctor --live
 
 SheLLM listens on 127.0.0.1:6100. Expose it through your own tunnel or reverse proxy.
+
+Updating from the dashboard is off until you turn it on:
+
+  sudo systemctl enable --now shellm-update.path
+
+That lets the dashboard ask a root unit to run \`shellm update\`. Without it the button reports
+that the updater is not enabled, and \`sudo shellm update\` over SSH keeps working either way.
 EOF
