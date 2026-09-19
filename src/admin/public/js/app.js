@@ -99,8 +99,8 @@ function app() {
       this.sidebarOpen = false;
       location.hash = pageId;
     },
-    openLogsFiltered(status) {
-      Alpine.store('nav').pendingLogFilter = String(status);
+    openLogsFiltered(filter) {
+      Alpine.store('nav').pendingLogFilter = typeof filter === 'object' ? filter : { status: String(filter) };
       this.navigate('logs');
     },
     formatUptime,

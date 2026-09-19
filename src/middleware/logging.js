@@ -47,6 +47,9 @@ function requestLogger(req, res, next) {
       insertRequestLog({
         request_id: req.requestId || null,
         client_name: req.clientName || null,
+        method: req.method,
+        path: req.path || req.url.split('?')[0],
+        error_code: res.locals.error_code || null,
         provider: res.locals.provider || null,
         model: res.locals.model || null,
         status: res.statusCode,

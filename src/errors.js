@@ -44,7 +44,13 @@ function fromCatchable(err, provider) {
   return cliFailed(provider, err.stderr || err.message || 'Unknown error');
 }
 
+// The request log needs the code the caller actually received, and every sender passes here.
+function recordErrorCode(res, err) {
+  if (res.locals) res.locals.error_code = err.code || 'internal_error';
+}
+
 function sendError(res, err, requestId) {
+  recordErrorCode(res, err);
   const body = {
     error: err.code || 'internal_error',
     message: err.message || 'Internal server error',
@@ -67,6 +73,7 @@ const CODE_TO_TYPE = {
 };
 
 function sendOpenAIError(res, err) {
+  recordErrorCode(res, err);
   const type = CODE_TO_TYPE[err.code] || 'server_error';
   if (err.retry_after) res.set('Retry-After', String(err.retry_after));
   const body = {
@@ -85,6 +92,7 @@ const CODE_TO_ANTHROPIC_TYPE = {
 };
 
 function sendAnthropicError(res, err) {
+  recordErrorCode(res, err);
   const type = CODE_TO_ANTHROPIC_TYPE[err.code] || 'api_error';
   if (err.retry_after) res.set('Retry-After', String(err.retry_after));
   const body = {
