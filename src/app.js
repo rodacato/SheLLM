@@ -7,6 +7,7 @@ const { requestLogger } = require('./middleware/logging');
 const { requestId } = require('./middleware/request-id');
 const { createAuthMiddleware } = require('./middleware/auth');
 const { createAdminAuth } = require('./middleware/admin-auth');
+const adminLoginRouter = require('./admin/login');
 const adminKeysRouter = require('./admin/keys');
 const adminLogsRouter = require('./admin/logs');
 const adminStatsRouter = require('./admin/stats');
@@ -22,8 +23,9 @@ app.use(express.json({ limit: '256kb' }));
 app.use(requestId);
 app.use(requestLogger);
 
-// Validate Content-Type on POST/PATCH requests with body
+// Validate Content-Type on POST/PATCH requests with body. The login form posts urlencoded.
 app.use((req, res, next) => {
+  if (req.path.startsWith('/admin/login') || req.path.startsWith('/admin/logout')) return next();
   if ((req.method === 'POST' || req.method === 'PATCH') && req.headers['content-length'] > 0 && !req.is('json')) {
     return sendError(res, invalidRequest('Content-Type must be application/json'), req.requestId);
   }
@@ -63,6 +65,7 @@ app.post('/v1/chat/completions', auth, chatCompletionsHandler);
 app.post('/v1/messages', auth, messagesHandler);
 
 // --- Admin routes (Basic auth via SHELLM_ADMIN_PASSWORD) ---
+app.use('/admin', adminLoginRouter);
 app.use('/admin', adminAuth, adminKeysRouter);
 app.use('/admin', adminAuth, adminLogsRouter);
 app.use('/admin', adminAuth, adminStatsRouter);
