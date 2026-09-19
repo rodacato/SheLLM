@@ -63,6 +63,8 @@ module.exports = [
         AbortController: 'readonly',
         URLSearchParams: 'readonly',
         EventSource: 'readonly',
+        sessionStorage: 'readonly',
+        performance: 'readonly',
         // Shared app globals (loaded via separate <script> tags)
         API_BASE: 'readonly',
         HEALTH_URL: 'readonly',
