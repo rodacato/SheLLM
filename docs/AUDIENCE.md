@@ -24,6 +24,11 @@ What he needs from SheLLM, in the order he feels it:
   model starts; a warm process answers in about 1 s (measured 2026-09-16 on his laptop, not yet on
   the server).
 - **It never gets his accounts banned.** He would rather lose speed than a subscription.
+- **He can tell whether he can keep using it.** Before starting work, not after something breaks:
+  how much of each subscription he has burned and at what pace, without opening each provider's
+  site and doing the arithmetic in his head. Neither CLI reports remaining quota or a reset time,
+  so SheLLM derives consumption from what it observes and reports a limit only once a provider
+  has actually refused a request. A percentage remaining would be a guess presented as a fact.
 - **He can tell what happened** from the admin dashboard or one `curl`: which provider answered,
   how long it queued, why it failed.
 
