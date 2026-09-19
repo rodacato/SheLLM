@@ -49,7 +49,7 @@ source of truth, copy is never invented, and disagreements between design and co
   a tree into another doc.
 
 **Adding a provider:** `src/providers/<name>.js` following the contract in the architecture guide,
-registered in `src/routing/engines.js`, with a health check entry in `src/infra/health.js`, tests
+registered in `src/routing/engines.js`, exporting an `authProbe` that costs no quota, tests
 in `test/providers/`, and the CLI version it was tested against in `VERSIONS.md`. Export a
 `models` array of the names that map to a real CLI model — `/v1/models` lists exactly that.
 
