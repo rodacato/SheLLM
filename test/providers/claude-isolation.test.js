@@ -15,6 +15,8 @@ describe('claude isolation flags', () => {
       assert.ok(args.includes('--disable-slash-commands'), 'skills stay out of a served request');
       assert.ok(args.includes('--strict-mcp-config'), 'the server user\'s MCP servers stay out');
       assert.deepEqual(JSON.parse(flagValue(args, '--settings')), { disableAllHooks: true });
+      assert.equal(flagValue(args, '--tools'), '', 'ADR-0002: the CLI\'s own tools are off');
+      assert.equal(flagValue(args, '--permission-mode'), 'dontAsk');
     }
   });
 
