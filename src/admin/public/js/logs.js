@@ -9,6 +9,16 @@ function logsPage() {
     loading: true,
     stats: null,
 
+    applyPendingFilter() {
+      const pending = this.$root.pendingLogFilter;
+      if (!pending) return false;
+      this.filterStatus = pending;
+      this.offset = 0;
+      this.$root.pendingLogFilter = null;
+      this.fetchLogs();
+      return true;
+    },
+
     async fetchLogs() {
       this.loading = true;
       const params = new URLSearchParams();
