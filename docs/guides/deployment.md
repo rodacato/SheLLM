@@ -17,8 +17,9 @@ ssh root@your-server 'bash -s' < scripts/setup/vps.sh
 The script is safe to re-run. It creates the `shellmer` user, installs Node.js 24, installs Claude
 Code pinned to `CLAUDE_VERSION` and Codex pinned to `CODEX_VERSION` (see
 [`VERSIONS.md`](../../VERSIONS.md)), clones the repository to `/home/shellmer/shellm`, links the
-`shellm` command, and installs the systemd unit and the logrotate config. It does **not** start
-the service and does **not** configure a tunnel.
+`shellm` command, and installs the systemd unit, the logrotate config and the update trigger. It
+does **not** start the service, does **not** enable the update trigger, and does **not** configure
+a tunnel.
 
 Both CLIs are installed as `shellmer`, not system-wide: Claude Code under `~/.local/bin` and Codex
 under `~/.npm-global/bin`, the two paths the systemd unit puts on `PATH`.
@@ -130,10 +131,41 @@ To move to a specific release, or back to an earlier one:
 SHELLM_REF=v1.0.0 sudo shellm update
 ```
 
+### Updating from the dashboard (off by default)
+
+`vps.sh` installs a trigger that lets the dashboard ask for an update, and leaves it disabled.
+Turning it on arms a root unit that the dashboard can reach, so it is your decision, not the
+provisioning script's:
+
+```bash
+sudo systemctl enable --now shellm-update.path
+sudo systemctl is-active shellm-update.path    # what the dashboard reports
+```
+
+What it installs, and what each piece is for:
+
+| | |
+|---|---|
+| `shellm-update.path` | Watches `/run/shellm/update-request.json`, which the dashboard writes |
+| `shellm-update.service` | Runs the updater once, as root |
+| `/usr/local/lib/shellm/shellm-update-runner.sh` | Validates the request, resolves the tag to a commit id against the repository, snapshots the database, then calls `shellm update` |
+| `/etc/tmpfiles.d/shellm.conf` | Creates `/run/shellm`, owned by `shellmer` |
+
+The runner refuses anything that is not a published release tag, and it checks out a **commit id**
+it resolved itself rather than the name it was given, so a rewritten local tag cannot redirect it.
+Before updating it writes a snapshot to `/var/backups/shellm/` with SQLite's online backup, keeping
+the last five. The outcome lands in `/home/shellmer/.shellm/update-status.json` — durable on
+purpose, because you read it *after* the restart, which is when a rollback is what you want to
+know about.
+
+Disable it again with `sudo systemctl disable --now shellm-update.path`. `sudo shellm update` over
+SSH works either way, and nothing else in SheLLM depends on the trigger.
+
 **Re-run `scripts/setup/vps.sh` instead when** you are installing for the first time, changing
 `CLAUDE_VERSION` or `CODEX_VERSION`, or repairing an install — it is idempotent and rebuilds
-everything it manages, including the unit. It does **not** restart the service or verify
-anything, so follow it with `sudo systemctl restart shellm`.
+everything it manages, including the unit. It verifies nothing, and the only time it restarts the
+service is the first time it creates `/run/shellm` (see the troubleshooting table for why it has
+to), so follow it with `sudo systemctl restart shellm`.
 
 The checkout is left detached at a tag either way, so `git pull` inside it does nothing useful:
 the ref is chosen by the tooling, not by a tracking branch. A repository with no tags at all
@@ -183,6 +215,9 @@ ssh root@your-server 'bash -s -- --purge' < scripts/setup/vps-uninstall.sh # rem
 | The service starts and exits immediately | `journalctl -u shellm -n 50`. A missing config file is the common cause: run `shellm init` as `shellmer` |
 | `Failed to set up mount namespacing` and the service will not start | A path the unit grants does not exist. The unit tolerates `/run/shellm` being absent; a hand-edited `ReadWritePaths` naming something else does not |
 | `EROFS` or "read-only file system" in the logs | Something tried to write inside the checkout, which the unit mounts read-only on purpose. State belongs under `/home/shellmer`, not next to the code |
+| The dashboard's update button does nothing and logs a read-only error for `/run/shellm` | `ProtectSystem=strict` mounts all of `/run` read-only inside the service's namespace, and the exception for `/run/shellm` is skipped while that directory does not exist. The namespace is built at start, so a service that was already running when the directory first appeared cannot write there. `sudo systemctl restart shellm` |
+| The update button reports that the updater is not enabled | `sudo systemctl enable --now shellm-update.path`. `sudo shellm update` works regardless |
+| `shellm-update.service` keeps starting over and over | A request file that was never deleted. `PathExists=` is level-triggered on purpose, so it re-fires while the file is there: `sudo rm /run/shellm/update-request.json`, then `journalctl -u shellm-update -n 100` for why the runner did not remove it itself |
 | Works locally but not through the tunnel | The tunnel points at the wrong port, or `HOST` is not loopback |
 
 When the subscription's own quota runs out, the CLI says so and the error surfaces as
