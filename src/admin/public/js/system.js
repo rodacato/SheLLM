@@ -22,7 +22,7 @@ function systemPage() {
     // Asked of GitHub by the browser, not the server: the service should not need outbound
     // network to report its own state, and an unauthenticated read is rate-limited per viewer.
     async fetchLatestRelease() {
-      const repo = this.$root.health?.build?.repository;
+      const repo = this.health?.build?.repository;
       if (!repo) return;
       try {
         const res = await fetch(`https://api.github.com/repos/${repo}/releases/latest`);
@@ -39,7 +39,7 @@ function systemPage() {
     },
 
     get runningVersion() {
-      return this.$root.health?.build?.version ?? null;
+      return this.health?.build?.version ?? null;
     },
 
     get updateAvailable() {

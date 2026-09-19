@@ -39,7 +39,7 @@ function overviewPage() {
     },
 
     queueSaturation() {
-      const q = this.$root.health?.queue;
+      const q = this.health?.queue;
       if (!q || !q.max_concurrent) return 0;
       return Math.min(100, Math.round((q.active / q.max_concurrent) * 100));
     },
