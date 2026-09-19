@@ -28,11 +28,11 @@ post:
           schema:
             $ref: "../schemas/ChatCompletionResponse.yaml"
     '400':
-      $ref: "../responses/BadRequest.yaml"
+      $ref: "../responses/BadRequestOpenAI.yaml"
     '401':
-      $ref: "../responses/Unauthorized.yaml"
+      $ref: "../responses/UnauthorizedOpenAI.yaml"
     '429':
-      $ref: "../responses/RateLimited.yaml"
+      $ref: "../responses/RateLimitedOpenAI.yaml"
     '502':
       description: Provider CLI failed
       content:
