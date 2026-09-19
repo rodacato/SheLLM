@@ -92,6 +92,7 @@ async function* chatStream({ prompt, system, response_format, model, signal }) {
 module.exports = {
   name: 'claude',
   models,
+  env: CLAUDE_ENV,
   chat,
   chatStream,
   buildArgs,
