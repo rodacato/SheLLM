@@ -80,6 +80,23 @@ describe('installable dashboard', () => {
     assert.notStrictEqual(byFilename.status, 200);
   });
 
+  // An installed app lands here every time the 12-hour session ends. Without the manifest link
+  // and the theme colour it renders as a different application inside the same window.
+  it('keeps the sign-in page inside the installed app', async () => {
+    const res = await request(app).get('/admin/login');
+    assert.strictEqual(res.status, 200);
+    assert.match(res.text, /<link rel="manifest" href="\/admin\/manifest\.webmanifest">/);
+    assert.match(res.text, /<meta name="theme-color"/);
+    assert.match(res.text, /viewport-fit=cover/);
+
+    for (const layer of ['crt', 'crt-lines']) {
+      const tag = new RegExp(`<div class="${layer}"[^>]*>`).exec(res.text);
+      assert.ok(tag, `the ${layer} layer is gone`);
+      assert.match(tag[0], /aria-hidden="true"/, `${layer} is decoration and must stay out of the tree`);
+    }
+    assert.match(res.text, /prefers-reduced-motion/);
+  });
+
   it('every icon the manifest promises is actually served', async () => {
     const manifest = JSON.parse((await request(app).get('/admin/manifest.webmanifest')).text);
     for (const icon of manifest.icons) {
