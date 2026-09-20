@@ -9,7 +9,7 @@
 > environment, so every finding below is derived from the source and the confidence is stated
 > where it is less than certain.
 
-Findings are numbered **P1–P13** so a board card can cite one. Severity is what an installed app
+Findings are numbered **P1–P14** so a board card can cite one. P14 was found on 2026-09-20, after the rest had been worked. Severity is what an installed app
 does wrong, not how hard it is to fix.
 
 ---
@@ -19,21 +19,29 @@ does wrong, not how hard it is to fix.
 | | Landed | Open |
 |---|---|---|
 | 🔴 | P1 · P2 *(documented, not fixed — that was the recommendation)* | — |
-| 🟠 | P3 *(partly)* · P4 | P3 *(residual)* · P5 |
+| 🟠 | P3 *(partly)* · P4 · **P5** · **P14** | P3 *(residual)* |
 | 🟡 | P6 · P7 · P9 · P8 *(resolved as "stays" — see below)* | — |
-| 🟢 | P10 · P12 · P13 | P11 |
+| 🟢 | P10 · P12 · P13 · **P11** *(closed as "not doing")* | — |
 
 Every commit green on `npm test` and `npm run lint`. What is left, and why:
 
 - **P3 residual.** The sign-in page now carries the manifest, the theme colour, the safe-area
-  insets and the app's own frame, so it no longer reads as a different application. Two things
-  survive: it is still outside `SHELL`, so offline it is the browser's error page inside a
-  windowed app, and it still declares its own nine palette aliases — which is **D20**, an open
-  design call, not an oversight.
-- **P5** needs a drawn asset, not a code change. A maskable icon is a different composition, not
-  a resize: the mark inside the middle 60% of the canvas on `surface-shell`.
-- **P11** is ~350 KB of PNG in the repo for a taller install dialog. Worth it if the exports are
-  going to be committed anyway, not worth it on its own.
+  insets, the app's own frame and — since the icon pass — the same four icon declarations the
+  dashboard makes. One thing survives: it is still outside `SHELL`, so offline it is the browser's
+  error page inside a windowed app. Its own nine palette aliases are **D20**, an open design call,
+  not an oversight.
+
+**Closed since, 2026-09-20:**
+
+- **P5 is drawn.** `icon-512-maskable.png` is its own artwork — the mark scaled into the centre
+  60% on `surface-shell`, every bbox corner measured at r=204 against the 205 a 512 canvas allows.
+  Source in `assets/logo/icon-maskable.svg`, and a test fails if the manifest ever points its
+  maskable entry at the plain icon again.
+- **P11 is decided: no.** ~350 KB of PNG in the repo to make the install dialog taller, for a tool
+  you install once. Closing it as *not doing* is worth more than leaving it open forever. The
+  design exports are not a substitute: a manifest screenshot claims to be the app, and those are
+  renders of the design of the app.
+- **P14 is new and is the reason this section exists** — see below.
 
 ### What this audit got wrong
 
@@ -84,6 +92,7 @@ undo them by accident.
 | **P11** | 🟢 | No `screenshots` in the manifest, so the install dialog is the minimal one |
 | **P12** | 🟢 | Nothing in the product ever says the dashboard can be installed |
 | **P13** | 🟢 | No `display_override` |
+| **P14** | 🟠 | Two different logos ship as the icon set, and which one you see depends on your browser |
 
 ---
 
@@ -169,6 +178,32 @@ roughly 20% bleed on every side; an icon drawn to its own edges loses its outer 
 
 **Fix:** a separate `icon-512-maskable.png` with the mark inside the middle 60% of the canvas on
 `--surface-shell`, and a third icon entry pointing at it.
+
+### P14 🟠 Two icon sets, and the browser picks
+
+Found on 2026-09-20 while checking whether the favicons were wired up at all. They were: the
+dashboard declared an SVG, a 32, a 16 and an apple-touch 180, all served, no 404s. They were also
+**two different pieces of artwork**, and nothing in the repo said so.
+
+`favicon.svg`, `icon-192.png` and `icon-512.png` are byte-identical to `assets/favicon/` — the
+flat mark on `#101417`. The three PNG favicons were an older render. Decoded rather than eyeballed:
+
+| | corner pixel | centre pixel | mark |
+|---|---|---|---|
+| `favicon-dark-180.png` | `#1a1e21` | `#151b1e` — a gradient | softened, `(10,76,90)` where the underscore should be `#03e3ff` |
+| `assets/favicon/favicon-180.png` | `#101417` | `#101417` — flat | `#03e3ff` exactly |
+
+At 16px the old render put cyan in the corner pixel, so the two sets do not even crop alike. A
+browser that prefers the SVG showed one logo; one that fell back to PNG showed the other. The 180
+also cost 41 KB against the canonical render's 1.5 KB at the same size.
+
+**Fixed:** all three replaced from `assets/favicon/`, under that source's own names, and a test
+compares them byte for byte so the next drift fails the suite instead of shipping. Two files that
+nothing referenced went with it — `icon-color.svg` and `logo-icon-color.png`, 40 KB.
+
+**What this says about the audit that missed it:** P5 read the manifest and stopped there. Nobody
+opened the PNGs, because they were declared correctly and served correctly — and being wired up
+is not the same as being right.
 
 ### P6 🟡 A dead session makes the whole worker install fail
 
