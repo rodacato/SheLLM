@@ -169,7 +169,7 @@ answers `inactive` for both — so the dashboard asks about the unit file as wel
 
 The runner refuses anything that is not a published release tag, and it checks out a **commit id**
 it resolved itself rather than the name it was given, so a rewritten local tag cannot redirect it.
-Before updating it writes a snapshot to `/var/backups/shellm/` with SQLite's online backup, keeping
+Before updating it writes a snapshot to `/var/lib/shellm/backups/` with SQLite's online backup, keeping
 the last five. The outcome lands in `/home/shellmer/.shellm/update-status.json` — durable on
 purpose, because you read it *after* the restart, which is when a rollback is what you want to
 know about.

@@ -30,13 +30,15 @@ if [[ "${PURGE}" == true ]]; then
   echo "==> Purging ${SERVICE_USER}"
   pkill -u "${SERVICE_USER}" 2>/dev/null || true
   userdel -r "${SERVICE_USER}"
+  rm -rf /var/lib/shellm
   echo "  removed ${SERVICE_HOME}: repository, config, database, logs and Claude credentials"
-  echo "  kept /var/backups/shellm — delete it yourself if you meant the snapshots too"
+  echo "  removed /var/lib/shellm: the snapshots the updater took before each update"
 else
   cat <<EOF
 
 Kept ${SERVICE_HOME}: repository, ~/.config/shellm/env, ~/.shellm (database and logs)
-and the Claude login. Re-run with --purge to delete the user and all of it.
+and the Claude login, plus /var/lib/shellm with the updater's database snapshots. Re-run
+with --purge to delete the user and all of it.
 EOF
 fi
 
