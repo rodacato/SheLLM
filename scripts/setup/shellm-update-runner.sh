@@ -22,6 +22,9 @@ SERVICE_USER="shellmer"
 APP_DIR="/home/${SERVICE_USER}/shellm"
 STATE_DIR="/home/${SERVICE_USER}/.shellm"
 REQUEST="/run/shellm/update-request.json"
+# Where the request is moved the moment it is read. Moving rather than deleting keeps the content
+# on disk for whoever has to work out why an update stopped, without leaving the trigger armed.
+CLAIMED="${REQUEST}.claimed"
 # Durable, not /run: the dashboard reads this *after* the restart, which is exactly when a
 # rollback is the thing you want to read about.
 STATUS="${STATE_DIR}/update-status.json"
@@ -46,10 +49,10 @@ json_string() {
   printf '"%s"' "${s}"
 }
 
-# Runs on every exit, including the failures, because a button that reports nothing when it fails
-# is worse than no button. Written 0640 shellmer:shellmer: root writes it, the confined service
-# reads it.
+# Written 0640 shellmer:shellmer — root writes it, the confined service reads it — through a
+# temporary file so a reader never sees half of one.
 write_status() {
+  local finished="$1"
   local tmp="${STATUS}.tmp"
   install -m 0640 -o "${SERVICE_USER}" -g "${SERVICE_USER}" /dev/null "${tmp}"
   cat > "${tmp}" <<EOF
@@ -59,12 +62,37 @@ write_status() {
   "commit": $(json_string "${resolved_sha}"),
   "detail": $(json_string "${detail}"),
   "started_at": $(json_string "${started_at}"),
-  "finished_at": $(json_string "$(date -u +%Y-%m-%dT%H:%M:%SZ)")
+  "finished_at": ${finished}
 }
 EOF
   mv -f "${tmp}" "${STATUS}"
 }
-trap write_status EXIT
+
+# Runs on every exit, including the failures, because a button that reports nothing when it fails
+# is worse than no button.
+on_exit() {
+  # Reaching the exit still marked "running" means `set -e` ended the script somewhere that did
+  # not go through fail(). Reporting it as running would be a lie with a timestamp on it.
+  if [[ ${state} == running ]]; then
+    state="failed"
+    detail="the updater stopped without reporting why — journalctl -u shellm-update -n 100"
+  fi
+  write_status "$(json_string "$(date -u +%Y-%m-%dT%H:%M:%SZ)")"
+}
+trap on_exit EXIT
+
+# An EXIT trap does not run when the shell is killed by an untrapped signal, and this unit has a
+# start timeout — so the one case most likely to leave the host half-updated is also the one that
+# would report nothing. Catching the signal turns it into an exit, which runs the trap above.
+on_signal() {
+  state="failed"
+  detail="terminated by SIG$1 — if this was the start timeout, the update may be half applied; check journalctl -u shellm-update"
+  echo "ERROR: ${detail}" >&2
+  exit $((128 + $2))
+}
+trap 'on_signal TERM 15' TERM
+trap 'on_signal INT 2' INT
+trap 'on_signal HUP 1' HUP
 
 fail() {
   state="failed"
@@ -75,19 +103,31 @@ fail() {
 
 as_service_user() { runuser -u "${SERVICE_USER}" -- "$@"; }
 
-# 1. Take the request and delete it BEFORE doing any work.
+# 1. Claim the request BEFORE doing any work, by moving it out of the watched name.
 #
 # PathExists= is level-triggered: while the file is there and this unit is not running, systemd
-# starts it again. Deleting the request at the end would still loop on any crash before that
-# line, and a loop is permanent. Deleting it first means a crashed update is one failure, not an
-# endless sequence of them.
+# starts it again. Clearing the request at the end would still loop on any crash before that
+# line, and that loop is permanent. Clearing it first means a crashed update is one failure
+# rather than an endless sequence of them.
+#
+# The consequence is deliberate and worth stating: a request is consumed even if the very next
+# step fails, and there is no retry. An update that re-fires by itself, as root, because
+# something went wrong is a worse thing to own than one that stops and says so. The status file
+# below is how it says so, and pressing the button again is a person's decision.
+#
+# It is moved rather than deleted so the content survives for whoever has to diagnose a run that
+# never reported — the one case the traps above cannot cover is SIGKILL, which cannot be caught.
+# The next request overwrites it.
 if [[ ! -f ${REQUEST} ]]; then
-  state="skipped"
-  detail="no request file — the trigger fired for something that was already handled"
+  # Report nothing and overwrite nothing. This unit can be started for a request another run
+  # already claimed, and replacing the previous outcome with "there was nothing to do" would
+  # erase exactly the record someone is about to go looking for.
+  echo "==> No request to claim — nothing to do"
+  trap - EXIT
   exit 0
 fi
-request="$(cat "${REQUEST}")"
-rm -f "${REQUEST}"
+mv -f "${REQUEST}" "${CLAIMED}"
+request="$(cat "${CLAIMED}")"
 
 # 2. Parse and validate in one step. The pattern is the validation: nothing that is not shaped
 # like a release tag can come out of it, whatever the file contains.
@@ -100,6 +140,15 @@ requested_ref="$(
 [[ -n ${requested_ref} ]] || fail "the request names no release tag of the form vX.Y.Z"
 
 echo "==> Requested ${requested_ref}"
+
+# Publish "running" before doing anything, with no finished_at. SIGKILL cannot be caught, so the
+# traps above cover every way this can die except the one systemd uses last. A record that says
+# `running` with a started_at and no end is what distinguishes "the updater was killed" from "the
+# updater never started" — and a reader that finds one older than the unit's start timeout should
+# treat it as failed.
+state="running"
+detail="applying ${requested_ref}"
+write_status null
 
 # 3. Resolve the tag to a commit id against the real repository, before anything is checked out.
 #

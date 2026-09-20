@@ -5,9 +5,22 @@ const { existsSync } = require('node:fs');
 const path = require('node:path');
 const { PROJECT_ROOT } = require('./paths');
 
-const SERVICE_FILE = path.join(PROJECT_ROOT, 'shellm.service');
-const SYSTEM_SERVICE = '/etc/systemd/system/shellm.service';
 const HEALTH_URL = 'http://127.0.0.1:6100/health';
+
+// Everything this repository installs outside the checkout. `scripts/setup/vps.sh` puts the same
+// set in place on a first provision, and an update has to keep them in step: a host that upgrades
+// the documented way would otherwise get the code for a feature without the wiring that makes it
+// work. The symptom of that is a button that does nothing — which is also what "installed but not
+// enabled" looks like, so the two would be indistinguishable. Enabling stays the operator's call;
+// only the files are synced here.
+const SYSTEM_FILES = [
+  { src: 'shellm.service', dest: '/etc/systemd/system/shellm.service' },
+  { src: 'config/systemd/shellm-update.service', dest: '/etc/systemd/system/shellm-update.service' },
+  { src: 'config/systemd/shellm-update.path', dest: '/etc/systemd/system/shellm-update.path' },
+  { src: 'config/tmpfiles.d/shellm.conf', dest: '/etc/tmpfiles.d/shellm.conf' },
+  { src: 'config/logrotate.conf', dest: '/etc/logrotate.d/shellm' },
+  { src: 'scripts/setup/shellm-update-runner.sh', dest: '/usr/local/lib/shellm/shellm-update-runner.sh', mode: '0755' },
+];
 
 function run() {
   const startTime = Date.now();
@@ -58,13 +71,22 @@ function run() {
     console.log('  skipped (redocly not available)');
   }
 
-  // 5. Update systemd service if changed
-  step('Checking systemd service');
-  const serviceChanged = exec(`git diff ${prevCommit} ${newCommit} --name-only`).includes('shellm.service');
-  if (serviceChanged && existsSync(SERVICE_FILE)) {
-    console.log('  shellm.service changed — updating...');
-    execAsRoot(`cp ${SERVICE_FILE} ${SYSTEM_SERVICE}`);
-    execAsRoot('systemctl daemon-reload');
+  // 5. Re-install any system file this release changed
+  step('Checking installed system files');
+  const touched = new Set(exec(`git diff ${prevCommit} ${newCommit} --name-only`).split('\n').map((l) => l.trim()));
+  const changed = SYSTEM_FILES.filter((f) => touched.has(f.src) && existsSync(path.join(PROJECT_ROOT, f.src)));
+  if (changed.length) {
+    for (const file of changed) {
+      console.log(`  ${file.src} changed — installing`);
+      execAsRoot(`install -D -m ${file.mode || '0644'} -o root -g root ${path.join(PROJECT_ROOT, file.src)} ${file.dest}`);
+    }
+    if (changed.some((f) => f.dest.startsWith('/etc/systemd/'))) execAsRoot('systemctl daemon-reload');
+    // A new tmpfiles entry has to be applied now, not at the next boot. The restart in step 6
+    // then rebuilds the service's mount namespace, which is the only way it gains write access
+    // to a runtime directory that did not exist when it started.
+    for (const file of changed.filter((f) => f.dest.startsWith('/etc/tmpfiles.d/'))) {
+      execAsRoot(`systemd-tmpfiles --create ${file.dest}`);
+    }
     console.log('  done');
   } else {
     console.log('  no changes');
@@ -129,4 +151,6 @@ function step(label) {
   console.log(`\n==> ${label}...`);
 }
 
-module.exports = { run };
+// SYSTEM_FILES is exported so a test can hold it against what vps.sh installs. The two drifting
+// apart is silent on the host that finds out.
+module.exports = { run, SYSTEM_FILES };

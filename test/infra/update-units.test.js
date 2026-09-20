@@ -146,11 +146,49 @@ describe('the runner', () => {
     return i;
   };
 
-  it('deletes the request before it does any work', () => {
+  it('claims the request before it does any work', () => {
     assert.ok(
-      at('rm -f "${REQUEST}"') < at('git ls-remote'),
-      'PathExists= is level-triggered: a request deleted at the end re-triggers forever on any '
+      at('mv -f "${REQUEST}" "${CLAIMED}"') < at('git ls-remote'),
+      'PathExists= is level-triggered: a request cleared at the end re-triggers forever on any '
       + 'failure before that line, and the loop is permanent',
+    );
+  });
+
+  it('keeps the claimed request instead of deleting it', () => {
+    assert.ok(
+      !/rm -f "\$\{REQUEST\}"/.test(RUNNER),
+      'SIGKILL cannot be caught, so a run that reports nothing leaves the moved file as the only '
+      + 'evidence of what was asked for',
+    );
+  });
+
+  it('reports "running" before it starts, with no end timestamp', () => {
+    assert.ok(
+      at('write_status null') < at('git ls-remote'),
+      'a status written only at the end says nothing about a run that was killed',
+    );
+    assert.ok(
+      at('state="running"') < at('write_status null'),
+      'the up-front record is what separates "killed" from "never started"',
+    );
+  });
+
+  it('turns the signals systemd sends into an exit that reports', () => {
+    for (const sig of ['TERM', 'INT', 'HUP']) {
+      assert.ok(
+        new RegExp(`trap '[^']*' ${sig}`).test(RUNNER),
+        `an untrapped SIG${sig} kills the shell without running the EXIT trap, and the start `
+        + 'timeout arrives as SIGTERM in the middle of the sequence',
+      );
+    }
+  });
+
+  it('writes no status when there was no request to claim', () => {
+    const skip = RUNNER.slice(at('! -f ${REQUEST}'), at('mv -f "${REQUEST}"'));
+    assert.ok(
+      /trap - EXIT/.test(skip),
+      'a spurious trigger would otherwise replace the previous outcome with "nothing to do", '
+      + 'erasing the record someone is about to look for',
     );
   });
 
@@ -182,10 +220,55 @@ describe('the runner', () => {
   });
 
   it('reports on every exit, including the failures', () => {
-    assert.ok(/trap write_status EXIT/.test(RUNNER), 'a button that says nothing when it fails is worse than none');
+    assert.ok(/trap on_exit EXIT/.test(RUNNER), 'a button that says nothing when it fails is worse than none');
     assert.ok(
       /install -m 0640 -o "\$\{SERVICE_USER\}" -g "\$\{SERVICE_USER\}"/.test(RUNNER),
       'root writes the status and the confined service reads it',
+    );
+  });
+});
+
+// `sudo shellm update` is the documented upgrade path, so it has to be able to deliver the wiring
+// of a feature it is itself shipping. If these two lists drift, a host that upgrades gets new code
+// and an old unit — and the symptom, a button that does nothing, is the same symptom as the
+// expected opt-in state.
+describe('the two installers agree on what lives outside the checkout', () => {
+  const { SYSTEM_FILES } = require('../../src/cli/update');
+
+  // Every destination vps.sh writes to under /etc or /usr, whichever command it used.
+  function destinationsInVps() {
+    const found = new Set();
+    for (const [, dest] of VPS.matchAll(/\s(\/(?:etc|usr)\/[\w./-]+)/g)) found.add(dest);
+    return found;
+  }
+
+  it('installs every system file an update would replace', () => {
+    const vps = destinationsInVps();
+    for (const { dest } of SYSTEM_FILES) {
+      assert.ok(vps.has(dest), `shellm update replaces ${dest}, but vps.sh never installs it`);
+    }
+  });
+
+  it('replaces on update every system file vps.sh installs', () => {
+    const managed = new Set(SYSTEM_FILES.map((f) => f.dest));
+    for (const dest of destinationsInVps()) {
+      assert.ok(
+        managed.has(dest),
+        `vps.sh installs ${dest} and shellm update never replaces it — a host that upgrades the `
+        + 'documented way keeps the old one',
+      );
+    }
+  });
+
+  it('applies a new tmpfiles entry during the update rather than at the next boot', () => {
+    const source = readFileSync(path.join(root, 'src/cli/update.js'), 'utf8');
+    assert.ok(
+      /systemd-tmpfiles --create/.test(source),
+      'the directory has to exist before the restart, which is what rebuilds the mount namespace',
+    );
+    assert.ok(
+      source.indexOf('systemd-tmpfiles --create') < source.indexOf("execAsRoot('systemctl restart shellm')"),
+      'creating it after the restart leaves the service unable to write there until the next one',
     );
   });
 });
