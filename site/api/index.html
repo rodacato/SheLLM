@@ -45,6 +45,14 @@
       /* ── Required badge ── */
       span[class*="required"] { color: #ffb4ab !important; }
 
+      /* ── Sidebar logo: Redoc gives x-logo no size of its own, so it grows to the sidebar's width ── */
+      .menu-content img {
+        max-height: 2rem !important;
+        width: auto !important;
+        /* Top margin clears the band .home is fixed into, below. */
+        margin: 2.75rem 0 1.25rem 1.25rem !important;
+      }
+
       /* ── Back to the landing page: Redoc owns the whole viewport, so this floats over it ── */
       .home { position: fixed; z-index: 100; top: 1rem; left: 1.25rem;
               font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; letter-spacing: 0.12em;
