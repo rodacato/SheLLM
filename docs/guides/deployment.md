@@ -96,6 +96,10 @@ Over HTTPS the dashboard installs as a PWA: open it on a phone and use the brows
 screen". It runs standalone, keeps the 12-hour session, and caches only its own shell — every
 request for keys, logs or provider status still goes to the server.
 
+**The install is a launcher, not an offline app.** Tailwind, Alpine and Chart.js come from a CDN,
+so the page needs the network to assemble itself at all — and every number on every screen comes
+from the gateway, so there would be nothing to show offline anyway.
+
 ## Operating it
 
 ```bash
