@@ -1,5 +1,7 @@
 'use strict';
 
+const { toInstant } = require('../lib/time');
+
 const LOGGED = "created_at >= datetime('now', ?)";
 
 function db() {
@@ -186,10 +188,12 @@ function limitState(interval) {
   return { since: row.created_at, provider: row.provider, status: row.api_error_status || row.status };
 }
 
-function timeline(interval, bucketExpr) {
-  return db().prepare(`
+// Hourly, always. The bucket leaves here as an instant: the naive string it used to return was
+// UTC with nothing saying so, and the page read it as local time.
+function timeline(interval) {
+  const rows = db().prepare(`
     SELECT
-      ${bucketExpr} AS bucket,
+      strftime('%Y-%m-%d %H:00', created_at) AS bucket,
       COUNT(*) AS requests,
       SUM(CASE WHEN status >= 400 THEN 1 ELSE 0 END) AS errors,
       COALESCE(ROUND(SUM(cost_usd), 4), 0) AS cost,
@@ -200,6 +204,8 @@ function timeline(interval, bucketExpr) {
     GROUP BY bucket
     ORDER BY bucket
   `).all(interval);
+
+  return rows.map(({ bucket, ...rest }) => ({ bucket_at: toInstant(bucket), ...rest }));
 }
 
 // Every request in the period, for the scatter the sparkline replaces. Capped: at this

@@ -92,7 +92,7 @@ function overviewPage() {
 
       if (this._timelineChart) this._timelineChart.destroy();
 
-      const labels = rows.map((r) => r.bucket);
+      const labels = rows.map((r) => formatDayHour(r.bucket_at));
       this._timelineChart = new Chart(canvas, {
         type: 'line',
         data: {
@@ -184,7 +184,7 @@ function overviewPage() {
                   const queued = p.queued ? ` · ${p.queued}ms queued` : '';
                   return `${p.status} · ${formatDuration(p.y)}${queued} · ${p.model || 'unknown'}`;
                 },
-                title: (items) => new Date(items[0].raw.x).toLocaleString(),
+                title: (items) => formatTime(new Date(items[0].raw.x)),
               },
             },
           },
@@ -196,7 +196,7 @@ function overviewPage() {
                 color: '#849397',
                 font: { size: 10, family: 'monospace' },
                 maxTicksLimit: 6,
-                callback: (value) => new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                callback: (value) => formatHourMinute(new Date(value)),
               },
             },
             y: {

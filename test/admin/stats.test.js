@@ -175,9 +175,22 @@ describe('admin /admin/stats', () => {
     const timeline = res.body.timeline;
     assert.ok(timeline.length > 0, 'expected at least one bucket');
     for (const bucket of timeline) {
-      assert.ok(bucket.bucket, 'every bucket names its period');
+      assert.ok(bucket.bucket_at, 'every bucket names the instant it starts at');
+      assert.ok(/(Z|[+-]\d{2}:?\d{2})$/.test(bucket.bucket_at),
+        `${bucket.bucket_at} says nothing about its zone, so the page has to guess`);
+      assert.ok(Number.isFinite(Date.parse(bucket.bucket_at)));
       assert.strictEqual(typeof bucket.requests, 'number');
       assert.strictEqual(typeof bucket.errors, 'number');
     }
+  });
+
+  it('tells the dashboard which zone to render in', async () => {
+    process.env.SHELLM_TZ = 'Europe/Helsinki';
+    const helsinki = await request(app).get('/admin/health').set('Authorization', `Basic ${adminCreds}`);
+    assert.strictEqual(helsinki.body.timezone, 'Europe/Helsinki');
+
+    delete process.env.SHELLM_TZ;
+    const fallback = await request(app).get('/admin/health').set('Authorization', `Basic ${adminCreds}`);
+    assert.strictEqual(fallback.body.timezone, 'America/Mexico_City');
   });
 });

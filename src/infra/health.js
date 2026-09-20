@@ -3,6 +3,7 @@ const { getBuildInfo } = require('./build-info');
 const { queue } = require('./queue');
 const { getAllCircuitStates, resetCircuit } = require('./circuit-breaker');
 const logger = require('../lib/logger');
+const { getTimezone } = require('../lib/time');
 
 const PROBE_TIMEOUT = 15000;
 
@@ -140,6 +141,7 @@ async function getHealthStatus() {
       build: getBuildInfo(),
       circuit_breakers: getAllCircuitStates(),
       queue: queue.stats,
+      timezone: getTimezone(),
       uptime_seconds: Math.floor(process.uptime()),
     };
   }
@@ -162,6 +164,7 @@ async function getHealthStatus() {
     build: getBuildInfo(),
     circuit_breakers: getAllCircuitStates(),
     queue: queue.stats,
+    timezone: getTimezone(),
     uptime_seconds: Math.floor(process.uptime()),
   };
 }
