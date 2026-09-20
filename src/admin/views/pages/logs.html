@@ -3,13 +3,6 @@
 
         <header class="mb-6 flex items-baseline gap-4">
           <h2 class="text-xl font-bold font-headline tracking-tighter text-on-surface">REQUEST LOGS<span class="text-primary-container">_</span></h2>
-          <button @click="fetchLogs(); fetchStats()" :disabled="loading"
-            :class="loading ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:text-on-surface'"
-            class="px-2.5 py-1 bg-surface-container-high text-[10px] uppercase tracking-widest font-headline font-bold flex items-center gap-1.5 transition-colors duration-100"
-            title="Re-read the table">
-            <span class="material-symbols-outlined text-sm">refresh</span>
-            <span x-text="loading ? 'Reading' : 'Refresh'"></span>
-          </button>
         </header>
 
         <!-- Filters -->
@@ -53,6 +46,13 @@
             class="self-end pb-2 text-[11px] font-mono text-primary-container hover:underline">clear filters</button>
           <div x-show="!loadError" class="text-[11px] font-mono text-outline/70 italic self-end pb-2" x-text="total + ' total logs found'"></div>
           <div class="ml-auto flex gap-2 self-end">
+            <!-- Never gated on total > 0: an empty table is exactly when you want to re-read it -->
+            <button @click="fetchLogs(); fetchStats()" :disabled="loading"
+              :class="loading ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:text-on-surface'"
+              class="px-3 py-2 border border-outline-variant/30 hover:border-outline/50 transition-colors duration-100 flex items-center"
+              :title="loading ? 'Reading the table' : 'Re-read the table'" aria-label="Refresh">
+              <span class="material-symbols-outlined text-base" :class="loading ? 'animate-spin' : ''">refresh</span>
+            </button>
             <button x-show="total > 0" @click="exportCSV()"
               class="px-4 py-2 text-xs font-headline font-bold uppercase text-primary-container border border-primary-container/40 hover:bg-primary-container/10 transition-colors duration-100">
               Export CSV
