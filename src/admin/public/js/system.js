@@ -38,8 +38,8 @@ function systemPage() {
 
     circuitClass(prov) {
       const state = prov.circuit?.state;
-      if (state === 'open') return 'text-[#ef4444] font-bold';
-      if (state === 'half-open') return 'text-[#ffb800] font-bold';
+      if (state === 'open') return 'text-status-fail font-bold';
+      if (state === 'half-open') return 'text-status-warn font-bold';
       return 'text-on-surface-variant';
     },
 

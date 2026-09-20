@@ -58,7 +58,7 @@
           <div class="bg-surface-container p-5">
             <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-4">Response</p>
 
-            <p x-show="error" class="text-xs font-mono text-[#ffb4ab]" x-text="error"></p>
+            <p x-show="error" class="text-xs font-mono text-error" x-text="error"></p>
             <p x-show="!error && !result && !running" class="text-xs font-mono text-outline">Nothing sent yet.</p>
             <p x-show="running" class="text-xs font-mono text-outline">Waiting for the CLI…</p>
 
@@ -76,7 +76,7 @@
                 </div>
 
                 <pre x-show="result.ok" class="bg-surface-container-lowest p-4 text-xs font-mono text-on-surface whitespace-pre-wrap break-words max-h-[420px] overflow-y-auto terminal-scroll" x-text="result.answer"></pre>
-                <p x-show="!result.ok" class="bg-surface-container-lowest p-4 text-xs font-mono text-[#ffb4ab] break-words" x-text="errorMessage(result.body)"></p>
+                <p x-show="!result.ok" class="bg-surface-container-lowest p-4 text-xs font-mono text-error break-words" x-text="errorMessage(result.body)"></p>
 
                 <button @click="showRaw = !showRaw" class="mt-3 text-[10px] font-mono text-outline hover:text-on-surface"
                   x-text="showRaw ? 'hide raw response' : 'show raw response'"></button>

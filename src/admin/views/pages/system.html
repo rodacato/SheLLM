@@ -26,14 +26,14 @@
             <div>
               <p class="text-[10px] font-mono text-outline uppercase mb-1">Status</p>
               <p class="text-2xl font-headline font-black"
-                :class="health?.status === 'ok' ? 'text-[#22c55e]' : (health?.status === 'degraded' ? 'text-[#ffb800]' : 'text-[#ef4444]')"
+                :class="health?.status === 'ok' ? 'text-status-ok' : (health?.status === 'degraded' ? 'text-status-warn' : 'text-status-fail')"
                 x-text="health?.status || '—'"></p>
             </div>
           </div>
 
           <div class="border-t border-outline-variant/30 pt-4">
             <template x-if="updateAvailable">
-              <p class="text-xs font-mono text-[#ffb800]">
+              <p class="text-xs font-mono text-status-warn">
                 <span x-text="'v' + updateAvailable + ' is published — this host runs v' + runningVersion"></span>
                 <a :href="latestRelease.html_url" target="_blank" rel="noopener" class="underline ml-2">release notes</a>
               </p>
@@ -80,7 +80,7 @@
                      to be typed rather than clicked. -->
                 <template x-if="isMajorJump">
                   <div class="flex flex-wrap items-center gap-3">
-                    <span class="text-xs font-mono text-[#ffb800]"
+                    <span class="text-xs font-mono text-status-warn"
                       x-text="'Major version jump. Type ' + target + ' to confirm:'"></span>
                     <input x-model="confirmText" :placeholder="target" spellcheck="false"
                       class="bg-surface border border-outline-variant/40 text-white text-xs font-mono px-3 py-2 w-32">
@@ -95,7 +95,7 @@
             </template>
 
             <template x-if="updateError">
-              <p class="text-xs font-mono text-[#ef4444] mt-3" x-text="updateError"></p>
+              <p class="text-xs font-mono text-status-fail mt-3" x-text="updateError"></p>
             </template>
 
             <!-- What happened last time. After an update this is read across a restart, which is
@@ -103,10 +103,10 @@
             <template x-if="updater?.pending || updater?.last">
               <div class="mt-4 text-[11px] font-mono">
                 <template x-if="updater.pending">
-                  <p class="text-[#ffb800]">A request is waiting to be picked up.</p>
+                  <p class="text-status-warn">A request is waiting to be picked up.</p>
                 </template>
                 <template x-if="updater.last && updater.last.state === 'running' && !updater.last.stalled">
-                  <p class="text-[#ffb800]" x-text="'Updating to ' + updater.last.ref + '…'"></p>
+                  <p class="text-status-warn" x-text="'Updating to ' + updater.last.ref + '…'"></p>
                 </template>
                 <!-- The restart happens under this page, so say what is being waited for. Without
                      it a press looks like nothing happened, and the second press is refused. -->
@@ -117,7 +117,7 @@
                   </p>
                 </template>
                 <template x-if="updater.last && updater.last.stalled">
-                  <p class="text-[#ef4444]"
+                  <p class="text-status-fail"
                     x-text="'The update to ' + updater.last.ref + ' stopped without reporting. Check journalctl -u shellm-update.'"></p>
                 </template>
                 <template x-if="updater.last && updater.last.state === 'ok'">
@@ -125,7 +125,7 @@
                     x-text="'Last update: ' + updater.last.detail + ' · ' + formatTime(updater.last.finished_at)"></p>
                 </template>
                 <template x-if="updater.last && updater.last.state === 'failed'">
-                  <p class="text-[#ef4444]"
+                  <p class="text-status-fail"
                     x-text="'Last update failed: ' + updater.last.detail"></p>
                 </template>
               </div>
@@ -144,7 +144,7 @@
             <div>
               <span class="text-outline uppercase block text-[10px]">Waiting</span>
               <span class="text-lg font-headline font-bold"
-                :class="(health?.queue?.pending ?? 0) > 0 ? 'text-[#ffb800]' : 'text-white'"
+                :class="(health?.queue?.pending ?? 0) > 0 ? 'text-status-warn' : 'text-white'"
                 x-text="health?.queue?.pending ?? 0"></span>
             </div>
             <div>
@@ -154,7 +154,7 @@
             <div>
               <span class="text-outline uppercase block text-[10px]">Open circuits</span>
               <span class="text-lg font-headline font-bold"
-                :class="openCircuits.length > 0 ? 'text-[#ef4444]' : 'text-white'"
+                :class="openCircuits.length > 0 ? 'text-status-fail' : 'text-white'"
                 x-text="openCircuits.length > 0 ? openCircuits.join(', ') : 'none'"></span>
             </div>
           </div>
@@ -188,7 +188,7 @@
               </div>
 
               <div x-show="prov.health_error" class="bg-surface-container-lowest p-3 mb-4">
-                <p class="text-[10px] font-mono text-[#ffb4ab] break-all" x-text="prov.health_error"></p>
+                <p class="text-[10px] font-mono text-error break-all" x-text="prov.health_error"></p>
               </div>
 
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] font-mono">

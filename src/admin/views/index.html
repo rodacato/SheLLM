@@ -37,13 +37,14 @@
             'outline':                  '#849397',
             'outline-variant':          '#3b494c',
             'error':                    '#ffb4ab',
-            'status-ok':                '#22c55e',
-            'status-warn':              '#ffb800',
-            'status-fail':              '#ef4444',
+            'status-ok':                'var(--status-ok)',
+            'status-warn':              'var(--status-warn)',
+            'status-fail':              'var(--status-fail)',
           },
           fontFamily: {
             'headline': ['"Space Grotesk"', 'system-ui', 'sans-serif'],
             'body':     ['"Inter"', 'system-ui', 'sans-serif'],
+            'mono':     ['ui-monospace', 'SFMono-Regular', '"SF Mono"', 'Menlo', 'Consolas', '"Liberation Mono"', 'monospace'],
           },
           borderRadius: {
             DEFAULT: '0px',
@@ -66,7 +67,7 @@
   <!-- Mobile top bar -->
   <div class="md:hidden fixed top-0 inset-x-0 h-14 z-40 bg-[#1a1e21] border-b border-outline-variant/20 flex items-center gap-3 px-4">
     <button @click="sidebarOpen = !sidebarOpen" class="text-on-surface-variant hover:text-primary-container" :aria-expanded="sidebarOpen" aria-label="Toggle navigation">
-      <span class="material-symbols-outlined" x-text="sidebarOpen ? 'close' : 'menu'"></span>
+      <span class="material-symbols-outlined text-[20px]" x-text="sidebarOpen ? 'close' : 'menu'"></span>
     </button>
     <img src="img/logo-dark.svg" alt="SheLLM" class="h-6 w-auto">
   </div>
