@@ -8,6 +8,36 @@ function statusColor(status) {
   return status < 500 ? statusVar('--status-warn') : statusVar('--status-fail');
 }
 
+// Chart.js ships no annotation layer and the plugin that does is another dependency for one
+// dashed line, so the line is drawn here. Inline, so only the charts that pass it get it.
+const nowMarker = {
+  id: 'nowMarker',
+  afterDatasetsDraw(chart) {
+    const at = chart.options.plugins?.nowMarker?.at;
+    if (!at) return;
+    const { ctx, chartArea } = chart;
+    const x = chart.scales.x.getPixelForValue(at);
+    if (x < chartArea.left || x > chartArea.right) return;
+
+    ctx.save();
+    ctx.setLineDash([3, 3]);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = statusVar('--outline') || '#849397';
+    ctx.beginPath();
+    ctx.moveTo(x, chartArea.top);
+    ctx.lineTo(x, chartArea.bottom);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = statusVar('--outline') || '#849397';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('now', x - 4, chartArea.top + 9);
+    ctx.restore();
+  },
+};
+
+const AXIS_TICKS = { color: '#849397', font: { size: 10, family: 'monospace' } };
+
 function overviewPage() {
   return {
     stats: null,
@@ -18,6 +48,7 @@ function overviewPage() {
     providersLoaded: false,
     _chart: null,
     _timelineChart: null,
+    _domain: null,
     _refreshInterval: null,
 
     async fetchStats() {
@@ -92,31 +123,26 @@ function overviewPage() {
 
       if (this._timelineChart) this._timelineChart.destroy();
 
-      const labels = rows.map((r) => formatDayHour(r.bucket_at));
+      const domain = this.timeDomain();
+      // tension smoothed a one-hour spike into a two-hour ramp that never happened
+      const series = (key, color, fill) => ({
+        label: key,
+        data: rows.map((r) => ({ x: Date.parse(r.bucket_at), y: r[key] })),
+        borderColor: statusVar(color),
+        backgroundColor: fill ? statusVar(fill) : 'transparent',
+        fill: Boolean(fill),
+        tension: 0,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+      });
+
       this._timelineChart = new Chart(canvas, {
         type: 'line',
+        plugins: [nowMarker],
         data: {
-          labels,
           datasets: [
-            {
-              label: 'requests',
-              data: rows.map((r) => r.requests),
-              borderColor: statusVar('--status-ok'),
-              backgroundColor: statusVar('--status-ok-fill'),
-              fill: true,
-              tension: 0.3,
-              pointRadius: 0,
-              pointHoverRadius: 4,
-            },
-            {
-              label: 'errors',
-              data: rows.map((r) => r.errors),
-              borderColor: statusVar('--status-fail'),
-              backgroundColor: 'transparent',
-              tension: 0.3,
-              pointRadius: 0,
-              pointHoverRadius: 4,
-            },
+            series('requests', '--status-ok', '--status-ok-fill'),
+            series('errors', '--status-fail', null),
           ],
         },
         options: {
@@ -125,20 +151,21 @@ function overviewPage() {
           animation: false,
           interaction: { mode: 'index', intersect: false },
           plugins: {
+            nowMarker: { at: domain.now },
             legend: {
               display: true,
-              labels: { color: '#849397', font: { size: 10, family: 'monospace' }, boxWidth: 10 },
+              labels: { ...AXIS_TICKS, boxWidth: 10 },
+            },
+            tooltip: {
+              callbacks: { title: (items) => formatTime(new Date(items[0].parsed.x)) },
             },
           },
           scales: {
-            x: {
-              grid: { color: 'rgba(132,147,151,0.1)' },
-              ticks: { color: '#849397', font: { size: 10, family: 'monospace' }, maxTicksLimit: 8 },
-            },
+            x: this.timeAxis(domain),
             y: {
               beginAtZero: true,
               grid: { color: 'rgba(132,147,151,0.1)' },
-              ticks: { color: '#849397', font: { size: 10, family: 'monospace' }, precision: 0 },
+              ticks: { ...AXIS_TICKS, precision: 0 },
             },
           },
         },
@@ -160,8 +187,10 @@ function overviewPage() {
         queued: r.queued_ms,
       }));
 
+      const domain = this.timeDomain();
       this._chart = new Chart(canvas, {
         type: 'scatter',
+        plugins: [nowMarker],
         data: {
           datasets: [{
             data: points,
@@ -176,6 +205,7 @@ function overviewPage() {
           maintainAspectRatio: false,
           animation: false,
           plugins: {
+            nowMarker: { at: domain.now },
             legend: { display: false },
             tooltip: {
               callbacks: {
@@ -189,24 +219,11 @@ function overviewPage() {
             },
           },
           scales: {
-            x: {
-              type: 'linear',
-              grid: { color: 'rgba(132,147,151,0.1)' },
-              ticks: {
-                color: '#849397',
-                font: { size: 10, family: 'monospace' },
-                maxTicksLimit: 6,
-                callback: (value) => formatHourMinute(new Date(value)),
-              },
-            },
+            x: this.timeAxis(domain),
             y: {
               beginAtZero: true,
               grid: { color: 'rgba(132,147,151,0.1)' },
-              ticks: {
-                color: '#849397',
-                font: { size: 10, family: 'monospace' },
-                callback: (value) => formatDuration(value),
-              },
+              ticks: { ...AXIS_TICKS, callback: (value) => formatDuration(value) },
             },
           },
         },
@@ -222,6 +239,44 @@ function overviewPage() {
         this.providersError = err.message;
       }
       this.providersLoaded = true;
+    },
+
+    // Both charts answer "when did this happen", so they get one domain. Computing it per chart
+    // gave each its own `now`, which is two axes that almost line up — the thing this replaced.
+    timeDomain() {
+      if (this._domain && this._domain.stats === this.stats) return this._domain.value;
+
+      const now = Date.now();
+      const from = this.stats?.window?.from ? Date.parse(this.stats.window.from) : now - 3600000;
+      const span = Math.max(now - from, 60000);
+      const value = { min: from, max: now + span * 0.03, now };
+
+      this._domain = { stats: this.stats, value };
+      return value;
+    },
+
+    timeAxis(domain) {
+      const multiDay = domain.max - domain.min > 36 * 3600000;
+      return {
+        type: 'linear',
+        min: domain.min,
+        max: domain.max,
+        grid: { color: 'rgba(132,147,151,0.1)' },
+        ticks: {
+          ...AXIS_TICKS,
+          maxTicksLimit: 7,
+          autoSkip: true,
+          callback: (value) => (multiDay ? formatDayHour(value) : formatHourMinute(value)),
+        },
+      };
+    },
+
+    // Above the cap the scatter and the totals stop describing the same rows, so the chart says so
+    // rather than letting a partial picture read as the whole window.
+    scatterCaption() {
+      const shown = this.stats?.recent_requests?.length || 0;
+      const total = this.stats?.recent_requests_total || 0;
+      return total > shown ? `last ${shown} of ${total.toLocaleString()}` : '';
     },
 
     // The page no longer asks for a period, so it has to say which one it got. Without this the
