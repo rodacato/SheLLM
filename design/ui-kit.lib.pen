@@ -960,7 +960,7 @@
                       "id": "wkclO",
                       "name": "Value",
                       "fill": "$outline",
-                      "content": "rgba(34,197,94,.12)",
+                      "content": "#22c55e1f (12%)",
                       "fontFamily": "Roboto Mono",
                       "fontSize": 10,
                       "fontWeight": "normal"
@@ -1171,7 +1171,7 @@
                       "id": "qJxVA",
                       "name": "Value",
                       "fill": "$outline",
-                      "content": "rgba(0,0,0,.6)",
+                      "content": "#00000099 (60%)",
                       "fontFamily": "Roboto Mono",
                       "fontSize": 10,
                       "fontWeight": "normal"
@@ -1239,7 +1239,8 @@
               "fill": "$on-surface",
               "content": "Body — Inter",
               "fontFamily": "Inter",
-              "fontSize": 16
+              "fontSize": 16,
+              "fontWeight": "normal"
             },
             {
               "type": "text",
@@ -1248,7 +1249,8 @@
               "fill": "$on-surface",
               "content": "Mono — system stack, rendered as Roboto Mono",
               "fontFamily": "Roboto Mono",
-              "fontSize": 14
+              "fontSize": 14,
+              "fontWeight": "normal"
             }
           ]
         },
@@ -1350,6 +1352,19 @@
               ]
             }
           ]
+        },
+        {
+          "type": "text",
+          "id": "N7HPa9",
+          "name": "Schema note",
+          "fill": "$outline",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "0.1.1 — the two translucent tokens were stored as rgba(); the .pen schema accepts only hex, so they are #RRGGBBAA here. The code still writes them as rgba() in custom.css, which is correct for CSS. Same colour, two notations, one per medium.",
+          "lineHeight": 1.6,
+          "fontFamily": "Roboto Mono",
+          "fontSize": 10,
+          "fontWeight": "normal"
         }
       ]
     }
@@ -1357,7 +1372,7 @@
   "variables": {
     "kit-version": {
       "type": "string",
-      "value": "0.1.0"
+      "value": "0.1.1"
     },
     "grid-x0": {
       "type": "number",
@@ -1445,7 +1460,7 @@
     },
     "status-ok-fill": {
       "type": "color",
-      "value": "rgba(34,197,94,0.12)"
+      "value": "#22c55e1f"
     },
     "brand-hover": {
       "type": "color",
@@ -1465,7 +1480,7 @@
     },
     "overlay-scrim": {
       "type": "color",
-      "value": "rgba(0,0,0,0.6)"
+      "value": "#00000099"
     },
     "font-headline": {
       "type": "string",

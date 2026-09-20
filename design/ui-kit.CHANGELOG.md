@@ -13,6 +13,19 @@ diverging is not. A changed token VALUE forces every consumer.
 
 ---
 
+## 0.1.1 — 2026-09-20 · two token values were not valid
+
+`status-ok-fill` and `overlay-scrim` were stored as `rgba(34,197,94,0.12)` and
+`rgba(0,0,0,0.6)`. `SetVariables` accepted them, and the swatches rendered dark enough that
+nothing looked wrong — but the `.pen` schema takes hex only (`#RGB`, `#RRGGBB`, `#RRGGBBAA`), so
+neither was a colour. Corrected to `#22c55e1f` and `#00000099`.
+
+The code is not wrong: `rgba()` is correct in CSS. The same colour has two notations, one per
+medium, and only the kit has to carry the `.pen` one. Found by reading the schema after an
+unrelated validation error — not by looking at the canvas, where it was invisible.
+
+Forced on consumers (a changed value): `flows/admin.pen` re-pinned to 0.1.1.
+
 ## 0.1.0 — 2026-09-20 · tokens
 
 Every token mirrored from the code, measured rather than eyeballed. No components yet: the
