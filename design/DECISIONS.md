@@ -4,7 +4,7 @@
 > notes in `ui-kit.lib.pen` cite these by number. Keep entries after resolution — record the
 > outcome instead of deleting; the reasoning is the useful part.
 
-**Status:** 9 entries · 6 resolved · 3 open · 0 🔴 high-impact · 0 🐞 unfiled bugs.
+**Status:** 10 entries · 6 resolved · 4 open · 0 🔴 high-impact · 0 🐞 unfiled bugs.
 
 **The registry collided with itself on 2026-09-20, and this is the repair.** Two documents
 claimed `D30` and `D31` the same day for different findings: the design audit's second pass took
@@ -12,7 +12,7 @@ claimed `D30` and `D31` the same day for different findings: the design audit's 
 then assigned the same two numbers to the undrawn sign-in screen and the manifest literals
 (commit `c528f97`). The audit's range wins, because thirteen entries, two tables and several
 commits already cite it. **This file's two are renumbered: old D30 → `D43`, old D31 → `D44`.**
-Read `c528f97`'s message with that mapping. The next free number is **D45**.
+Read `c528f97`'s message with that mapping. The next free number is **D46**.
 
 **D14 resolved 2026-09-20** — it was a design-audit card, not a `D<n>` here; the verdict pattern now covers the circuit state, provider sign-in and the burn rate. Each reads a fact the server already had rather than a threshold someone picked: `retry_at` comes from the breaker's own RESET_MS, the sign-in command from the provider module, and the burn rate is judged against the weekly window beside it.
 
@@ -54,6 +54,8 @@ that doc tracks landing them.
 
 | **D43** ✅ <br>*(was D30)* | The sign-in page is not in `admin.pen`. It is a real screen of this app — the one an installed dashboard shows every time the 12-hour session ends — and the flow calls itself *5 of 5*. Worse, the CRT treatment it now carries was **written in code before it was drawn**, which inverts the source-of-truth rule on purpose because Pencil was unavailable in that session. | Code: 1 undrawn screen ([`src/admin/login.js:11`](../src/admin/login.js#L11)), 5 drawn. Its four decorative layers, the `prefers-reduced-motion` branch and the safe-area insets exist only as CSS | ✅ **Drawn 2026-09-20.** *Admin / Sign in / Default* opens the band at x 760 and the band is *6 of 6*; the `Log` frame records that the code led. It got a full artboard, not a state on another brief — the decoration is most of what the screen is, so a state note would have described nothing. Two of the four CRT layers are drawn (the glow as a blurred ellipse at 6%, the sweep as a 1px gradient at 18%); the other two are repeating patterns the canvas cannot tile — a 40px dot grid and a 1px/3px line texture — and carry a `CRT TEXTURE NOT MIRRORED` note with their values and timings, the same convention the chart interiors use. The 401 and 429 states are **not** drawn: they are one panel appended to the same form and belong to the error band this flow still does not have. Was: ⏳ mirror it, and record in the `Log` frame that the code led for once. |
 | **D44** ✅ <br>*(was D31)* | `manifest.webmanifest` re-types two palette colours, and a JSON file cannot read a custom property. One of them is also the wrong colour: `background_color` is `#1a1e21` (`surface-shell`, the sidebar) while the body the splash screen resolves into is `surface` `#101417`. | [`manifest.webmanifest:9-10`](../src/admin/public/manifest.webmanifest#L9). `theme_color` matches `index.html`'s meta and is correct; `background_color` matches nothing the user sees full-bleed | ✅ **Done 2026-09-20**, in the same session it was logged — this entry stood as an open question for two commits and should not have. `background_color` is `#101417` and the guard is a test, not a comment: [`palette.test.js`](../test/admin/palette.test.js) pins `background_color` to `--surface` and `theme_color` to `--surface-shell`, and fails if the page's `<meta>` and the manifest disagree. The exemption in `LITERAL_IS_THE_ONLY_OPTION` says the manifest may carry the literal; it never said it may carry the wrong one. Was: D19 removed every retyped literal it could reach and this is the one it structurally cannot. |
+
+| **D45** | The canvas draws two type steps a pixel off the code, in 40 places. `text-sm` is 13px on the canvas against 14 in the code (36 nodes, 25 of them Logs table cells), and `text-lg` is 17 against 18 (4 nodes on System). | Measured 2026-09-20 across the flow: canvas sizes are 9·10·11·12·13·17·18·20·23·24·26, the code's scale is 10·11·12·14·18·20·24 plus icons at 16·18·20 (the 23 is the logo's SVG text and the 13s on Sign in are correct — `login.js` sets `.8rem`) | ⏳ Two of the five were fixed in the same pass because they were safe: 26 → `$text-2xl` on seven figures, and 9 → `$text-label` on five footers after the code collapsed that step. These 40 were not. Every one of them sits in a fixed-width table cell or a tight row, and growing text by a pixel without being able to look at the result is how a mirror pass introduces the overflow it exists to catch. Do it in a session that can screenshot, and check bounds on Logs first. |
 
 ## Real app bugs — logged here until filed on the board
 

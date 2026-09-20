@@ -13,6 +13,31 @@ diverging is not. A changed token VALUE forces every consumer.
 
 ---
 
+## 0.3.0 — 2026-09-20 · size and space finally have names
+
+Twenty-one tokens, and not one of them changes a pixel: seven type steps, three icon sizes and
+the eleven spacing steps the dashboard actually spends. D35 and D39 closed together, because they
+are the same gap seen from two sides — the kit could say what colour a card is and not how big its
+title is or how far it sits from the next one.
+
+**What the code decided first.** The scale was collapsed in code before it was named here
+(`fa9a87d`): a 9px footer and an icon written `text-base` while its four siblings were
+`text-[16px]` were the last two sizes used exactly once. Naming a scale that still had them would
+have blessed them. A test now fails on an eighth text step, and on an icon size used on something
+that is not an icon.
+
+**Names follow the code where the code has one** — `text-xs`, `text-sm`, `text-lg`, `text-xl`,
+`text-2xl` are Tailwind's own. The two the code can only write as bracket values get a role name
+instead of a px name: `text-label` is the 120-use eyebrow and card title, `text-meta` the mono
+metadata line. Spacing is named in px (`space-20`, not `space-5`) because that is the unit the
+canvas takes, and the class each one comes from is drawn next to it.
+
+`icon-18` and `text-lg` are both 18, and both stay: an icon at 18 is not a heading at 18, and the
+test keeps the bracket forms on `material-symbols` spans so the two cannot quietly merge.
+
+Forced on consumers: nothing renders differently, so `flows/admin.pen` may install these when it
+next needs them rather than immediately.
+
 ## 0.2.1 — 2026-09-20 · the canvas caught up with 0.2.0's own changelog
 
 `brand-hover` was gone from the flow and still on the kit — as a variable **and** as a swatch

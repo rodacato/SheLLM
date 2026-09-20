@@ -29,7 +29,7 @@
           "id": "tYURy",
           "name": "Kit pin",
           "fill": "$outline",
-          "content": "kit-version-source 0.2.0 · band 1 of 1 · happy path · 6 of 6 screens drawn",
+          "content": "kit-version-source 0.3.0 · band 1 of 1 · happy path · 6 of 6 screens drawn",
           "fontFamily": "$font-mono-render",
           "fontSize": 10,
           "fontWeight": "normal"
@@ -257,7 +257,7 @@
               "fill": "$on-surface-variant",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "D16 · D18 · D20 remain. D20 is now visible on the canvas: Sign in is drawn from its own nine aliases, pinned to the canonical values by a test, and the kit is not asked to pretend otherwise. D30 (this screen was undrawn) closes with this pass — the code led for once, and the Log says so. D15, D17 and D19 closed 2026-09-20. D16 is still live on Playground: the catalog notes go silent on a failed read, in the one panel whose job is provenance. One kit gap surfaced here and is NOT fixed in the kit: the sweep gradient needs a fully transparent stop, and the kit has no token for one, so #03e3ff00 is the only hex in this flow.",
+              "content": "D16 · D18 · D20 · D45 remain. D45 is new and is this flow's own: 36 nodes draw text-sm as 13px and 4 draw text-lg as 17px, against a code scale that is now named and tested. D20 is visible on the canvas: Sign in is drawn from its own nine aliases, pinned to the canonical values by a test, and the kit is not asked to pretend otherwise. D43 (this screen was undrawn) closed 2026-09-20 — the code led, and the Log says so. D15, D17 and D19 closed the same day. D16 is still live on Playground: the catalog notes go silent on a failed read, in the one panel whose job is provenance. One kit gap surfaced here and is NOT fixed in the kit: the sweep gradient needs a fully transparent stop, and the kit has no token for one, so #03e3ff00 is the only hex in this flow.",
               "lineHeight": 1.6,
               "fontFamily": "$font-mono-render",
               "fontSize": 10,
@@ -2278,7 +2278,7 @@
                           "fill": "$on-surface",
                           "content": "1.4s",
                           "fontFamily": "$font-headline",
-                          "fontSize": 26,
+                          "fontSize": "$text-2xl",
                           "fontWeight": "700"
                         }
                       ]
@@ -2310,7 +2310,7 @@
                           "fill": "$on-surface",
                           "content": "16.8s",
                           "fontFamily": "$font-headline",
-                          "fontSize": 26,
+                          "fontSize": "$text-2xl",
                           "fontWeight": "700"
                         }
                       ]
@@ -2342,7 +2342,7 @@
                           "fill": "$on-surface",
                           "content": "19.2s",
                           "fontFamily": "$font-headline",
-                          "fontSize": 26,
+                          "fontSize": "$text-2xl",
                           "fontWeight": "700"
                         }
                       ]
@@ -2374,7 +2374,7 @@
                           "fill": "$on-surface",
                           "content": "0.9s",
                           "fontFamily": "$font-headline",
-                          "fontSize": 26,
+                          "fontSize": "$text-2xl",
                           "fontWeight": "700"
                         }
                       ]
@@ -5641,7 +5641,7 @@
                   "fill": "$outline",
                   "content": "SHELLM ADMIN",
                   "fontFamily": "$font-mono-render",
-                  "fontSize": 9,
+                  "fontSize": "$text-label",
                   "fontWeight": "normal",
                   "letterSpacing": 1.6
                 },
@@ -5658,7 +5658,7 @@
                       "fill": "$outline",
                       "content": "READ 07:14:52",
                       "fontFamily": "$font-mono-render",
-                      "fontSize": 9,
+                      "fontSize": "$text-label",
                       "fontWeight": "normal",
                       "letterSpacing": 1.6
                     },
@@ -5669,7 +5669,7 @@
                       "fill": "$outline",
                       "content": "UPTIME: 2D 4H",
                       "fontFamily": "$font-mono-render",
-                      "fontSize": 9,
+                      "fontSize": "$text-label",
                       "fontWeight": "normal",
                       "letterSpacing": 1.6
                     }
@@ -6571,7 +6571,7 @@
                               "fill": "$on-surface",
                               "content": "15.4%",
                               "fontFamily": "$font-headline",
-                              "fontSize": 26,
+                              "fontSize": "$text-2xl",
                               "fontWeight": "700"
                             },
                             {
@@ -6764,7 +6764,7 @@
                               "fill": "$primary-container",
                               "content": "512.9K",
                               "fontFamily": "$font-headline",
-                              "fontSize": 26,
+                              "fontSize": "$text-2xl",
                               "fontWeight": "700"
                             }
                           ]
@@ -6793,7 +6793,7 @@
                               "fill": "$on-surface",
                               "content": "$3.91",
                               "fontFamily": "$font-headline",
-                              "fontSize": 26,
+                              "fontSize": "$text-2xl",
                               "fontWeight": "700"
                             }
                           ]
@@ -7883,7 +7883,7 @@
                   "fill": "$outline",
                   "content": "SHELLM ADMIN",
                   "fontFamily": "$font-mono-render",
-                  "fontSize": 9,
+                  "fontSize": "$text-label",
                   "fontWeight": "normal",
                   "letterSpacing": 1.6
                 },
@@ -7900,7 +7900,7 @@
                       "fill": "$outline",
                       "content": "READ 07:14:52",
                       "fontFamily": "$font-mono-render",
-                      "fontSize": 9,
+                      "fontSize": "$text-label",
                       "fontWeight": "normal",
                       "letterSpacing": 1.6
                     },
@@ -7911,7 +7911,7 @@
                       "fill": "$outline",
                       "content": "UPTIME: 2D 4H",
                       "fontFamily": "$font-mono-render",
-                      "fontSize": 9,
+                      "fontSize": "$text-label",
                       "fontWeight": "normal",
                       "letterSpacing": 1.6
                     }
@@ -8059,6 +8059,19 @@
           "textGrowth": "fixed-width",
           "width": "fill_container",
           "content": "2026-09-20 · Drew both chart interiors, which this flow had refused to draw since it was created. What changed is the evidence: production captures of the shipped scatter and timeline exist now, and a capture outranks a guess in the source-of-truth order — the refusal was never about charts, it was about inventing one. The chrome is the code's, read from the Chart.js config rather than from the picture: grid rgba(132,147,151,0.1), which over surface-container is exactly surface-container-high, so the canvas uses the token; status-ok / status-warn / status-fail per point; pointRadius 3; status-ok-fill under the requests line; both charts on one time domain with the dashed now marker at 97% and a 'now' label in 10px mono. The captures' own tick labels were NOT copied — they read '02:33 PM' and '2026-09-19 20:00', and the shipped formatter is hourCycle h23 with formatDayHour only past 36h, so the axes read 13:02 … 07:47. The marks plot this screen's illustrative dataset (107 requests, 91 ok and 16 4xx clustered in the last hour, p50 1.4s against a tail to 19s) rather than the captures' seven requests at 100% ok, which would have contradicted every table on the page. The timeline plot is 180px, which is what the code says; it had been drawn at 200.",
+          "lineHeight": 1.6,
+          "fontFamily": "$font-mono-render",
+          "fontSize": 10,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "Dyzwt",
+          "name": "2026-09-20i",
+          "fill": "$on-surface-variant",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "2026-09-20 · Vendored kit 0.3.0 — the twenty-one type, icon and spacing tokens D35 and D39 asked for. Nothing renders differently from installing them; two things do render differently from applying them. The four latency figures, the Logs error rate and its two totals were drawn at 26px against the code's text-2xl, which is 24, and the page footer was 9px on five screens after the code collapsed it to 10 (fa9a87d). Both fixed, both now pointing at $text-2xl and $text-label rather than a number. What is NOT fixed is logged as D45: the canvas draws text-sm as 13 in 36 places and text-lg as 17 in 4, and correcting a size in a fixed-width table cell without being able to look at the result is how a mirror pass introduces the overflow it exists to catch.",
           "lineHeight": 1.6,
           "fontFamily": "$font-mono-render",
           "fontSize": 10,
@@ -9706,7 +9719,7 @@
                   "fill": "$outline",
                   "content": "SHELLM ADMIN",
                   "fontFamily": "$font-mono-render",
-                  "fontSize": 9,
+                  "fontSize": "$text-label",
                   "fontWeight": "normal",
                   "letterSpacing": 1.6
                 },
@@ -9723,7 +9736,7 @@
                       "fill": "$outline",
                       "content": "READ 07:14:52",
                       "fontFamily": "$font-mono-render",
-                      "fontSize": 9,
+                      "fontSize": "$text-label",
                       "fontWeight": "normal",
                       "letterSpacing": 1.6
                     },
@@ -9734,7 +9747,7 @@
                       "fill": "$outline",
                       "content": "UPTIME: 2D 4H",
                       "fontFamily": "$font-mono-render",
-                      "fontSize": 9,
+                      "fontSize": "$text-label",
                       "fontWeight": "normal",
                       "letterSpacing": 1.6
                     }
@@ -10749,7 +10762,7 @@
                   "fill": "$outline",
                   "content": "SHELLM ADMIN",
                   "fontFamily": "$font-mono-render",
-                  "fontSize": 9,
+                  "fontSize": "$text-label",
                   "fontWeight": "normal",
                   "letterSpacing": 1.6
                 },
@@ -10766,7 +10779,7 @@
                       "fill": "$outline",
                       "content": "READ 07:14:52",
                       "fontFamily": "$font-mono-render",
-                      "fontSize": 9,
+                      "fontSize": "$text-label",
                       "fontWeight": "normal",
                       "letterSpacing": 1.6
                     },
@@ -10777,7 +10790,7 @@
                       "fill": "$outline",
                       "content": "UPTIME: 2D 4H",
                       "fontFamily": "$font-mono-render",
-                      "fontSize": 9,
+                      "fontSize": "$text-label",
                       "fontWeight": "normal",
                       "letterSpacing": 1.6
                     }
@@ -12176,7 +12189,7 @@
                   "fill": "$outline",
                   "content": "SHELLM ADMIN",
                   "fontFamily": "$font-mono-render",
-                  "fontSize": 9,
+                  "fontSize": "$text-label",
                   "fontWeight": "normal",
                   "letterSpacing": 1.6
                 },
@@ -12193,7 +12206,7 @@
                       "fill": "$outline",
                       "content": "READ 07:14:52",
                       "fontFamily": "$font-mono-render",
-                      "fontSize": 9,
+                      "fontSize": "$text-label",
                       "fontWeight": "normal",
                       "letterSpacing": 1.6
                     },
@@ -12204,7 +12217,7 @@
                       "fill": "$outline",
                       "content": "UPTIME: 2D 4H",
                       "fontFamily": "$font-mono-render",
-                      "fontSize": 9,
+                      "fontSize": "$text-label",
                       "fontWeight": "normal",
                       "letterSpacing": 1.6
                     }
@@ -12573,7 +12586,7 @@
     },
     "kit-version-source": {
       "type": "string",
-      "value": "0.2.0"
+      "value": "0.3.0"
     },
     "grid-x0": {
       "type": "number",
@@ -12734,6 +12747,90 @@
     "grid-fold-y": {
       "type": "number",
       "value": 900
+    },
+    "text-label": {
+      "type": "number",
+      "value": 10
+    },
+    "text-meta": {
+      "type": "number",
+      "value": 11
+    },
+    "text-xs": {
+      "type": "number",
+      "value": 12
+    },
+    "text-sm": {
+      "type": "number",
+      "value": 14
+    },
+    "text-lg": {
+      "type": "number",
+      "value": 18
+    },
+    "text-xl": {
+      "type": "number",
+      "value": 20
+    },
+    "text-2xl": {
+      "type": "number",
+      "value": 24
+    },
+    "icon-16": {
+      "type": "number",
+      "value": 16
+    },
+    "icon-18": {
+      "type": "number",
+      "value": 18
+    },
+    "icon-20": {
+      "type": "number",
+      "value": 20
+    },
+    "space-2": {
+      "type": "number",
+      "value": 2
+    },
+    "space-4": {
+      "type": "number",
+      "value": 4
+    },
+    "space-6": {
+      "type": "number",
+      "value": 6
+    },
+    "space-8": {
+      "type": "number",
+      "value": 8
+    },
+    "space-10": {
+      "type": "number",
+      "value": 10
+    },
+    "space-12": {
+      "type": "number",
+      "value": 12
+    },
+    "space-16": {
+      "type": "number",
+      "value": 16
+    },
+    "space-20": {
+      "type": "number",
+      "value": 20
+    },
+    "space-24": {
+      "type": "number",
+      "value": 24
+    },
+    "space-32": {
+      "type": "number",
+      "value": 32
+    },
+    "space-40": {
+      "type": "number",
+      "value": 40
     }
   },
   "fileToken": "6834f5af-d12d-417e-b728-f6a369cfe0d4"
