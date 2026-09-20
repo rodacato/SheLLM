@@ -39,7 +39,11 @@ jobs:
           mkdir -p site/assets site/img
           cp -r assets/favicon site/assets/favicon
           cp -r assets/logo site/assets/logo
+          cp design/exports/admin-overview-default.png site/img/overview.png
           cp design/exports/admin-request-logs-default.png site/img/request-logs.png
+          cp design/exports/admin-api-keys-default.png site/img/api-keys.png
+          cp design/exports/admin-playground-answered.png site/img/playground.png
+          cp design/exports/admin-system-default.png site/img/system.png
 
       - name: Build the API reference
         run: |
