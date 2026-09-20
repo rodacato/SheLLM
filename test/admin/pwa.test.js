@@ -51,18 +51,23 @@ describe('installable dashboard', () => {
   });
 
   // A page added to index.html without its script in the shell leaves an installed PWA serving
-  // markup that asks for a file it never cached.
-  it('caches every script the page loads', async () => {
+  // markup that asks for a file it never cached. The stylesheet counts twice over: it declares
+  // every colour the Tailwind config refers to, so without it the app paints nothing.
+  it('caches every local file the page loads', async () => {
     const fs = require('node:fs');
     const path = require('node:path');
     const dir = path.join(__dirname, '../../src/admin/public');
     const html = require('../../src/admin/views').compose();
     const worker = fs.readFileSync(path.join(dir, 'sw.js'), 'utf8');
 
-    const scripts = [...html.matchAll(/<script src="(js\/[^"]+)"/g)].map((m) => m[1]);
-    assert.ok(scripts.length > 0, 'found no local scripts — this check proves nothing');
+    const assets = [
+      ...[...html.matchAll(/<script src="(js\/[^"]+)"/g)].map((m) => m[1]),
+      ...[...html.matchAll(/<link rel="stylesheet" href="(css\/[^"]+)"/g)].map((m) => m[1]),
+    ];
+    assert.ok(assets.some((a) => a.startsWith('js/')), 'found no local scripts — this check proves nothing');
+    assert.ok(assets.some((a) => a.startsWith('css/')), 'found no local stylesheet — this check proves nothing');
 
-    for (const src of scripts) {
+    for (const src of assets) {
       assert.ok(worker.includes(`/admin/dashboard/${src}`), `${src} is loaded by the page but absent from the shell cache`);
     }
   });
