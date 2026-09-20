@@ -10,8 +10,11 @@ const { compose } = require('../../src/admin/views');
 function logsPage(html) {
   const start = html.indexOf('<!-- LOGS PAGE -->');
   assert.ok(start > -1, 'the logs page is in the composed dashboard');
-  const end = html.indexOf('<!-- ', html.indexOf('<!-- Table -->') + 1);
-  return html.slice(start, end > start ? end : undefined);
+  const end = html.indexOf(' PAGE -->', start + '<!-- LOGS PAGE -->'.length);
+  assert.ok(end > start, 'another page follows, which is what bounds this one');
+  const slice = html.slice(start, html.lastIndexOf('<!--', end));
+  assert.ok(slice.includes('Total Tokens'), 'the slice reaches the panels below the table');
+  return slice;
 }
 
 function slice(html, from, to) {
@@ -53,5 +56,24 @@ describe('refresh is an action on the logs table', () => {
     assert.ok(button.includes('aria-label="Refresh"'), 'an icon-only control needs a name');
     assert.ok(/:title=/.test(button), 'and a tooltip on hover');
     assert.ok(button.includes(':disabled="loading"'), 'it cannot be pressed while it is already reading');
+  });
+});
+
+describe('the logs panels do not name a period they do not measure', () => {
+  let page;
+
+  before(() => { page = logsPage(compose()); });
+
+  it('dropped the labels that claimed 60 minutes and today', () => {
+    assert.ok(!page.includes('Last 60m'),
+      'the panel reads /admin/stats, which is the whole retained window, not an hour');
+    assert.ok(!page.includes('Total Tokens (Today)'), 'same figure, same window, not today');
+    assert.ok(page.includes('Error Rate') && page.includes('Total Tokens'),
+      'the panels are still there — otherwise the two checks above prove nothing');
+  });
+
+  it('says which window it is showing instead', () => {
+    const matches = page.match(/x-text="windowSpan\(\)"/g) || [];
+    assert.strictEqual(matches.length, 2, 'both panels state the window they measured');
   });
 });

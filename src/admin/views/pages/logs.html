@@ -226,7 +226,9 @@
           <p x-show="statsError" x-cloak class="md:col-span-5 bg-surface-container-low p-4 font-mono text-xs text-error"
             x-text="'Could not read the stats — ' + statsError"></p>
           <div class="md:col-span-2 bg-surface-container-low p-6 border-l-4 border-primary-container">
-            <p class="text-[10px] text-outline uppercase tracking-widest mb-2 font-headline">Error Rate (Last 60m)</p>
+            <p class="text-[10px] text-outline uppercase tracking-widest mb-2 font-headline">
+              Error Rate <span class="text-outline/60 normal-case tracking-normal font-mono" x-text="windowSpan()"></span>
+            </p>
             <div class="flex items-end gap-4">
               <h2 class="text-4xl font-headline font-bold text-white" x-text="stats ? (stats.error_rate.client_error_pct + stats.error_rate.server_error_pct).toFixed(1) + '%' : '-'"></h2>
               <div class="flex-1 h-12 bg-surface-container-lowest relative overflow-hidden">
@@ -243,7 +245,9 @@
           </div>
           <div class="md:col-span-3 bg-surface-container-low p-6 flex justify-between items-center">
             <div>
-              <p class="text-[10px] text-outline uppercase tracking-widest mb-2 font-headline">Total Tokens (Today)</p>
+              <p class="text-[10px] text-outline uppercase tracking-widest mb-2 font-headline">
+                Total Tokens <span class="text-outline/60 normal-case tracking-normal font-mono" x-text="windowSpan()"></span>
+              </p>
               <h2 class="text-4xl font-headline font-bold text-primary-container" x-text="stats ? formatCompactNumber(stats.total_tokens) : '-'"></h2>
             </div>
             <div class="text-right">
