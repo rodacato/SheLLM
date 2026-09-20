@@ -1,18 +1,1496 @@
 {
-  "version": "2.14",
+  "version": "2.17",
   "children": [
     {
       "type": "frame",
       "id": "bi8Au",
       "x": 0,
       "y": 0,
-      "name": "Frame",
+      "name": "UI Kit / Tokens",
       "clip": true,
-      "width": 800,
-      "height": 600,
-      "fill": "#FFFFFF",
-      "layout": "none"
+      "width": 1256,
+      "fill": "$surface",
+      "layout": "vertical",
+      "gap": 36,
+      "padding": 48,
+      "children": [
+        {
+          "type": "frame",
+          "id": "y2NmYg",
+          "name": "Title",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 6,
+          "children": [
+            {
+              "type": "text",
+              "id": "r9g8zq",
+              "name": "Heading",
+              "fill": "$on-surface",
+              "content": "SheLLM admin — design tokens",
+              "fontFamily": "Space Grotesk",
+              "fontSize": 28,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "w6uNpg",
+              "name": "Provenance",
+              "fill": "$outline",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Mirrored 1:1 from src/admin/views/index.html (tailwind.config) and src/admin/public/css/custom.css. kit-version 0.1.0. Names match the code's names; a name the code does not use is a kit gap, logged in ui-kit.CHANGELOG.md.",
+              "lineHeight": 1.5,
+              "fontFamily": "Roboto Mono",
+              "fontSize": 11,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "MKdR5",
+          "name": "Surfaces",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "children": [
+            {
+              "type": "frame",
+              "id": "WN2mm",
+              "name": "Section head",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 3,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "fPv3G",
+                  "name": "Label",
+                  "fill": "$outline",
+                  "content": "Surfaces",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "NdqsH",
+                  "name": "Note",
+                  "fill": "$outline-variant",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "tailwind.config colors — six steps, darkest to lightest",
+                  "fontFamily": "Roboto Mono",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "N4DaD",
+              "name": "Row 1",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "j2w8ci",
+                  "name": "surface-container-lowest",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "SNgW5",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$surface-container-lowest",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "YvJUz",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "surface-container-lowest",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Q8XihF",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#0b0f12",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "reIMA",
+                  "name": "surface",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Tz6ry",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$surface",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "b47Deg",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "surface",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "zRBQX",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#101417",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "TL53m",
+                  "name": "surface-container-low",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "BV9KU",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$surface-container-low",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "eZIGb",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "surface-container-low",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "NJjcI",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#181c1f",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "eayZo",
+                  "name": "surface-container",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "gPLRc",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$surface-container",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "J04XEO",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "surface-container",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "ipHN8",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#1c2023",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "W6pmf",
+                  "name": "surface-container-high",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "j6nO2",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$surface-container-high",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "pQ7E6",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "surface-container-high",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "eBf3m",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#262a2e",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "p2cfZ",
+                  "name": "surface-container-highest",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "ccBMZ",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$surface-container-highest",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "CxfTJ",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "surface-container-highest",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "dfupy",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#313538",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "c6Ilnn",
+          "name": "Content",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "children": [
+            {
+              "type": "frame",
+              "id": "GtgCs",
+              "name": "Section head",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 3,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "F2rbwL",
+                  "name": "Label",
+                  "fill": "$outline",
+                  "content": "Content",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "aO6ef",
+                  "name": "Note",
+                  "fill": "$outline-variant",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "text and hairlines",
+                  "fontFamily": "Roboto Mono",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "VHwSj",
+              "name": "Row 1",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "BcoLx",
+                  "name": "on-surface",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "d6wCzE",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$on-surface",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "tyYLb",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "on-surface",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "eGd2D",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#e0e3e7",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "jChDA",
+                  "name": "on-surface-variant",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "DdVCZ",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$on-surface-variant",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "ZpiHs",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "on-surface-variant",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "gnRdT",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#bac9cd",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "HOrKI",
+                  "name": "outline",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "WsM2n",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$outline",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "yY420",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "outline",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "WRnsR",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#849397",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "T4WDDw",
+                  "name": "outline-variant",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "HKWrq",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$outline-variant",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "greX5",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "outline-variant",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "GJSPO",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#3b494c",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "EDefo",
+                  "name": "error",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "K0SKK",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$error",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "fjdqH",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "error",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "xsRfD",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#ffb4ab",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "qHt8Q",
+          "name": "Brand",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "children": [
+            {
+              "type": "frame",
+              "id": "m9hkD7",
+              "name": "Section head",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 3,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "rzuNw",
+                  "name": "Label",
+                  "fill": "$outline",
+                  "content": "Brand",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "lhu5y",
+                  "name": "Note",
+                  "fill": "$outline-variant",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "brand-hover is custom.css only — the tailwind config does not name it",
+                  "fontFamily": "Roboto Mono",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "pT4mg",
+              "name": "Row 1",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "eldaR",
+                  "name": "primary-container",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "NNi5O",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$primary-container",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "NLSLL",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "primary-container",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "kf5Cd",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#03e3ff",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "LscSt",
+                  "name": "on-primary",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "cCggN",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$on-primary",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "aHAjX",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "on-primary",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "YWH45",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#00363e",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "N5dLx6",
+                  "name": "brand-hover",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "PD9fF",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$brand-hover",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "bWeBx",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "brand-hover",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "vh18r",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#39eeff",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "qZ9oW",
+          "name": "Status",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "children": [
+            {
+              "type": "frame",
+              "id": "W8InF",
+              "name": "Section head",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 3,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "aWnAI",
+                  "name": "Label",
+                  "fill": "$outline",
+                  "content": "Status",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "oMaId",
+                  "name": "Note",
+                  "fill": "$outline-variant",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "declared in custom.css as CSS vars; tailwind aliases them. Chart.js reads the vars.",
+                  "fontFamily": "Roboto Mono",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "eFkAY",
+              "name": "Row 1",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "F5onML",
+                  "name": "status-ok",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "K5mz2",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$status-ok",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "S8FIAQ",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "status-ok",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "YtvH5",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#22c55e",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "mWeOz",
+                  "name": "status-warn",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "xnbPA",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$status-warn",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "qhgj2",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "status-warn",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Wjfhz",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#ffb800",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ojU9A",
+                  "name": "status-fail",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "V0iry",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$status-fail",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "J7c1W",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "status-fail",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "P30PsP",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#ef4444",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "IgR2a",
+                  "name": "status-ok-fill",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "SMaPU",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$status-ok-fill",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "CegCy",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "status-ok-fill",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "wkclO",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "rgba(34,197,94,.12)",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "vKDRI",
+          "name": "Badges and scrim",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "children": [
+            {
+              "type": "frame",
+              "id": "Wsu6j",
+              "name": "Section head",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 3,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "C9r0bJ",
+                  "name": "Label",
+                  "fill": "$outline",
+                  "content": "Badges and scrim",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "g4uOPZ",
+                  "name": "Note",
+                  "fill": "$outline-variant",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "custom.css class backgrounds — unnamed in the tailwind config",
+                  "fontFamily": "Roboto Mono",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "S96eMX",
+              "name": "Row 1",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "n0VBe",
+                  "name": "badge-2xx-bg",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "vsBN6",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$badge-2xx-bg",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "j5cJqa",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "badge-2xx-bg",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "SBiHL",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#052e16",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "S3nNxx",
+                  "name": "badge-4xx-bg",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "kCpH4",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$badge-4xx-bg",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "w5Z4dZ",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "badge-4xx-bg",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "trClq",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#3b2800",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "nCjrp",
+                  "name": "badge-5xx-bg",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "FaasL",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$badge-5xx-bg",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "u9djk7",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "badge-5xx-bg",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Q9A0aO",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#3b0a0a",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "YoeMs",
+                  "name": "overlay-scrim",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Y2kvyC",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$overlay-scrim",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "o44kyX",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "overlay-scrim",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "qJxVA",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "rgba(0,0,0,.6)",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "xtnSm",
+          "name": "Typography",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "children": [
+            {
+              "type": "frame",
+              "id": "eQBTL",
+              "name": "Section head",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 3,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "iyDts",
+                  "name": "Label",
+                  "fill": "$outline",
+                  "content": "Typography",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "tUUlG",
+                  "name": "Note",
+                  "fill": "$outline-variant",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "headline and body are Google families the code loads. mono is a SYSTEM STACK in the code with no single family — Roboto Mono renders here as a stand-in. See D18.",
+                  "fontFamily": "Roboto Mono",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "id": "pgJ7s",
+              "name": "Headline — Space Grotesk",
+              "fill": "$on-surface",
+              "content": "Headline — Space Grotesk",
+              "fontFamily": "Space Grotesk",
+              "fontSize": 22,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "a3U7E",
+              "name": "Body — Inter",
+              "fill": "$on-surface",
+              "content": "Body — Inter",
+              "fontFamily": "Inter",
+              "fontSize": 16
+            },
+            {
+              "type": "text",
+              "id": "a19PgQ",
+              "name": "Mono — system stack, rendered as Roboto Mono",
+              "fill": "$on-surface",
+              "content": "Mono — system stack, rendered as Roboto Mono",
+              "fontFamily": "Roboto Mono",
+              "fontSize": 14
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "sxuG3",
+          "name": "Radius",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "children": [
+            {
+              "type": "text",
+              "id": "qR29q",
+              "name": "Label",
+              "fill": "$outline",
+              "content": "Radius",
+              "fontFamily": "Space Grotesk",
+              "fontSize": 12,
+              "fontWeight": "700"
+            },
+            {
+              "type": "text",
+              "id": "PNPrC",
+              "name": "Note",
+              "fill": "$outline-variant",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Every step is 0 except full. Square corners are the product, not a default left unset.",
+              "fontFamily": "Roboto Mono",
+              "fontSize": 10,
+              "fontWeight": "normal"
+            },
+            {
+              "type": "frame",
+              "id": "TxQp1",
+              "name": "Row",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "S7Wec5",
+                  "name": "radius-default — 0",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Vv43G",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$primary-container",
+                      "cornerRadius": "$radius-default"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Z6tkjz",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "radius-default — 0",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "FQdUl",
+                  "name": "radius-full — 9999",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "q8BetK",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$primary-container",
+                      "cornerRadius": "$radius-full"
+                    },
+                    {
+                      "type": "text",
+                      "id": "Vwl7E",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "radius-full — 9999",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
+  "variables": {
+    "kit-version": {
+      "type": "string",
+      "value": "0.1.0"
+    },
+    "grid-x0": {
+      "type": "number",
+      "value": 0
+    },
+    "grid-brief-w": {
+      "type": "number",
+      "value": 640
+    },
+    "grid-gutter": {
+      "type": "number",
+      "value": 120
+    },
+    "grid-y0": {
+      "type": "number",
+      "value": 0
+    },
+    "grid-row-gap": {
+      "type": "number",
+      "value": 260
+    },
+    "surface": {
+      "type": "color",
+      "value": "#101417"
+    },
+    "surface-container-lowest": {
+      "type": "color",
+      "value": "#0b0f12"
+    },
+    "surface-container-low": {
+      "type": "color",
+      "value": "#181c1f"
+    },
+    "surface-container": {
+      "type": "color",
+      "value": "#1c2023"
+    },
+    "surface-container-high": {
+      "type": "color",
+      "value": "#262a2e"
+    },
+    "surface-container-highest": {
+      "type": "color",
+      "value": "#313538"
+    },
+    "primary-container": {
+      "type": "color",
+      "value": "#03e3ff"
+    },
+    "on-primary": {
+      "type": "color",
+      "value": "#00363e"
+    },
+    "on-surface": {
+      "type": "color",
+      "value": "#e0e3e7"
+    },
+    "on-surface-variant": {
+      "type": "color",
+      "value": "#bac9cd"
+    },
+    "outline": {
+      "type": "color",
+      "value": "#849397"
+    },
+    "outline-variant": {
+      "type": "color",
+      "value": "#3b494c"
+    },
+    "error": {
+      "type": "color",
+      "value": "#ffb4ab"
+    },
+    "status-ok": {
+      "type": "color",
+      "value": "#22c55e"
+    },
+    "status-warn": {
+      "type": "color",
+      "value": "#ffb800"
+    },
+    "status-fail": {
+      "type": "color",
+      "value": "#ef4444"
+    },
+    "status-ok-fill": {
+      "type": "color",
+      "value": "rgba(34,197,94,0.12)"
+    },
+    "brand-hover": {
+      "type": "color",
+      "value": "#39eeff"
+    },
+    "badge-2xx-bg": {
+      "type": "color",
+      "value": "#052e16"
+    },
+    "badge-4xx-bg": {
+      "type": "color",
+      "value": "#3b2800"
+    },
+    "badge-5xx-bg": {
+      "type": "color",
+      "value": "#3b0a0a"
+    },
+    "overlay-scrim": {
+      "type": "color",
+      "value": "rgba(0,0,0,0.6)"
+    },
+    "font-headline": {
+      "type": "string",
+      "value": "Space Grotesk"
+    },
+    "font-body": {
+      "type": "string",
+      "value": "Inter"
+    },
+    "font-mono-render": {
+      "type": "string",
+      "value": "Roboto Mono"
+    },
+    "font-mono-code": {
+      "type": "string",
+      "value": "ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace"
+    },
+    "radius-default": {
+      "type": "number",
+      "value": 0
+    },
+    "radius-full": {
+      "type": "number",
+      "value": 9999
+    }
+  },
   "fileToken": "b89832e2-dbf3-4cfa-823a-16dad4512416"
 }
