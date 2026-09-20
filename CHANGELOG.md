@@ -9,29 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.0] - 2026-09-20
 
+### Upgrade notes
+
+**The dashboard's update button arrives in this release**, and it stays inert until the trigger
+is armed: `sudo systemctl enable --now shellm-update.path`. The System page distinguishes the two
+ways it can be off — a unit that was never installed, which `scripts/setup/vps.sh` fixes, and one
+installed and deliberately disabled, which `systemctl enable --now` does — because the remedies
+differ and `systemctl is-active` reports `inactive` for both.
+
+**Check `/var/backups/shellm` if a 1.2.0 host ever ran an update.** That release's updater created
+the directory with `install -d -o shellmer`, which also takes over one that already exists, so on
+a host where something else had provisioned it the owner silently changed. This release stops
+using the directory, but nothing changes its ownership back: run `ls -ld /var/backups/shellm` and
+restore it by hand if it reads `shellmer` where you expect root. Note that the upgrade *into* this
+release is still carried out by 1.2.0's updater, so it leaves one last snapshot there; everything
+after it lands in `/var/lib/shellm/backups`.
+
 ### Added
 
-- **admin:** the update button, which asks rather than acts
-
-### Fixed
-
-- **admin:** serve the dashboard relative to its own directory
-- **deploy:** snapshot into a directory the updater owns
-
-### Documentation
-
-- **deployment:** stop the manual backup from destroying the previous one
-- **deployment:** back up to a path the service user can write
-
-
-### Fixed
-
-- **deployment:** stop the documented manual backup from destroying the previous one — the
-  snapshot command read its source through `~`, which the calling shell expands to *its own*
-  home before `sudo` runs, so it failed and left an empty file behind; the `mv` on the next line
-  then moved those zero bytes over the existing backup. The commands are now chained, use
-  absolute paths, and verify the copy is non-empty and passes `integrity_check` before anything
-  is overwritten.
+- **admin:** the update button, which asks rather than acts — the System page moves the host to a
+  newer release by writing `/run/shellm/update-request.json` and stops there; the root unit does
+  the rest, or nothing does. The endpoint's job is mostly to refuse, and each refusal matches a
+  way a host could end up on a release nobody chose: anything that is not a `vX.Y.Z` tag, a target
+  that is not newer, a major jump without the version typed out, a second request while one is
+  already pending, and a trigger that is not armed.
 
 ### Fixed
 
@@ -39,12 +40,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   directory with `install -d -o shellmer`, which also applies to a directory that already exists,
   so on a host where something else had provisioned it as root-only the updater silently handed
   it to the service user. Snapshots now go to `/var/lib/shellm/backups`, which this project
-  creates and owns, and retention only matches the runner's own file names. Existing hosts keep
-  whatever `/var/backups/shellm` holds; nothing here changes its ownership back, so check it with
-  `ls -ld /var/backups/shellm` if the updater ever ran.
+  creates and owns, and retention only matches the runner's own file names.
 - **admin:** serve the dashboard's own files relative to their directory — `res.sendFile` was
   given an absolute path, and `send` refuses any path holding a dot-directory, so the page, the
   manifest and the service worker all answered 404 when the checkout sat under one.
+
+### Documentation
+
+- **deployment:** make the documented manual database backup work, and prove its own result — it
+  read the database through `~`, which the calling shell expands to *its own* home before `sudo`
+  runs, so it failed and left an empty file behind while the unchained `mv` on the next line moved
+  those zero bytes over the previous backup. The commands are now chained, take absolute paths,
+  and check the copy is non-empty and passes `integrity_check` before anything is overwritten —
+  both checks, because an empty file is a valid empty SQLite database that `integrity_check`
+  answers `ok` for.
 
 ## [1.2.0] - 2026-09-20
 
