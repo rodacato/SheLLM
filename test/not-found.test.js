@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 
 const PASSWORD = 'correct-horse-battery-staple';
 
-describe('unmatched routes', () => {
+describe('entry point and unmatched routes', () => {
   let request;
   let app;
 
@@ -25,6 +25,30 @@ describe('unmatched routes', () => {
 
   after(() => {
     require('../src/db').closeDb();
+  });
+
+  it('sends a browser at the root to the dashboard', async () => {
+    const res = await request(app).get('/').set('Accept', 'text/html');
+    assert.strictEqual(res.status, 302);
+    assert.strictEqual(res.headers.location, '/admin/dashboard/');
+  });
+
+  it('lands a browser without a session on the login page', async () => {
+    const root = await request(app).get('/').set('Accept', 'text/html');
+    const dashboard = await request(app).get(root.headers.location).set('Accept', 'text/html');
+    assert.strictEqual(dashboard.status, 302);
+    assert.strictEqual(dashboard.headers.location, '/admin/login?next=%2Fadmin%2Fdashboard%2F');
+
+    const login = await request(app).get(dashboard.headers.location).set('Accept', 'text/html');
+    assert.strictEqual(login.status, 200);
+    assert.match(login.text, /<form method="post" action="\/admin\/login">/);
+  });
+
+  it('answers a client on the root with JSON, not a redirect', async () => {
+    const res = await request(app).get('/').set('Accept', 'application/json');
+    assert.strictEqual(res.status, 404);
+    assert.strictEqual(res.body.error, 'not_found');
+    assert.strictEqual(res.body.message, 'No route for GET /');
   });
 
   it('answers an unknown path with SheLLM\'s error shape', async () => {
