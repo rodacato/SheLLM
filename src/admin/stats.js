@@ -75,8 +75,8 @@ function errorRate(byStatusCode, total) {
   };
 }
 
-function quotaSection(interval) {
-  const windows = QUOTA_WINDOW_HOURS.map((hours) => stats.usageWindow(hours));
+function quotaSection(interval, uptimeHours) {
+  const windows = QUOTA_WINDOW_HOURS.map((hours) => stats.usageWindow(hours, uptimeHours));
   return {
     windows,
     by_provider: stats.usageByProvider(interval),
@@ -140,14 +140,16 @@ router.get('/stats', (req, res) => {
     WHERE created_at >= datetime('now', ?)
   `).get(interval);
 
+  const window = describeWindow(stats.windowBounds(interval));
+
   res.json(payload({
-    window: describeWindow(stats.windowBounds(interval)),
+    window,
     agg,
     byStatusCode: stats.byStatusCode(interval),
     providerRows: stats.usageByProvider(interval),
     errorBreakdown: stats.errorBreakdown(interval),
     latency: latencySection(interval),
-    quota: quotaSection(interval),
+    quota: quotaSection(interval, window.hours),
     byModel: stats.byModel(interval),
     byClient: stats.byClient(interval),
     timeline: stats.timeline(interval),

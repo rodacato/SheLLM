@@ -296,6 +296,15 @@ function overviewPage() {
       return total > shown ? `last ${shown} of ${total.toLocaleString()}` : '';
     },
 
+    // The nominal window is a request, not a measurement — it names seven days whether or not
+    // seven days of requests exist. Say what was actually covered when the two differ.
+    quotaLabel(w) {
+      const hours = Math.min(w.observed_hours ?? w.hours, w.hours);
+      if (hours < 1) return `Last ${Math.round(hours * 60)}m`;
+      if (hours < 48) return `Last ${Math.round(hours)}h`;
+      return `Last ${Math.round(hours / 24)}d`;
+    },
+
     // A rate with nothing to compare it against is a number, not a reading. The two quota windows
     // are already measured, so the short one is judged against the long one rather than a guess.
     burnVerdict(w) {

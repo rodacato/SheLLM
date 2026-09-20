@@ -80,7 +80,7 @@
                 <div class="bg-surface-container p-5">
                   <div class="flex items-baseline justify-between mb-3">
                     <span class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline"
-                      x-text="'Last ' + (w.hours >= 24 ? (w.hours / 24) + 'd' : w.hours + 'h')"></span>
+                      x-text="quotaLabel(w)"></span>
                     <span class="flex items-baseline gap-2">
                       <span class="text-xs font-mono text-primary-container"
                         x-text="'$' + w.cost_per_hour + '/hr · ' + w.requests_per_minute + ' rpm'"></span>

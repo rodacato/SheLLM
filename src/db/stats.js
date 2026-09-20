@@ -55,24 +55,28 @@ function windowBounds(interval) {
   return row || { first_request_at: null, last_request_at: null, requests: 0 };
 }
 
-function usageWindow(hours) {
+// A window cannot have observed more than `uptimeHours`, so a gateway up eighteen hours does not
+// divide a week of quiet into its burn rate — windowBounds states the same rule for the left edge.
+function usageWindow(hours, uptimeHours = hours) {
   const interval = `-${hours} hours`;
   const row = db().prepare(`
     SELECT
       COUNT(*) AS requests,
       COALESCE(SUM(tokens), 0) AS tokens,
       COALESCE(SUM(cache_read_tokens), 0) AS cache_read_tokens,
-      COALESCE(ROUND(SUM(cost_usd), 4), 0) AS cost_usd,
-      MIN(created_at) AS first_request_at
+      COALESCE(ROUND(SUM(cost_usd), 4), 0) AS cost_usd
     FROM request_logs
     WHERE ${LOGGED}
   `).get(interval);
 
+  const observed = Math.min(hours, Math.max(uptimeHours, 0));
+
   return {
     hours,
+    observed_hours: Math.round(observed * 100) / 100,
     ...row,
-    cost_per_hour: Math.round((row.cost_usd / hours) * 10000) / 10000,
-    requests_per_minute: Math.round((row.requests / (hours * 60)) * 100) / 100,
+    cost_per_hour: observed ? Math.round((row.cost_usd / observed) * 10000) / 10000 : 0,
+    requests_per_minute: observed ? Math.round((row.requests / (observed * 60)) * 100) / 100 : 0,
   };
 }
 
