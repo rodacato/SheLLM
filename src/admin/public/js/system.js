@@ -224,6 +224,14 @@ function systemPage() {
       return this.health?.build?.version ?? null;
     },
 
+    // There is no beforeinstallprompt on iOS, so a browser's own menu item is the only route and
+    // a line of copy is the only way to point at it. Insecure origins are never offered it.
+    get installHint() {
+      if (typeof window.matchMedia !== 'function' || !window.isSecureContext) return false;
+      if (window.navigator?.standalone) return false;
+      return window.matchMedia('(display-mode: browser)').matches;
+    },
+
     get updateAvailable() {
       const latest = this.latestRelease?.tag_name?.replace(/^v/, '');
       const running = this.runningVersion;
