@@ -87,7 +87,8 @@ export ANTHROPIC_BASE_URL=http://127.0.0.1:6100 ANTHROPIC_API_KEY=$SHELLM_KEY
 For a server, [`docs/guides/deployment.md`](docs/guides/deployment.md) covers
 `scripts/setup/vps.sh`, the systemd unit, logging in a CLI on a headless machine, and
 `shellm update` — which moves the host to the newest published release and rolls back on its own
-if the service does not come up. To call it
+if the service does not come up — and `shellm backup`, which writes a consistent snapshot of the
+database and the config file for whatever you already use to carry backups off a host. To call it
 from your own code — SDK snippets, what Claude can and cannot do through the API, the limits you
 will hit — read [`docs/guides/usage.md`](docs/guides/usage.md).
 
@@ -132,6 +133,7 @@ shellm start [-d] [-p PORT]    Start the server (foreground or daemon)
 shellm stop | restart          Control the daemon
 shellm status                  Report whether the server answers
 shellm logs [-f] [-n N]        View daemon logs
+shellm backup [--dir DIR]      Snapshot the database and config file into one directory
 shellm update | version        Update the install, print the version
 ```
 

@@ -118,10 +118,16 @@ sudo shellm update
 ```
 
 That is the whole thing. It moves to the newest published release and does the rest in order:
-installs dependencies only if `package-lock.json` changed, runs migrations, re-installs any file
-the release changed that lives outside the checkout, restarts, and then polls `/health`. **If the
-service does not answer, it checks out the previous commit, restarts again, and exits non-zero** —
-so a bad release leaves you where you were rather than with a service that will not start.
+**snapshots the database and the config file** before anything moves, installs dependencies only
+if `package-lock.json` changed, runs migrations, re-installs any file the release changed that
+lives outside the checkout, restarts, and then polls `/health`. **If the service does not answer,
+it checks out the previous commit, restarts again, and exits non-zero** — so a bad release leaves
+you where you were rather than with a service that will not start.
+
+The snapshot comes first because migrations only go forward: the rollback restores the code, and
+the snapshot is what lets you restore the data behind it. It is the same `shellm backup` described
+below, writing to the same directory, and it runs whether the update came from the dashboard or
+from this command — **if it cannot be written, the update stops there with nothing changed.**
 
 Those outside files are the systemd units, the `tmpfiles.d` entry, the updater script and the
 logrotate config — the same set `vps.sh` installs. Keeping them in step is what lets a release
@@ -169,8 +175,8 @@ answers `inactive` for both — so the dashboard asks about the unit file as wel
 
 The runner refuses anything that is not a published release tag, and it checks out a **commit id**
 it resolved itself rather than the name it was given, so a rewritten local tag cannot redirect it.
-Before updating it writes a snapshot to `/var/lib/shellm/backups/` with SQLite's online backup, keeping
-the last five. The outcome lands in `/home/shellmer/.shellm/update-status.json` — durable on
+The snapshot is `shellm update`'s, not the runner's, so the button and the SSH command take the
+same one. The outcome lands in `/home/shellmer/.shellm/update-status.json` — durable on
 purpose, because you read it *after* the restart, which is when a rollback is what you want to
 know about.
 
@@ -211,37 +217,106 @@ debug something strange:
 - **Anything that stores state inside the checkout will fail.** The CLIs do not — they write to
   the home directory — but a new provider that did would need its path added to the unit.
 
-**Back up** `/home/shellmer/.shellm/shellm.db` (keys, request logs, audit trail) and
-`/home/shellmer/.config/shellm/env` (secrets).
-
-The database runs in WAL mode, so **copying the `.db` file is not a valid backup** — the copy
-comes out torn or missing recent writes. On a live install the `.db` file was 86 KB with an mtime
-six months old while the `-wal` beside it held 3.3 MB: a `cp` of the `.db` alone hands you the
-state of six months ago, at full size, with nothing about it looking wrong. Use SQLite's online
-backup, which is safe while the service is running:
+### Backing up
 
 ```bash
-sudo -iu shellmer sqlite3 /home/shellmer/.shellm/shellm.db ".backup '/home/shellmer/shellm-backup.db'" &&
-  sudo test -s /home/shellmer/shellm-backup.db &&
-  sudo -iu shellmer sqlite3 /home/shellmer/shellm-backup.db 'PRAGMA integrity_check' | grep -qx ok &&
-  sudo mv /home/shellmer/shellm-backup.db /var/backups/shellm.db
+sudo -u shellmer -H shellm backup
 ```
 
-The snapshot lands in the home directory and is moved afterwards because it is written as
-`shellmer`, and `/var/backups` is root's at mode 755. Three things in that command are
-load-bearing:
+That writes one snapshot into `/var/lib/shellm/backups`, keeping the newest 7 and deleting older
+ones it wrote itself:
 
-- **Absolute paths, no `~`.** Your shell expands a tilde before `sudo` exists, so `~/.shellm`
-  names *your* home rather than `shellmer`'s and the backup cannot open its source. SQLite does
-  not expand one either — inside the `.backup` argument it is a literal string.
-- **The `&&`.** A `.backup` that fails still leaves an empty file at its destination, so an
-  unconditional `mv` on a line of its own moves those zero bytes over the backup you already had.
-  The error scrolls past, the `mv` reports success, and the good copy is gone.
-- **Both checks, not one.** An empty file is a valid empty SQLite database, so
-  `integrity_check` answers `ok` for zero bytes. `test -s` is what catches the failure above;
-  `integrity_check` is what catches a copy of plausible size that is not readable.
+```
+/var/lib/shellm/backups/20260920T031500Z/
+  shellm.db     the database — API keys, request logs, audit trail
+  config.env    the config file — admin password and the CLI OAuth tokens
+```
 
-The config file is a plain file and `cp` is fine for it.
+**Both files are mode 0600 and the directory is 0700, and they should stay that way wherever you
+copy them.** Between them they are enough to impersonate this install.
+
+A snapshot is written to a temporary name, verified, and only then renamed into place, so a run
+that fails leaves nothing half-written and never damages the snapshot you already had. **It exits
+non-zero when the snapshot did not happen** — a scheduled job can trust the exit status.
+
+**Taking one nightly**, if you have no backup tooling of your own:
+
+```bash
+sudo systemctl enable --now shellm-backup.timer
+systemctl list-timers shellm-backup.timer
+```
+
+`scripts/setup/vps.sh` installs that timer and leaves it off, the same way it treats the update
+trigger. If you already schedule backups, leave it off and call `shellm backup` from what you run.
+
+**Getting the snapshots off this host is yours.** SheLLM makes a consistent copy in a directory it
+owns; copying that directory somewhere else — rsync, restic, borg, an object store, whatever you
+already use — and deciding how long to keep it are yours. Point your tool at
+`/var/lib/shellm/backups` and nothing here needs to know which one you picked.
+
+`--dir` writes somewhere else. Note that `shellm-backup.service` can only write
+`/home/shellmer/.shellm` and `/var/lib/shellm`, so a different directory in the timer's path needs
+a drop-in granting it, or the unit fails with a read-only filesystem error.
+
+**Do not run it as root.** It refuses, and the refusal is the point: opening the database creates
+its `-wal` and `-shm` files, and root-owned ones in `/home/shellmer/.shellm` leave the service
+unable to write its own database.
+
+**Why not just copy the file.** The database runs in WAL mode, so **`cp` of the `.db` is not a
+backup** — the copy comes out torn or missing recent writes. On a live install the `.db` file was
+86 KB with an mtime six months old while the `-wal` beside it held 3.3 MB: a `cp` of the `.db`
+alone hands you the state of six months ago, at full size, with nothing about it looking wrong.
+`shellm backup` uses SQLite's online backup, which is consistent while the service is running and
+under load.
+
+### Restoring
+
+The snapshot is two ordinary files. Nothing about restoring assumes the tool that carried them
+here, or that they came from this host.
+
+```bash
+snapshot=/var/lib/shellm/backups/20260920T031500Z   # the one you are restoring
+
+# 1. Snapshot what is there now, so the restore is itself reversible. If this fails because the
+#    current database is unreadable, that is usually why you are here — carry on.
+sudo -u shellmer -H shellm backup
+
+# 2. Stop the service and remove the current database WITH its -wal and -shm. A restored .db
+#    beside the old WAL is not the database you restored.
+sudo systemctl stop shellm
+sudo -u shellmer rm -f /home/shellmer/.shellm/shellm.db \
+                       /home/shellmer/.shellm/shellm.db-wal \
+                       /home/shellmer/.shellm/shellm.db-shm
+
+# 3. Put the snapshot in place, owned by the service user and readable by nobody else.
+sudo install -o shellmer -g shellmer -m 600 "$snapshot/shellm.db"  /home/shellmer/.shellm/shellm.db
+sudo install -o shellmer -g shellmer -m 600 "$snapshot/config.env" /home/shellmer/.config/shellm/env
+
+# 4. Start and check.
+sudo systemctl start shellm
+sudo -iu shellmer shellm doctor
+```
+
+Restore the config file only if you are also restoring its secrets — a snapshot from another host,
+or one taken before you rotated the admin password, will put the old values back.
+
+**Rehearse it.** A backup nobody has restored is not a backup, and this costs nothing: point
+`HOME` at a throwaway directory and start a second instance on another port, with the live one
+still running.
+
+```bash
+rehearsal=$(sudo -u shellmer mktemp -d)
+sudo -u shellmer mkdir -p "$rehearsal/.shellm" "$rehearsal/.config/shellm"
+sudo -u shellmer cp "$snapshot/shellm.db"  "$rehearsal/.shellm/shellm.db"
+sudo -u shellmer cp "$snapshot/config.env" "$rehearsal/.config/shellm/env"
+sudo -u shellmer env HOME="$rehearsal" shellm start -p 6199    # Ctrl-C when done
+
+curl -s localhost:6199/health                                   # from another shell
+curl -s localhost:6199/v1/models -H "Authorization: Bearer <a key from that snapshot>"
+```
+
+If the second command answers with your models, that snapshot is a working install: the database
+came back intact and the keys inside it still authenticate. Delete `$rehearsal` afterwards.
 
 **Uninstall:**
 
@@ -265,6 +340,11 @@ ssh root@your-server 'bash -s -- --purge' < scripts/setup/vps-uninstall.sh # rem
 | The dashboard's update button does nothing and logs a read-only error for `/run/shellm` | `ProtectSystem=strict` mounts all of `/run` read-only inside the service's namespace, and the exception for `/run/shellm` is skipped while that directory does not exist. The namespace is built at start, so a service that was already running when the directory first appeared cannot write there. `sudo systemctl restart shellm` |
 | The update button reports that the updater is not enabled | `sudo systemctl enable --now shellm-update.path`. `sudo shellm update` works regardless |
 | `shellm-update.service` keeps starting over and over | A request file that was never deleted. `PathExists=` is level-triggered on purpose, so it re-fires while the file is there: `sudo rm /run/shellm/update-request.json`, then `journalctl -u shellm-update -n 100` for why the runner did not remove it itself |
+| `shellm backup` refuses to run as root | Run it as the service user: `sudo -u shellmer -H shellm backup`. As root it would leave root-owned `-wal` and `-shm` files that the service cannot write |
+| `shellm backup` cannot create `/var/lib/shellm/backups` | `/var/lib` is root's. Re-run `vps.sh`, or `sudo install -d -m 0750 -o shellmer -g shellmer /var/lib/shellm/backups` once |
+| An update stopped at "Snapshotting the database" | Nothing was changed — the update refuses to go on without one. Fix the snapshot (the two rows above) and run it again |
+| `shellm-backup.service` fails with a read-only filesystem error | The unit grants `/home/shellmer/.shellm` and `/var/lib/shellm` and nothing else. A `--dir` elsewhere needs `systemctl edit shellm-backup.service` with a `ReadWritePaths=` for it |
+| A `.partial-…` directory in the backup directory | A snapshot that was killed outright. It is not a snapshot, nothing will ever read it, and it is safe to delete |
 | Works locally but not through the tunnel | The tunnel points at the wrong port, or `HOST` is not loopback |
 
 When the subscription's own quota runs out, the CLI says so and the error surfaces as
