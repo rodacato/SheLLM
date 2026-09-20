@@ -124,6 +124,12 @@ function overviewPage() {
       return this.stats?.error_breakdown || [];
     },
 
+    // The page already knows a 4xx and a 5xx are different news — it colours them apart. Only the
+    // second kind is the gateway failing, so only the second kind earns the top of the page.
+    get hasServerErrors() {
+      return this.errorRows.some((row) => row.status >= 500);
+    },
+
     openErrorLogs(row) {
       Alpine.store('nav').pendingLogFilter = {
         status: String(row.status),

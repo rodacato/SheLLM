@@ -26,10 +26,11 @@
             x-text="stats ? 'logs are kept ' + stats.window.retention_days + ' days' : ''"></span>
         </div>
 
-        <!-- What failed, before how much went through: a count alone cannot say whose it was or
-             which route, and on a clean period there is nothing here to read past. -->
+        <!-- A 4xx is the gateway refusing a caller, which is it working. Errors only leads the
+             page when something the gateway itself did went wrong; otherwise Now does. -->
+        <div class="flex flex-col">
         <template x-if="stats && errorRows.length > 0">
-          <div class="bg-surface-container p-5 mb-8">
+          <div class="bg-surface-container p-5 mb-8" :class="hasServerErrors ? 'order-1' : 'order-3'">
             <div class="flex items-baseline justify-between mb-4">
               <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant">Errors</p>
               <span class="text-[10px] font-mono text-outline" x-text="stats.error_rate.success_pct + '% ok'"></span>
@@ -41,12 +42,12 @@
                   <th class="text-left pb-2 font-headline">Status</th>
                   <th class="text-left pb-2 font-headline">Error</th>
                   <th class="text-left pb-2 font-headline">Client</th>
-                  <th class="text-left pb-2 font-headline">Route</th>
+                  <th class="text-left pb-2 font-headline">Model</th>
                   <th class="text-right pb-2 font-headline">Count</th>
                 </tr>
               </thead>
               <tbody>
-                <template x-for="row in errorRows" :key="row.status + row.error_code + row.client_name + row.path">
+                <template x-for="row in errorRows" :key="row.status + row.error_code + row.client_name + row.model + row.path">
                   <tr @click="openErrorLogs(row)"
                     class="border-t border-outline-variant/20 cursor-pointer hover:bg-surface-container-high transition-colors duration-100">
                     <td class="py-2 text-outline whitespace-nowrap" :title="formatTime(row.last_seen_at)"
@@ -56,7 +57,7 @@
                       x-text="row.status"></td>
                     <td class="py-2 text-on-surface-variant" x-text="row.error_code"></td>
                     <td class="py-2 text-on-surface-variant" x-text="row.client_name"></td>
-                    <td class="py-2 text-outline" x-text="row.path"></td>
+                    <td class="py-2 text-outline" x-text="row.model"></td>
                     <td class="py-2 text-right text-white font-bold" x-text="row.count"></td>
                   </tr>
                 </template>
@@ -67,7 +68,7 @@
 
         <!-- ================= CAPACITY ================= -->
         <template x-if="stats && stats.quota">
-          <div class="mb-8">
+          <div class="mb-8 order-2">
             <div class="flex items-baseline gap-3 mb-3">
               <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Capacity</span>
               <span class="text-[10px] text-outline" x-text="stats.quota.note"></span>
@@ -137,6 +138,7 @@
         </template>
 
         <!-- ================= NOW ================= -->
+        <div :class="hasServerErrors ? 'order-3' : 'order-1'">
         <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase block mb-3">Now</span>
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
           <div class="bg-surface-container p-5 lg:col-span-2">
@@ -194,6 +196,8 @@
               x-text="'Could not read providers — ' + providersError + '.'"></p>
             <p x-show="providersLoaded && !providersError && providers.length === 0" class="text-outline text-xs font-mono">No providers configured.</p>
           </div>
+        </div>
+        </div>
         </div>
 
         <template x-if="stats">
