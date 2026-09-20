@@ -41,16 +41,19 @@
   a:hover { text-decoration:underline; }
   code, pre { font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   img { max-width:100%; }
+  figure { margin:0; }
 
   .wrap { max-width:var(--measure); margin:0 auto; padding:0 1.5rem; }
-  section { padding:5rem 0; border-top:1px solid color-mix(in srgb, var(--line) 35%, transparent); }
+  section { padding:4rem 0; border-top:1px solid color-mix(in srgb, var(--line) 35%, transparent); }
   section h2 { font-size:.7rem; text-transform:uppercase; letter-spacing:.2em; color:var(--accent);
-               margin:0 0 2rem; font-weight:500; }
+               margin:0 0 1.5rem; font-weight:500; }
   .lede { font-size:1.35rem; line-height:1.55; max-width:36rem; margin:0; color:#fff; font-weight:300; }
+  .sub { max-width:36rem; margin:1.5rem 0 0; color:var(--muted); }
 
   .btn { display:inline-block; padding:.9rem 2rem; font-family:"Space Grotesk", sans-serif; font-weight:700;
-         text-transform:uppercase; letter-spacing:.1em; font-size:.85rem; transition:background .2s var(--ease); }
+         text-transform:uppercase; letter-spacing:.1em; font-size:.85rem; transition:background .2s var(--ease), transform .12s var(--ease); }
   .btn:hover { text-decoration:none; }
+  .btn:active { transform:scale(.97); }
   .btn-solid { background:var(--accent); color:var(--on-accent); }
   .btn-solid:hover { background:#fff; }
   .btn-ghost { background:var(--panel-high); color:var(--text); }
@@ -67,7 +70,7 @@
   nav.top a:hover { color:#fff; text-decoration:none; }
   @media (max-width: 46rem) { nav.top li:nth-child(-n+2) { display:none; } }
 
-  header { position:relative; min-height:82vh; display:grid; place-items:center; text-align:center;
+  header { position:relative; min-height:64vh; display:grid; place-items:center; text-align:center;
            background:var(--surface-low); overflow:hidden; }
   header .inner { position:relative; z-index:1; padding:3rem 1.5rem; }
   header img { width:min(22rem, 78vw); height:auto; }
@@ -103,30 +106,33 @@
             transition:opacity .65s var(--ease) var(--d,0ms), transform .65s var(--ease) var(--d,0ms); }
   .reveal.in { opacity:1; transform:none; }
 
-  .stage { background:var(--surface-low); padding:0 0 5rem; }
-  .shot-hero { position:relative; border:1px solid var(--line); overflow:hidden;
-               box-shadow:0 2rem 5rem rgba(0,0,0,.55); }
-  /* The export is a whole-page capture; 2:1 keeps it above its own fold marker. */
-  .shot-hero img { display:block; width:100%; aspect-ratio:2/1; object-fit:cover; object-position:top; }
-  .shot-hero::after { content:''; position:absolute; inset:auto 0 0 0; height:35%; pointer-events:none;
-                      background:linear-gradient(transparent, color-mix(in srgb, var(--surface-low) 92%, transparent)); }
+  .stage { background:var(--surface-low); padding:0 0 3rem; }
 
-  .panels { display:grid; gap:1.5rem; grid-template-columns:repeat(auto-fit, minmax(20rem, 1fr)); align-items:start; }
-  .panel { border:1px solid color-mix(in srgb, var(--line) 60%, transparent); background:var(--surface-low);
-           transition:border-color .3s var(--ease), transform .3s var(--ease); }
-  .panel:hover { border-color:color-mix(in srgb, var(--accent) 40%, transparent); transform:translateY(-3px); }
-  .panel img { display:block; width:100%; height:auto; border-bottom:1px solid color-mix(in srgb, var(--line) 45%, transparent); }
-  .panel figcaption { padding:1.15rem 1.35rem 1.5rem; }
-  .panel h3 { font-size:1.05rem; margin:0 0 .4rem; color:#fff; }
-  .panel p { margin:0; color:var(--muted); font-size:.9rem; line-height:1.6; }
+  .frame { border:1px solid var(--line); background:var(--surface-low); }
+  .frame-bar { display:flex; gap:.45rem; padding:.85rem 1.1rem;
+               border-bottom:1px solid color-mix(in srgb, var(--line) 45%, transparent); }
+  .frame-bar i { width:.6rem; height:.6rem; background:var(--line); }
+  .frame img { display:block; width:100%; height:auto; }
 
-  .term { border:1px solid var(--line); background:var(--surface-low); max-width:46rem; }
-  .term-bar { display:flex; gap:.45rem; padding:.85rem 1.1rem;
-              border-bottom:1px solid color-mix(in srgb, var(--line) 45%, transparent); }
-  .term-bar i { width:.6rem; height:.6rem; background:var(--line); }
+  .shot-hero { box-shadow:0 2rem 5rem rgba(0,0,0,.55); }
+
+  /* One screenshot per row: an admin capture is 1,185 logical px wide and stops being
+     readable below about two thirds of that. */
+  .panels { display:grid; gap:2.5rem; }
+  .panel { transition:border-color .2s var(--ease); }
+  .panel:hover { border-color:color-mix(in srgb, var(--accent) 40%, transparent); }
+  .panel figcaption { display:flex; align-items:baseline; gap:1rem 1.5rem; flex-wrap:wrap;
+                      padding:1.1rem 1.35rem;
+                      border-bottom:1px solid color-mix(in srgb, var(--line) 45%, transparent); }
+  .panel h3 { font-size:1rem; margin:0; color:#fff; }
+  .panel figcaption p { margin:0; color:var(--muted); font-size:.875rem; }
+
+  .term { max-width:46rem; }
+  .term + .term { margin-top:1.5rem; }
   .term pre { margin:0; padding:1.35rem 1.5rem; overflow-x:auto; font-size:.85rem; line-height:2; }
   pre .c { color:var(--muted); }
   pre .p { color:var(--accent); }
+  pre .s { color:#7fd6a0; }
 
   .nots { display:grid; gap:1px; grid-template-columns:repeat(auto-fit, minmax(16rem, 1fr));
           background:color-mix(in srgb, var(--line) 30%, transparent);
@@ -149,7 +155,7 @@
     .crt-grid, .crt-glow, .cursor::after { animation:none; }
     .crt-sweep { display:none; }
     .reveal { opacity:1; transform:none; transition:none; }
-    .panel:hover { transform:none; }
+    .btn:active { transform:none; }
   }
 </style>
 </head>
@@ -193,8 +199,9 @@
 
 <div class="stage">
   <div class="wrap">
-    <figure class="shot-hero reveal">
-      <img src="img/overview.png" width="2880" height="4374" alt="The Overview page: a request queue showing one active call of two, both providers ready, spend and token counts for the last five and eighteen hours, and a per-subscription breakdown of requests, tokens and cost for claude and codex." loading="eager">
+    <figure class="frame shot-hero reveal">
+      <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+      <img src="img/overview.png" width="2880" height="1440" alt="The Overview page: one active call of two in the request queue, both providers ready, and capacity for the last five and eighteen hours — spend, tokens and request counts, with a per-subscription breakdown for claude and codex." loading="eager">
     </figure>
   </div>
 </div>
@@ -207,6 +214,11 @@
       credit you would buy separately. SheLLM runs the official CLI behind one endpoint that
       answers in both formats.
     </p>
+    <p class="sub">
+      You already pay the subscription, so the marginal request costs nothing extra — and for
+      Claude the CLI reports what it <em>would</em> have cost on the API, attributed to the key
+      that made it. That is the figure above.
+    </p>
   </div>
 </section>
 
@@ -215,36 +227,36 @@
     <h2 class="reveal">What you get</h2>
     <div class="panels">
 
-      <figure class="panel reveal">
-        <img src="img/request-logs.png" width="2880" height="1402" alt="The Request Logs page: a filterable table of every request with status, client, provider, model, duration, tokens and cost, one row expanded to show the request id and upstream detail, and an error-rate sparkline above it." loading="lazy">
+      <figure class="frame panel reveal">
         <figcaption>
           <h3>Request logs</h3>
           <p>Every request, with what it cost and why it failed.</p>
         </figcaption>
+        <img src="img/request-logs.png" width="2369" height="845" alt="The Request Logs table: an error rate with its sparkline, total tokens and estimated cost for the last eighteen hours, then rows carrying time, status, route, client, provider, model, duration, tokens and cost — including a 401 auth_required." loading="lazy">
       </figure>
 
-      <figure class="panel reveal">
-        <img src="img/api-keys.png" width="2880" height="1202" alt="The API Keys page: three keys with their prefix, rate limit, allowed models, seven-day usage, last use and expiry, and an inline editor open below them." loading="lazy">
+      <figure class="frame panel reveal">
         <figcaption>
           <h3>API keys</h3>
           <p>A key per app, with its own rate limit, models and spend.</p>
         </figcaption>
+        <img src="img/api-keys.png" width="2369" height="420" alt="The API Keys table: three keys with their prefix, requests per minute, allowed models, seven-day usage and cost, last use, active state and expiry." loading="lazy">
       </figure>
 
-      <figure class="panel reveal">
-        <img src="img/playground.png" width="2880" height="1394" alt="The Playground page: a client key, format and model selector beside a prompt box, and an answered response showing status 200, round-trip time, tokens in and out, and the request id." loading="lazy">
+      <figure class="frame panel reveal">
         <figcaption>
           <h3>Playground</h3>
           <p>Send a real request down the path your app takes.</p>
         </figcaption>
+        <img src="img/playground.png" width="2369" height="480" alt="The Playground: a client key, the Anthropic /v1/messages format and the claude-fable model on the left, and an answered response on the right showing status 200, a 4.5 second round trip, tokens in and out, and the request id." loading="lazy">
       </figure>
 
-      <figure class="panel reveal">
-        <img src="img/system.png" width="2880" height="1686" alt="The System page: build version, commit and uptime, concurrency counters for running, waiting and streaming calls, and a card per provider with its CLI version, circuit state, last status and models." loading="lazy">
+      <figure class="frame panel reveal">
         <figcaption>
-          <h3>System</h3>
+          <h3>Provider health</h3>
           <p>CLI versions, circuit state and what is queued right now.</p>
         </figcaption>
+        <img src="img/system.png" width="2369" height="700" alt="The System page's provider cards: claude and codex, each with its CLI version, circuit state, last status, last use and the models it serves." loading="lazy">
       </figure>
 
     </div>
@@ -254,13 +266,26 @@
 <section id="start">
   <div class="wrap reveal">
     <h2>Get started</h2>
-    <div class="term">
-      <div class="term-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="term frame">
+      <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i></div>
 <pre><span class="c"># Node.js 24 and a logged-in claude (or codex) on the same machine</span>
 <span class="p">$</span> git clone git@github.com:rodacato/SheLLM.git &amp;&amp; cd SheLLM
 <span class="p">$</span> npm install &amp;&amp; npm link
 <span class="p">$</span> shellm init
 <span class="p">$</span> shellm start</pre>
+    </div>
+    <div class="term frame">
+      <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+<pre><span class="p">$</span> curl http://127.0.0.1:6100/v1/chat/completions \
+    -H <span class="s">"Authorization: Bearer $SHELLM_KEY"</span> \
+    -d <span class="s">'{"model":"claude-haiku","messages":[{"role":"user","content":"Hello"}]}'</span>
+
+{
+  "object": "chat.completion",
+  "model": "claude-haiku",
+  "choices": [{ "message": { "role": "assistant", "content": "…" } }],
+  "usage": { "prompt_tokens": 12, "completion_tokens": 18, "total_tokens": 30 }
+}</pre>
     </div>
   </div>
 </section>
