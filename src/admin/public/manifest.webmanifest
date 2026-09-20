@@ -1,12 +1,14 @@
 {
+  "id": "/admin/",
   "name": "SheLLM Admin",
   "short_name": "SheLLM",
   "description": "Keys, request logs and provider status for your SheLLM instance.",
   "start_url": "/admin/dashboard/",
   "scope": "/admin/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "any",
-  "background_color": "#1a1e21",
+  "background_color": "#101417",
   "theme_color": "#1a1e21",
   "icons": [
     { "src": "/admin/dashboard/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },

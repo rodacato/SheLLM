@@ -115,8 +115,7 @@ subscription" is a question with an answer. Nothing about the prompt is stored o
 The playground sends a real request through the same path an app takes, so a key that works here
 works everywhere.
 
-> These two are renders from the design system in [`design/`](design/README.md), which mirrors the
-> shipped code rather than the other way round. They are not captures of a running instance.
+<sub>Renders from the [design system](design/README.md), which mirrors the shipped code.</sub>
 
 ## Models
 
