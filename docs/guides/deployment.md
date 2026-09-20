@@ -215,19 +215,31 @@ debug something strange:
 `/home/shellmer/.config/shellm/env` (secrets).
 
 The database runs in WAL mode, so **copying the `.db` file is not a valid backup** — the copy
-comes out torn or missing recent writes, and the `-wal` file beside it routinely holds hundreds
-of kilobytes that a `cp` leaves behind. Use SQLite's online backup, which is safe while the
-service is running:
+comes out torn or missing recent writes. On a live install the `.db` file was 86 KB with an mtime
+six months old while the `-wal` beside it held 3.3 MB: a `cp` of the `.db` alone hands you the
+state of six months ago, at full size, with nothing about it looking wrong. Use SQLite's online
+backup, which is safe while the service is running:
 
 ```bash
-sudo -iu shellmer sqlite3 ~/.shellm/shellm.db ".backup '/home/shellmer/shellm-backup.db'"
-sudo mv /home/shellmer/shellm-backup.db /var/backups/shellm.db
+sudo -iu shellmer sqlite3 /home/shellmer/.shellm/shellm.db ".backup '/home/shellmer/shellm-backup.db'" &&
+  sudo test -s /home/shellmer/shellm-backup.db &&
+  sudo -iu shellmer sqlite3 /home/shellmer/shellm-backup.db 'PRAGMA integrity_check' | grep -qx ok &&
+  sudo mv /home/shellmer/shellm-backup.db /var/backups/shellm.db
 ```
 
-The destination of the first command has to be somewhere `shellmer` can write, which is why it
-lands in the home directory and is moved afterwards — the command runs as that user, and
-`/var/backups` is root's at mode 755. Note also that SQLite does not expand `~` inside the
-`.backup` argument: it is a literal string, so give it an absolute path.
+The snapshot lands in the home directory and is moved afterwards because it is written as
+`shellmer`, and `/var/backups` is root's at mode 755. Three things in that command are
+load-bearing:
+
+- **Absolute paths, no `~`.** Your shell expands a tilde before `sudo` exists, so `~/.shellm`
+  names *your* home rather than `shellmer`'s and the backup cannot open its source. SQLite does
+  not expand one either — inside the `.backup` argument it is a literal string.
+- **The `&&`.** A `.backup` that fails still leaves an empty file at its destination, so an
+  unconditional `mv` on a line of its own moves those zero bytes over the backup you already had.
+  The error scrolls past, the `mv` reports success, and the good copy is gone.
+- **Both checks, not one.** An empty file is a valid empty SQLite database, so
+  `integrity_check` answers `ok` for zero bytes. `test -s` is what catches the failure above;
+  `integrity_check` is what catches a copy of plausible size that is not readable.
 
 The config file is a plain file and `cp` is fine for it.
 

@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **deployment:** stop the documented manual backup from destroying the previous one — the
+  snapshot command read its source through `~`, which the calling shell expands to *its own*
+  home before `sudo` runs, so it failed and left an empty file behind; the `mv` on the next line
+  then moved those zero bytes over the existing backup. The commands are now chained, use
+  absolute paths, and verify the copy is non-empty and passes `integrity_check` before anything
+  is overwritten.
+
+### Fixed
+
 - **deploy:** take the update snapshots out of `/var/backups/shellm` — the updater created that
   directory with `install -d -o shellmer`, which also applies to a directory that already exists,
   so on a host where something else had provisioned it as root-only the updater silently handed
