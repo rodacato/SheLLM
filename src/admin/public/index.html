@@ -1028,6 +1028,84 @@
               <p class="text-xs font-mono text-outline" x-text="'Latest release unknown — ' + releaseError"></p>
             </template>
           </div>
+
+          <!-- The update itself. This writes a request; a root unit does the work, or nothing does. -->
+          <div class="border-t border-outline-variant/30 pt-4 mt-4" x-show="updater">
+
+            <!-- Why the button is not here, said in the operator's terms rather than the unit's -->
+            <template x-if="updater?.trigger !== 'ready'">
+              <p class="text-xs font-mono text-outline" x-text="updater?.trigger_help"></p>
+            </template>
+
+            <template x-if="updater?.trigger === 'ready' && upgradeTargets.length === 0">
+              <p class="text-xs font-mono text-outline">Nothing newer to move to.</p>
+            </template>
+
+            <template x-if="updater?.trigger === 'ready' && upgradeTargets.length > 0">
+              <div class="space-y-3">
+                <div class="flex flex-wrap items-center gap-3">
+                  <select x-model="target"
+                    class="bg-surface border border-outline-variant/40 text-white text-xs font-mono px-3 py-2">
+                    <template x-for="r in upgradeTargets" :key="r.tag_name">
+                      <option :value="r.tag_name" x-text="r.tag_name"></option>
+                    </template>
+                  </select>
+                  <template x-if="selectedRelease">
+                    <a :href="selectedRelease.html_url" target="_blank" rel="noopener"
+                      class="text-xs font-mono text-primary-container underline">release notes</a>
+                  </template>
+                  <button @click="requestUpdate()" :disabled="!canRequest"
+                    class="text-xs font-headline font-bold uppercase tracking-wider px-4 py-2 bg-primary-container text-surface disabled:opacity-40 disabled:cursor-not-allowed"
+                    x-text="busy === 'update' ? 'requesting…' : 'update this host'"></button>
+                </div>
+
+                <!-- A major jump is where a migration can be one-way, so it asks for the version
+                     to be typed rather than clicked. -->
+                <template x-if="isMajorJump">
+                  <div class="flex flex-wrap items-center gap-3">
+                    <span class="text-xs font-mono text-[#ffb800]"
+                      x-text="'Major version jump. Type ' + target + ' to confirm:'"></span>
+                    <input x-model="confirmText" :placeholder="target" spellcheck="false"
+                      class="bg-surface border border-outline-variant/40 text-white text-xs font-mono px-3 py-2 w-32">
+                  </div>
+                </template>
+
+                <p class="text-[11px] font-mono text-outline">
+                  The host snapshots its database, moves to the tag, and rolls back on its own if
+                  the service does not answer.
+                </p>
+              </div>
+            </template>
+
+            <template x-if="updateError">
+              <p class="text-xs font-mono text-[#ef4444] mt-3" x-text="updateError"></p>
+            </template>
+
+            <!-- What happened last time. After an update this is read across a restart, which is
+                 exactly when it matters. -->
+            <template x-if="updater?.pending || updater?.last">
+              <div class="mt-4 text-[11px] font-mono">
+                <template x-if="updater.pending">
+                  <p class="text-[#ffb800]">A request is waiting to be picked up.</p>
+                </template>
+                <template x-if="updater.last && updater.last.state === 'running' && !updater.last.stalled">
+                  <p class="text-[#ffb800]" x-text="'Updating to ' + updater.last.ref + '…'"></p>
+                </template>
+                <template x-if="updater.last && updater.last.stalled">
+                  <p class="text-[#ef4444]"
+                    x-text="'The update to ' + updater.last.ref + ' stopped without reporting. Check journalctl -u shellm-update.'"></p>
+                </template>
+                <template x-if="updater.last && updater.last.state === 'ok'">
+                  <p class="text-outline"
+                    x-text="'Last update: ' + updater.last.detail + ' · ' + formatTime(updater.last.finished_at)"></p>
+                </template>
+                <template x-if="updater.last && updater.last.state === 'failed'">
+                  <p class="text-[#ef4444]"
+                    x-text="'Last update failed: ' + updater.last.detail"></p>
+                </template>
+              </div>
+            </template>
+          </div>
         </div>
 
         <!-- ================= QUEUE ================= -->

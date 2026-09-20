@@ -139,9 +139,9 @@ SHELLM_REF=v1.0.0 sudo shellm update
 
 ### Updating from the dashboard (off by default)
 
-`vps.sh` installs a trigger that lets the dashboard ask for an update, and leaves it disabled.
-Turning it on arms a root unit that the dashboard can reach, so it is your decision, not the
-provisioning script's:
+The System page can move this host to a newer release. `vps.sh` installs the trigger that makes
+that possible and leaves it disabled — turning it on arms a root unit the dashboard can reach, so
+it is your decision, not the provisioning script's:
 
 ```bash
 sudo systemctl enable --now shellm-update.path
@@ -156,6 +156,16 @@ What it installs, and what each piece is for:
 | `shellm-update.service` | Runs the updater once, as root |
 | `/usr/local/lib/shellm/shellm-update-runner.sh` | Validates the request, resolves the tag to a commit id against the repository, snapshots the database, then calls `shellm update` |
 | `/etc/tmpfiles.d/shellm.conf` | Creates `/run/shellm`, owned by `shellmer` |
+
+The page offers only releases **newer** than the one running, with a link to each one's notes. A
+major version jump asks for the version to be typed before the button works, because that is where
+a migration can be one-way. Rolling back is deliberately not offered here — it is
+`SHELLM_REF=vX.Y.Z sudo shellm update`, where someone is already looking at the host.
+
+When the trigger is not armed the page says which of the two reasons applies, because they have
+different fixes: the units are not installed at all (re-run `vps.sh`) or they are installed and
+switched off (`systemctl enable --now`). `systemctl is-active` cannot tell those apart — it
+answers `inactive` for both — so the dashboard asks about the unit file as well.
 
 The runner refuses anything that is not a published release tag, and it checks out a **commit id**
 it resolved itself rather than the name it was given, so a rewritten local tag cannot redirect it.

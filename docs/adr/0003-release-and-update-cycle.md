@@ -122,6 +122,13 @@ The dashboard offers an update. It lists published releases with their notes, ma
 version jump differently from a patch, and requires the target version to be typed for a major.
 Pressing it **writes a request**; it does not deploy.
 
+**Downgrades are not offered from the page.** Rolling back is a real need and it keeps its
+existing home, `SHELLM_REF=vX.Y.Z sudo shellm update`, where a person is already looking at the
+host. Refusing it here narrows what a forged request buys: the worst outcome becomes "this host
+moved to the newest published release" rather than "this host moved to an old one with a known
+hole in it". The endpoint checks the same tag shape the root runner does, which turns a typo into
+a message on the page instead of a failure in a journal minutes later.
+
 Two files carry the exchange, and the split is deliberate:
 
 | | Path | Why there |
