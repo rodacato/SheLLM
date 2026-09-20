@@ -1,0 +1,37 @@
+# Writes a consistent snapshot of the database and the config file into /var/lib/shellm/backups.
+# Installed by scripts/setup/vps.sh and NOT enabled by it — see shellm-backup.timer.
+#
+# This unit takes the snapshot. Getting it off the host, and keeping it for longer than the few
+# the command keeps locally, is the operator's: point rsync, restic, borg or anything else at
+# that directory. See docs/adr/0004-backup-is-a-command.md.
+
+[Unit]
+Description=Snapshot the SheLLM database and configuration
+Documentation=https://github.com/rodacato/SheLLM/blob/master/docs/adr/0004-backup-is-a-command.md
+
+[Service]
+Type=oneshot
+# Never root. Opening a WAL database creates its -wal and -shm files, and root-owned ones in the
+# service user's state directory leave the service unable to write its own database. `shellm
+# backup` refuses to run as root, so a unit that lost this line fails loudly instead.
+User=shellmer
+Group=shellmer
+# `shellm` lands in whichever prefix npm was configured with, so PATH names both and is not
+# left to whatever a unit inherits.
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=NO_COLOR=1
+ExecStart=/usr/bin/env shellm backup
+# A oneshot inherits DefaultTimeoutStartUSec, 90 s on a stock box. A snapshot of a small database
+# takes well under a second; this is the margin for one that is not, on a host that is not idle.
+TimeoutStartSec=300
+
+# Same posture as shellm.service: everything read-only except what this actually writes — the
+# -wal and -shm beside the live database, and the snapshot directory. A --dir elsewhere needs a
+# drop-in that grants it, or the unit fails with a read-only filesystem error.
+ProtectSystem=strict
+ReadWritePaths=/home/shellmer/.shellm /var/lib/shellm
+PrivateTmp=yes
+NoNewPrivileges=yes
+
+StandardOutput=journal
+StandardError=journal
