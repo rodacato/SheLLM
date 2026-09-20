@@ -56,13 +56,12 @@ describe('admin /admin/stats', () => {
     closeDb();
   });
 
-  it('returns stats with default 24h period', async () => {
+  it('returns stats over the one window there is', async () => {
     const res = await request(app)
       .get('/admin/stats')
       .set('Authorization', `Basic ${adminCreds}`);
 
     assert.strictEqual(res.status, 200);
-    assert.strictEqual(res.body.period, '24h');
     assert.strictEqual(res.body.total_requests, 3);
     assert.strictEqual(res.body.total_tokens, 1000);
     assert.strictEqual(res.body.total_cost_usd, 0.03);
@@ -98,30 +97,46 @@ describe('admin /admin/stats', () => {
     assert.strictEqual(res.body.active_clients, 1);
   });
 
-  it('accepts period=7d', async () => {
+  it('describes the window it measured, so the totals have a denominator', async () => {
     const res = await request(app)
-      .get('/admin/stats?period=7d')
+      .get('/admin/stats')
       .set('Authorization', `Basic ${adminCreds}`);
 
-    assert.strictEqual(res.status, 200);
-    assert.strictEqual(res.body.period, '7d');
+    const w = res.body.window;
+    assert.strictEqual(w.requests, 3, 'the window counts the rows the totals came from');
+    assert.strictEqual(w.retention_days, 30);
+    assert.ok(Date.parse(w.from) <= Date.parse(w.to), 'the window starts before it ends');
+    assert.ok(w.hours > 0, 'an observed window has a length');
   });
 
-  it('accepts period=30d', async () => {
-    const res = await request(app)
-      .get('/admin/stats?period=30d')
-      .set('Authorization', `Basic ${adminCreds}`);
+  it('ignores a period, because there is no longer one to pick', async () => {
+    const [plain, asked] = await Promise.all([
+      request(app).get('/admin/stats').set('Authorization', `Basic ${adminCreds}`),
+      request(app).get('/admin/stats?period=7d').set('Authorization', `Basic ${adminCreds}`),
+    ]);
 
-    assert.strictEqual(res.status, 200);
-    assert.strictEqual(res.body.period, '30d');
+    assert.strictEqual(asked.status, 200);
+    assert.strictEqual(asked.body.total_requests, plain.body.total_requests);
+    assert.strictEqual(asked.body.window.requests, plain.body.window.requests);
+    assert.ok(!('period' in asked.body), 'the answer must not echo a period it did not honour');
   });
 
-  it('defaults invalid period to 24h', async () => {
+  it('reports no previous-period delta, because the comparable window was pruned', async () => {
     const res = await request(app)
-      .get('/admin/stats?period=invalid')
+      .get('/admin/stats')
       .set('Authorization', `Basic ${adminCreds}`);
 
-    assert.strictEqual(res.body.period, '24h');
+    assert.ok(!('delta_p95_pct' in res.body.latency), 'an invented baseline is worse than no arrow');
+    assert.ok(!('previous_total_ms' in res.body.latency));
+  });
+
+  it('keeps the quota windows on their own fixed lengths', async () => {
+    const res = await request(app)
+      .get('/admin/stats')
+      .set('Authorization', `Basic ${adminCreds}`);
+
+    assert.deepStrictEqual(res.body.quota.windows.map((w) => w.hours), [5, 168],
+      'quota tracks the provider cycle, not whatever the dashboard is showing');
   });
 
   it('rejects unauthenticated request', async () => {
@@ -135,7 +150,7 @@ describe('admin /admin/stats', () => {
     insertRequestLog({ client_name: null, status: 401, error_code: 'auth_required', method: 'POST', path: '/v1/messages' });
 
     const res = await request(app)
-      .get('/admin/stats?period=24h')
+      .get('/admin/stats')
       .set('Authorization', `Basic ${adminCreds}`);
 
     const rows = res.body.error_breakdown;
@@ -154,7 +169,7 @@ describe('admin /admin/stats', () => {
 
   it('returns timeline buckets a chart can be drawn from', async () => {
     const res = await request(app)
-      .get('/admin/stats?period=24h')
+      .get('/admin/stats')
       .set('Authorization', `Basic ${adminCreds}`);
 
     const timeline = res.body.timeline;

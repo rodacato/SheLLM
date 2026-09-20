@@ -11,14 +11,15 @@
           </button>
         </header>
 
-        <!-- Period filter -->
-        <div class="flex items-center gap-2 mb-6">
-          <template x-for="p in ['24h', '7d', '30d']" :key="p">
-            <button @click="changePeriod(p)"
-              :class="period === p ? 'bg-primary-container text-on-primary font-bold' : 'bg-surface-container text-outline hover:text-white hover:bg-surface-container-high'"
-              class="px-4 py-1.5 text-xs font-headline uppercase tracking-wide transition-colors duration-100"
-              x-text="p"></button>
-          </template>
+        <!-- Every figure below is over this window, and nothing on the page can narrow it -->
+        <div class="flex items-baseline gap-2 mb-6 text-[11px] font-mono text-outline flex-wrap">
+          <span class="text-on-surface-variant" x-text="stats ? (stats.total_requests || 0).toLocaleString() + ' requests' : '—'"></span>
+          <span x-show="stats && stats.window.from">over</span>
+          <span class="text-on-surface-variant" x-show="stats && stats.window.from" x-text="stats ? windowSpan() : ''"></span>
+          <span x-show="stats && stats.window.from" x-text="stats ? '· since ' + formatTime(stats.window.from) : ''"></span>
+          <span x-show="stats && !stats.window.from">no requests recorded yet</span>
+          <span class="ml-auto text-outline/60"
+            x-text="stats ? 'logs are kept ' + stats.window.retention_days + ' days' : ''"></span>
         </div>
 
         <!-- What failed, before how much went through: a count alone cannot say whose it was or
@@ -197,12 +198,7 @@
                     <p class="text-2xl font-headline font-black text-white" x-text="formatDuration(stats.latency.total_ms.p50)"></p>
                   </div>
                   <div class="bg-surface-container p-5">
-                    <div class="flex items-baseline justify-between mb-2">
-                      <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">p95</p>
-                      <span x-show="stats.latency.delta_p95_pct !== null" class="text-[10px] font-mono"
-                        :class="stats.latency.delta_p95_pct > 0 ? 'text-status-warn' : 'text-status-ok'"
-                        x-text="(stats.latency.delta_p95_pct > 0 ? '↑' : '↓') + Math.abs(stats.latency.delta_p95_pct) + '%'"></span>
-                    </div>
+                    <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">p95</p>
                     <p class="text-2xl font-headline font-black text-white" x-text="formatDuration(stats.latency.total_ms.p95)"></p>
                   </div>
                   <div class="bg-surface-container p-5">
@@ -274,7 +270,7 @@
                     </template>
                   </tbody>
                 </table>
-                <p x-show="!stats.by_model || stats.by_model.length === 0" class="text-outline text-xs font-mono">No requests in this period.</p>
+                <p x-show="!stats.by_model || stats.by_model.length === 0" class="text-outline text-xs font-mono">No requests in this window.</p>
               </div>
 
               <div class="bg-surface-container p-5">
@@ -301,7 +297,7 @@
                     </template>
                   </tbody>
                 </table>
-                <p x-show="!stats.by_client || stats.by_client.length === 0" class="text-outline text-xs font-mono">No requests in this period.</p>
+                <p x-show="!stats.by_client || stats.by_client.length === 0" class="text-outline text-xs font-mono">No requests in this window.</p>
               </div>
             </div>
 

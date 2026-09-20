@@ -33,7 +33,7 @@ describe('admin /admin/stats shape without a database', () => {
 
     const request = require('supertest');
     const app = require(path.resolve(__dirname, '../../src/app'));
-    const ask = () => request(app).get('/admin/stats?period=24h').set('Authorization', `Basic ${adminCreds}`);
+    const ask = () => request(app).get('/admin/stats').set('Authorization', `Basic ${adminCreds}`);
 
     populated = (await ask()).body;
     require('../../src/db').closeDb();

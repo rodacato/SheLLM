@@ -66,9 +66,9 @@ function initDb(dbPath) {
 
   // Prune old logs and expired keys on startup and daily
   const { pruneOldLogs, pruneExpiredKeys } = require('./request-logs');
-  pruneOldLogs(30);
+  pruneOldLogs();
   pruneExpiredKeys();
-  pruneInterval = setInterval(() => { pruneOldLogs(30); pruneExpiredKeys(); }, 24 * 60 * 60 * 1000);
+  pruneInterval = setInterval(() => { pruneOldLogs(); pruneExpiredKeys(); }, 24 * 60 * 60 * 1000);
   pruneInterval.unref();
 
   return db;
