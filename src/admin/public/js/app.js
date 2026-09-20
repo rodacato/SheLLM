@@ -15,17 +15,51 @@ function redirectToLogin() {
   location.replace(`/admin/login?next=${next}`);
 }
 
+class ApiError extends Error {
+  constructor(message, status = null) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+// Every admin read reports into this store, so one banner can say "I could not ask" instead of
+// each page rendering a failed request as an empty one.
+function reportRead(detail) {
+  const conn = typeof Alpine === 'undefined' ? null : Alpine.store('connection');
+  if (!conn) return;
+  conn.detail = detail;
+  conn.failed = detail !== null;
+  if (detail === null) conn.lastReadAt = new Date();
+}
+
 async function apiFetch(url, options = {}) {
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...options.headers,
-    },
-  });
+  let res;
+  try {
+    res = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        ...options.headers,
+      },
+    });
+  } catch {
+    reportRead('the gateway did not answer');
+    throw new ApiError('the gateway did not answer');
+  }
   if (res.status === 401) redirectToLogin();
+  reportRead(res.ok ? null : `the gateway answered ${res.status}`);
   return res;
+}
+
+// What a read path uses. It answers with the body or throws — the three states a table has to
+// tell apart (loading, unreachable, genuinely empty) are not expressible while a failed fetch
+// and an empty one both return nothing.
+async function apiRead(url, options = {}) {
+  const res = await apiFetch(url, options);
+  if (!res.ok) throw new ApiError(`the gateway answered ${res.status}`, res.status);
+  return res.json();
 }
 
 function formatUptime(seconds) {
@@ -74,6 +108,15 @@ function formatTime(isoString) {
   return `${mon}/${day} ${hh}:${mm}:${ss}`;
 }
 
+// Wall-clock only: this answers "how stale is what I am looking at", never which day it was.
+function formatClock(date) {
+  if (!date) return null;
+  const hh = String(date.getHours()).padStart(2, '0');
+  const mm = String(date.getMinutes()).padStart(2, '0');
+  const ss = String(date.getSeconds()).padStart(2, '0');
+  return `${hh}:${mm}:${ss}`;
+}
+
 function statusBadgeClass(status) {
   if (status >= 200 && status < 300) return 'badge-2xx';
   if (status >= 400 && status < 500) return 'badge-4xx';
@@ -87,6 +130,20 @@ const VALID_PAGES = ['overview', 'logs', 'keys', 'playground', 'system'];
 // shared state here for that reason.
 document.addEventListener('alpine:init', () => {
   Alpine.store('nav', { pendingLogFilter: null });
+  Alpine.store('connection', {
+    online: navigator.onLine,
+    failed: false,
+    detail: null,
+    lastReadAt: null,
+    get degraded() { return !this.online || this.failed; },
+    get message() {
+      if (!this.online) return 'This browser is offline. Nothing below is being updated.';
+      return `Could not reach the gateway — ${this.detail}. Nothing below is being updated.`;
+    },
+  });
+  for (const event of ['online', 'offline']) {
+    window.addEventListener(event, () => { Alpine.store('connection').online = navigator.onLine; });
+  }
 });
 
 function app() {
@@ -94,6 +151,7 @@ function app() {
     page: VALID_PAGES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview',
     sidebarOpen: false,
     health: { uptime: null, providers: {}, queue: {} },
+    healthRead: 'pending',
     nav: [
       { id: 'overview', label: 'Overview', icon: 'dashboard' },
       { id: 'logs', label: 'Request Logs', icon: 'database' },
@@ -111,6 +169,8 @@ function app() {
       this.navigate('logs');
     },
     formatUptime,
+    formatClock,
+    get lastReadAt() { return formatClock(Alpine.store('connection').lastReadAt); },
     async init() {
       window.addEventListener('hashchange', () => {
         const id = location.hash.slice(1);
@@ -119,20 +179,22 @@ function app() {
       await this.fetchHealth();
       setInterval(() => this.fetchHealth(), 30000);
     },
+    // Keeping the last good reading and saying nothing is how the one element whose job is to
+    // report the server is alive went on saying so after it died.
     async fetchHealth() {
       try {
-        const res = await apiFetch(HEALTH_URL);
-        if (res.ok) {
-          const data = await res.json();
-          this.health = {
-            uptime: data.uptime_seconds,
-            providers: data.providers || {},
-            queue: data.queue || {},
-            status: data.status,
-            build: data.build || null,
-          };
-        }
-      } catch { /* ignore */ }
+        const data = await apiRead(HEALTH_URL);
+        this.health = {
+          uptime: data.uptime_seconds,
+          providers: data.providers || {},
+          queue: data.queue || {},
+          status: data.status,
+          build: data.build || null,
+        };
+        this.healthRead = 'ok';
+      } catch {
+        this.healthRead = 'failed';
+      }
     },
   };
 }
