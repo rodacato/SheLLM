@@ -7949,6 +7949,19 @@
         },
         {
           "type": "text",
+          "id": "SYdMB",
+          "name": "2026-09-20l",
+          "fill": "$on-surface-variant",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "2026-09-20 · The first fidelity loop this flow has actually run, and it earned its keep. The band was drawn from the code, then checked against the app in a browser — the service worker serving its cached shell for the dead-gateway states, a fake CLI on PATH for the waiting clock, no subscription quota spent. Four screens were wrong. System drew 'Latest release unknown — could not reach GitHub', which that screen cannot render: fetchLatestRelease returns early when the build is unknown (system.js:99-101), so releaseError is never set. That is invented copy — the one failure this method exists to prevent — and three readings of the file had not caught it. Logs drew Export CSV and Clear All, both x-show total > 0 and so hidden at zero. The three never-answered screens drew a read timestamp in the banner, the header and the footer; lastReadAt is written only by a read that succeeded, so all of them go and those footers are the product name alone. Sign in drew a filled password field against a server that re-renders it empty. The Playground catalog failure is now a 500, because /admin/providers has no 503 path — 503 is /v1's. Kept on purpose: the Keys activity log stays expanded, one click from its default, because its empty line renders nowhere else.",
+          "lineHeight": 1.6,
+          "fontFamily": "$font-mono-render",
+          "fontSize": 10,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
           "id": "F6rPN",
           "name": "2026-09-20k",
           "fill": "$on-surface-variant",
@@ -12865,7 +12878,7 @@
                       "id": "r3myL",
                       "name": "Value",
                       "fill": "$on-surface",
-                      "content": "••••••••••••",
+                      "content": " ",
                       "fontFamily": "$font-mono-render",
                       "fontSize": 13,
                       "fontWeight": "normal"
@@ -13231,7 +13244,7 @@
                       "id": "QqTXJ",
                       "name": "Value",
                       "fill": "$on-surface",
-                      "content": "••••••••••••",
+                      "content": " ",
                       "fontFamily": "$font-mono-render",
                       "fontSize": 13,
                       "fontWeight": "normal"
@@ -13802,16 +13815,6 @@
                           "name": "Spacer",
                           "width": "fill_container",
                           "height": 1
-                        },
-                        {
-                          "type": "text",
-                          "id": "p64HC",
-                          "name": "Last read",
-                          "fill": "$outline",
-                          "content": "last read 07:14:52",
-                          "fontFamily": "$font-mono-render",
-                          "fontSize": "$text-xs",
-                          "fontWeight": "normal"
                         }
                       ]
                     }
@@ -13869,16 +13872,6 @@
                       "name": "Requests",
                       "fill": "$on-surface-variant",
                       "content": "—",
-                      "fontFamily": "$font-mono-render",
-                      "fontSize": 11,
-                      "fontWeight": "normal"
-                    },
-                    {
-                      "type": "text",
-                      "id": "omTgz",
-                      "name": "Read",
-                      "fill": "$status-warn",
-                      "content": "· read 07:14:52",
                       "fontFamily": "$font-mono-render",
                       "fontSize": 11,
                       "fontWeight": "normal"
@@ -14190,25 +14183,6 @@
                   "fontSize": "$text-label",
                   "fontWeight": "normal",
                   "letterSpacing": 1.6
-                },
-                {
-                  "type": "frame",
-                  "id": "WVjqN",
-                  "name": "Status",
-                  "gap": 16,
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "oZrki",
-                      "name": "Read",
-                      "fill": "$status-warn",
-                      "content": "READ 07:14:52",
-                      "fontFamily": "$font-mono-render",
-                      "fontSize": "$text-label",
-                      "fontWeight": "normal",
-                      "letterSpacing": 1.6
-                    }
-                  ]
                 }
               ]
             }
@@ -19685,7 +19659,7 @@
           "id": "VL8lN",
           "name": "Sidebar",
           "width": 256,
-          "height": 709,
+          "height": 710,
           "fill": "$surface-shell",
           "layout": "vertical",
           "children": [
@@ -20136,16 +20110,6 @@
                           "name": "Spacer",
                           "width": "fill_container",
                           "height": 1
-                        },
-                        {
-                          "type": "text",
-                          "id": "pcZfU",
-                          "name": "Last read",
-                          "fill": "$outline",
-                          "content": "last read 07:14:52",
-                          "fontFamily": "$font-mono-render",
-                          "fontSize": "$text-xs",
-                          "fontWeight": "normal"
                         }
                       ]
                     }
@@ -20462,65 +20426,6 @@
                               "icon": "refresh",
                               "library": "Material Symbols Outlined",
                               "fill": "$outline"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "Vj9oV",
-                          "name": "Export CSV",
-                          "stroke": "$primary-container",
-                          "strokeWidth": 1,
-                          "padding": [
-                            8,
-                            16
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "pJqRE",
-                              "name": "Label",
-                              "fill": "$primary-container",
-                              "content": "EXPORT CSV",
-                              "fontFamily": "$font-headline",
-                              "fontSize": 11,
-                              "fontWeight": "700"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "Co2US",
-                          "name": "Clear All",
-                          "fill": "$danger-surface",
-                          "gap": 8,
-                          "padding": [
-                            9,
-                            16
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "icon",
-                              "id": "ygcy0",
-                              "name": "Icon",
-                              "width": 14,
-                              "height": 14,
-                              "icon": "filter_list_off",
-                              "library": "Material Symbols Outlined",
-                              "fill": "$status-fail"
-                            },
-                            {
-                              "type": "text",
-                              "id": "fyqZc",
-                              "name": "Label",
-                              "fill": "$status-fail",
-                              "content": "CLEAR ALL",
-                              "fontFamily": "$font-headline",
-                              "fontSize": 11,
-                              "fontWeight": "700",
-                              "letterSpacing": 1.4
                             }
                           ]
                         }
@@ -21036,25 +20941,6 @@
                   "fontSize": "$text-label",
                   "fontWeight": "normal",
                   "letterSpacing": 1.6
-                },
-                {
-                  "type": "frame",
-                  "id": "sTqTW",
-                  "name": "Status",
-                  "gap": 16,
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "ni5D8",
-                      "name": "Read",
-                      "fill": "$status-warn",
-                      "content": "READ 07:14:52",
-                      "fontFamily": "$font-mono-render",
-                      "fontSize": "$text-label",
-                      "fontWeight": "normal",
-                      "letterSpacing": 1.6
-                    }
-                  ]
                 }
               ]
             }
@@ -22263,7 +22149,7 @@
                           "id": "tlNCI",
                           "name": "Message",
                           "fill": "$on-surface-variant",
-                          "content": "Could not reach the gateway — the gateway answered 503. Nothing below is being updated.",
+                          "content": "Could not reach the gateway — the gateway answered 500. Nothing below is being updated.",
                           "fontFamily": "$font-mono-render",
                           "fontSize": "$text-xs",
                           "fontWeight": "normal"
@@ -22583,7 +22469,7 @@
                                   "fill": "$status-warn",
                                   "textGrowth": "fixed-width",
                                   "width": "fill_container",
-                                  "content": "Could not read the model list — the gateway answered 503. The field still accepts any name.",
+                                  "content": "Could not read the model list — the gateway answered 500. The field still accepts any name.",
                                   "lineHeight": 1.5,
                                   "fontFamily": "$font-mono-render",
                                   "fontSize": "$text-label",
@@ -23502,7 +23388,7 @@
                                       "fill": "$on-surface",
                                       "textGrowth": "fixed-width",
                                       "width": "fill_container",
-                                      "content": "claude-fable",
+                                      "content": "claude",
                                       "lineHeight": 1.5,
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": "$text-sm",
@@ -23743,7 +23629,7 @@
           "id": "coTKp",
           "name": "Sidebar",
           "width": 256,
-          "height": 651,
+          "height": 620,
           "fill": "$surface-shell",
           "layout": "vertical",
           "children": [
@@ -24194,16 +24080,6 @@
                           "name": "Spacer",
                           "width": "fill_container",
                           "height": 1
-                        },
-                        {
-                          "type": "text",
-                          "id": "oVUuw",
-                          "name": "Last read",
-                          "fill": "$outline",
-                          "content": "last read 07:14:52",
-                          "fontFamily": "$font-mono-render",
-                          "fontSize": "$text-xs",
-                          "fontWeight": "normal"
                         }
                       ]
                     }
@@ -24424,16 +24300,6 @@
                       "width": "fill_container",
                       "height": 1,
                       "fill": "$outline-variant"
-                    },
-                    {
-                      "type": "text",
-                      "id": "Imbi2",
-                      "name": "Release unknown",
-                      "fill": "$outline",
-                      "content": "Latest release unknown — could not reach GitHub",
-                      "fontFamily": "$font-mono-render",
-                      "fontSize": 11,
-                      "fontWeight": "normal"
                     }
                   ]
                 },
@@ -24660,25 +24526,6 @@
                   "fontSize": "$text-label",
                   "fontWeight": "normal",
                   "letterSpacing": 1.6
-                },
-                {
-                  "type": "frame",
-                  "id": "W4nEgL",
-                  "name": "Status",
-                  "gap": 16,
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "DFHHk",
-                      "name": "Read",
-                      "fill": "$status-warn",
-                      "content": "READ 07:14:52",
-                      "fontFamily": "$font-mono-render",
-                      "fontSize": "$text-label",
-                      "fontWeight": "normal",
-                      "letterSpacing": 1.6
-                    }
-                  ]
                 }
               ]
             }
@@ -24810,7 +24657,7 @@
               "fill": "$on-surface-variant",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "Nine, at 514a8f8. Sign in / Invalid credentials and Sign in / Rate limited are the 401 and 429 panels D43 deliberately left for this band. Overview / Not updating — nothing answered, so the page collapses to its header, the NOW row and one line. Overview / Usage limit — every read worked and the quota did not; it is the only screen here at full height and the only one that keeps the fold marker. Request Logs / Unreachable — the stats strip, both panels at '-' and the table's error row, with pagination still at Page 1 of 1. API Keys / Empty is the one screen in the band where nothing went wrong: a read that worked and found no keys, activity log expanded to show its own empty line. Playground / Waiting and Playground / No provider carry between them the three catalog states D16 closed, plus the waiting clock. System / Unreachable — the build card unread and the providers line.",
+              "content": "Nine, at 514a8f8. Sign in / Invalid credentials and Sign in / Rate limited are the 401 and 429 panels D43 deliberately left for this band; both fields come back empty, because the server re-renders the form without value attributes. Overview / Not updating — nothing answered, so the page collapses to its header, the NOW row and one line. Overview / Usage limit — every read worked and the quota did not; it is the only screen here at full height and the only one that keeps the fold marker. Request Logs / Unreachable — the stats strip, both panels at '-' and the table's error row, with pagination still at Page 1 of 1 and a toolbar down to Refresh alone, since Export CSV and Clear All are both x-show total > 0. API Keys / Empty is the one screen in the band where nothing went wrong: a read that worked and found no keys. Its activity log is drawn expanded, one click from the default — showAudit is false (public/js/keys.js:16) — because that panel's empty line is copy that renders nowhere else. Playground / Waiting and / No provider carry between them the three catalog states D16 closed, plus the waiting clock; their MODEL and FORMAT values are the operator's, not the app's, which opens on claude and OpenAI · /v1/chat/completions. System / Unreachable — the build card unread and the providers line.",
               "lineHeight": 1.6,
               "fontFamily": "$font-mono-render",
               "fontSize": 10,
@@ -24843,7 +24690,7 @@
               "fill": "$on-surface-variant",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "Three states, never two: loading, unreachable and genuinely empty get different sentences everywhere all three can happen. That is why API Keys / Empty sits in this band beside screens that failed — it is the third state, not a failure. The banner is shell-level and conditional: it lives in main above every page (views/index.html:148), so it is drawn identically on four screens here and belongs to none of them. Degraded and unreachable are not the same question — the banner reads the last read of any request, while the sidebar and footer read the health poll, which only runs every 30s (app.js:239). Playground / Waiting is where they disagree on purpose: the banner reports a 503 on the model catalog while the sidebar still says UP, because health itself is fine. On the three screens where health did fail, the sidebar says UNREACHABLE in status-fail (index.html:123) and the footer drops its uptime. Sign in refuses on the server: 5 attempts per IP per 5 minutes (src/middleware/admin-auth.js:9,11), and the seconds in the 429 are the real remainder, not a fixed lockout.",
+              "content": "Three states, never two: loading, unreachable and genuinely empty get different sentences everywhere all three can happen. That is why API Keys / Empty sits in this band beside screens that failed — it is the third state, not a failure. The banner is shell-level and conditional: it lives in main above every page (views/index.html:148), so it is drawn identically on four screens here and belongs to none of them. Degraded and unreachable are not the same question — the banner reads the last read of any request, while the sidebar and footer read the health poll, which only runs every 30s (app.js:239). Playground / Waiting is where they disagree on purpose: the banner reports a 500 on the model catalog while the sidebar still says UP, because health itself is fine. Measured in a browser on 2026-09-20 and it does happen, with two caveats the artboard cannot show — it is order-dependent, because reportRead is last-write-wins and a failure that resolves before the health read is erased by it; and it is transient, because the next poll clears the banner on its own. On the three screens where health itself failed there is no read timestamp anywhere: lastReadAt is written only by a read that succeeded (app.js:34), so a page that never got an answer has nothing to stamp, and its footer is the product name alone. Sign in refuses on the server: 5 attempts per IP per 5 minutes (src/middleware/admin-auth.js:9,11), and the seconds in the 429 are the real remainder, not a fixed lockout.",
               "lineHeight": 1.6,
               "fontFamily": "$font-mono-render",
               "fontSize": 10,
@@ -24876,7 +24723,7 @@
               "fill": "$on-surface-variant",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "Every string here exists in the code and was copied from it. src/admin/login.js:135 and :141 for the two panels, and that file's own .error rule for the panel itself — a 3px left border in error over --error-bg, which is the same value as surface-container-lowest, at .8rem. views/index.html:148-154 for the banner, :123 for UNREACHABLE, :173 for the warn-coloured footer read. overview.html:77-81 (USAGE LIMIT HIT), :194-197 (providers), :334-336 (stats). logs.html:70 and :125. keys.html:47 and :146. playground.html:56-58 and :81-83. system.html:234-239, plus public/js/system.js:254 for the refused toggle. The banner's two sentences are app.js:193-194. Numbers are illustrative; sentences never are.",
+              "content": "Every string here exists in the code and was copied from it. src/admin/login.js:135 and :141 for the two panels, and that file's own .error rule for the panel itself — a 3px left border in error over --error-bg, which is the same value as surface-container-lowest, at .8rem. views/index.html:148-154 for the banner, :123 for UNREACHABLE. overview.html:77-81 (USAGE LIMIT HIT), :194-197 (providers), :334-336 (stats). logs.html:70 and :125. keys.html:47 and :146. playground.html:56-58 and :81-83. system.html:234-239, plus public/js/system.js:254 for the refused toggle. The banner's two sentences are app.js:193-194. Numbers are illustrative; sentences never are. Verified against the running app on 2026-09-20, which is how four of these screens were corrected instead of shipped wrong: System drew a release line the code cannot reach on that screen (fetchLatestRelease returns early when the build is unknown, system.js:99-101), Logs drew two toolbar buttons the real page hides, three read timestamps could not coexist with a body that never got a read, and the sign-in password field was drawn filled. The catalog failure is drawn as a 500 rather than a 503 for the same reason: /admin/providers answers 200 or, on a throw, Express's 500 — it has no path that produces a 503, which belongs to /v1.",
               "lineHeight": 1.6,
               "fontFamily": "$font-mono-render",
               "fontSize": 10,
