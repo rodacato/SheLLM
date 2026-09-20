@@ -1,0 +1,21 @@
+# A nightly snapshot, for a host with no backup tooling of its own.
+#
+# Installed by scripts/setup/vps.sh but NOT enabled by it — same reason as shellm-update.path:
+# installing is the script's job, turning it on is the operator's. Whoever already schedules
+# backups leaves this off and calls `shellm backup` from what they run; whoever does not:
+#
+#   sudo systemctl enable --now shellm-backup.timer
+
+[Unit]
+Description=Take a SheLLM snapshot every night
+Documentation=https://github.com/rodacato/SheLLM/blob/master/docs/adr/0004-backup-is-a-command.md
+
+[Timer]
+OnCalendar=daily
+# A host that was off at midnight takes the missed snapshot when it comes back, instead of
+# silently skipping the day.
+Persistent=true
+RandomizedDelaySec=15m
+
+[Install]
+WantedBy=timers.target

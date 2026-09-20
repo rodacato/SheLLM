@@ -17,6 +17,8 @@ const SYSTEM_FILES = [
   { src: 'shellm.service', dest: '/etc/systemd/system/shellm.service' },
   { src: 'config/systemd/shellm-update.service', dest: '/etc/systemd/system/shellm-update.service' },
   { src: 'config/systemd/shellm-update.path', dest: '/etc/systemd/system/shellm-update.path' },
+  { src: 'config/systemd/shellm-backup.service', dest: '/etc/systemd/system/shellm-backup.service' },
+  { src: 'config/systemd/shellm-backup.timer', dest: '/etc/systemd/system/shellm-backup.timer' },
   { src: 'config/tmpfiles.d/shellm.conf', dest: '/etc/tmpfiles.d/shellm.conf' },
   { src: 'config/logrotate.conf', dest: '/etc/logrotate.d/shellm' },
   { src: 'scripts/setup/shellm-update-runner.sh', dest: '/usr/local/lib/shellm/shellm-update-runner.sh', mode: '0755' },

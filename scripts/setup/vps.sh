@@ -90,6 +90,14 @@ cp "${APP_DIR}/config/logrotate.conf" /etc/logrotate.d/shellm
 systemctl daemon-reload
 systemctl enable shellm
 
+echo "==> Backups"
+# The command writes here; the timer is installed and left off. Creating the directory as root is
+# the one part the service user cannot do for itself — /var/lib is root's.
+install -d -m 0750 -o "${SERVICE_USER}" -g "${SERVICE_USER}" /var/lib/shellm/backups
+cp "${APP_DIR}/config/systemd/shellm-backup.service" /etc/systemd/system/shellm-backup.service
+cp "${APP_DIR}/config/systemd/shellm-backup.timer" /etc/systemd/system/shellm-backup.timer
+echo "  snapshots go to /var/lib/shellm/backups; enable the nightly one with: systemctl enable --now shellm-backup.timer"
+
 echo "==> Update trigger"
 # The units are installed but not enabled: they are how the dashboard reaches a root process,
 # and that is the operator's decision to make. The runner goes outside the checkout, where
@@ -134,4 +142,12 @@ Updating from the dashboard is off until you turn it on:
 
 That lets the dashboard ask a root unit to run \`shellm update\`. Without it the button reports
 that the updater is not enabled, and \`sudo shellm update\` over SSH keeps working either way.
+
+Backups are off until you turn them on too:
+
+  sudo systemctl enable --now shellm-backup.timer
+
+That takes a nightly snapshot into /var/lib/shellm/backups, keeping the last 7. If you already
+schedule backups, leave it off and call \`shellm backup\` from what you run. Either way, copying
+that directory off this host is yours: SheLLM writes the snapshot, you decide where it lives.
 EOF
