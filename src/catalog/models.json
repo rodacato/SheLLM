@@ -1,0 +1,113 @@
+{
+  "generated_at": "2026-09-20",
+  "cli": {
+    "codex": "0.154.0",
+    "claude": "2.1.273"
+  },
+  "providers": {
+    "codex": {
+      "models": [
+        {
+          "id": "codex-gpt-6-astra",
+          "label": "GPT-6-Astra",
+          "description": "Our most capable model for complex, demanding work.",
+          "isDefault": true,
+          "retiresAt": null,
+          "upgradeTo": null
+        },
+        {
+          "id": "codex-gpt-5.6-sol",
+          "label": "GPT-5.6-Sol",
+          "description": "Reliable agentic workhorse for everyday tasks.",
+          "isDefault": false,
+          "retiresAt": null,
+          "upgradeTo": null
+        },
+        {
+          "id": "codex-gpt-5.6-terra",
+          "label": "GPT-5.6-Terra",
+          "description": "Balanced agentic coding model for everyday work.",
+          "isDefault": false,
+          "retiresAt": null,
+          "upgradeTo": null
+        },
+        {
+          "id": "codex-gpt-5.6-luna",
+          "label": "GPT-5.6-Luna",
+          "description": "Fast and affordable agentic coding model.",
+          "isDefault": false,
+          "retiresAt": null,
+          "upgradeTo": null
+        },
+        {
+          "id": "codex-gpt-5.5",
+          "label": "GPT-5.5",
+          "description": "Proven previous-generation model for coding and general work.",
+          "isDefault": false,
+          "retiresAt": "2026-10-14",
+          "upgradeTo": "codex-gpt-5.6-sol"
+        }
+      ]
+    },
+    "claude": {
+      "models": [
+        {
+          "id": "claude-sonnet",
+          "label": "sonnet",
+          "description": null,
+          "isDefault": false,
+          "retiresAt": null,
+          "upgradeTo": null
+        },
+        {
+          "id": "claude-opus",
+          "label": "opus",
+          "description": null,
+          "isDefault": false,
+          "retiresAt": null,
+          "upgradeTo": null
+        },
+        {
+          "id": "claude-haiku",
+          "label": "haiku",
+          "description": null,
+          "isDefault": false,
+          "retiresAt": null,
+          "upgradeTo": null
+        },
+        {
+          "id": "claude-fable",
+          "label": "fable",
+          "description": null,
+          "isDefault": false,
+          "retiresAt": null,
+          "upgradeTo": null
+        },
+        {
+          "id": "claude-best",
+          "label": "best",
+          "description": null,
+          "isDefault": false,
+          "retiresAt": null,
+          "upgradeTo": null
+        },
+        {
+          "id": "claude-opusplan",
+          "label": "opusplan",
+          "description": null,
+          "isDefault": false,
+          "retiresAt": null,
+          "upgradeTo": null
+        },
+        {
+          "id": "claude-default",
+          "label": "default",
+          "description": null,
+          "isDefault": false,
+          "retiresAt": null,
+          "upgradeTo": null
+        }
+      ]
+    }
+  }
+}

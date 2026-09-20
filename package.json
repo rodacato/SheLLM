@@ -17,6 +17,7 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "seed": "node scripts/seed.js",
+    "catalog:build": "node scripts/build-model-catalog.js",
     "migrate": "node -e \"require('./src/db').initDb()\"",
     "lint": "eslint src/ test/ scripts/",
     "lint:fix": "eslint --fix src/ test/ scripts/",
