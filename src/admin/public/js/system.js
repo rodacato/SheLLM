@@ -107,42 +107,78 @@ function systemPage() {
       return !this.isMajorJump || this.confirmText === this.target;
     },
 
+    // What the button says while it is doing something. A press that changes nothing visible is
+    // read as a press that failed, and the second one gets a 409 from a server that is right.
+    get updateButtonLabel() {
+      if (this.busy !== 'update') return 'update this host';
+      return this.watching ? 'updating…' : 'requesting…';
+    },
+
     // Writes the request and nothing else. What happens next is a root unit's business, and the
     // only thing this page can do is watch the status file the runner leaves behind.
     async requestUpdate() {
       this.busy = 'update';
       this.updateError = null;
+      const ref = this.target;
+      const since = this.updater?.last?.started_at ?? null;
+
       try {
         const res = await apiFetch(`${API_BASE}/update`, {
           method: 'POST',
-          body: JSON.stringify({ ref: this.target, confirm: this.confirmText || undefined }),
+          body: JSON.stringify({ ref, confirm: this.confirmText || undefined }),
         });
-        if (res.ok) {
-          this.confirmText = '';
-          this.watchUpdate();
-        } else {
+        if (!res.ok) {
           this.updateError = (await res.json().catch(() => ({})))?.error?.message ?? `the server answered ${res.status}`;
+          this.busy = null;
+          return;
         }
       } catch {
         this.updateError = 'could not reach the server';
+        this.busy = null;
+        return;
       }
+
+      this.confirmText = '';
+      // Say so now rather than in three seconds. The first poll of the watch below is a timeout
+      // away, and until it lands the panel still reads "nothing in flight" — which is how one
+      // press becomes two and the second one is refused.
+      if (this.updater) this.updater.pending = true;
+      await this.watchUpdate(ref, since);
       this.busy = null;
     },
 
     // The service is restarted in the middle of what we are watching, so a failed poll is the
     // expected case rather than an error. Stop when the runner reports an end, or give up after
     // the unit's own timeout.
-    async watchUpdate() {
+    //
+    // `ref` and `since` are what makes "the run we asked for ended" different from "a run ended":
+    // the status file still holds the previous outcome until the runner overwrites it, and for
+    // the few milliseconds between the request being claimed and the first `running` record,
+    // that stale one reads exactly like a finished new one.
+    async watchUpdate(ref, since) {
       if (this.watching) return;
       this.watching = true;
       const deadline = Date.now() + 15 * 60 * 1000;
+      let finished = null;
+
       while (Date.now() < deadline) {
         await new Promise((r) => setTimeout(r, 3000));
         await this.fetchUpdater();
         const last = this.updater?.last;
-        if (!this.updater?.pending && last && last.state !== 'running') break;
+        const ours = last && last.ref === ref && last.started_at !== since;
+        if (!this.updater?.pending && ours && last.state !== 'running') {
+          finished = last;
+          break;
+        }
       }
+
       this.watching = false;
+      // The version, the commit, the uptime and every panel behind them belong to a process that
+      // no longer exists. Re-reading one card would leave the rest of the page lying.
+      if (finished?.state === 'ok') {
+        window.location.reload();
+        return;
+      }
       await this.fetchLatestRelease();
     },
 

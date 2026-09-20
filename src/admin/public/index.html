@@ -1056,7 +1056,7 @@
                   </template>
                   <button @click="requestUpdate()" :disabled="!canRequest"
                     class="text-xs font-headline font-bold uppercase tracking-wider px-4 py-2 bg-primary-container text-surface disabled:opacity-40 disabled:cursor-not-allowed"
-                    x-text="busy === 'update' ? 'requesting…' : 'update this host'"></button>
+                    x-text="updateButtonLabel"></button>
                 </div>
 
                 <!-- A major jump is where a migration can be one-way, so it asks for the version
@@ -1090,6 +1090,14 @@
                 </template>
                 <template x-if="updater.last && updater.last.state === 'running' && !updater.last.stalled">
                   <p class="text-[#ffb800]" x-text="'Updating to ' + updater.last.ref + '…'"></p>
+                </template>
+                <!-- The restart happens under this page, so say what is being waited for. Without
+                     it a press looks like nothing happened, and the second press is refused. -->
+                <template x-if="watching">
+                  <p class="text-outline">
+                    Watching the host — the service restarts during this, and the page reloads
+                    itself when the update reports done.
+                  </p>
                 </template>
                 <template x-if="updater.last && updater.last.stalled">
                   <p class="text-[#ef4444]"
