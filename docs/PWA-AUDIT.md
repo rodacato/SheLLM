@@ -20,10 +20,10 @@ does wrong, not how hard it is to fix.
 |---|---|---|
 | 🔴 | P1 · P2 *(documented, not fixed — that was the recommendation)* | — |
 | 🟠 | P3 *(partly)* · P4 | P3 *(residual)* · P5 |
-| 🟡 | P6 · P7 · P9 | P8 |
+| 🟡 | P6 · P7 · P9 · P8 *(resolved as "stays" — see below)* | — |
 | 🟢 | P10 · P12 · P13 | P11 |
 
-Nine commits, every one green on `npm test` and `npm run lint`. What is left, and why:
+Every commit green on `npm test` and `npm run lint`. What is left, and why:
 
 - **P3 residual.** The sign-in page now carries the manifest, the theme colour, the safe-area
   insets and the app's own frame, so it no longer reads as a different application. Two things
@@ -32,11 +32,15 @@ Nine commits, every one green on `npm test` and `npm run lint`. What is left, an
   design call, not an oversight.
 - **P5** needs a drawn asset, not a code change. A maskable icon is a different composition, not
   a resize: the mark inside the middle 60% of the canvas on `surface-shell`.
-- **P8** needs a decision. `skipWaiting()` + `clients.claim()` stays, or it goes and the
-  connection banner grows a "reload to update" line. Either is defensible; leaving it undecided
-  is what this entry objects to.
 - **P11** is ~350 KB of PNG in the repo for a taller install dialog. Worth it if the exports are
   going to be committed anyway, not worth it on its own.
+
+### What this audit got wrong
+
+**P8 was not a decision.** It was written as a trade-off with two defensible sides, because the
+entry was written without reading `watchUpdate` in `js/system.js`. One of the two sides breaks
+the update flow. An audit that hands over a false choice is worse than one that says nothing —
+the reader spends a turn deciding something the code had already decided.
 
 ---
 
@@ -195,8 +199,21 @@ until every entry has been re-fetched. Nothing surfaces the change.
 Low severity because the fetch handler is network-first, so an online page is always fresh. It
 becomes real the first time someone debugs a phantom.
 
-**Fix:** either drop `skipWaiting()` and add a "reload to update" line to the connection banner,
-or accept it and write down why. Do not leave it undecided.
+**Resolved 2026-09-20: `skipWaiting()` stays, and this entry was wrong to call it a choice.**
+
+The one moment the operator sits in a tab that goes stale is an update they triggered themselves
+from the System page — and that page already reloads itself when the run reports `ok`
+(`js/system.js:213-218`). Every other moment the fetch handler is network-first, so an online
+page is fresh regardless.
+
+Dropping `skipWaiting()` would not improve that; it would break it. **A reload does not release a
+waiting worker** — only closing every controlled tab does. So the post-update reload would be
+served by the worker it is replacing, and the page would report the new version in its Build card
+while running the previous release's assets. That is the exact defect this entry set out to
+prevent, caused by its own proposed fix.
+
+The coupling lives in two files and is stated by neither, so a test now pins it: remove either
+`skipWaiting()` or that `reload()` and it fails, naming the other.
 
 ### P9 🟡 `cache.match` without `ignoreSearch`
 
