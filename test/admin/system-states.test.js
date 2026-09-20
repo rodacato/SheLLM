@@ -9,9 +9,8 @@ const vm = require('node:vm');
 const JS_DIR = path.join(__dirname, '../../src/admin/public/js');
 const { compose } = require('../../src/admin/views');
 
-// The page's own files, loaded the way the browser loads them. Only fetch is stood in for, and
-// it answers exactly what the scenario under test needs the gateway to have answered. Arrays the
-// page builds belong to the vm's realm, so assert on their length rather than deep-equality.
+// The page's own files, loaded the way the browser loads them; only fetch is stood in for. Arrays
+// the page builds belong to the vm's realm, so assert on length rather than deep-equality.
 function loadSystem(fetchImpl) {
   const stores = {};
   const context = vm.createContext({

@@ -8,9 +8,8 @@ function getMaxQueueDepth() {
   return parseInt(process.env.MAX_QUEUE_DEPTH || '10', 10);
 }
 
-// A count says how many are running; it cannot say that three of them have been running for nine
-// minutes. Requests here are CLI subprocesses measured in seconds, so a wedged one is this
-// product's characteristic failure and the age is the whole diagnosis.
+// A count says how many are running, never that one has been running nine minutes. These are CLI
+// subprocesses measured in seconds, so a wedged one is the failure and the age is the diagnosis.
 const MAX_REPORTED_IN_FLIGHT = 10;
 
 class RequestQueue {

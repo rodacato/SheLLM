@@ -78,9 +78,8 @@ function overviewPage() {
       }
     },
 
-    // The count says three are running; it cannot say one has been wedged for nine minutes. A CLI
-    // subprocess that never returns is this product's characteristic failure and the only one the
-    // queue panel could not draw.
+    // The count says three are running; it cannot say one has been wedged for nine minutes —
+    // this product's characteristic failure, and the only one the queue panel could not draw.
     queueVerdict() {
       const q = this.health?.queue;
       if (!q || !q.in_flight || q.in_flight.length === 0) return '';

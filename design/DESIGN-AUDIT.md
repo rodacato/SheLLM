@@ -606,6 +606,13 @@ One overlap worth flagging so `/ui-motion` does not misdiagnose it: the pulsing 
 pulsing when the server is unreachable. That is **B2**, not a motion defect — the animation is
 correct, the state feeding it is wrong.
 
+> **Judged since, 2026-09-20 — [`MOTION-AUDIT.md`](MOTION-AUDIT.md).** The app was driven in a
+> browser: **D21–D27**, two 🐞 bugs at **D28–D29**, and one accepted proposal that defers to
+> **D11**. It corrects this inventory in one place (`animate-spin` ×1 was missed) and confirms
+> **B2** was fixed before the pass ran. Its numbers continue `DECISIONS.md`, not the `B1–B4`
+> ledger below, which stays this document's.
+
+
 ---
 
 ## Suggested order
