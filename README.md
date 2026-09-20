@@ -58,6 +58,37 @@ Cross-provider fallback is off unless you turn it on. What is left to you: one l
 and not pointing a batch job at it. If you need machine-scale volume, buy API access — that is
 what it is for.
 
+## What you'd build with it
+
+You already pay the subscription, so the marginal request costs nothing extra — and for Claude the
+CLI reports what that request *would* have cost on the API, attributed to the key that made it.
+Build the feature, run it for a week, and you know the bill before you decide to pay one. Codex
+reports no cost, so its requests read `not priced`.
+
+Three shapes, one integration — an official SDK with the base URL and the key swapped:
+
+```mermaid
+graph LR
+    A[Chat handler] -->|SDK| S
+    B[Nightly job] -->|SDK| S
+    C[Script or Playground] -->|SDK| S
+    S[SheLLM] --> CLI[claude / codex]
+    S -.->|per key: requests, tokens, cost| D[(Dashboard)]
+```
+
+**A chatbot or an assistant inside your app.** Someone is waiting, so latency is the constraint:
+the floor for any answer is about 2.5 s ([benchmarks](docs/guides/benchmarks.md)) and two requests
+run at a time by default. Fine for one person talking to your app; not a support queue.
+
+**A nightly report over your own data.** A cron job that reads yesterday's rows and leaves a
+summary you find in the morning. **One report, not one per row** — pushing a backlog through a
+subscription is what gets accounts flagged, and it is the same boundary as "not machine-scale"
+above.
+
+**Trying a prompt or a model before it becomes a feature.** The playground sends a real request
+down the same path your app takes, and the same key then works from a shell script. Give each
+experiment its own key and the dashboard answers which of them is worth paying for.
+
 ## Getting started
 
 Requires Node.js 24 and a logged-in `claude` (or `codex`) on the same machine.

@@ -87,6 +87,19 @@
     .crt-sweep { display:none; }
   }
 
+  /* Integration diagram */
+  .flow { display:grid; gap:0; justify-items:center; margin:2.5rem 0 3rem; }
+  .flow-row { display:flex; gap:.75rem; flex-wrap:wrap; justify-content:center; align-items:center; }
+  .node { border:1px solid var(--line); background:var(--panel); padding:.7rem 1.1rem;
+          font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.8rem; white-space:nowrap; }
+  .node-key { border-color:var(--accent); color:#fff; }
+  .node-dim { border-style:dashed; color:var(--muted); }
+  .flow-link { display:flex; flex-direction:column; align-items:center; gap:.35rem; padding:.9rem 0; }
+  .flow-link::before { content:''; width:1px; height:1.4rem; background:var(--line); }
+  .flow-link span { font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .flow-side { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; justify-content:center; }
+  .flow-side em { font-style:normal; font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+
   /* Content */
   ul.plain { list-style:none; padding:0; margin:0; display:grid; gap:1.25rem; }
   ul.plain li { padding-left:1.5rem; position:relative; max-width:46rem; }
@@ -154,6 +167,47 @@
       <li><strong>Not a backend for coding agents.</strong> Claude Code, Cline, Aider and friends drive their own CLI; putting SheLLM in between adds latency and breaks their terms.</li>
       <li><strong>Not an API-key gateway.</strong> If you pay per token, LiteLLM and OpenRouter do that better.</li>
       <li><strong>Not machine-scale.</strong> Subscription quota is measured in human sessions, not throughput.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>What you'd build with it</h2>
+    <p class="lede">
+      You already pay the subscription, so the marginal request costs nothing extra — and for
+      Claude the CLI reports what that request <em>would</em> have cost on the API, attributed to
+      the key that made it. Build the feature, run it for a week, and you know the bill before you
+      decide to pay one. Codex reports no cost, so its requests read <code>not priced</code>.
+    </p>
+
+    <div class="flow">
+      <div class="flow-row">
+        <div class="node">Chat handler</div>
+        <div class="node">Nightly job</div>
+        <div class="node">Script or Playground</div>
+      </div>
+      <div class="flow-link"><span>SDK · base URL + key</span></div>
+      <div class="flow-side">
+        <div class="node node-key">SheLLM</div>
+        <em>&#8943;&#8594;</em>
+        <div class="node node-dim">Dashboard · per key: requests, tokens, cost</div>
+      </div>
+      <div class="flow-link"></div>
+      <div class="flow-row"><div class="node">claude / codex CLI</div></div>
+    </div>
+
+    <ul class="plain">
+      <li><strong>A chatbot or an assistant inside your app.</strong> Someone is waiting, so
+        latency is the constraint: the floor for any answer is about 2.5&nbsp;s and two requests
+        run at a time by default. Fine for one person talking to your app; not a support queue.</li>
+      <li><strong>A nightly report over your own data.</strong> A cron job that reads yesterday's
+        rows and leaves a summary you find in the morning. One report, not one per row — pushing a
+        backlog through a subscription is what gets accounts flagged.</li>
+      <li><strong>Trying a prompt or a model before it becomes a feature.</strong> The playground
+        sends a real request down the same path your app takes, and the same key then works from a
+        shell script. Give each experiment its own key and the dashboard answers which of them is
+        worth paying for.</li>
     </ul>
   </div>
 </section>
