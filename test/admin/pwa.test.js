@@ -61,18 +61,23 @@ describe('installable dashboard', () => {
     const fs = require('node:fs');
     const path = require('node:path');
     const dir = path.join(__dirname, '../../src/admin/public');
-    const html = require('../../src/admin/views').compose();
     const worker = fs.readFileSync(path.join(dir, 'sw.js'), 'utf8');
 
-    const assets = [
-      ...[...html.matchAll(/<script src="(js\/[^"]+)"/g)].map((m) => m[1]),
-      ...[...html.matchAll(/<link rel="stylesheet" href="(css\/[^"]+)"/g)].map((m) => m[1]),
-    ];
-    assert.ok(assets.some((a) => a.startsWith('js/')), 'found no local scripts — this check proves nothing');
-    assert.ok(assets.some((a) => a.startsWith('css/')), 'found no local stylesheet — this check proves nothing');
+    // The sign-in page is the other half of the chrome: it is where an installed app lands
+    // whenever the session dies, and it loads the same wordmark the sidebar does.
+    const local = (html) => [...html.matchAll(/(?:src|href)="(?:\/admin\/dashboard\/)?((?:js|css|img)\/[^"]+)"/g)]
+      .map((m) => m[1]);
+    const assets = [...new Set([
+      ...local(require('../../src/admin/views').compose()),
+      ...local((await request(app).get('/admin/login')).text),
+    ])];
+
+    for (const kind of ['js/', 'css/', 'img/']) {
+      assert.ok(assets.some((a) => a.startsWith(kind)), `found no local ${kind} reference — this check proves nothing`);
+    }
 
     for (const src of assets) {
-      assert.ok(worker.includes(`/admin/dashboard/${src}`), `${src} is loaded by the page but absent from the shell cache`);
+      assert.ok(worker.includes(`'/admin/dashboard/${src}'`), `${src} is loaded by the chrome but absent from the shell cache`);
     }
   });
 

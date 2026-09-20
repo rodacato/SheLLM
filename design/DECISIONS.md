@@ -4,7 +4,7 @@
 > notes in `ui-kit.lib.pen` cite these by number. Keep entries after resolution — record the
 > outcome instead of deleting; the reasoning is the useful part.
 
-**Status:** 11 entries · 10 resolved · 1 open · 0 🔴 high-impact · 0 🐞 unfiled bugs.
+**Status:** 12 entries · 11 resolved · 1 open · 0 🔴 high-impact · 0 🐞 unfiled bugs.
 
 **The registry collided with itself on 2026-09-20, and this is the repair.** Two documents
 claimed `D30` and `D31` the same day for different findings: the design audit's second pass took
@@ -12,7 +12,7 @@ claimed `D30` and `D31` the same day for different findings: the design audit's 
 then assigned the same two numbers to the undrawn sign-in screen and the manifest literals
 (commit `c528f97`). The audit's range wins, because thirteen entries, two tables and several
 commits already cite it. **This file's two are renumbered: old D30 → `D43`, old D31 → `D44`.**
-Read `c528f97`'s message with that mapping. The next free number is **D47**.
+Read `c528f97`'s message with that mapping. The next free number is **D48**.
 
 **D14 resolved 2026-09-20** — it was a design-audit card, not a `D<n>` here; the verdict pattern now covers the circuit state, provider sign-in and the burn rate. Each reads a fact the server already had rather than a threshold someone picked: `retry_at` comes from the breaker's own RESET_MS, the sign-in command from the provider module, and the burn rate is judged against the weekly window beside it.
 
@@ -63,6 +63,7 @@ that doc tracks landing them.
 | # | Bug | Evidence | Where it goes |
 |---|---|---|---|
 | **D17** ✅ 🐞 | Disabling or enabling a provider fails silently. `toggleProvider` clears the spinner and returns; the switch snaps back to its old position with no message, so the operator believes the provider is in a state it is not. | [`system.js:195-205`](../src/admin/public/js/system.js#L195) — `if (res.ok) await this.fetchProviders();` then `catch { /* ignore */ }`. A 403, a 500 and a dropped connection are all indistinguishable from "nothing happened". | ✅ **Fixed 2026-09-20** without ever being filed — it lived in the same panel as D15 and leaving it would have been half a fix. A refused write now names the provider that did not change and why. Was: a silently-failed **write** on the page whose job is controlling providers is worse than a silently-failed read: the operator acts on a belief the UI gave them. |
+| **D47** ✅ 🐞 | The installed dashboard shows a broken image where its own wordmark should be. The service worker precaches the SVG favicon and the three PWA icons but not `logo-dark.svg` — which the sidebar, the mobile bar and the sign-in page all render — so once the shell is served from cache the wordmark 404s. The one screen whose whole job is to stay readable when the backend is gone had a broken asset in its chrome. | [`sw.js:5-17`](../src/admin/public/sw.js#L5) listed 13 URLs; the chrome references 4 more. `logo-dark.svg` is used at [`index.html:85`](../src/admin/views/index.html#L85) and `:96`, and at [`login.js:80`](../src/admin/login.js#L80). The three PNG favicons were missing too — same defect, milder symptom | ✅ **Fixed 2026-09-20.** Found by the fidelity pass, in the capture rather than in the code: the drawn artboards show the wordmark, which is right for the online app, and the real cached-shell render showed a broken-image glyph beside it. All four assets added. **The cache version was deliberately NOT bumped**, and that is the interesting half: `install` re-runs on any byte change to `sw.js` (served `no-cache`, [`app.js:96`](../src/app.js#L96)) and `addAll` re-fetches every URL, so existing installs pick the additions up anyway — while `activate` deletes every cache key that is not the current one, which would discard the opportunistically-cached `/admin/dashboard/` page and leave a client that updated and then went offline with no shell at all. The version earns a bump when an entry must be evicted, not when one is added. The existing test was generalised rather than duplicated: it now derives every local `js/`, `css/` and `img/` reference from the composed dashboard **and** the login page and requires each to be in the cache list, with a per-kind guard so a regex that stops matching fails instead of passing vacuously. No design change — the artboards were already right. |
 
 ## Out of scope (confirmed)
 
