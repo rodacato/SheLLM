@@ -37,6 +37,9 @@
             'outline':                  '#849397',
             'outline-variant':          '#3b494c',
             'error':                    '#ffb4ab',
+            'status-ok':                '#22c55e',
+            'status-warn':              '#ffb800',
+            'status-fail':              '#ef4444',
           },
           fontFamily: {
             'headline': ['"Space Grotesk"', 'system-ui', 'sans-serif'],
@@ -100,8 +103,10 @@
       <!-- Uptime + icons row -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2 text-outline text-[10px] font-mono tracking-wider">
-          <div class="w-1.5 h-1.5 rounded-full" :class="health.uptime ? 'bg-primary-container animate-pulse' : 'bg-outline/30'"></div>
-          <span x-text="health.uptime ? 'UP ' + formatUptime(health.uptime).toUpperCase() : 'CONNECTING...'"></span>
+          <div class="w-1.5 h-1.5 rounded-full"
+            :class="healthRead === 'failed' ? 'bg-status-fail' : (healthRead === 'ok' && health.uptime ? 'bg-primary-container animate-pulse' : 'bg-outline/30')"></div>
+          <span :class="healthRead === 'failed' ? 'text-status-fail' : ''"
+            x-text="healthRead === 'failed' ? 'UNREACHABLE' : (health.uptime ? 'UP ' + formatUptime(health.uptime).toUpperCase() : 'CONNECTING...')"></span>
         </div>
         <div class="flex items-center gap-3">
           <a href="/docs/" target="_blank" class="text-outline/40 hover:text-primary-container transition-colors" title="API Docs">
@@ -126,6 +131,14 @@
     <!-- Content -->
     <main class="flex-1 p-4 md:p-8 overflow-auto">
 
+      <div x-show="$store.connection.degraded" x-cloak
+        class="bg-surface-container border-l-2 border-status-fail p-4 mb-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <span class="font-headline font-bold text-status-fail text-[10px] uppercase tracking-[0.2em]">Not updating</span>
+        <span class="text-xs font-mono text-on-surface-variant" x-text="$store.connection.message"></span>
+        <span x-show="lastReadAt" class="text-xs font-mono text-outline ml-auto"
+          x-text="'last read ' + lastReadAt"></span>
+      </div>
+
       <!--#include pages/overview.html-->
 
       <!--#include pages/logs.html-->
@@ -142,7 +155,11 @@
     <!-- Footer -->
     <footer class="h-10 border-t border-surface-container-low bg-surface px-8 flex items-center justify-between text-[9px] font-mono text-outline/60 uppercase tracking-widest shrink-0">
       <span>SheLLM Admin</span>
-      <span x-show="health.uptime" x-text="'Uptime: ' + formatUptime(health.uptime)"></span>
+      <span class="flex items-center gap-4">
+        <span x-show="lastReadAt" :class="$store.connection.degraded ? 'text-status-warn' : ''"
+          x-text="'Read ' + lastReadAt"></span>
+        <span x-show="healthRead === 'ok' && health.uptime" x-text="'Uptime: ' + formatUptime(health.uptime)"></span>
+      </span>
     </footer>
   </div>
 
