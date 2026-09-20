@@ -9,6 +9,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.5.0] - 2026-09-20
 
+### Upgrade notes
+
+**A bare `codex` now names a model, where before it named none.** Without `-m` the CLI reads
+`~/.codex/config.toml`, and a ChatGPT account answers `The 'gpt-5.4' model is not supported when
+using Codex with a ChatGPT account` to what it usually finds there — so `codex`, the only codex
+name the API advertised, was the one that could not run. It now resolves to whichever model the
+CLI itself reports as its default, read from `src/catalog/models.json`. On the catalog shipped
+with this release that is `gpt-6-astra`. If your host wants a different one, name it explicitly
+(`codex-gpt-5.6-sol`) or regenerate the catalog against your own binaries:
+
+```bash
+npm run catalog:build   # writes src/catalog/models.json from the CLIs installed here
+```
+
+That file is a floor, not the truth: the service asks your installed CLIs first and only falls
+back to it, and the dashboard's playground says which of the two answered.
+
+**The dashboard now tells you when it could not read, and it used to tell you the opposite.**
+An unreachable gateway made the logs table say `No logs found`, the keys table say `No keys created
+yet`, the queue read `0 / 0`, and the sidebar go on reporting `UP` with a frozen uptime and a
+pulsing dot. All of those are now distinct from "nothing happened": a banner says the connection is
+down, the sidebar says `UNREACHABLE`, and each table says which read failed. If your admin screens
+look alarming after upgrading, read them — they may have been lying before.
+
+**`GET /admin/dashboard/index.html` now requires a session.** The page lived under the static
+mount, which sits ahead of the auth middleware, so that exact URL served the admin shell to anyone
+who asked. It carried no account data, but it disclosed the dashboard. Anything pointing at the
+filename — a bookmark, an uptime check — gets a 401 now; point it at `/admin/dashboard/` instead.
+
+**`codex-gpt-5.5` retires on 2026-10-14.** The provider reports it and the playground now warns,
+naming `codex-gpt-5.6-sol` as the replacement. Nothing breaks before that date.
+
 ### Added
 
 - **models:** read the model catalog out of the CLIs instead of a list someone maintains
