@@ -28,7 +28,7 @@ as context for AI agents (`AGENTS.md` points them here).
 
 | File | Screens | Kit | Domain entry point |
 |---|---|---|---|
-| `admin.pen` | 1 of 5 drawn — Overview. Request Logs, API Keys, Playground, System pending | **0.1.1** | `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
+| `admin.pen` | 2 of 5 drawn — Overview, Request Logs. API Keys, Playground, System pending | **0.1.1** | `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
 
 `ui-kit.lib.pen` carries tokens as of **0.1.1** and no components yet — the shared components come
 out of the real markup as the remaining screens are drawn, not from guessing which ones are shared.
