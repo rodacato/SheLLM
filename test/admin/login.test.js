@@ -129,6 +129,27 @@ describe('admin login', () => {
     assert.strictEqual(api.body.error, 'auth_required');
   });
 
+  // A locked-out operator is who most needs a page. The rate-limited POST answered with raw JSON,
+  // so the browser rendered an error object at the one moment there was nothing else to look at.
+  it('shows a locked-out browser the page, and still answers a script with JSON', async () => {
+    const attempt = (accept) => request(app).post('/admin/login').type('form').set('Accept', accept)
+      .send({ username: 'admin', password: 'wrong-password' });
+
+    for (let i = 0; i < 5; i++) await attempt('application/json');
+
+    const browser = await attempt('text/html');
+    assert.strictEqual(browser.status, 429);
+    assert.match(browser.headers['content-type'], /text\/html/);
+    assert.match(browser.headers['retry-after'] || '', /^\d+$/, 'the page lost the Retry-After header');
+    assert.match(browser.text, /<form method="post" action="\/admin\/login">/);
+    assert.match(browser.text, /Try again in \d+s/);
+
+    const script = await attempt('application/json');
+    assert.strictEqual(script.status, 429);
+    assert.strictEqual(script.body.error, 'rate_limited');
+    assert.ok(script.headers['retry-after'], 'a script lost the Retry-After header');
+  });
+
   it('logs out and invalidates the browser session', async () => {
     const { cookie } = await login();
     const res = await request(app).post('/admin/logout').set('Cookie', cookie).set('Accept', 'text/html');
