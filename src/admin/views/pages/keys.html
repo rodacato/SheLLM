@@ -1,9 +1,8 @@
       <!-- KEYS PAGE -->
       <div x-show="page === 'keys'" x-data="keysPage()" x-effect="if (page === 'keys' && keys.length === 0 && loading) { fetchKeys(); fetchAuditLogs(); }">
 
-        <header class="mb-10">
-          <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">API KEYS<span class="text-primary-container">_</span></h2>
-          <p class="text-on-surface-variant">Manage client credentials, rate limits, and model access controls.</p>
+        <header class="mb-6">
+          <h2 class="text-xl font-bold font-headline tracking-tighter text-on-surface">API KEYS<span class="text-primary-container">_</span></h2>
         </header>
 
         <!-- New key banner -->

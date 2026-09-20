@@ -1,8 +1,8 @@
       <!-- LOGS PAGE -->
       <div x-show="page === 'logs'" x-data="logsPage()" x-effect="if (page === 'logs') { if (!applyPendingFilter() && logs.length === 0 && loading) fetchLogs(); fetchStats(); }">
 
-        <header class="mb-8 flex items-center gap-4">
-          <h2 class="text-3xl font-bold font-headline tracking-tight text-on-surface">Request Logs</h2>
+        <header class="mb-6 flex items-baseline gap-4">
+          <h2 class="text-xl font-bold font-headline tracking-tighter text-on-surface">REQUEST LOGS<span class="text-primary-container">_</span></h2>
           <button @click="fetchLogs(); fetchStats()" :disabled="loading"
             :class="loading ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:text-on-surface'"
             class="px-2.5 py-1 bg-surface-container-high text-[10px] uppercase tracking-widest font-headline font-bold flex items-center gap-1.5 transition-colors duration-100"

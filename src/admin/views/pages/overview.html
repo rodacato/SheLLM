@@ -1,17 +1,14 @@
       <!-- OVERVIEW PAGE -->
       <div x-show="page === 'overview'" x-data="overviewPage()" x-effect="if (page === 'overview') { if (!stats) fetchStats(); if (providers.length === 0) fetchProviders(); startAutoRefresh(); } else { stopAutoRefresh(); }">
 
-        <header class="mb-10">
-          <div class="flex items-baseline justify-between gap-4 flex-wrap">
-            <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">OVERVIEW<span class="text-primary-container">_</span></h2>
-            <button @click="navigate('system')" x-show="health?.build"
-              class="text-[11px] font-mono text-outline hover:text-primary-container transition-colors duration-100">
-              <span x-text="'v' + (health?.build?.version || '?')"></span>
-              <span class="text-outline/60" x-text="health?.build?.commit ? '· ' + health.build.commit : ''"></span>
-              <span class="ml-1">→</span>
-            </button>
-          </div>
-          <p class="text-on-surface-variant">System health, provider status, and request metrics at a glance.</p>
+        <header class="mb-6 flex items-baseline justify-between gap-4 flex-wrap">
+          <h2 class="text-xl font-bold font-headline tracking-tighter text-on-surface">OVERVIEW<span class="text-primary-container">_</span></h2>
+          <button @click="navigate('system')" x-show="health?.build"
+            class="text-[11px] font-mono text-outline hover:text-primary-container transition-colors duration-100">
+            <span x-text="'v' + (health?.build?.version || '?')"></span>
+            <span class="text-outline/60" x-text="health?.build?.commit ? '· ' + health.build.commit : ''"></span>
+            <span class="ml-1">→</span>
+          </button>
         </header>
 
         <!-- Period filter -->
@@ -23,6 +20,44 @@
               x-text="p"></button>
           </template>
         </div>
+
+        <!-- What failed, before how much went through: a count alone cannot say whose it was or
+             which route, and on a clean period there is nothing here to read past. -->
+        <template x-if="stats && errorRows.length > 0">
+          <div class="bg-surface-container p-5 mb-8">
+            <div class="flex items-baseline justify-between mb-4">
+              <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Errors</p>
+              <span class="text-[10px] font-mono text-outline" x-text="stats.error_rate.success_pct + '% ok'"></span>
+            </div>
+            <table class="w-full text-xs font-mono">
+              <thead>
+                <tr class="text-outline text-[10px] uppercase tracking-widest">
+                  <th class="text-left pb-2 font-headline">Last seen</th>
+                  <th class="text-left pb-2 font-headline">Status</th>
+                  <th class="text-left pb-2 font-headline">Error</th>
+                  <th class="text-left pb-2 font-headline">Client</th>
+                  <th class="text-left pb-2 font-headline">Route</th>
+                  <th class="text-right pb-2 font-headline">Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="row in errorRows" :key="row.status + row.error_code + row.client_name + row.path">
+                  <tr @click="openErrorLogs(row)"
+                    class="border-t border-outline-variant/20 cursor-pointer hover:bg-surface-container-high transition-colors duration-100">
+                    <td class="py-2 text-outline whitespace-nowrap" x-text="formatTime(row.last_seen_at)"></td>
+                    <td class="py-2 font-bold"
+                      :class="row.status < 500 ? 'text-status-warn' : 'text-status-fail'"
+                      x-text="row.status"></td>
+                    <td class="py-2 text-on-surface-variant" x-text="row.error_code"></td>
+                    <td class="py-2 text-on-surface-variant" x-text="row.client_name"></td>
+                    <td class="py-2 text-outline" x-text="row.path"></td>
+                    <td class="py-2 text-right text-white font-bold" x-text="row.count"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </template>
 
         <!-- ================= CAPACITY ================= -->
         <template x-if="stats && stats.quota">
@@ -103,18 +138,18 @@
             <div class="flex items-end gap-8 mb-3">
               <div>
                 <span class="text-[10px] font-mono text-outline uppercase block">Active</span>
-                <span class="font-headline font-bold text-white text-lg" x-text="health?.queue?.active ?? 0"></span>
+                <span class="font-headline font-bold text-white text-lg" x-text="healthRead === 'ok' ? (health?.queue?.active ?? 0) : '—'"></span>
                 <span class="text-outline text-sm">/ <span x-text="health?.queue?.max_concurrent ?? 0"></span></span>
               </div>
               <div>
                 <span class="text-[10px] font-mono text-outline uppercase block">Pending</span>
                 <span class="font-headline font-bold text-lg"
                   :class="(health?.queue?.pending ?? 0) > 0 ? 'text-status-warn' : 'text-white'"
-                  x-text="health?.queue?.pending ?? 0"></span>
+                  x-text="healthRead === 'ok' ? (health?.queue?.pending ?? 0) : '—'"></span>
               </div>
               <div>
                 <span class="text-[10px] font-mono text-outline uppercase block">Streams</span>
-                <span class="font-headline font-bold text-white text-lg" x-text="health?.queue?.active_streams ?? 0"></span>
+                <span class="font-headline font-bold text-white text-lg" x-text="healthRead === 'ok' ? (health?.queue?.active_streams ?? 0) : '—'"></span>
                 <span class="text-outline text-sm">/ <span x-text="health?.queue?.max_stream_concurrent ?? 0"></span></span>
               </div>
             </div>
@@ -123,7 +158,8 @@
                 :class="(health?.queue?.pending ?? 0) > 0 ? 'bg-status-warn' : 'bar-brand'"
                 :style="'width:' + queueSaturation() + '%'"></div>
             </div>
-            <p class="text-[10px] font-mono text-outline mt-2" x-text="queueSaturation() + '% of concurrency in use'"></p>
+            <p class="text-[10px] font-mono text-outline mt-2"
+              x-text="healthRead === 'ok' ? queueSaturation() + '% of concurrency in use' : 'not read yet'"></p>
           </div>
 
           <div class="bg-surface-container p-5">
@@ -278,41 +314,6 @@
               <div class="h-[180px]"><canvas x-ref="timeline"></canvas></div>
             </div>
 
-            <!-- What failed: a count alone cannot say whose it was or which route -->
-            <div class="bg-surface-container p-5">
-              <div class="flex items-baseline justify-between mb-4">
-                <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Errors</p>
-                <span class="text-[10px] font-mono text-outline" x-text="stats.error_rate.success_pct + '% ok'"></span>
-              </div>
-              <table class="w-full text-xs font-mono" x-show="errorRows.length > 0">
-                <thead>
-                  <tr class="text-outline text-[10px] uppercase tracking-widest">
-                    <th class="text-left pb-2 font-headline">Last seen</th>
-                    <th class="text-left pb-2 font-headline">Status</th>
-                    <th class="text-left pb-2 font-headline">Error</th>
-                    <th class="text-left pb-2 font-headline">Client</th>
-                    <th class="text-left pb-2 font-headline">Route</th>
-                    <th class="text-right pb-2 font-headline">Count</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <template x-for="row in errorRows" :key="row.status + row.error_code + row.client_name + row.path">
-                    <tr @click="openErrorLogs(row)"
-                      class="border-t border-outline-variant/20 cursor-pointer hover:bg-surface-container-high transition-colors duration-100">
-                      <td class="py-2 text-outline whitespace-nowrap" x-text="formatTime(row.last_seen_at)"></td>
-                      <td class="py-2 font-bold"
-                        :class="row.status < 500 ? 'text-status-warn' : 'text-status-fail'"
-                        x-text="row.status"></td>
-                      <td class="py-2 text-on-surface-variant" x-text="row.error_code"></td>
-                      <td class="py-2 text-on-surface-variant" x-text="row.client_name"></td>
-                      <td class="py-2 text-outline" x-text="row.path"></td>
-                      <td class="py-2 text-right text-white font-bold" x-text="row.count"></td>
-                    </tr>
-                  </template>
-                </tbody>
-              </table>
-              <p x-show="errorRows.length === 0" class="text-outline text-xs font-mono">Nothing failed in this period.</p>
-            </div>
           </div>
         </template>
         <p x-show="loading && !stats" class="text-outline text-sm font-mono">Loading stats...</p>
