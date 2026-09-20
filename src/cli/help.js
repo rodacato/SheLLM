@@ -16,6 +16,8 @@ Commands:
   status                                  Show whether the server answers
   doctor [--live]                         Check the setup; --live sends one request to Claude
   logs [-f|--follow] [-n|--lines N]       View daemon logs
+  backup [--dir DIR] [--keep N]           Snapshot the database and config file
+  update                                  Move to the newest published release
   version                                 Show version
   help                                    Show this help
 
@@ -31,6 +33,10 @@ systemd (production):
   sudo systemctl start shellm
   sudo systemctl status shellm
   journalctl -u shellm -f
+
+Backups:
+  shellm backup             Snapshot to /var/lib/shellm/backups, keeping the last 7
+  sudo systemctl enable --now shellm-backup.timer   Take one nightly
 `.trim());
 }
 
