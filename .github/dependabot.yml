@@ -10,6 +10,11 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    # better-sqlite3 13.x publishes no prebuilt binary for any ABI, so installing it compiles
+    # from source. A major moves by hand, once a prebuild for the target Node ABI exists.
+    ignore:
+      - dependency-name: better-sqlite3
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: docker
     directory: "/"
