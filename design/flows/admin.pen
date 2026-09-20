@@ -29,7 +29,7 @@
           "id": "tYURy",
           "name": "Kit pin",
           "fill": "$outline",
-          "content": "kit-version-source 0.1.1 · band 1 of 1 · happy path · 5 of 5 screens drawn",
+          "content": "kit-version-source 0.2.0 · band 1 of 1 · happy path · 5 of 5 screens drawn",
           "fontFamily": "$font-mono-render",
           "fontSize": 10,
           "fontWeight": "normal"
@@ -224,7 +224,7 @@
               "fill": "$on-surface-variant",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "Loading and unreachable are one-line string swaps that carry no layout these screens lack — 'Loading stats...', 'Could not read the logs — …', 'No logs found', 'No keys created yet', 'Loading…'. The degraded banner ('Not updating' + the connection message + last read) sits in main above every page and is conditional. USAGE LIMIT HIT is a conditional banner above Capacity; neither is drawn, because putting either on the happy path would say it is always present — they belong to an error band this flow does not have yet. Overview's CHART INTERIORS are not mirrored at all: Chart.js draws a scatter and a line, the .pen layout cannot position individual points, and an approximation would look plausible while misrepresenting what ships. The Logs sparkline IS drawn — fifteen divs with computed heights is something the layout can express honestly.",
+              "content": "Loading and unreachable are one-line string swaps that carry no layout these screens lack — 'Loading stats...', 'Could not read the logs — …', 'No logs found', 'No keys created yet'. System's providers section now has all three, drawn as a single line each, and a refused provider toggle says which provider did not change; the failure states themselves are not drawn for the same reason as the rest. The degraded banner ('Not updating' + the connection message + last read) sits in main above every page and is conditional. USAGE LIMIT HIT is a conditional banner above Capacity. Playground's running state — 'Waiting for the CLI…' with 'stop waiting' beside it — is the state D11 created and is NOT drawn here: this screen is Answered, and showing both would claim the answer arrived while the page is still waiting. All of these belong to an error band this flow does not have yet, which is the next thing worth drawing. Overview's CHART INTERIORS are not mirrored at all: Chart.js draws a scatter and a line, the .pen layout cannot position individual points, and an approximation would look plausible while misrepresenting what ships. The Logs sparkline IS drawn — fifteen divs with computed heights is something the layout can express honestly.",
               "lineHeight": 1.6,
               "fontFamily": "$font-mono-render",
               "fontSize": 10,
@@ -257,7 +257,7 @@
               "fill": "$on-surface-variant",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "D15 · D16 · D18 · D19. D15 lives on the System screen drawn here: a failed provider read renders as nothing at all, because the page kept only the loading state Overview got all three of — the design should draw the unreachable and empty states and the code should follow. D16 is on Playground: the catalog notes go silent on a failed read, in the one panel whose job is saying where the model names came from. D19 bit five times while mirroring: the shell surface, the active nav item, the Clear All background and pure white all ship without a name in the palette.",
+              "content": "D16 · D18 · D20 remain. D15, D17 and D19 closed 2026-09-20, and the screens here reflect the code after them: System renders three provider-read states instead of one, the circuit and sign-in lines carry a verdict rather than a raw value, the Overview queue panel reports the age of the oldest in-flight request, and every colour on these screens now has a name — the UNTOKENISED locals are gone. D16 is still live on Playground: the catalog notes go silent on a failed read, in the one panel whose job is provenance.",
               "lineHeight": 1.6,
               "fontFamily": "$font-mono-render",
               "fontSize": 10,
@@ -316,7 +316,7 @@
           "name": "Sidebar",
           "width": 256,
           "height": 2187,
-          "fill": "$shell-surface-UNTOKENISED",
+          "fill": "$surface-shell",
           "layout": "vertical",
           "children": [
             {
@@ -339,7 +339,7 @@
                       "type": "text",
                       "id": "IbO64",
                       "name": "Prompt",
-                      "fill": "$pure-white-UNTOKENISED",
+                      "fill": "$white",
                       "content": ">_ ",
                       "fontFamily": "$font-mono-render",
                       "fontSize": 23,
@@ -349,7 +349,7 @@
                       "type": "text",
                       "id": "BJs5M",
                       "name": "She",
-                      "fill": "$pure-white-UNTOKENISED",
+                      "fill": "$white",
                       "content": "She",
                       "fontFamily": "$font-headline",
                       "fontSize": 23,
@@ -371,7 +371,7 @@
                       "type": "text",
                       "id": "y9LBEv",
                       "name": "M",
-                      "fill": "$pure-white-UNTOKENISED",
+                      "fill": "$white",
                       "content": "M",
                       "fontFamily": "$font-headline",
                       "fontSize": 23,
@@ -411,7 +411,7 @@
                   "id": "KH2U1",
                   "name": "Overview",
                   "width": "fill_container",
-                  "fill": "$nav-active-UNTOKENISED",
+                  "fill": "$nav-selected",
                   "stroke": "$primary-container",
                   "strokeWidth": {
                     "left": 4
@@ -451,8 +451,8 @@
                   "id": "EaX3i",
                   "name": "Request Logs",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -490,8 +490,8 @@
                   "id": "hf5W8",
                   "name": "API Keys",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -529,8 +529,8 @@
                   "id": "x5JE63",
                   "name": "Playground",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -568,8 +568,8 @@
                   "id": "F7nl8",
                   "name": "System",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -1378,7 +1378,7 @@
                               "id": "CXhwi",
                               "name": "Rate",
                               "fill": "$primary-container",
-                              "content": "$0.31/hr · 0.12 rpm",
+                              "content": "$0.31/hr · 0.12 rpm  ",
                               "fontFamily": "$font-mono-render",
                               "fontSize": 11,
                               "fontWeight": "normal"
@@ -2072,6 +2072,19 @@
                           "name": "Saturation",
                           "fill": "$outline",
                           "content": "50% of concurrency in use",
+                          "fontFamily": "$font-mono-render",
+                          "fontSize": 10,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "i6jZx9",
+                          "name": "Queue verdict",
+                          "fill": "$status-fail",
+                          "textGrowth": "fixed-width",
+                          "width": "fill_container",
+                          "content": "oldest has been running 9.0m (claude · claude-fable) — that is long past a normal call",
+                          "lineHeight": 1.4,
                           "fontFamily": "$font-mono-render",
                           "fontSize": 10,
                           "fontWeight": "normal"
@@ -3314,7 +3327,7 @@
           "name": "Sidebar",
           "width": 256,
           "height": 701,
-          "fill": "$shell-surface-UNTOKENISED",
+          "fill": "$surface-shell",
           "layout": "vertical",
           "children": [
             {
@@ -3337,7 +3350,7 @@
                       "type": "text",
                       "id": "LgpYx",
                       "name": "Prompt",
-                      "fill": "$pure-white-UNTOKENISED",
+                      "fill": "$white",
                       "content": ">_ ",
                       "fontFamily": "$font-mono-render",
                       "fontSize": 23,
@@ -3347,7 +3360,7 @@
                       "type": "text",
                       "id": "CRQgF",
                       "name": "She",
-                      "fill": "$pure-white-UNTOKENISED",
+                      "fill": "$white",
                       "content": "She",
                       "fontFamily": "$font-headline",
                       "fontSize": 23,
@@ -3369,7 +3382,7 @@
                       "type": "text",
                       "id": "be9yK",
                       "name": "M",
-                      "fill": "$pure-white-UNTOKENISED",
+                      "fill": "$white",
                       "content": "M",
                       "fontFamily": "$font-headline",
                       "fontSize": 23,
@@ -3409,8 +3422,8 @@
                   "id": "G2uS5",
                   "name": "Overview",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -3448,7 +3461,7 @@
                   "id": "IfZaA",
                   "name": "Request Logs",
                   "width": "fill_container",
-                  "fill": "$nav-active-UNTOKENISED",
+                  "fill": "$nav-selected",
                   "stroke": "$primary-container",
                   "strokeWidth": {
                     "left": 4
@@ -3488,8 +3501,8 @@
                   "id": "npFSk",
                   "name": "API Keys",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -3527,8 +3540,8 @@
                   "id": "OxBIl",
                   "name": "Playground",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -3566,8 +3579,8 @@
                   "id": "u0xrrd",
                   "name": "System",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -4066,7 +4079,7 @@
                           "type": "frame",
                           "id": "E81K8x",
                           "name": "Clear All",
-                          "fill": "$danger-bg-UNTOKENISED",
+                          "fill": "$danger-surface",
                           "gap": 8,
                           "padding": [
                             9,
@@ -5610,6 +5623,32 @@
           "fontFamily": "$font-mono-render",
           "fontSize": 10,
           "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "DNDoU",
+          "name": "2026-09-20e",
+          "fill": "$on-surface-variant",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "2026-09-20 · Re-mirrored after the audit close-out landed in code. Overview's queue panel gained the age of the oldest in-flight request and the quota window gained a burn verdict read against the week; System's circuit lines gained a verdict that says what the state costs and what ends it. Two things were drawn and then removed rather than kept: an empty auth verdict, which a healthy provider does not render, and Playground's waiting row, which would have claimed the answer arrived while the page was still waiting. Both are now in states-not-drawn with the reason.",
+          "lineHeight": 1.6,
+          "fontFamily": "$font-mono-render",
+          "fontSize": 10,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
+          "id": "XboKn",
+          "name": "2026-09-20f",
+          "fill": "$on-surface-variant",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "2026-09-20 · Re-vendored at kit 0.2.0. The four UNTOKENISED locals are gone: D19 gave three of them names in the code (surface-shell, nav-selected, danger-surface) and the fourth is Tailwind's own white, which the markup uses 38 times. 58 nodes repointed, then read back — zero references to a local and zero dangling token references. The suffix did its job: it made the next re-vendor surface them instead of letting them pass as if the kit had always had them.",
+          "lineHeight": 1.6,
+          "fontFamily": "$font-mono-render",
+          "fontSize": 10,
+          "fontWeight": "normal"
         }
       ]
     },
@@ -5629,7 +5668,7 @@
           "name": "Sidebar",
           "width": 256,
           "height": 600,
-          "fill": "$shell-surface-UNTOKENISED",
+          "fill": "$surface-shell",
           "layout": "vertical",
           "children": [
             {
@@ -5652,7 +5691,7 @@
                       "type": "text",
                       "id": "c50c3",
                       "name": "Prompt",
-                      "fill": "$pure-white-UNTOKENISED",
+                      "fill": "$white",
                       "content": ">_ ",
                       "fontFamily": "$font-mono-render",
                       "fontSize": 23,
@@ -5662,7 +5701,7 @@
                       "type": "text",
                       "id": "OA3zy",
                       "name": "She",
-                      "fill": "$pure-white-UNTOKENISED",
+                      "fill": "$white",
                       "content": "She",
                       "fontFamily": "$font-headline",
                       "fontSize": 23,
@@ -5684,7 +5723,7 @@
                       "type": "text",
                       "id": "Xk2hj",
                       "name": "M",
-                      "fill": "$pure-white-UNTOKENISED",
+                      "fill": "$white",
                       "content": "M",
                       "fontFamily": "$font-headline",
                       "fontSize": 23,
@@ -5724,8 +5763,8 @@
                   "id": "OOlS3",
                   "name": "Overview",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -5763,8 +5802,8 @@
                   "id": "c10Aqr",
                   "name": "Request Logs",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -5802,7 +5841,7 @@
                   "id": "sLIoG",
                   "name": "API Keys",
                   "width": "fill_container",
-                  "fill": "$nav-active-UNTOKENISED",
+                  "fill": "$nav-selected",
                   "stroke": "$primary-container",
                   "strokeWidth": {
                     "left": 4
@@ -5842,8 +5881,8 @@
                   "id": "dfVMY",
                   "name": "Playground",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -5881,8 +5920,8 @@
                   "id": "BieFw",
                   "name": "System",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -6242,7 +6281,7 @@
                               "type": "text",
                               "id": "flLAU",
                               "name": "Value",
-                              "fill": "$pure-white-UNTOKENISED",
+                              "fill": "$white",
                               "content": "Benchmark",
                               "fontFamily": "$font-headline",
                               "fontSize": 13,
@@ -6503,7 +6542,7 @@
                               "type": "text",
                               "id": "PWrhe",
                               "name": "Value",
-                              "fill": "$pure-white-UNTOKENISED",
+                              "fill": "$white",
                               "content": "mi-feria",
                               "fontFamily": "$font-headline",
                               "fontSize": 13,
@@ -6726,7 +6765,7 @@
                               "type": "text",
                               "id": "fu5Ml",
                               "name": "Value",
-                              "fill": "$pure-white-UNTOKENISED",
+                              "fill": "$white",
                               "content": "retired-probe",
                               "fontFamily": "$font-headline",
                               "fontSize": 13,
@@ -7309,7 +7348,7 @@
           "name": "Sidebar",
           "width": 256,
           "height": 695,
-          "fill": "$shell-surface-UNTOKENISED",
+          "fill": "$surface-shell",
           "layout": "vertical",
           "children": [
             {
@@ -7332,7 +7371,7 @@
                       "type": "text",
                       "id": "UW490",
                       "name": "Prompt",
-                      "fill": "$pure-white-UNTOKENISED",
+                      "fill": "$white",
                       "content": ">_ ",
                       "fontFamily": "$font-mono-render",
                       "fontSize": 23,
@@ -7342,7 +7381,7 @@
                       "type": "text",
                       "id": "W6MNJs",
                       "name": "She",
-                      "fill": "$pure-white-UNTOKENISED",
+                      "fill": "$white",
                       "content": "She",
                       "fontFamily": "$font-headline",
                       "fontSize": 23,
@@ -7364,7 +7403,7 @@
                       "type": "text",
                       "id": "JdrxV",
                       "name": "M",
-                      "fill": "$pure-white-UNTOKENISED",
+                      "fill": "$white",
                       "content": "M",
                       "fontFamily": "$font-headline",
                       "fontSize": 23,
@@ -7404,8 +7443,8 @@
                   "id": "ocZJ1",
                   "name": "Overview",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -7443,8 +7482,8 @@
                   "id": "aojW2",
                   "name": "Request Logs",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -7482,8 +7521,8 @@
                   "id": "f5B0vQ",
                   "name": "API Keys",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -7521,7 +7560,7 @@
                   "id": "MwsMM",
                   "name": "Playground",
                   "width": "fill_container",
-                  "fill": "$nav-active-UNTOKENISED",
+                  "fill": "$nav-selected",
                   "stroke": "$primary-container",
                   "strokeWidth": {
                     "left": 4
@@ -7561,8 +7600,8 @@
                   "id": "P64d6",
                   "name": "System",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -8353,7 +8392,7 @@
           "name": "Sidebar",
           "width": 256,
           "height": 767,
-          "fill": "$shell-surface-UNTOKENISED",
+          "fill": "$surface-shell",
           "layout": "vertical",
           "children": [
             {
@@ -8376,7 +8415,7 @@
                       "type": "text",
                       "id": "NuHi1",
                       "name": "Prompt",
-                      "fill": "$pure-white-UNTOKENISED",
+                      "fill": "$white",
                       "content": ">_ ",
                       "fontFamily": "$font-mono-render",
                       "fontSize": 23,
@@ -8386,7 +8425,7 @@
                       "type": "text",
                       "id": "HeN8l",
                       "name": "She",
-                      "fill": "$pure-white-UNTOKENISED",
+                      "fill": "$white",
                       "content": "She",
                       "fontFamily": "$font-headline",
                       "fontSize": 23,
@@ -8408,7 +8447,7 @@
                       "type": "text",
                       "id": "YdyZx",
                       "name": "M",
-                      "fill": "$pure-white-UNTOKENISED",
+                      "fill": "$white",
                       "content": "M",
                       "fontFamily": "$font-headline",
                       "fontSize": 23,
@@ -8448,8 +8487,8 @@
                   "id": "Z5y6RA",
                   "name": "Overview",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -8487,8 +8526,8 @@
                   "id": "rYnXG",
                   "name": "Request Logs",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -8526,8 +8565,8 @@
                   "id": "q5MSj",
                   "name": "API Keys",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -8565,8 +8604,8 @@
                   "id": "l2WM3Q",
                   "name": "Playground",
                   "width": "fill_container",
-                  "fill": "$shell-surface-UNTOKENISED",
-                  "stroke": "$shell-surface-UNTOKENISED",
+                  "fill": "$surface-shell",
+                  "stroke": "$surface-shell",
                   "strokeWidth": {
                     "left": 4
                   },
@@ -8604,7 +8643,7 @@
                   "id": "dz2PI",
                   "name": "System",
                   "width": "fill_container",
-                  "fill": "$nav-active-UNTOKENISED",
+                  "fill": "$nav-selected",
                   "stroke": "$primary-container",
                   "strokeWidth": {
                     "left": 4
@@ -8848,7 +8887,7 @@
                               "type": "text",
                               "id": "kdx57",
                               "name": "Value",
-                              "fill": "$pure-white-UNTOKENISED",
+                              "fill": "$white",
                               "content": "1.5.0",
                               "fontFamily": "$font-headline",
                               "fontSize": 24,
@@ -8878,7 +8917,7 @@
                               "type": "text",
                               "id": "V7jRml",
                               "name": "Value",
-                              "fill": "$pure-white-UNTOKENISED",
+                              "fill": "$white",
                               "content": "6cfefe0",
                               "fontFamily": "$font-headline",
                               "fontSize": 24,
@@ -8908,7 +8947,7 @@
                               "type": "text",
                               "id": "kwD9u",
                               "name": "Value",
-                              "fill": "$pure-white-UNTOKENISED",
+                              "fill": "$white",
                               "content": "2d 4h",
                               "fontFamily": "$font-headline",
                               "fontSize": 24,
@@ -9020,7 +9059,7 @@
                           "type": "text",
                           "id": "kYRjE",
                           "name": "Value",
-                          "fill": "$pure-white-UNTOKENISED",
+                          "fill": "$white",
                           "content": "1 / 2",
                           "fontFamily": "$font-headline",
                           "fontSize": 17,
@@ -9050,7 +9089,7 @@
                           "type": "text",
                           "id": "T0TLJ",
                           "name": "Value",
-                          "fill": "$pure-white-UNTOKENISED",
+                          "fill": "$white",
                           "content": "0",
                           "fontFamily": "$font-headline",
                           "fontSize": 17,
@@ -9080,7 +9119,7 @@
                           "type": "text",
                           "id": "cJ04S",
                           "name": "Value",
-                          "fill": "$pure-white-UNTOKENISED",
+                          "fill": "$white",
                           "content": "0 / 2",
                           "fontFamily": "$font-headline",
                           "fontSize": 17,
@@ -9110,7 +9149,7 @@
                           "type": "text",
                           "id": "OGfbX",
                           "name": "Value",
-                          "fill": "$pure-white-UNTOKENISED",
+                          "fill": "$white",
                           "content": "none",
                           "fontFamily": "$font-headline",
                           "fontSize": 17,
@@ -9188,7 +9227,7 @@
                               "type": "text",
                               "id": "RjM67",
                               "name": "Name",
-                              "fill": "$pure-white-UNTOKENISED",
+                              "fill": "$white",
                               "content": "claude",
                               "fontFamily": "$font-headline",
                               "fontSize": 13,
@@ -9298,6 +9337,19 @@
                               "lineHeight": 1.4,
                               "fontFamily": "$font-mono-render",
                               "fontSize": 11,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "odyxD",
+                              "name": "Circuit verdict",
+                              "fill": "$outline",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "routing normally",
+                              "lineHeight": 1.4,
+                              "fontFamily": "$font-mono-render",
+                              "fontSize": 10,
                               "fontWeight": "normal"
                             }
                           ]
@@ -9442,7 +9494,7 @@
                               "type": "text",
                               "id": "PM6CP",
                               "name": "Name",
-                              "fill": "$pure-white-UNTOKENISED",
+                              "fill": "$white",
                               "content": "codex",
                               "fontFamily": "$font-headline",
                               "fontSize": 13,
@@ -9548,10 +9600,23 @@
                               "fill": "$outline",
                               "textGrowth": "fixed-width",
                               "width": "fill_container",
-                              "content": "closed",
+                              "content": "closed · 1 recent failures",
                               "lineHeight": 1.4,
                               "fontFamily": "$font-mono-render",
                               "fontSize": 11,
+                              "fontWeight": "normal"
+                            },
+                            {
+                              "type": "text",
+                              "id": "p8bNyw",
+                              "name": "Circuit verdict",
+                              "fill": "$outline",
+                              "textGrowth": "fixed-width",
+                              "width": "fill_container",
+                              "content": "routing normally — 2 more failures would stop it",
+                              "lineHeight": 1.4,
+                              "fontFamily": "$font-mono-render",
+                              "fontSize": 10,
                               "fontWeight": "normal"
                             }
                           ]
@@ -9730,11 +9795,11 @@
   "variables": {
     "kit-version": {
       "type": "string",
-      "value": "0.1.0"
+      "value": "0.2.0"
     },
     "kit-version-source": {
       "type": "string",
-      "value": "0.1.1"
+      "value": "0.2.0"
     },
     "grid-x0": {
       "type": "number",
@@ -9824,10 +9889,6 @@
       "type": "color",
       "value": "#22c55e1f"
     },
-    "brand-hover": {
-      "type": "color",
-      "value": "#39eeff"
-    },
     "badge-2xx-bg": {
       "type": "color",
       "value": "#052e16"
@@ -9868,21 +9929,33 @@
       "type": "number",
       "value": 9999
     },
-    "shell-surface-UNTOKENISED": {
+    "surface-shell": {
       "type": "color",
       "value": "#1a1e21"
     },
-    "nav-active-UNTOKENISED": {
+    "nav-selected": {
       "type": "color",
       "value": "#2e3b44"
     },
-    "danger-bg-UNTOKENISED": {
+    "error-container": {
+      "type": "color",
+      "value": "#3a1d1d"
+    },
+    "danger-surface": {
       "type": "color",
       "value": "#3b1a1a"
     },
-    "pure-white-UNTOKENISED": {
+    "danger-surface-hover": {
+      "type": "color",
+      "value": "#4a2020"
+    },
+    "white": {
       "type": "color",
       "value": "#ffffff"
+    },
+    "primary-container-hover": {
+      "type": "color",
+      "value": "#39eeff"
     }
   },
   "fileToken": "6834f5af-d12d-417e-b728-f6a369cfe0d4"

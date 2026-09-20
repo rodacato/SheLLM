@@ -719,7 +719,7 @@
                 {
                   "type": "frame",
                   "id": "N5dLx6",
-                  "name": "brand-hover",
+                  "name": "brand-hover (renamed → primary-container-hover)",
                   "width": 180,
                   "layout": "vertical",
                   "gap": 7,
@@ -1365,6 +1365,347 @@
           "fontFamily": "Roboto Mono",
           "fontSize": 10,
           "fontWeight": "normal"
+        },
+        {
+          "type": "frame",
+          "id": "HeDxy",
+          "name": "Named 2026-09-20",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 14,
+          "children": [
+            {
+              "type": "frame",
+              "id": "t41Tn8",
+              "name": "Section head",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 3,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "bTnPP",
+                  "name": "Label",
+                  "fill": "$outline",
+                  "content": "Named in 0.2.0",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "E6EEP",
+                  "name": "Note",
+                  "fill": "$outline-variant",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Colours that shipped without a name until D19 closed. They are now declared in custom.css like the rest of the palette, and the Tailwind config reads them. white mirrors Tailwind's own built-in, which the markup uses 38 times.",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Roboto Mono",
+                  "fontSize": 10,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "doSuU",
+              "name": "Row 1",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "N9v6lM",
+                  "name": "surface-shell",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "a132rB",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$surface-shell",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "CEJn9",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "surface-shell",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "d33AG4",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#1a1e21",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "NgZjv",
+                  "name": "nav-selected",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "PrQSl",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$nav-selected",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "dY325",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "nav-selected",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "c5nv9",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#2e3b44",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "Wd26w",
+                  "name": "error-container",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "finiz",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$error-container",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "pAxYk",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "error-container",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "jaM5E",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#3a1d1d",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "jMo3A",
+                  "name": "danger-surface",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Lh2hg",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$danger-surface",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "ia12E",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "danger-surface",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "QrthE",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#3b1a1a",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "t18oGq",
+                  "name": "danger-surface-hover",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "JYj3x",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$danger-surface-hover",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "Sz2AC",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "danger-surface-hover",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "J7FWg",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#4a2020",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "K6sAW",
+              "name": "Row 2",
+              "width": "fill_container",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "RE5Tb",
+                  "name": "white",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "YPdDP",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$white",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "QPu86",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "white",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "yGzL4",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#ffffff",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "CzmGO",
+                  "name": "primary-container-hover",
+                  "width": 180,
+                  "layout": "vertical",
+                  "gap": 7,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "x6jPAR",
+                      "name": "Chip",
+                      "width": "fill_container",
+                      "height": 56,
+                      "fill": "$primary-container-hover",
+                      "stroke": "$outline-variant",
+                      "strokeWidth": 1
+                    },
+                    {
+                      "type": "text",
+                      "id": "QQO8N",
+                      "name": "Name",
+                      "fill": "$on-surface",
+                      "content": "primary-container-hover",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    },
+                    {
+                      "type": "text",
+                      "id": "a9fvX",
+                      "name": "Value",
+                      "fill": "$outline",
+                      "content": "#39eeff",
+                      "fontFamily": "Roboto Mono",
+                      "fontSize": 10,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -1372,7 +1713,7 @@
   "variables": {
     "kit-version": {
       "type": "string",
-      "value": "0.1.1"
+      "value": "0.2.0"
     },
     "grid-x0": {
       "type": "number",
@@ -1505,6 +1846,34 @@
     "radius-full": {
       "type": "number",
       "value": 9999
+    },
+    "surface-shell": {
+      "type": "color",
+      "value": "#1a1e21"
+    },
+    "nav-selected": {
+      "type": "color",
+      "value": "#2e3b44"
+    },
+    "error-container": {
+      "type": "color",
+      "value": "#3a1d1d"
+    },
+    "danger-surface": {
+      "type": "color",
+      "value": "#3b1a1a"
+    },
+    "danger-surface-hover": {
+      "type": "color",
+      "value": "#4a2020"
+    },
+    "white": {
+      "type": "color",
+      "value": "#ffffff"
+    },
+    "primary-container-hover": {
+      "type": "color",
+      "value": "#39eeff"
     }
   },
   "fileToken": "b89832e2-dbf3-4cfa-823a-16dad4512416"
