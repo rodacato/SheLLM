@@ -1,4 +1,4 @@
-# Design decisions — open questions & findings (D1–D20)
+# Design decisions — open questions & findings (D1–D29)
 
 > **This is the registry the `.pen` files point at.** Briefs in `flows/*.pen` and warning
 > notes in `ui-kit.lib.pen` cite these by number. Keep entries after resolution — record the
@@ -11,6 +11,12 @@
 **D2–D14 are spent.** The 2026-09-20 design audit claimed that range and most of it landed; two
 entries survive as drafts on the project board, cited there by number. New findings start at
 **D15** — reusing a number would collide with a card that still says "Design audit D11".
+
+**D21–D29 are spent too.** The 2026-09-20 motion audit claimed that range the same way —
+seven findings and two 🐞 bugs, all of them held in [MOTION-AUDIT.md](MOTION-AUDIT.md) rather than
+copied here. New findings start at **D30**. Two of them, D22 and D28, are the mobile drawer, which
+*Out of scope (confirmed)* below already rules out; they are recorded so the next pass does not
+re-find them, not proposed.
 
 **How entries work.** A `D<n>` is a *finding*: logged when the design and the code disagree
 and the call isn't the designer's to make. The design is always built to match the **code**

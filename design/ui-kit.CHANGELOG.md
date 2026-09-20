@@ -13,6 +13,22 @@ diverging is not. A changed token VALUE forces every consumer.
 
 ---
 
+## 0.2.0 — 2026-09-20 · the colours that had no name
+
+Seven tokens added, six of them because the code finally names them. D19 closed by declaring
+`surface-shell`, `nav-selected`, `error-container`, `danger-surface` and `danger-surface-hover`
+in `custom.css` and having the Tailwind config read them; `white` mirrors Tailwind's own built-in,
+which the markup uses 38 times, and `primary-container-hover` replaces the kit-local `brand-hover`
+now that the code declares it under that name.
+
+The kit stops being ahead of the code here. Every colour on the five drawn screens resolves to a
+declaration in `:root`, so a re-vendor can diff against the code rather than against memory.
+
+Forced on consumers (new tokens, and one rename): `flows/admin.pen` re-vendored at 0.2.0. Its four
+`*-UNTOKENISED` locals are gone — 58 nodes repointed, then read back for dangling references. The
+suffix earned its keep: it made this re-vendor surface them instead of letting them pass as though
+the kit had always carried them.
+
 ## 0.1.1 — 2026-09-20 · two token values were not valid
 
 `status-ok-fill` and `overlay-scrim` were stored as `rgba(34,197,94,0.12)` and
