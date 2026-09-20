@@ -46,7 +46,7 @@ async function routeWithFallback({ model, prompt, system, max_tokens, temperatur
         const execStart = Date.now();
         return candidate.chat({ prompt, system, max_tokens, temperature, top_p, response_format, model })
           .then((r) => ({ ...r, queued_ms: execStart - startTime }));
-      });
+      }, `${candidate.name} · ${model || candidate.name}`);
       recordSuccess(candidate.name);
 
       const isFallback = candidate.name !== primary.name;

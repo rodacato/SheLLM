@@ -165,6 +165,9 @@
             </div>
             <p class="text-[10px] font-mono text-outline mt-2"
               x-text="healthRead === 'ok' ? queueSaturation() + '% of concurrency in use' : 'not read yet'"></p>
+            <p x-show="healthRead === 'ok' && queueVerdict()" class="text-[10px] font-mono mt-1"
+              :class="queueIsStalling() ? 'text-status-fail' : 'text-outline'"
+              x-text="queueVerdict()"></p>
           </div>
 
           <div class="bg-surface-container p-5">

@@ -71,7 +71,10 @@
 
             <p x-show="error" class="text-xs font-mono text-error" x-text="error"></p>
             <p x-show="!error && !result && !running" class="text-xs font-mono text-outline">Nothing sent yet.</p>
-            <p x-show="running" class="text-xs font-mono text-outline">Waiting for the CLI…</p>
+            <div x-show="running" class="flex items-baseline gap-3">
+              <p class="text-xs font-mono text-outline">Waiting for the CLI…</p>
+              <button @click="stopWaiting()" class="text-[10px] font-mono text-outline hover:text-status-fail underline">stop waiting</button>
+            </div>
 
             <template x-if="result">
               <div>
