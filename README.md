@@ -12,7 +12,12 @@
   <a href="https://github.com/rodacato/SheLLM/actions/workflows/ci.yml"><img src="https://github.com/rodacato/SheLLM/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/rodacato/SheLLM/releases/latest"><img src="https://img.shields.io/github/v/release/rodacato/SheLLM" alt="Latest release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License"></a>
-  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D24-brightgreen" alt="Node.js >= 24"></a>
+</p>
+
+<p align="center">
+  <a href="https://rodacato.github.io/SheLLM/api/">API reference</a> ·
+  <a href="docs/guides/usage.md">Calling it from your code</a> ·
+  <a href="docs/guides/deployment.md">Running it on a server</a>
 </p>
 
 You pay for Claude Code or Codex. Your own apps cannot use that subscription — they need API
@@ -85,12 +90,33 @@ export ANTHROPIC_BASE_URL=http://127.0.0.1:6100 ANTHROPIC_API_KEY=$SHELLM_KEY
 ```
 
 For a server, [`docs/guides/deployment.md`](docs/guides/deployment.md) covers
-`scripts/setup/vps.sh`, the systemd unit, logging in a CLI on a headless machine, and
-`shellm update` — which moves the host to the newest published release and rolls back on its own
-if the service does not come up — and `shellm backup`, which writes a consistent snapshot of the
-database and the config file for whatever you already use to carry backups off a host. To call it
-from your own code — SDK snippets, what Claude can and cannot do through the API, the limits you
-will hit — read [`docs/guides/usage.md`](docs/guides/usage.md).
+`scripts/setup/vps.sh`, the systemd unit and logging a CLI in on a headless machine. Two commands
+matter once it is running: `shellm update` moves the host to the newest published release and
+rolls back on its own if the service does not come up, and `shellm backup` writes a consistent
+snapshot of the database and the config file for whatever you already use to carry backups off a
+host.
+
+To call it from your own code — SDK snippets, what Claude can and cannot do through the API, the
+limits you will hit — read [`docs/guides/usage.md`](docs/guides/usage.md).
+
+## The dashboard
+
+`/admin` is where the keys, the request log and provider health live. Browsers sign in at
+`/admin/login`; scripts use HTTP Basic with `SHELLM_ADMIN_PASSWORD`. Over HTTPS it installs as an
+app — see [`docs/PWA-AUDIT.md`](docs/PWA-AUDIT.md) for what that install does and does not do.
+
+![Request logs — a filterable table of every request with its status, client, provider, model, duration, tokens and cost, one row expanded to show the request id and the upstream detail, and an error-rate sparkline below it](design/exports/admin-request-logs-default.png)
+
+Every request is logged with what it cost and how long the CLI took, so "which app is burning the
+subscription" is a question with an answer. Nothing about the prompt is stored or inspected.
+
+![Playground — a client key field, a format selector set to Anthropic /v1/messages, a model field, a prompt box, and a response panel showing a 200 with round trip, token counts and request id](design/exports/admin-playground-answered.png)
+
+The playground sends a real request through the same path an app takes, so a key that works here
+works everywhere.
+
+> These two are renders from the design system in [`design/`](design/README.md), which mirrors the
+> shipped code rather than the other way round. They are not captures of a running instance.
 
 ## Models
 
@@ -109,7 +135,7 @@ A model the CLI rejects comes back as `404 model_not_found`.
 | `POST /v1/messages` | Anthropic format. `model`, `max_tokens` and `messages` required, top-level `system` optional |
 | `GET /v1/models` | OpenAI model list of the names that map to a real CLI model |
 | `GET /health` | `{ "status": "ok" }`, unauthenticated |
-| `/admin/*` | Keys, request logs and provider status. Browsers sign in at `/admin/login`; scripts use HTTP Basic with `SHELLM_ADMIN_PASSWORD`. The dashboard installs as a PWA over HTTPS |
+| `/admin/*` | Keys, request logs and provider status — see [The dashboard](#the-dashboard) |
 
 The full contract — request and response schemas, the admin endpoints, streaming — is the
 OpenAPI document in [`docs/api/openapi.yaml`](docs/api/openapi.yaml). A running instance serves
