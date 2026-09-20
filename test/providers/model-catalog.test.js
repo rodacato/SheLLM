@@ -3,7 +3,8 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const { parseClaudeModels, listClaudeModels } = require('../../src/providers/model-list');
-const { readCatalog, declared, resetCatalogCache } = require('../../src/infra/model-catalog');
+const { readCatalog, bakedDefault, declared, resetCatalogCache } = require('../../src/infra/model-catalog');
+const codex = require('../../src/providers/codex');
 const baked = require('../../src/catalog/models.json');
 
 // Verbatim from claude 2.1.273. The aliases live in one human-readable line, so a wording change
@@ -64,6 +65,29 @@ describe('the baked catalog', () => {
         assert.ok('description' in m && 'isDefault' in m && 'retiresAt' in m && 'upgradeTo' in m);
       }
     }
+  });
+});
+
+// codex with no -m falls back to whatever config.toml names, and a ChatGPT account answers
+// "model is not supported" to it. The catalog is what stops a bare `codex` being the one model
+// SheLLM advertises that cannot run.
+describe('a bare provider name', () => {
+  const modelArg = (model) => {
+    const args = codex.buildArgs({ prompt: 'hi', model });
+    const i = args.indexOf('-m');
+    return i === -1 ? null : args[i + 1];
+  };
+
+  it('resolves codex to the model the CLI calls its default', () => {
+    const id = bakedDefault('codex');
+    assert.match(id, /^codex-/);
+    const expected = id.slice('codex-'.length);
+    assert.strictEqual(modelArg('codex'), expected, 'a bare codex still reached the CLI with no -m');
+    assert.strictEqual(modelArg(undefined), expected);
+  });
+
+  it('still passes an explicit model straight through', () => {
+    assert.strictEqual(modelArg('codex-gpt-5.6-sol'), 'gpt-5.6-sol');
   });
 });
 
