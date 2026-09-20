@@ -18,12 +18,24 @@ const QUOTA_WINDOW_HOURS = [
   parseInt(process.env.SHELLM_QUOTA_WEEK_HOURS || '168', 10),
 ];
 
-const EMPTY = {
-  total_requests: 0, total_tokens: 0, total_cost_usd: 0, avg_duration_ms: 0,
-  by_provider: {}, by_status: {}, active_clients: 0,
-  latency: null, quota: null, by_model: [], by_client: [], by_status_code: [],
-  recent_requests: [],
-};
+function noData() {
+  return {
+    agg: {
+      total_requests: 0, total_tokens: 0, tokens_in: 0, tokens_out: 0,
+      cache_write_tokens: 0, cache_read_tokens: 0, total_cost_usd: 0, avg_duration_ms: 0,
+    },
+    byStatusCode: [],
+    providerRows: [],
+    errorBreakdown: [],
+    latency: null,
+    quota: null,
+    byModel: [],
+    byClient: [],
+    timeline: [],
+    recentRequests: [],
+    activeClients: 0,
+  };
+}
 
 function errorRate(byStatusCode, total) {
   const classOf = (status) => (status >= 200 && status < 400 ? '2xx' : status < 500 ? '4xx' : '5xx');
@@ -63,11 +75,39 @@ function latencySection(interval, hours) {
   };
 }
 
-router.get('/stats', (req, res) => {
-  if (!getDb()) return res.json({ period: req.query.period || '24h', ...EMPTY });
+// The only place the response shape is written down, so a database-less answer cannot lose a key.
+function payload(period, hours, source) {
+  const {
+    agg, byStatusCode, providerRows, errorBreakdown,
+    latency, quota, byModel, byClient, timeline, recentRequests, activeClients,
+  } = source;
 
+  return {
+    period,
+    ...agg,
+    by_provider: Object.fromEntries(providerRows.map((r) => [r.provider, r.requests])),
+    by_status: Object.fromEntries(byStatusCode.map((r) => [String(r.status), r.count])),
+    by_status_code: byStatusCode,
+    error_breakdown: errorBreakdown,
+    error_rate: errorRate(byStatusCode, agg.total_requests),
+    cost_by_provider: Object.fromEntries(providerRows.map((r) => [r.provider, r.cost_usd])),
+    cost_burn_rate: Math.round((agg.total_cost_usd / hours) * 10000) / 10000,
+    latency,
+    quota,
+    by_model: byModel,
+    by_client: byClient,
+    timeline,
+    recent_requests: recentRequests,
+    active_clients: activeClients,
+  };
+}
+
+router.get('/stats', (req, res) => {
   const periodKey = PERIODS[req.query.period] ? req.query.period : '24h';
   const { interval, hours } = PERIODS[periodKey];
+
+  if (!getDb()) return res.json(payload(periodKey, hours, noData()));
+
   const db = getDb();
 
   const agg = db.prepare(`
@@ -84,32 +124,23 @@ router.get('/stats', (req, res) => {
     WHERE created_at >= datetime('now', ?)
   `).get(interval);
 
-  const byStatusCode = stats.byStatusCode(interval);
-  const by_status = Object.fromEntries(byStatusCode.map((r) => [String(r.status), r.count]));
-  const providerRows = stats.usageByProvider(interval);
-
   const bucketExpr = periodKey === '24h'
     ? "strftime('%Y-%m-%d %H:00', created_at)"
     : "strftime('%Y-%m-%d', created_at)";
 
-  res.json({
-    period: periodKey,
-    ...agg,
-    by_provider: Object.fromEntries(providerRows.map((r) => [r.provider, r.requests])),
-    by_status,
-    by_status_code: byStatusCode,
-    error_breakdown: stats.errorBreakdown(interval),
-    error_rate: errorRate(byStatusCode, agg.total_requests),
-    cost_by_provider: Object.fromEntries(providerRows.map((r) => [r.provider, r.cost_usd])),
-    cost_burn_rate: Math.round((agg.total_cost_usd / hours) * 10000) / 10000,
+  res.json(payload(periodKey, hours, {
+    agg,
+    byStatusCode: stats.byStatusCode(interval),
+    providerRows: stats.usageByProvider(interval),
+    errorBreakdown: stats.errorBreakdown(interval),
     latency: latencySection(interval, hours),
     quota: quotaSection(interval),
-    by_model: stats.byModel(interval),
-    by_client: stats.byClient(interval),
+    byModel: stats.byModel(interval),
+    byClient: stats.byClient(interval),
     timeline: stats.timeline(interval, bucketExpr),
-    recent_requests: stats.recentRequests(interval),
-    active_clients: db.prepare('SELECT COUNT(*) as count FROM clients WHERE active = 1').get().count,
-  });
+    recentRequests: stats.recentRequests(interval),
+    activeClients: db.prepare('SELECT COUNT(*) as count FROM clients WHERE active = 1').get().count,
+  }));
 });
 
 module.exports = router;
