@@ -44,7 +44,7 @@
           </div>
           <button x-show="hasFilters" @click="clearFilters()"
             class="self-end pb-2 text-[11px] font-mono text-primary-container hover:underline">clear filters</button>
-          <div x-show="!loadError" class="text-[11px] font-mono text-outline/70 italic self-end pb-2" x-text="total + ' total logs found'"></div>
+          <div x-show="!loadError" class="text-[11px] font-mono text-outline italic self-end pb-2" x-text="total + ' total logs found'"></div>
           <div class="ml-auto flex gap-2 self-end">
             <!-- Never gated on total > 0: an empty table is exactly when you want to re-read it -->
             <button @click="fetchLogs(); fetchStats()" :disabled="loading"
@@ -71,7 +71,7 @@
             x-text="'Could not read the stats — ' + statsError"></p>
           <div class="md:col-span-2 bg-surface-container p-5">
             <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-2">
-              Error Rate <span class="text-outline/60 normal-case tracking-normal font-mono" x-text="windowSpan()"></span>
+              Error Rate <span class="text-outline normal-case tracking-normal font-mono" x-text="windowSpan()"></span>
             </p>
             <div class="flex items-end gap-4">
               <p class="text-2xl font-headline font-black text-white" x-text="stats ? (stats.error_rate.client_error_pct + stats.error_rate.server_error_pct).toFixed(1) + '%' : '-'"></p>
@@ -90,7 +90,7 @@
           <div class="md:col-span-3 bg-surface-container p-5 flex items-end gap-10">
             <div>
               <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-2">
-                Total Tokens <span class="text-outline/60 normal-case tracking-normal font-mono" x-text="windowSpan()"></span>
+                Total Tokens <span class="text-outline normal-case tracking-normal font-mono" x-text="windowSpan()"></span>
               </p>
               <p class="text-2xl font-headline font-black text-primary-container" x-text="stats ? formatCompactNumber(stats.total_tokens) : '-'"></p>
             </div>

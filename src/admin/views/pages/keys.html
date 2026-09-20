@@ -147,7 +147,7 @@
             </template>
             <template x-for="entry in auditLogs" :key="entry.id">
               <div class="flex gap-4 py-1.5 border-b border-outline-variant/10 last:border-0">
-                <span class="text-outline/50 whitespace-nowrap" x-text="formatTime(entry.created_at)"></span>
+                <span class="text-outline whitespace-nowrap" x-text="formatTime(entry.created_at)"></span>
                 <span class="text-primary-container font-bold uppercase" x-text="entry.action"></span>
                 <span class="text-on-surface-variant" x-text="entry.resource + (entry.details ? ' — ' + entry.details : '')"></span>
               </div>

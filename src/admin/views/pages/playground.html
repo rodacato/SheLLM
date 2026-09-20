@@ -19,7 +19,7 @@
                 </label>
                 <button x-show="apiKey" @click="forgetKey()" class="text-[10px] font-mono text-outline hover:text-on-surface">forget</button>
               </div>
-              <p class="text-[10px] font-mono text-outline/70 mt-2">
+              <p class="text-[10px] font-mono text-outline mt-2">
                 Keys are stored hashed, so an existing one cannot be filled in here. Rotate a key to get a new secret.
               </p>
             </div>
@@ -40,7 +40,7 @@
                     <option :value="m.id" x-text="m.description || m.label"></option>
                   </template>
                 </datalist>
-                <p class="text-[10px] font-mono text-outline/70 mt-2">
+                <p class="text-[10px] font-mono text-outline mt-2">
                   Any <span class="text-on-surface-variant">claude-</span> or
                   <span class="text-on-surface-variant">codex-</span> name routes; the suffix goes
                   straight to the CLI. A bare provider name uses its default.
@@ -50,7 +50,7 @@
                     x-text="r.id + ' retires ' + r.retiresAt + (r.upgradeTo ? ' — move to ' + r.upgradeTo : '')"></p>
                 </template>
                 <template x-for="note in catalogNotes" :key="note">
-                  <p class="text-[10px] font-mono text-outline/50 mt-1" x-text="note"></p>
+                  <p class="text-[10px] font-mono text-outline mt-1" x-text="note"></p>
                 </template>
               </div>
             </div>
@@ -63,7 +63,7 @@
             <button @click="send()" :disabled="running"
               class="btn-brand px-5 py-2.5 text-xs font-headline font-bold uppercase disabled:opacity-40"
               x-text="running ? 'Sending…' : 'Send'"></button>
-            <p class="text-[10px] font-mono text-outline/70 mt-3">
+            <p class="text-[10px] font-mono text-outline mt-3">
               This spends real subscription quota and is logged like any other request.
             </p>
           </div>
