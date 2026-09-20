@@ -145,23 +145,23 @@
           <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-[11px] font-mono">
             <div>
               <span class="text-outline uppercase block text-[10px]">Running</span>
-              <span class="text-white text-lg font-headline font-bold" x-text="(health?.queue?.active ?? 0) + ' / ' + (health?.queue?.max_concurrent ?? 0)"></span>
+              <span class="text-white text-lg font-headline font-bold" x-text="healthRead === 'ok' ? (health?.queue?.active ?? 0) + ' / ' + (health?.queue?.max_concurrent ?? 0) : '—'"></span>
             </div>
             <div>
               <span class="text-outline uppercase block text-[10px]">Waiting</span>
               <span class="text-lg font-headline font-bold"
                 :class="(health?.queue?.pending ?? 0) > 0 ? 'text-status-warn' : 'text-white'"
-                x-text="health?.queue?.pending ?? 0"></span>
+                x-text="healthRead === 'ok' ? (health?.queue?.pending ?? 0) : '—'"></span>
             </div>
             <div>
               <span class="text-outline uppercase block text-[10px]">Streams</span>
-              <span class="text-white text-lg font-headline font-bold" x-text="(health?.queue?.active_streams ?? 0) + ' / ' + (health?.queue?.max_stream_concurrent ?? 0)"></span>
+              <span class="text-white text-lg font-headline font-bold" x-text="healthRead === 'ok' ? (health?.queue?.active_streams ?? 0) + ' / ' + (health?.queue?.max_stream_concurrent ?? 0) : '—'"></span>
             </div>
             <div>
               <span class="text-outline uppercase block text-[10px]">Open circuits</span>
               <span class="text-lg font-headline font-bold"
                 :class="openCircuits.length > 0 ? 'text-status-fail' : 'text-white'"
-                x-text="openCircuits.length > 0 ? openCircuits.join(', ') : 'none'"></span>
+                x-text="providersLoaded && !providersError ? (openCircuits.length > 0 ? openCircuits.join(', ') : 'none') : '—'"></span>
             </div>
           </div>
         </div>
