@@ -6,7 +6,7 @@
           <button @click="navigate('system')" x-show="health?.build"
             class="text-[11px] font-mono text-outline hover:text-primary-container transition-colors duration-100">
             <span x-text="'v' + (health?.build?.version || '?')"></span>
-            <span class="text-outline/60" x-text="health?.build?.commit ? '· ' + health.build.commit : ''"></span>
+            <span class="text-outline" x-text="health?.build?.commit ? '· ' + health.build.commit : ''"></span>
             <span class="ml-1">→</span>
           </button>
         </header>
@@ -22,7 +22,7 @@
                push the footer's copy of this two screens down. -->
           <span x-show="lastReadAt" :class="$store.connection.degraded ? 'text-status-warn' : 'text-outline'"
             x-text="'· read ' + lastReadAt"></span>
-          <span class="ml-auto text-outline/60"
+          <span class="ml-auto text-outline"
             x-text="stats ? 'logs are kept ' + stats.window.retention_days + ' days' : ''"></span>
         </div>
 

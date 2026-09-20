@@ -1128,7 +1128,7 @@ Correctness. These do not wait for a kit batch. **B1–B4** are pass 1's.
 | # | Where | Bug |
 |---|---|---|
 | **B5** | `src/db/stats.js:74-75` + `src/admin/stats.js:47-48` | Quota burn rate divides by the nominal window, not the observed one — the exact failure the file's own comment rejects |
-| **B6** | `src/admin/views/` ×11 + `index.html:162` | Eleven opacity-dimmed text elements fail WCAG AA, on 9–10 px type, against a README that promises AA |
+| **B6** | `src/admin/views/` ×14 | Fourteen opacity-dimmed elements fall below their threshold, on 9–11 px type, against a README that promises AA |
 | **B7** | `src/admin/views/pages/logs.html:233, 251, 255` | Three metric values are `<h2>`, so the Logs heading outline reads "Request Logs / 15.4% / 512.9K / $3.91" |
 
 **B5.** `usageWindow(hours)` computes `cost_usd / hours` and `requests / (hours * 60)` against the
@@ -1152,14 +1152,19 @@ type in the product.
 | Class | Size | On | Ratio | AA (4.5:1) |
 |---|---|---|---|---|
 | `text-outline/50` | 10 px | `--surface-container` | **2.3 : 1** | ✗ |
-| `text-outline/60` | 9 px | `--surface` | **3.1 : 1** | ✗ |
+| `text-outline/60` | 9 px | `--surface` | **2.9 : 1** | ✗ |
 | `text-outline/70` | 10 px | `--surface-container` | **3.2 : 1** | ✗ |
 | `text-outline` | 10 px | `--surface-container` | 5.2 : 1 | ✓ |
 
-Counted: `/30` ×5, `/40` ×3, `/50` ×2, `/60` ×5, `/70` ×4, plus `text-error/70` ×1. `/30` and `/40`
-are on icons and disabled pagination controls, where AA's text rule does not apply and the 3:1
-non-text rule does — they are not claimed here. The eleven `/50`, `/60`, `/70` uses on real text
-are.
+Counted: `/30` ×5, `/40` ×3, `/50` ×2, `/60` ×5, `/70` ×4, plus `text-error/70` ×1 (which passes
+at 5.4 : 1). The eleven `/50`, `/60`, `/70` uses are on real text. `/30` marks disabled pagination
+controls, which WCAG exempts. `/40` is on the three icon-only links in the sidebar, which answer to
+the 3:1 non-text rule rather than this one — **and measured against `--surface-shell` they come to
+1.93 : 1, so they fail that threshold too.** This pass first reported them as not claimed; they are
+claimed now, measured.
+
+*Two figures above were corrected when the gate measured them: the footer reads 2.9 : 1, not the
+3.1 : 1 first reported, and the count is fourteen rather than eleven.*
 
 `README.md` says *"AA contrast through tokens"* — and that is true of every token. The guarantee is
 written at the token level and the violations are all one level below it, which is why a token audit
