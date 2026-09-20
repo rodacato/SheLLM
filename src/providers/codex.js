@@ -34,8 +34,16 @@ const authProbe = {
 };
 
 function cliModel(model) {
-  if (!model || model === 'codex') return null;
+  if (!model || model === 'codex') return defaultModel();
   return model.startsWith(MODEL_PREFIX) ? model.slice(MODEL_PREFIX.length) : model;
+}
+
+// Without -m the CLI falls back to whatever config.toml names, and a ChatGPT account answers
+// "model is not supported" to it. The catalog carries the default the CLI itself reports.
+function defaultModel() {
+  const { bakedDefault } = require('../infra/model-catalog');
+  const id = bakedDefault('codex');
+  return id && id.startsWith(MODEL_PREFIX) ? id.slice(MODEL_PREFIX.length) : null;
 }
 
 // Codex has no --system-prompt flag — prepend to prompt

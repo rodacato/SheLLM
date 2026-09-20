@@ -53,9 +53,16 @@ process.exit(file === 'exec-json-unknown-model.jsonl' ? 1 : 0);
     assert.equal(args.at(-1), 'ping', 'the prompt is the last argument');
   });
 
-  it('leaves the CLI default model alone when the id is the provider name', async () => {
+  // Leaving the CLI to pick used to look like the respectful default. It is not: with no -m the
+  // CLI falls back to whatever config.toml names, and a ChatGPT account answers "model is not
+  // supported" to it — so `codex` was the one model SheLLM advertised that could not run.
+  it('names the CLI\'s own default model when the id is the provider name', async () => {
+    const { bakedDefault } = require('../../src/infra/model-catalog');
+    const expected = bakedDefault('codex').slice('codex-'.length);
+
     await codex.chat({ prompt: 'ping', model: 'codex' });
-    assert.ok(!argsOf().includes('-m'));
+    const args = argsOf();
+    assert.equal(args[args.indexOf('-m') + 1], expected);
   });
 
   it('prepends the system prompt and the JSON-mode instruction the CLI has no flag for', async () => {

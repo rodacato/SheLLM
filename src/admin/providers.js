@@ -10,6 +10,7 @@ const {
 } = require('../db');
 const { engines } = require('../routing');
 const { getHealthStatus } = require('../infra/health');
+const { readCatalog } = require('../infra/model-catalog');
 const { getCircuitState } = require('../infra/circuit-breaker');
 const logger = require('../lib/logger');
 
@@ -29,6 +30,10 @@ router.get('/providers', async (req, res) => {
     healthData = health.providers || {};
   } catch { /* ignore */ }
 
+  const catalogs = Object.fromEntries(await Promise.all(
+    dbProviders.map(async (p) => [p.name, await readCatalog(p.name)]),
+  ));
+
   const result = dbProviders.map((p) => ({
     name: p.name,
     type: p.type,
@@ -43,6 +48,7 @@ router.get('/providers', async (req, res) => {
     last_status: lastUsageMap[p.name]?.last_status || null,
     circuit: getCircuitState(p.name),
     models: engines[p.name]?.models || [],
+    catalog: catalogs[p.name],
   }));
 
   res.json({ providers: result });

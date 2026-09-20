@@ -11,6 +11,7 @@ function playgroundPage() {
     model: 'claude',
     prompt: 'Reply with one short sentence.',
     models: [],
+    catalogs: [],
     running: false,
     result: null,
     error: null,
@@ -32,9 +33,30 @@ function playgroundPage() {
         const res = await apiFetch(`${API_BASE}/providers`);
         if (!res.ok) return;
         const { providers } = await res.json();
-        this.models = providers.filter((p) => p.enabled).flatMap((p) => p.models || []);
-        if (this.models.length > 0 && !this.models.includes(this.model)) this.model = this.models[0];
+        const enabled = providers.filter((p) => p.enabled);
+        this.catalogs = enabled.map((p) => ({ provider: p.name, running: p.version, ...(p.catalog || {}) }));
+        this.models = this.catalogs.flatMap((c) => c.models || []);
+        if (this.models.length > 0 && !this.models.some((m) => m.id === this.model)) {
+          this.model = (this.models.find((m) => m.isDefault) || this.models[0]).id;
+        }
       } catch { /* the list is a convenience; the field still accepts anything */ }
+    },
+
+    // Where the names came from, per provider. A list that cannot say it is stale is the same
+    // defect as a table that renders a failed read as an empty one.
+    get catalogNotes() {
+      return this.catalogs.map((c) => {
+        if (c.source === 'cli') return `${c.provider}: asked the CLI`;
+        if (c.source === 'baked') {
+          const drift = c.cli && c.running && c.cli !== c.running ? `, this host runs ${c.running}` : '';
+          return `${c.provider}: built ${c.generatedAt} against CLI ${c.cli}${drift}`;
+        }
+        return `${c.provider}: could not ask — built-in aliases only`;
+      });
+    },
+
+    get retiring() {
+      return this.models.filter((m) => m.retiresAt);
     },
 
     get endpoint() {

@@ -4,9 +4,17 @@ const { modelNotFound } = require('../errors');
 const MODEL_ALIASES = { 'claude-haiku': 'haiku', 'claude-sonnet': 'sonnet', 'claude-opus': 'opus' };
 const models = ['claude', ...Object.keys(MODEL_ALIASES)];
 
+const PREFIX = 'claude-';
+
+// A full model id must reach the CLI untouched, so the prefix comes off only for a name the
+// catalog says is an alias. MODEL_ALIASES stays as the floor: tier names outlive the catalog.
 function cliModel(model) {
   if (!model || model === 'claude') return null;
-  return MODEL_ALIASES[model] || model;
+  if (MODEL_ALIASES[model]) return MODEL_ALIASES[model];
+  if (!model.startsWith(PREFIX)) return model;
+  const short = model.slice(PREFIX.length);
+  const { bakedAliases } = require('../infra/model-catalog');
+  return bakedAliases('claude').has(short) ? short : model;
 }
 
 function shouldSkipPermissions() {
