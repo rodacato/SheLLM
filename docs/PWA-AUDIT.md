@@ -14,6 +14,32 @@ does wrong, not how hard it is to fix.
 
 ---
 
+## Status — 2026-09-20
+
+| | Landed | Open |
+|---|---|---|
+| 🔴 | P1 · P2 *(documented, not fixed — that was the recommendation)* | — |
+| 🟠 | P3 *(partly)* · P4 | P3 *(residual)* · P5 |
+| 🟡 | P6 · P7 · P9 | P8 |
+| 🟢 | P10 · P12 · P13 | P11 |
+
+Nine commits, every one green on `npm test` and `npm run lint`. What is left, and why:
+
+- **P3 residual.** The sign-in page now carries the manifest, the theme colour, the safe-area
+  insets and the app's own frame, so it no longer reads as a different application. Two things
+  survive: it is still outside `SHELL`, so offline it is the browser's error page inside a
+  windowed app, and it still declares its own nine palette aliases — which is **D20**, an open
+  design call, not an oversight.
+- **P5** needs a drawn asset, not a code change. A maskable icon is a different composition, not
+  a resize: the mark inside the middle 60% of the canvas on `surface-shell`.
+- **P8** needs a decision. `skipWaiting()` + `clients.claim()` stays, or it goes and the
+  connection banner grows a "reload to update" line. Either is defensible; leaving it undecided
+  is what this entry objects to.
+- **P11** is ~350 KB of PNG in the repo for a taller install dialog. Worth it if the exports are
+  going to be committed anyway, not worth it on its own.
+
+---
+
 ## What is already right
 
 Worth stating, because the non-obvious parts were done deliberately and a later change could
