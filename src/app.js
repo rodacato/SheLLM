@@ -12,6 +12,7 @@ const adminKeysRouter = require('./admin/keys');
 const adminLogsRouter = require('./admin/logs');
 const adminStatsRouter = require('./admin/stats');
 const adminProvidersRouter = require('./admin/providers');
+const adminUpdateRouter = require('./admin/update');
 const { sendApiError, invalidRequest } = require('./errors');
 const path = require('node:path');
 
@@ -84,6 +85,7 @@ app.use('/admin', adminAuth, adminKeysRouter);
 app.use('/admin', adminAuth, adminLogsRouter);
 app.use('/admin', adminAuth, adminStatsRouter);
 app.use('/admin', adminAuth, adminProvidersRouter);
+app.use('/admin', adminAuth, adminUpdateRouter);
 
 // Admin health endpoint (detailed, for dashboard)
 app.get('/admin/health', adminAuth, async (req, res) => {
