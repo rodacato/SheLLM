@@ -28,4 +28,24 @@ describe('what describes the numbers comes before them', () => {
     ]);
     assert.ok(read < errors, 'the read stamp is below the first panel it describes');
   });
+
+  // Overview promotes the error rate to the top; Logs used to bury the same fact, inverted, under
+  // twenty-five rows. One product, one answer to where the summary goes.
+  it('puts the Logs summary between the filters and the table it summarises', () => {
+    const [[, filters], [, summary], [, table]] = orderOf(page('logs.html'), [
+      ['filters', '<!-- Filters -->'],
+      ['summary', '<!-- Stats Summary -->'],
+      ['table', '<!-- Table -->'],
+    ]);
+    assert.ok(filters < summary, 'the summary sits above the filters that scope it');
+    assert.ok(summary < table, 'the summary is still below the table');
+  });
+
+  it('keeps the tokens card reading as one figure, not two at opposite ends', () => {
+    assert.doesNotMatch(
+      page('logs.html'),
+      /md:col-span-3[^"]*justify-between/,
+      'total tokens and estimated cost are spread to the ends of the card again',
+    );
+  });
 });
