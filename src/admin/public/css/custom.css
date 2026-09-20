@@ -44,6 +44,19 @@
   --dur-fast:   100ms;
   --dur-move:   200ms;
   --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+
+  /* Lighter, not darker: these surfaces are near-black, and a transparent target has nothing
+     to darken. One veil works on cyan, on red and on nothing at all. */
+  --press-veil: rgba(255, 255, 255, 0.08);
+}
+
+/* The click either registered or it did not, and on a page whose answer takes seconds that is
+   the only thing the interface can say immediately. */
+button:not(:disabled):active,
+a:active,
+.toggle-track:active,
+[class*="cursor-pointer"]:active {
+  box-shadow: inset 0 0 0 999px var(--press-veil);
 }
 
 /* Status badges */

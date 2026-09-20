@@ -85,4 +85,17 @@ describe('motion is two durations and one curve', () => {
     assert.match(query[1], /\.animate-pulse\s*\{[^}]*opacity:\s*1\s*!important/,
       'the pulse is pinned solid rather than frozen at whatever opacity the last frame had');
   });
+
+  // A destructive button and a button that spends real subscription quota both confirmed nothing
+  // on press until this landed. The rule is one block; what it must not lose is its reach.
+  it('gives every kind of click target a press state', () => {
+    const rule = /([^{}]*):active[^{}]*\{([^}]*)\}/.exec(css.replace(/@media[\s\S]*$/, ''));
+    assert.ok(rule, 'custom.css declares a press state');
+
+    const selector = rule[0];
+    for (const target of ['button:not(:disabled)', 'a:active', 'cursor-pointer']) {
+      assert.ok(selector.includes(target), `the press state still reaches ${target}`);
+    }
+    assert.match(rule[2], /var\(--press-veil\)/, 'and it reads the declared veil rather than a literal');
+  });
 });
