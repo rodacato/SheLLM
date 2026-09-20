@@ -175,6 +175,8 @@
                   <div>
                     <span class="font-headline font-bold text-white text-sm" x-text="prov.name"></span>
                     <span class="text-[10px] font-mono text-outline ml-2" x-text="providerState(prov)"></span>
+                    <span x-show="authVerdict(prov)" class="text-[10px] font-mono text-outline block mt-1"
+                      x-text="authVerdict(prov)"></span>
                   </div>
                 </div>
 
@@ -210,6 +212,8 @@
                 <div>
                   <span class="text-outline uppercase block text-[10px]">Circuit</span>
                   <span :class="circuitClass(prov)" x-text="circuitLabel(prov)"></span>
+                  <span x-show="circuitVerdict(prov)" class="text-outline block mt-0.5 text-[10px]"
+                    x-text="circuitVerdict(prov)"></span>
                 </div>
                 <div class="col-span-2 md:col-span-4">
                   <span class="text-outline uppercase block text-[10px]">Models</span>

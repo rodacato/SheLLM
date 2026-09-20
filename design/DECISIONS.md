@@ -4,7 +4,9 @@
 > notes in `ui-kit.lib.pen` cite these by number. Keep entries after resolution — record the
 > outcome instead of deleting; the reasoning is the useful part.
 
-**Status:** 7 entries · 3 resolved · 4 open · 0 🔴 high-impact · 0 🐞 unfiled bugs.
+**Status:** 7 entries · 4 resolved · 3 open · 0 🔴 high-impact · 0 🐞 unfiled bugs.
+
+**D14 resolved 2026-09-20** — it was a design-audit card, not a `D<n>` here; the verdict pattern now covers the circuit state, provider sign-in and the burn rate. Each reads a fact the server already had rather than a threshold someone picked: `retry_at` comes from the breaker's own RESET_MS, the sign-in command from the provider module, and the burn rate is judged against the weekly window beside it.
 
 **D2–D14 are spent.** The 2026-09-20 design audit claimed that range and most of it landed; two
 entries survive as drafts on the project board, cited there by number. New findings start at

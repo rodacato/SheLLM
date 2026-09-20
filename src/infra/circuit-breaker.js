@@ -74,13 +74,17 @@ function canSendTraffic(name) {
   return true;
 }
 
+// retry_at is reported rather than left to the caller: RESET_MS is this module's policy and a
+// dashboard that guessed it would be wrong the moment the env var changed.
 function getCircuitState(name) {
   const circuit = getOrCreate(name);
   return {
     state: circuit.state,
     failures: circuit.failures,
+    threshold: THRESHOLD,
     lastFailureAt: circuit.lastFailureAt,
     lastTransitionAt: circuit.lastTransitionAt,
+    retry_at: circuit.state === 'open' ? new Date(circuit.lastTransitionAt + RESET_MS).toISOString() : null,
   };
 }
 

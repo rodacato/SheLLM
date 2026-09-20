@@ -47,6 +47,7 @@ router.get('/providers', async (req, res) => {
     last_used_at: lastUsageMap[p.name]?.last_used_at || null,
     last_status: lastUsageMap[p.name]?.last_status || null,
     circuit: getCircuitState(p.name),
+    login_help: engines[p.name]?.LOGIN_HELP || null,
     models: engines[p.name]?.models || [],
     catalog: catalogs[p.name],
   }));

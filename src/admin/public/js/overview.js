@@ -279,6 +279,19 @@ function overviewPage() {
       return total > shown ? `last ${shown} of ${total.toLocaleString()}` : '';
     },
 
+    // A rate with nothing to compare it against is a number, not a reading. The two quota windows
+    // are already measured, so the short one is judged against the long one rather than a guess.
+    burnVerdict(w) {
+      const windows = this.stats?.quota?.windows || [];
+      const week = windows.find((x) => x.hours >= 24);
+      if (!week || w === week || !week.cost_per_hour || !w.cost_per_hour) return '';
+
+      const ratio = w.cost_per_hour / week.cost_per_hour;
+      if (ratio >= 2) return `${ratio.toFixed(1)}× the weekly pace`;
+      if (ratio <= 0.5) return `${(1 / ratio).toFixed(1)}× slower than the week`;
+      return 'in line with the week';
+    },
+
     // The page no longer asks for a period, so it has to say which one it got. Without this the
     // percentages and the totals have no denominator on screen.
     windowSpan() {
