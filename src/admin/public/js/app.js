@@ -213,9 +213,15 @@ function app() {
       { id: 'system', label: 'System', icon: 'settings_heart' },
     ],
     navigate(pageId) {
-      this.page = pageId;
+      this.show(pageId);
       this.sidebarOpen = false;
       location.hash = pageId;
+    },
+    // Never smooth: this fires on every navigation, and it delays the first read of a page the
+    // operator opened to read.
+    show(pageId) {
+      this.page = pageId;
+      window.scrollTo(0, 0);
     },
     openLogsFiltered(filter) {
       Alpine.store('nav').pendingLogFilter = typeof filter === 'object' ? filter : { status: String(filter) };
@@ -227,7 +233,7 @@ function app() {
     async init() {
       window.addEventListener('hashchange', () => {
         const id = location.hash.slice(1);
-        if (VALID_PAGES.includes(id)) this.page = id;
+        if (VALID_PAGES.includes(id)) this.show(id);
       });
       await this.fetchHealth();
       setInterval(() => this.fetchHealth(), 30000);
