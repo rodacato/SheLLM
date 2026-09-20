@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-09-20
+
+### Added
+
+- **site:** rebuild the landing page around the screenshots
+
+### Fixed
+
+- **site:** stop the API reference logo filling the sidebar and colliding with the home link
+- **admin:** precache the wordmark, so the offline shell is not broken (D47)
+- **admin:** stop System reporting a health read that never happened (D46)
+
+### Documentation
+
+- **design:** record what the landing audit's findings turned into
+- **design:** correct the README's claim that the public surface does not exist
+- **experts:** seat S8 for brand and positioning
+- **design:** audit the landing page against the one it replaced
+- **design:** reject motion on the degraded banner, and correct a prediction
+
+### Maintenance
+
+- **deps:** bump sonarsource/sonarqube-scan-action from 8.2.1 to 8.2.2
+- **deps:** bump dotenv from 17.4.2 to 18.0.0
+- **deps-dev:** bump @redocly/cli from 2.53.2 to 2.53.3
+
+
 ## [1.6.1] - 2026-09-20
 
 A recovery release. v1.6.0 took a `better-sqlite3` major whose releases publish no prebuilt
@@ -721,5 +748,5 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.6.1...HEAD
-[1.6.1]: https://github.com/rodacato/SheLLM/compare/v1.6.0...v1.6.1
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/rodacato/SheLLM/compare/v1.6.1...v1.7.0
