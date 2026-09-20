@@ -52,6 +52,10 @@
                 <template x-for="note in catalogNotes" :key="note">
                   <p class="text-[10px] font-mono text-outline mt-1" x-text="note"></p>
                 </template>
+                <p x-show="catalogsError" x-cloak class="text-[10px] font-mono text-status-warn mt-1"
+                  x-text="'Could not read the model list — ' + catalogsError + '. The field still accepts any name.'"></p>
+                <p x-show="catalogsLoaded && !catalogsError && catalogNotes.length === 0" x-cloak
+                  class="text-[10px] font-mono text-outline mt-1">No provider is enabled, so there are no model names to list.</p>
               </div>
             </div>
 
