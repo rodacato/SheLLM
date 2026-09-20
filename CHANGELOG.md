@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-09-20
+
+### Added
+
+- **deploy:** the privileged half of the update button
+- **admin:** a playground that calls /v1 with a client key
+- **admin:** say what failed and what the runtime is doing
+- **keys:** show what a key has spent, and let its limits be edited
+- **logs:** record what a request asked for and why it failed
+
+### Fixed
+
+- **deploy:** make the updater report the failures it cannot survive
+- **admin:** send an expired session to the login page, not a Basic prompt
+
+### Documentation
+
+- **deployment:** make `shellm update` the documented way to upgrade
+
+
 ## [1.1.1] - 2026-09-19
 
 ### Fixed
@@ -397,5 +417,5 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.1.1...HEAD
-[1.1.1]: https://github.com/rodacato/SheLLM/compare/v1.1.0...v1.1.1
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/rodacato/SheLLM/compare/v1.1.1...v1.2.0
