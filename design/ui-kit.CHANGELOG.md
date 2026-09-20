@@ -13,9 +13,45 @@ diverging is not. A changed token VALUE forces every consumer.
 
 ---
 
-## Unreleased — blank starter
+## 0.1.0 — 2026-09-20 · tokens
 
-`ui-kit.lib.pen` is an empty canvas. **0.1.0** is cut when the first Pencil session lifts the
-tokens (surface scale, primary cyan, on-surface text, outline, error; Space Grotesk + Inter; 0px
-radius) and the core components from `src/admin/public/index.html`, and vendors them into
-`flows/admin.pen`.
+Every token mirrored from the code, measured rather than eyeballed. No components yet: the
+kit carries the palette, the type and the radius scale, and nothing that was not in the code.
+
+**Sources.** `src/admin/views/index.html` (`tailwind.config`, line 23) and
+`src/admin/public/css/custom.css`. The path in the old note (`src/admin/public/index.html`) no
+longer exists — the SPA was split into `views/`.
+
+**Installed.** 6 surface steps · 5 content · 3 brand · 4 status · 4 badge/scrim · 3 font
+families · 2 radius steps · the 5 `grid-*` canvas constants. 34 variables.
+
+**Names follow the code.** `surface-container-high`, not `surface-3`. Where the code names a
+value only through a CSS class, the class named the token: `.badge-2xx` → `badge-2xx-bg`,
+`.btn-brand:hover` → `brand-hover`, `.modal-overlay` → `overlay-scrim`.
+
+**Status colours are aliased twice in the code** — declared as CSS custom properties in
+`custom.css` and re-exported through the Tailwind config as `var(--status-ok)`. The kit mirrors
+the CSS declaration, which is the one Chart.js reads.
+
+### Open kit gaps — measured, not impressions
+
+Five hex literals in `src/` have no name in the Tailwind config. Counts are every occurrence
+under `src/` on 2026-09-20, `.webmanifest` included:
+
+| Value | Uses | Where | What it is |
+|---|---|---|---|
+| `#1a1e21` | 5 | `views/index.html` ×3 (meta theme-color, mobile bar, sidebar) · `public/manifest.webmanifest` ×2 | **The shell surface** — sidebar, mobile top bar, PWA theme colour. A distinct surface step the six-step scale does not contain, and the only gap that also escapes the app into the installed-PWA chrome. The largest one. |
+| `#2e3b44` | 2 | `views/index.html` | Active and hover background of a nav item |
+| `#3a1d1d` | 1 | `pages/overview.html` | `USAGE LIMIT HIT` banner background |
+| `#3b1a1a` / `#4a2020` | 1 each | `pages/logs.html` | `Clear All` background and its hover |
+
+Not tokenised yet: naming them is a design call, logged as **D19**. The kit mirrors current
+code, so it stays without them until that lands.
+
+**Resolved by cutting this version:** `D1` (where the tokens live) now has a measured answer.
+**Logged while cutting it:** `D18` (the mono family has no renderable equivalent), `D19` (the
+five unnamed literals above).
+
+**Fixed in code, not in the kit:** `--outline` was read by `overview.js` and never declared, so
+the charts always fell through to a retyped `#849397`. Declared in `custom.css` on branch
+`chart-outline-token`.

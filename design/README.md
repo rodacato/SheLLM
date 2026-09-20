@@ -1,6 +1,6 @@
 # Design — Pencil workflow
 
-Everything about SheLLM's visual design — the admin dashboard and the public pages — lives here. Read this before touching a `.pen`. It doubles
+Everything about SheLLM's visual design — the admin dashboard — lives here. Read this before touching a `.pen`. It doubles
 as context for AI agents (`AGENTS.md` points them here).
 
 **Two rules that matter most:**
@@ -28,12 +28,16 @@ as context for AI agents (`AGENTS.md` points them here).
 
 | File | Screens | Kit | Domain entry point |
 |---|---|---|---|
-| `admin.pen` | 7 — Overview, Playground, Terminal, Request Logs, API Keys, Models, Settings | not vendored yet | `/admin/dashboard/`, sidebar in `src/admin/public/js/app.js:71` |
-| `public.pen` | 2 — Landing, API reference | not vendored yet | `site/index.html`, `docs/index.html` |
+| `admin.pen` | 5 — Overview, Request Logs, API Keys, Playground, System | not vendored yet | `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
 
-Both flows and the kit are **blank starters** until the first Pencil session mirrors the kit from
-the code. The Stitch exports kept locally under `docs/screens/` are legacy references, below code
-and production captures in the source-of-truth order.
+`admin.pen` is still a **blank starter**. `ui-kit.lib.pen` carries tokens as of **0.1.0** and no
+components yet.
+
+The admin is the only surface with a flow. There is no public flow: the landing page and the
+hosted API reference were removed, so `site/` and `docs/index.html` do not exist. The Stitch
+exports kept locally under `docs/screens/` are legacy references, below code and production
+captures in the source-of-truth order — and two of them (`models_…`, `…_landing_page_…`) describe
+screens the product no longer has.
 
 **This table is present tense — it never carries history.** "Migrated on <date>, six
 components consolidated" belongs in that flow's `Log` frame, not here.
@@ -59,7 +63,7 @@ A fact written in two of them belongs in one; the others cite it.
 
 **code > production capture > legacy.** In that order, every time.
 
-- Derive the **domain list** from the dashboard sidebar (`src/admin/public/js/app.js`) and the public pages, never from an old design.
+- Derive the **domain list** from the dashboard sidebar ([`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209)), never from an old design. The audit's own mockups list a Models page that `252cd12` removed — that is what reading a domain list off a legacy file costs.
 - **Never invent copy** — every string must exist in the code.
 - Build states by finding their owner in the code; hunt the states a normal session never
   reaches (no data, no permission, failed request) — that's where design gaps AND code bugs
@@ -109,5 +113,5 @@ flow even when nothing renders differently.
 ## Fidelity loop (design ↔ code)
 
 1. Open the flow, read its brief. 2. Design with the vendored components. 3. Implement:
-"the `.pen` components map 1:1 to the Tailwind config and markup in `src/admin/public/index.html`". 4. Screenshot the rendered app,
+the `.pen` components map 1:1 to the Tailwind config in [`src/admin/views/index.html:23`](../src/admin/views/index.html#L23), the custom properties in `src/admin/public/css/custom.css`, and the markup in `src/admin/views/pages/*.html`. 4. Screenshot the rendered app,
 overlay at 50% opacity on the design, fix drift in the design first, then the code.
