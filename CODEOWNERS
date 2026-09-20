@@ -5,7 +5,7 @@
 * @rodacato
 
 # API contract — Contract + Consumer review required
-docs/openapi.yaml @rodacato
+docs/api/ @rodacato
 src/api/v1/ @rodacato
 
 # Providers — CLI specialist review required
@@ -18,12 +18,9 @@ src/middleware/sanitize.js @rodacato
 scripts/pre-commit @rodacato
 
 # Infrastructure & deployment
-Dockerfile @rodacato
-docker-compose.yml @rodacato
 .github/ @rodacato
 scripts/setup/ @rodacato
 shellm.service @rodacato
 
-# Public-facing docs and site
-site/ @rodacato
+# Public-facing docs
 docs/ @rodacato

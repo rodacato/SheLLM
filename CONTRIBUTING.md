@@ -124,9 +124,37 @@ node --test test/providers/claude.test.js
 ### Test Guidelines
 
 - Use Node.js built-in test runner (`node:test`)
-- Mock subprocess calls at the `execute()` boundary — don't spawn real CLIs in CI
+- Prefer the real thing: temp directories, real function calls, and a fake CLI written to disk and
+  put on `PATH` over mocking `execute()`. `base.js` captures `PATH` when it loads, so a test that
+  installs a fake CLI must do it before requiring any provider
 - API tests import the Express `app` directly — don't start a server
-- Tests should be fast (< 1s total, currently 56 tests across 16 suites) and deterministic (no network calls, no timers)
+- Tests should be fast and deterministic: no network calls, no timers, no real CLI in CI
+
+### Coverage
+
+`npm run test:coverage` writes `coverage/lcov.info` and reports against a minimum. CI runs it on
+every pull request, and it warns rather than failing — set `COVERAGE_BLOCKING` to `true` in
+`.github/workflows/ci.yml` to make a drop block a merge.
+
+The figure only counts files a test loads. The dashboard's browser scripts run through
+`vm.runInContext`, which Node's coverage does not instrument, so they are exercised and still
+absent from the number.
+
+### The API contract
+
+The OpenAPI document lives in [`docs/api/`](docs/api/), split one file per path and schema with
+[`docs/api/openapi.yaml`](docs/api/openapi.yaml) as the root.
+
+```bash
+npm run docs:lint     # validate against the recommended ruleset
+npm run docs:build    # rebuild docs/api/bundled.json — commit it
+npm run docs:preview  # open it as a page
+```
+
+`test/api/spec-coverage.test.js` walks the real Express router and fails when a route is not in the
+bundle, so adding an endpoint means adding its path file and re-running `docs:build`. A route that
+is deliberately not part of the API — the dashboard's own pages, the PWA files — goes in that
+test's `NOT_AN_API_SURFACE` map with the reason.
 
 ## Testing Before Deployment
 

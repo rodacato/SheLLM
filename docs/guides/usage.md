@@ -12,6 +12,9 @@ Everything below was probed against a running instance of **this** build on **20
 
 - Installing a server: [`../../README.md`](../../README.md) and [`deployment.md`](./deployment.md)
 - Parameter-by-parameter mapping: [`api-compatibility.md`](./api-compatibility.md)
+- Every field and status, as a machine-readable contract: [`../api/openapi.yaml`](../api/openapi.yaml).
+  Your own instance serves the bundled copy at `$SHELLM_BASE/docs/openapi.json`, so a client
+  generator can read the version that host is actually running.
 
 ## 1. What you need
 
