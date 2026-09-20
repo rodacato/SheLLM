@@ -192,9 +192,8 @@ const HOUR_MS = 3600000;
 
 const floorHour = (ms) => Math.floor(ms / HOUR_MS) * HOUR_MS;
 
-// An hour nothing happened in is a fact about the service, and grouping cannot report it: it only
-// returns hours that have rows. Without these the chart drew quiet hours as no width at all, so a
-// one-hour spike and an overnight silence were the same distance apart.
+// Grouping only returns hours that have rows, so without these the chart gave a quiet hour no
+// width at all — a one-hour spike and an overnight silence sat the same distance apart.
 function fillQuietHours(rows, endMs) {
   if (rows.length === 0) return [];
   const byHour = new Map(rows.map((r) => [Date.parse(r.bucket_at), r]));
