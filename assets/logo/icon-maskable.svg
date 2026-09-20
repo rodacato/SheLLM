@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="SheLLM">
+  <!-- Maskable: the mark fits the centre 60% so a circular or squircle mask cannot clip it. -->
+  <rect width="512" height="512" fill="#1a1e21"/>
+  <g transform="translate(-1.862, -19.548) scale(0.9309091)">
+    <path d="M112 176 L232 296 L112 416 L136 440 L280 296 L136 152 Z" fill="#FFFFFF"/>
+    <rect x="292" y="386" width="150" height="30" fill="#03E3FF"/>
+  </g>
+</svg>

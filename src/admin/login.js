@@ -20,7 +20,9 @@ const PAGE = (error, next) => `<!DOCTYPE html>
 <title>SheLLM — sign in</title>
 <link rel="manifest" href="/admin/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/admin/dashboard/img/favicon.svg">
-<link rel="apple-touch-icon" sizes="180x180" href="/admin/dashboard/img/favicon-dark-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/admin/dashboard/img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/admin/dashboard/img/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/admin/dashboard/img/favicon-180.png">
 <style>
   :root { color-scheme: dark; --bg:#101417; --panel:#1c2023; --line:#3b494c; --text:#e0e3e7; --accent:#03e3ff;
           --error:#ffb4ab; --error-bg:#0b0f12; --muted:#849397; --on-accent:#00363e; }
