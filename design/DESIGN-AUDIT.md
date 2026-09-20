@@ -682,6 +682,12 @@ reading first. That is Adrian's, and it is the scope's only open gate.
 
 ## Two limits, declared
 
+> **Limit 1 was lifted on 2026-09-20.** Both chart interiors are now drawn in `flows/admin.pen`,
+> from production captures plus the Chart.js config — so the quarter of the Overview this pass
+> could not judge is judgeable at the next one. The measurements below stand as the record of what
+> this pass could see, and the timeline plot's height was 200 on the canvas against `h-[180px]` in
+> the code; that is corrected.
+
 **1. The charts.** Both plot interiors carry `CHART INTERIOR NOT MIRRORED` and neither is drawn.
 Measured from the code rather than from the picture: `h-[200px]` (scatter,
 [`overview.html:249`](../src/admin/views/pages/overview.html#L249)) and `h-[180px]` (timeline,
