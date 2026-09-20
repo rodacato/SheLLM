@@ -118,10 +118,16 @@ sudo shellm update
 ```
 
 That is the whole thing. It moves to the newest published release and does the rest in order:
-installs dependencies only if `package-lock.json` changed, runs migrations, re-installs the
-systemd unit if it changed, restarts, and then polls `/health`. **If the service does not answer,
-it checks out the previous commit, restarts again, and exits non-zero** — so a bad release leaves
-you where you were rather than with a service that will not start.
+installs dependencies only if `package-lock.json` changed, runs migrations, re-installs any file
+the release changed that lives outside the checkout, restarts, and then polls `/health`. **If the
+service does not answer, it checks out the previous commit, restarts again, and exits non-zero** —
+so a bad release leaves you where you were rather than with a service that will not start.
+
+Those outside files are the systemd units, the `tmpfiles.d` entry, the updater script and the
+logrotate config — the same set `vps.sh` installs. Keeping them in step is what lets a release
+that ships new wiring actually deliver it to a host that upgrades this way; it would otherwise
+arrive as code with nothing behind it. Nothing is *enabled* by an update: a unit that was off
+stays off.
 
 It takes a few seconds, and prints each step.
 
@@ -157,6 +163,19 @@ Before updating it writes a snapshot to `/var/backups/shellm/` with SQLite's onl
 the last five. The outcome lands in `/home/shellmer/.shellm/update-status.json` — durable on
 purpose, because you read it *after* the restart, which is when a rollback is what you want to
 know about.
+
+**A request is consumed even if the update then fails, and nothing retries it.** The runner claims
+the request before it does any work, because the trigger re-fires while the file is on disk and a
+request cleared at the end would loop forever on any crash. That means a failure — a database
+snapshot that would not write, a tag that does not resolve — stops there and says so in
+`update-status.json` rather than arming itself again as root. Pressing the button a second time is
+a person's decision.
+
+The status file is also how you tell a killed update from one that never started: it is written as
+`"state": "running"` with no `finished_at` before any work begins, and rewritten with the outcome
+at the end, including when the runner is terminated. A `running` record older than the unit's
+`TimeoutStartSec` means it was killed outright — `journalctl -u shellm-update` has the rest, and
+`/run/shellm/update-request.json.claimed` still holds what was asked for.
 
 Disable it again with `sudo systemctl disable --now shellm-update.path`. `sudo shellm update` over
 SSH works either way, and nothing else in SheLLM depends on the trigger.

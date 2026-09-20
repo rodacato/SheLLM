@@ -268,16 +268,40 @@ the trap is not armed. It is the same trap the original root-owned-script design
 `runuser -u` versus `runuser -l`, arriving through a different door, and it is a property of
 sudoers rather than of this repository — a host configured differently can still hit it.
 
-Two things the run did not exercise, and neither can be forced from a terminal: reinstalling
-`shellm.service` and reloading systemd, which only happens when the unit changes between two
-releases, and the rollback, which only happens when the health check fails. The release that adds
-the units below is itself the first case.
+Two things the run did not exercise, and neither can be forced from a terminal: reinstalling a
+system file and reloading systemd, which only happens when one changes between two releases, and
+the rollback, which only happens when the health check fails.
+
+The release that adds the units below does **not** exercise the first, and the reason is worth
+writing down because it is the same shape as the gap it closes: the update to that release is
+performed by the *previous* release's `src/cli/update.js`, which only ever looked at
+`shellm.service`. So the hop that first carries the units installs none of them. A host already
+running SheLLM needs one `vps.sh` re-run to pick up the wiring, and from the release after that
+`shellm update` carries the set on its own. Upgrade paths are executed by the code being replaced,
+not by the code arriving, and any future change to what an update installs lands one release later
+than it reads like it does.
 
 Both units, the runner and the `tmpfiles.d` entry ship in this repository beside `shellm.service`
 and are installed by `vps.sh`. None of them contains anything specific to one machine, and a
 self-hosted install that had to reinvent the privileged wiring would either go without the feature
 or improvise something weaker. What stays with the operator is the decision to enable them, the
 webhook URL, and their own backup schedule.
+
+**`shellm update` installs that whole set, not just `shellm.service`.** Part 4 made the tag the
+unit of deployment and the guide makes `sudo shellm update` the way to move between tags, so an
+update that delivers code without the wiring it needs breaks the cycle at its last step: the
+update button cannot ship the update button. The failure is worse than incomplete, because its
+symptom — a button that does nothing — is identical to the expected opt-in state of a host where
+the units are installed and deliberately off. Two different faults, one symptom, and no way for
+the dashboard to tell them apart unless it asks whether the unit *exists* (`systemctl
+list-unit-files`) as well as whether it is active; `is-active` on a unit that was never installed
+answers `inactive`, exactly like one that is installed and disabled.
+
+So `src/cli/update.js` carries a manifest of the files this repository installs outside the
+checkout and re-installs the ones a release changed, applying a new `tmpfiles.d` entry before the
+restart that rebuilds the service's namespace. `vps.sh` keeps its role of first install and
+repair, and a test holds the two lists against each other because they drift silently. An update
+never *enables* anything: a unit that was off stays off.
 
 `vps.sh` installs the units but does **not** enable them. Enabling the trigger is what arms a root
 unit that the dashboard can reach, and a provisioning script should not make that choice on an
@@ -303,9 +327,9 @@ a host rather than reasoned out, and each fails quietly:
   an update is running is not lost: systemd re-evaluates when the service deactivates. The writer
   has no way to know the updater is busy, so dropping that request — which is what the
   edge-triggered `PathChanged=` does — is the worse failure. The cost is that a request left on
-  disk re-triggers without end, so **the runner deletes it before it does any work**. Deleting it
-  at the end would loop forever on any crash before that line. `StartLimitIntervalSec=` and
-  `StartLimitBurst=` on the service are the net under that rule.
+  disk re-triggers without end, so **the runner claims it before it does any work**, by moving it
+  out of the watched name. Clearing it at the end would loop forever on any crash before that
+  line. `StartLimitIntervalSec=` and `StartLimitBurst=` on the service are the net under that rule.
 - **A `Type=oneshot` inherits `DefaultTimeoutStartUSec`, which is 90 seconds.** The measured run
   took 3.8 s with a warm npm cache; a cold cache or a slow registry passes 90 s easily, and the
   timeout arrives as a `SIGTERM` in the middle of the sequence — plausibly between the checkout and
@@ -320,6 +344,21 @@ a host rather than reasoned out, and each fails quietly:
 `update-status.json` is written by root into a directory that belongs to `shellmer`, so its mode
 is set explicitly (`0640 shellmer:shellmer`) rather than inherited: a status file the confined
 service cannot read is a rollback nobody sees.
+
+**Consuming the request before the work is a trade, and the side it lands on is deliberate.** A
+snapshot that will not write, or a tag that does not resolve, loses the request — there is no
+retry. The alternative is a privileged update that re-arms itself because something went wrong,
+which is a worse thing to own than one that stops and reports. What makes the trade acceptable is
+that it always reports, so the second press is a person's decision rather than systemd's.
+
+That obligation to report is why the status has a lifecycle rather than a single write at the end.
+`"running"` with no `finished_at` is published before any work begins; the outcome replaces it on
+every exit, including the failures, and `SIGTERM`, `SIGINT` and `SIGHUP` are trapped so the start
+timeout — the failure most likely to leave a host half-updated — is also reported rather than
+silent. `SIGKILL` cannot be caught, and the up-front `"running"` record is what covers it: one
+older than `TimeoutStartSec` means the runner was killed, and the claimed request file is still on
+disk beside it. A run that finds no request to claim writes nothing at all, rather than replacing
+the previous outcome with "there was nothing to do".
 
 What makes this safe is not the mechanism but step 2: the updater deploys a published tag from
 the remote, never the working tree. Code that a prompt injection wrote to `src/` is **discarded**
