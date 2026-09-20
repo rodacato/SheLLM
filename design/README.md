@@ -69,11 +69,16 @@ when they are re-drawn:
 Points are absolutely positioned inside the plot frame and the lines are `path` nodes — the
 "layout cannot position individual points" limit applies to Pencil's flexbox, not to the file.
 
-The admin is the only surface with a flow. There is no public flow: the landing page and the
-hosted API reference were removed, so `site/` and `docs/index.html` do not exist. The Stitch
-exports kept locally under `docs/screens/` are legacy references, below code and production
-captures in the source-of-truth order — and two of them (`models_…`, `…_landing_page_…`) describe
-screens the product no longer has.
+The admin is the only surface with a `.pen` flow. The public surface is not drawn in Pencil but it
+does exist: the landing page (`site/index.html`) and the hosted API reference
+(`site/api/index.html`) are hand-written and deployed by `.github/workflows/pages.yml`. They are
+reviewed as code, and [`LANDING-AUDIT.md`](LANDING-AUDIT.md) is that pass. `docs/index.html` is
+the one that was removed and never came back.
+
+The Stitch exports kept locally under `docs/screens/` are legacy references, below code and
+production captures in the source-of-truth order. `models_…` describes a screen the product no
+longer has; `…_landing_page_…` describes a landing page the product replaced, so read it for
+intent and never as a target.
 
 **This table is present tense — it never carries history.** "Migrated on <date>, six
 components consolidated" belongs in that flow's `Log` frame, not here.
