@@ -235,7 +235,10 @@
 
                 <!-- One mark per request: at this volume an averaged line invents shape that is not there -->
                 <div class="bg-surface-container p-5" x-show="stats.recent_requests && stats.recent_requests.length > 1">
-                  <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-3">Every request</p>
+                  <div class="flex items-baseline justify-between mb-3">
+                    <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Every request</p>
+                    <span class="text-[10px] font-mono text-outline" x-text="scatterCaption()"></span>
+                  </div>
                   <div class="h-[200px]"><canvas x-ref="scatter"></canvas></div>
                 </div>
               </div>

@@ -39,6 +39,7 @@ function noData() {
     byClient: [],
     timeline: [],
     recentRequests: [],
+    recentRequestsTotal: 0,
     activeClients: 0,
   };
 }
@@ -94,7 +95,7 @@ function latencySection(interval) {
 function payload(source) {
   const {
     window, agg, byStatusCode, providerRows, errorBreakdown,
-    latency, quota, byModel, byClient, timeline, recentRequests, activeClients,
+    latency, quota, byModel, byClient, timeline, recentRequests, recentRequestsTotal, activeClients,
   } = source;
 
   return {
@@ -113,6 +114,7 @@ function payload(source) {
     by_client: byClient,
     timeline,
     recent_requests: recentRequests,
+    recent_requests_total: recentRequestsTotal,
     active_clients: activeClients,
   };
 }
@@ -150,6 +152,7 @@ router.get('/stats', (req, res) => {
     byClient: stats.byClient(interval),
     timeline: stats.timeline(interval),
     recentRequests: stats.recentRequests(interval),
+    recentRequestsTotal: stats.recentRequestsTotal(interval),
     activeClients: db.prepare('SELECT COUNT(*) as count FROM clients WHERE active = 1').get().count,
   }));
 });

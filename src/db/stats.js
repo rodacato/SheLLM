@@ -188,9 +188,32 @@ function limitState(interval) {
   return { since: row.created_at, provider: row.provider, status: row.api_error_status || row.status };
 }
 
+const HOUR_MS = 3600000;
+
+const floorHour = (ms) => Math.floor(ms / HOUR_MS) * HOUR_MS;
+
+// An hour nothing happened in is a fact about the service, and grouping cannot report it: it only
+// returns hours that have rows. Without these the chart drew quiet hours as no width at all, so a
+// one-hour spike and an overnight silence were the same distance apart.
+function fillQuietHours(rows, endMs) {
+  if (rows.length === 0) return [];
+  const byHour = new Map(rows.map((r) => [Date.parse(r.bucket_at), r]));
+  const start = Math.min(...byHour.keys());
+  const end = Math.max(floorHour(endMs), start);
+
+  const filled = [];
+  for (let at = start; at <= end; at += HOUR_MS) {
+    filled.push(byHour.get(at) || {
+      bucket_at: new Date(at).toISOString(),
+      requests: 0, errors: 0, cost: 0, avg_duration_ms: 0, avg_queued_ms: 0,
+    });
+  }
+  return filled;
+}
+
 // Hourly, always. The bucket leaves here as an instant: the naive string it used to return was
 // UTC with nothing saying so, and the page read it as local time.
-function timeline(interval) {
+function timeline(interval, now = Date.now()) {
   const rows = db().prepare(`
     SELECT
       strftime('%Y-%m-%d %H:00', created_at) AS bucket,
@@ -205,11 +228,22 @@ function timeline(interval) {
     ORDER BY bucket
   `).all(interval);
 
-  return rows.map(({ bucket, ...rest }) => ({ bucket_at: toInstant(bucket), ...rest }));
+  const marked = rows.map(({ bucket, ...rest }) => ({
+    bucket_at: new Date(Date.parse(toInstant(bucket))).toISOString(),
+    ...rest,
+  }));
+  return fillQuietHours(marked, now);
 }
 
 // Every request in the period, for the scatter the sparkline replaces. Capped: at this
 // volume the honest chart is one mark per request, but the page must not carry a month of them.
+function recentRequestsTotal(interval) {
+  return db().prepare(`
+    SELECT COUNT(*) AS count FROM request_logs
+    WHERE ${LOGGED} AND duration_ms IS NOT NULL
+  `).get(interval).count;
+}
+
 function recentRequests(interval, limit = 500) {
   return db().prepare(`
     SELECT created_at, duration_ms, queued_ms, status, COALESCE(upstream_model, model) AS model
@@ -235,4 +269,5 @@ module.exports = {
   limitState,
   timeline,
   recentRequests,
+  recentRequestsTotal,
 };
