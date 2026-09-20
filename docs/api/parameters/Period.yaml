@@ -1,6 +1,0 @@
-name: period
-in: query
-schema:
-  type: string
-  enum: ['24h', '7d', '30d']
-  default: '24h'

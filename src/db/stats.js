@@ -8,11 +8,8 @@ function db() {
 
 // SQLite has no percentile function and no extensions are loaded, so the value is read by
 // offset. Ordering excludes nulls, which is why the offset counts the same filtered set.
-// `until` bounds the window on the right, which is what makes a previous-period delta possible.
-function percentile(column, fraction, { interval, until = null, extraWhere = '' }) {
-  const bounds = until ? `${LOGGED} AND created_at < datetime('now', ?)` : LOGGED;
-  const where = `${bounds} AND ${column} IS NOT NULL${extraWhere ? ` AND ${extraWhere}` : ''}`;
-  const args = until ? [interval, until] : [interval];
+function percentile(column, fraction, { interval, extraWhere = '' }) {
+  const where = `${LOGGED} AND ${column} IS NOT NULL${extraWhere ? ` AND ${extraWhere}` : ''}`;
   const row = db().prepare(`
     SELECT ${column} AS value FROM request_logs
     WHERE ${where}
@@ -20,7 +17,7 @@ function percentile(column, fraction, { interval, until = null, extraWhere = '' 
     LIMIT 1 OFFSET (
       SELECT CAST((COUNT(*) - 1) * ? AS INTEGER) FROM request_logs WHERE ${where}
     )
-  `).get(...args, fraction, ...args);
+  `).get(interval, fraction, interval);
   return row ? row.value : null;
 }
 
@@ -45,9 +42,15 @@ function latencyLayers(interval) {
   };
 }
 
-// Same length of time, ending where the current period starts.
-function previousPeriod(column, interval, hours) {
-  return percentiles(column, { interval: `-${hours * 2} hours`, until: `-${hours} hours` });
+// What the window actually covers. The pruner bounds it on the left, so the honest left edge is
+// the oldest row that survived, not the retention limit — 22 empty days are not a measurement.
+function windowBounds(interval) {
+  const row = db().prepare(`
+    SELECT MIN(created_at) AS first_request_at, MAX(created_at) AS last_request_at, COUNT(*) AS requests
+    FROM request_logs
+    WHERE ${LOGGED}
+  `).get(interval);
+  return row || { first_request_at: null, last_request_at: null, requests: 0 };
 }
 
 function usageWindow(hours) {
@@ -215,7 +218,7 @@ module.exports = {
   percentile,
   percentiles,
   latencyLayers,
-  previousPeriod,
+  windowBounds,
   usageWindow,
   usageByProvider,
   byModel,

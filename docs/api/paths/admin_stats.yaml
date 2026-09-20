@@ -4,8 +4,6 @@ get:
   summary: Aggregated usage statistics
   security:
     - BasicAuth: []
-  parameters:
-    - $ref: "../parameters/Period.yaml"
   responses:
     '200':
       description: Statistics

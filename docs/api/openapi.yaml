@@ -185,8 +185,6 @@ components:
       $ref: "./parameters/Limit.yaml"
     Offset:
       $ref: "./parameters/Offset.yaml"
-    Period:
-      $ref: "./parameters/Period.yaml"
     LogProvider:
       $ref: "./parameters/LogProvider.yaml"
     LogClient:

@@ -12,7 +12,6 @@ function overviewPage() {
   return {
     stats: null,
     statsError: null,
-    period: '24h',
     loading: true,
     providers: [],
     providersError: null,
@@ -24,7 +23,7 @@ function overviewPage() {
     async fetchStats() {
       this.loading = true;
       try {
-        this.stats = await apiRead(`${API_BASE}/stats?period=${this.period}`);
+        this.stats = await apiRead(`${API_BASE}/stats`);
         this.statsError = null;
         this.$nextTick(() => {
           this.renderScatter();
@@ -225,9 +224,14 @@ function overviewPage() {
       this.providersLoaded = true;
     },
 
-    async changePeriod(p) {
-      this.period = p;
-      await this.fetchStats();
+    // The page no longer asks for a period, so it has to say which one it got. Without this the
+    // percentages and the totals have no denominator on screen.
+    windowSpan() {
+      const hours = this.stats?.window?.hours || 0;
+      if (!hours) return 'no requests yet';
+      if (hours < 1) return `${Math.round(hours * 60)} min`;
+      if (hours < 48) return `${Math.round(hours)} h`;
+      return `${Math.round(hours / 24)} days`;
     },
 
     formatCost,

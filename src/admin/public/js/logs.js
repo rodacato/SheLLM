@@ -86,7 +86,7 @@ function logsPage() {
 
     async fetchStats() {
       try {
-        this.stats = await apiRead(`${API_BASE}/stats?period=24h`);
+        this.stats = await apiRead(`${API_BASE}/stats`);
         this.statsError = null;
       } catch (err) {
         this.stats = null;

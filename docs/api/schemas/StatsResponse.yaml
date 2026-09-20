@@ -1,8 +1,25 @@
 type: object
 properties:
-  period:
-    type: string
-    enum: ['24h', '7d', '30d']
+  window:
+    type: object
+    description: >-
+      The single window every figure below is measured over: every request still in the database.
+      Retention bounds it, so there is no period to choose.
+    properties:
+      from:
+        type: [string, 'null']
+        format: date-time
+        description: Oldest surviving request. Null when nothing has been recorded.
+      to:
+        type: string
+        format: date-time
+      hours:
+        type: number
+        description: Hours actually observed, which is what cost_burn_rate divides by.
+      requests:
+        type: integer
+      retention_days:
+        type: integer
   total_requests:
     type: integer
   total_tokens:
