@@ -51,7 +51,7 @@
               :class="loading ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:text-on-surface'"
               class="px-3 py-2 border border-outline-variant/30 hover:border-outline/50 transition-colors duration-fast flex items-center"
               :title="loading ? 'Reading the table' : 'Re-read the table'" aria-label="Refresh">
-              <span class="material-symbols-outlined text-base" :class="loading && page === 'logs' ? 'animate-spin' : ''">refresh</span>
+              <span class="material-symbols-outlined text-[16px]" :class="loading && page === 'logs' ? 'animate-spin' : ''">refresh</span>
             </button>
             <button x-show="total > 0" @click="exportCSV()"
               class="px-4 py-2 text-xs font-headline font-bold uppercase text-primary-container border border-primary-container/40 hover:bg-primary-container/10 transition-colors duration-fast">
