@@ -1120,6 +1120,11 @@
             ],
             "description": "`degraded` when some enabled provider is not authenticated, `down` when none is,\n`ok` when all are — or when no provider is enabled at all.\n"
           },
+          "timezone": {
+            "type": "string",
+            "description": "IANA zone the dashboard renders every timestamp in, from `SHELLM_TZ`. Defaults to\n`America/Mexico_City`; an unknown name falls back to it rather than failing the request.\n",
+            "example": "America/Mexico_City"
+          },
           "providers": {
             "type": "object",
             "additionalProperties": {

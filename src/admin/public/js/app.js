@@ -91,30 +91,64 @@ function formatCost(usd) {
   return `$${usd.toFixed(4)}`;
 }
 
+// Whose clock the page speaks. The browser's used to decide it, which meant the same dashboard
+// read differently from the laptop and from a phone abroad, and disagreed with the buckets the
+// server sent. The server names the zone; this is the fallback until its first answer arrives.
+let dashboardTimezone = 'America/Mexico_City';
+
+function setDashboardTimezone(tz) {
+  if (tz) dashboardTimezone = tz;
+}
+
 // Two shapes reach this: SQLite's "2026-09-20 02:04:45", which is UTC with nothing saying so,
 // and the updater's "2026-09-20T02:04:45Z", which says so already. Appending Z to the second one
 // makes it unparseable, and the System page printed "NaN/NaN NaN:NaN:NaN" for every finished
 // update because of it.
-function formatTime(isoString) {
-  if (!isoString) return '-';
-  const text = String(isoString);
+function parseInstant(value) {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  const text = String(value);
   const d = new Date(/(Z|[+-]\d{2}:?\d{2})$/.test(text) ? text : `${text.replace(' ', 'T')}Z`);
-  if (Number.isNaN(d.getTime())) return '-';
-  const mon = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  const ss = String(d.getSeconds()).padStart(2, '0');
-  return `${mon}/${day} ${hh}:${mm}:${ss}`;
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function zonedParts(date) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: dashboardTimezone,
+    month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+  return Object.fromEntries(parts.map((p) => [p.type, p.value]));
+}
+
+function formatTime(isoString) {
+  const d = parseInstant(isoString);
+  if (!d) return '-';
+  const p = zonedParts(d);
+  return `${p.month}/${p.day} ${p.hour}:${p.minute}:${p.second}`;
+}
+
+function formatHourMinute(value) {
+  const d = parseInstant(value);
+  if (!d) return '';
+  const p = zonedParts(d);
+  return `${p.hour}:${p.minute}`;
+}
+
+function formatDayHour(value) {
+  const d = parseInstant(value);
+  if (!d) return '';
+  const p = zonedParts(d);
+  return `${p.month}/${p.day} ${p.hour}:${p.minute}`;
 }
 
 // Wall-clock only: this answers "how stale is what I am looking at", never which day it was.
 function formatClock(date) {
-  if (!date) return null;
-  const hh = String(date.getHours()).padStart(2, '0');
-  const mm = String(date.getMinutes()).padStart(2, '0');
-  const ss = String(date.getSeconds()).padStart(2, '0');
-  return `${hh}:${mm}:${ss}`;
+  const d = parseInstant(date);
+  if (!d) return null;
+  const p = zonedParts(d);
+  return `${p.hour}:${p.minute}:${p.second}`;
 }
 
 function statusBadgeClass(status) {
@@ -184,6 +218,7 @@ function app() {
     async fetchHealth() {
       try {
         const data = await apiRead(HEALTH_URL);
+        setDashboardTimezone(data.timezone);
         this.health = {
           uptime: data.uptime_seconds,
           providers: data.providers || {},

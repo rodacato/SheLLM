@@ -138,8 +138,6 @@ router.get('/stats', (req, res) => {
     WHERE created_at >= datetime('now', ?)
   `).get(interval);
 
-  const bucketExpr = "strftime('%Y-%m-%d %H:00', created_at)";
-
   res.json(payload({
     window: describeWindow(stats.windowBounds(interval)),
     agg,
@@ -150,7 +148,7 @@ router.get('/stats', (req, res) => {
     quota: quotaSection(interval),
     byModel: stats.byModel(interval),
     byClient: stats.byClient(interval),
-    timeline: stats.timeline(interval, bucketExpr),
+    timeline: stats.timeline(interval),
     recentRequests: stats.recentRequests(interval),
     activeClients: db.prepare('SELECT COUNT(*) as count FROM clients WHERE active = 1').get().count,
   }));
