@@ -49,16 +49,16 @@
             <!-- Never gated on total > 0: an empty table is exactly when you want to re-read it -->
             <button @click="fetchLogs(); fetchStats()" :disabled="loading"
               :class="loading ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:text-on-surface'"
-              class="px-3 py-2 border border-outline-variant/30 hover:border-outline/50 transition-colors duration-100 flex items-center"
+              class="px-3 py-2 border border-outline-variant/30 hover:border-outline/50 transition-colors duration-fast flex items-center"
               :title="loading ? 'Reading the table' : 'Re-read the table'" aria-label="Refresh">
               <span class="material-symbols-outlined text-base" :class="loading ? 'animate-spin' : ''">refresh</span>
             </button>
             <button x-show="total > 0" @click="exportCSV()"
-              class="px-4 py-2 text-xs font-headline font-bold uppercase text-primary-container border border-primary-container/40 hover:bg-primary-container/10 transition-colors duration-100">
+              class="px-4 py-2 text-xs font-headline font-bold uppercase text-primary-container border border-primary-container/40 hover:bg-primary-container/10 transition-colors duration-fast">
               Export CSV
             </button>
             <button x-show="total > 0" @click="clearLogs()"
-              class="px-4 py-2.5 text-xs font-headline font-bold uppercase tracking-widest text-status-fail bg-danger-surface hover:bg-danger-surface-hover transition-colors duration-100 flex items-center gap-2">
+              class="px-4 py-2.5 text-xs font-headline font-bold uppercase tracking-widest text-status-fail bg-danger-surface hover:bg-danger-surface-hover transition-colors duration-fast flex items-center gap-2">
               <span class="material-symbols-outlined text-sm">filter_list_off</span>
               Clear All
             </button>
@@ -125,7 +125,7 @@
                     x-text="loading ? 'Loading...' : (loadError ? 'Could not read the logs — ' + loadError : 'No logs found')"></td>
                 </tr>
                 <template x-for="log in logs" :key="log.id">
-                  <tr @click="toggleRow(log.id)" class="hover:bg-surface-container-high transition-colors duration-100 cursor-pointer">
+                  <tr @click="toggleRow(log.id)" class="hover:bg-surface-container-high transition-colors duration-fast cursor-pointer">
                     <td class="px-6 py-4 text-on-surface font-mono text-sm whitespace-nowrap" x-text="formatTime(log.created_at)"></td>
                     <td class="px-6 py-4">
                       <span class="px-2 py-0.5 text-[10px] font-bold font-mono"
@@ -215,14 +215,14 @@
               <!-- First -->
               <button @click="goToPage(1)" :disabled="currentPage <= 1"
                 :class="currentPage <= 1 ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:bg-surface-container-high hover:text-on-surface'"
-                class="w-8 h-8 flex items-center justify-center text-xs transition-colors duration-100"
+                class="w-8 h-8 flex items-center justify-center text-xs transition-colors duration-fast"
                 title="First page">
                 <span class="material-symbols-outlined text-[16px]">first_page</span>
               </button>
               <!-- Prev -->
               <button @click="prevPage()" :disabled="offset <= 0"
                 :class="offset <= 0 ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:bg-surface-container-high hover:text-on-surface'"
-                class="w-8 h-8 flex items-center justify-center text-xs transition-colors duration-100"
+                class="w-8 h-8 flex items-center justify-center text-xs transition-colors duration-fast"
                 title="Previous page">
                 <span class="material-symbols-outlined text-[16px]">chevron_left</span>
               </button>
@@ -230,21 +230,21 @@
               <template x-for="p in visiblePages" :key="p">
                 <button @click="goToPage(p)"
                   :class="p === currentPage ? 'bg-primary-container text-on-primary font-bold' : 'text-outline hover:bg-surface-container-high hover:text-on-surface'"
-                  class="w-8 h-8 flex items-center justify-center text-xs font-mono transition-colors duration-100"
+                  class="w-8 h-8 flex items-center justify-center text-xs font-mono transition-colors duration-fast"
                   x-text="p">
                 </button>
               </template>
               <!-- Next -->
               <button @click="nextPage()" :disabled="offset + limit >= total"
                 :class="offset + limit >= total ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:bg-surface-container-high hover:text-on-surface'"
-                class="w-8 h-8 flex items-center justify-center text-xs transition-colors duration-100"
+                class="w-8 h-8 flex items-center justify-center text-xs transition-colors duration-fast"
                 title="Next page">
                 <span class="material-symbols-outlined text-[16px]">chevron_right</span>
               </button>
               <!-- Last -->
               <button @click="goToPage(totalPages)" :disabled="currentPage >= totalPages"
                 :class="currentPage >= totalPages ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:bg-surface-container-high hover:text-on-surface'"
-                class="w-8 h-8 flex items-center justify-center text-xs transition-colors duration-100"
+                class="w-8 h-8 flex items-center justify-center text-xs transition-colors duration-fast"
                 title="Last page">
                 <span class="material-symbols-outlined text-[16px]">last_page</span>
               </button>

@@ -47,7 +47,7 @@
                   x-text="loading ? 'Loading...' : (loadError ? 'Could not read the keys — ' + loadError : 'No keys created yet')"></td>
               </tr>
               <template x-for="key in keys" :key="key.id">
-                <tr class="border-t border-outline-variant/20 hover:bg-surface-container-high transition-colors duration-100">
+                <tr class="border-t border-outline-variant/20 hover:bg-surface-container-high transition-colors duration-fast">
                   <td class="px-4 py-3">
                     <span class="font-headline font-bold text-white text-sm block" x-text="key.name"></span>
                     <span x-show="key.description" class="text-outline text-xs block mt-0.5" x-text="key.description"></span>
@@ -92,7 +92,7 @@
                   <td class="px-4 py-3 text-right whitespace-nowrap">
                     <button @click="startEdit(key)" class="link-brand text-xs font-headline font-bold uppercase mr-3">Edit</button>
                     <button @click="rotateKey(key)" class="link-brand text-xs font-headline font-bold uppercase mr-3">Rotate</button>
-                    <button @click="deleteKey(key)" class="text-error/70 hover:text-error text-xs font-headline font-bold uppercase transition-colors duration-100">Delete</button>
+                    <button @click="deleteKey(key)" class="text-error/70 hover:text-error text-xs font-headline font-bold uppercase transition-colors duration-fast">Delete</button>
                   </td>
                 </tr>
               </template>
@@ -192,7 +192,7 @@
             </div>
             <div class="flex justify-end gap-3 mt-8">
               <button @click="showCreateModal = false"
-                class="px-5 py-2.5 text-xs font-headline font-bold uppercase text-outline border border-outline-variant/40 hover:text-white hover:bg-surface-container-high transition-colors duration-100">
+                class="px-5 py-2.5 text-xs font-headline font-bold uppercase text-outline border border-outline-variant/40 hover:text-white hover:bg-surface-container-high transition-colors duration-fast">
                 Cancel
               </button>
               <button @click="createKey()" class="btn-brand px-5 py-2.5 text-xs font-headline font-bold uppercase">
