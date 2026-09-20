@@ -57,9 +57,15 @@ function formatCost(usd) {
   return `$${usd.toFixed(4)}`;
 }
 
+// Two shapes reach this: SQLite's "2026-09-20 02:04:45", which is UTC with nothing saying so,
+// and the updater's "2026-09-20T02:04:45Z", which says so already. Appending Z to the second one
+// makes it unparseable, and the System page printed "NaN/NaN NaN:NaN:NaN" for every finished
+// update because of it.
 function formatTime(isoString) {
   if (!isoString) return '-';
-  const d = new Date(isoString + 'Z');
+  const text = String(isoString);
+  const d = new Date(/(Z|[+-]\d{2}:?\d{2})$/.test(text) ? text : `${text.replace(' ', 'T')}Z`);
+  if (Number.isNaN(d.getTime())) return '-';
   const mon = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   const hh = String(d.getHours()).padStart(2, '0');
