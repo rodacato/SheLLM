@@ -10,6 +10,7 @@ const commands = {
   init: './cli/init',
   logs: './cli/logs',
   update: './cli/update',
+  backup: './cli/backup',
   version: './cli/version',
   help: './cli/help',
 };

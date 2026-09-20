@@ -41,10 +41,7 @@ function initDb(dbPath) {
   if (dbPath === ':memory:') {
     db = new Database(':memory:');
   } else {
-    if (!dbPath) {
-      const { SHELLM_DIR } = require('../cli/paths');
-      dbPath = path.join(SHELLM_DIR, 'shellm.db');
-    }
+    if (!dbPath) dbPath = require('../cli/paths').DB_FILE;
 
     const dir = path.dirname(dbPath);
     mkdirSync(dir, { recursive: true, mode: 0o700 });
