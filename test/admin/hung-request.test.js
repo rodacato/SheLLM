@@ -19,7 +19,7 @@ function loadPage(file, factory, extra = {}) {
     document: { documentElement: {}, addEventListener: () => {} },
     navigator: { onLine: true },
     setTimeout: (fn) => { Promise.resolve().then(fn); return 0; },
-    clearTimeout: () => {}, setInterval: () => 0,
+    clearTimeout: () => {}, setInterval: () => 0, clearInterval: () => {},
     location: { pathname: '/admin/dashboard', hash: '', replace: () => {} },
     window: { addEventListener: () => {} },
     ...extra,
@@ -97,6 +97,43 @@ describe('the Playground can give up on a request that never returns', () => {
     assert.strictEqual(page.running, false, 'the button comes back');
     assert.ok(page.error.includes('still running on the server'),
       `the operator must not think aborting killed the CLI: ${JSON.stringify(page.error)}`);
+  });
+
+  // The wait is measured in seconds and the screen said one static sentence for all of them, so
+  // a normal call and a wedged one looked identical until the clock landed.
+  it('counts the wait while it is happening, not after it ends', async () => {
+    let clock = 0;
+    const ticks = [];
+    const page = loadPage('playground.js', 'playgroundPage', {
+      fetch: () => new Promise(() => {}),
+      performance: { now: () => clock },
+      setInterval: (fn) => { ticks.push(fn); return 7; },
+      clearInterval: () => {},
+    });
+    page.apiKey = 'shellm-test';
+
+    page.send();
+    await Promise.resolve();
+    assert.strictEqual(page.waitingMs, 0, 'the counter starts at zero, not at the last request');
+    assert.strictEqual(ticks.length, 1, 'exactly one ticker runs');
+
+    clock = 4230;
+    ticks[0]();
+    assert.strictEqual(page.waitingMs, 4230);
+    assert.strictEqual(page.running, true, 'and the request is still in flight');
+  });
+
+  it('stops the ticker when the answer arrives', async () => {
+    let cleared = null;
+    const page = loadPage('playground.js', 'playgroundPage', {
+      fetch: async () => ({ ok: true, status: 200, headers: { get: () => null }, json: async () => ({}) }),
+      setInterval: () => 7,
+      clearInterval: (id) => { cleared = id; },
+    });
+    page.apiKey = 'shellm-test';
+    await page.send();
+
+    assert.strictEqual(cleared, 7, 'a ticker left running would keep writing to a finished request');
   });
 
   it('still reports an ordinary failure as an ordinary failure', async () => {
