@@ -165,7 +165,7 @@
               </div>
             </div>
             <div class="bg-surface-container-lowest h-1.5">
-              <div class="h-1.5 transition-all duration-300"
+              <div class="h-1.5 transition-[width] duration-200 ease-out"
                 :class="(health?.queue?.pending ?? 0) > 0 ? 'bg-status-warn' : 'bar-brand'"
                 :style="'width:' + queueSaturation() + '%'"></div>
             </div>
