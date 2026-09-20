@@ -28,10 +28,14 @@ as context for AI agents (`AGENTS.md` points them here).
 
 | File | Screens | Kit | Domain entry point |
 |---|---|---|---|
-| `admin.pen` | 2 of 5 drawn — Overview, Request Logs. API Keys, Playground, System pending | **0.1.1** | `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
+| `admin.pen` | 5 of 5 — Overview, Request Logs, API Keys, Playground, System. One band, happy path | **0.1.1** | `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
 
-`ui-kit.lib.pen` carries tokens as of **0.1.1** and no components yet — the shared components come
-out of the real markup as the remaining screens are drawn, not from guessing which ones are shared.
+`ui-kit.lib.pen` carries tokens as of **0.1.1** and no components yet. The sidebar and the page
+footer are now known to be shared — they are rebuilt per screen from one function in the flow, and
+that is the promotion candidate for the first kit component. Promoting is a batch, done when asked.
+
+There is no error band yet. Both conditional banners (`Not updating`, `USAGE LIMIT HIT`) and every
+unreachable state are listed in the brief's *states not drawn* rather than guessed at.
 
 **Chart interiors are not mirrored.** Chart.js draws a scatter and a line; the `.pen` layout cannot
 position individual points, and an approximation would look plausible and misrepresent what ships.
