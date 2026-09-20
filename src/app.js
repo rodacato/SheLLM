@@ -19,6 +19,11 @@ const path = require('node:path');
 const app = express();
 const auth = createAuthMiddleware();
 
+// Every static file is served relative to this root rather than by absolute path: send() refuses
+// any path with a dot-directory in it, so an absolute one makes the answer depend on where the
+// checkout happens to live.
+const ADMIN_PUBLIC = path.join(__dirname, 'admin/public');
+
 // --- Global middleware (order matters) ---
 app.use(express.json({ limit: '256kb' }));
 app.use(requestId);
@@ -68,16 +73,16 @@ app.post('/v1/messages', auth, messagesHandler);
 // --- Admin routes (Basic auth via SHELLM_ADMIN_PASSWORD) ---
 // The SPA's own assets carry no account data; only the page behind them needs a session.
 // This mount goes before the authenticated routers, or every asset would answer 401.
-app.use('/admin/dashboard', adminSecurityHeaders, express.static(path.join(__dirname, 'admin/public'), {
+app.use('/admin/dashboard', adminSecurityHeaders, express.static(ADMIN_PUBLIC, {
   index: false,
 }));
 
 // PWA files: no account data, and both must sit at /admin/ for the worker to claim that scope
 app.get('/admin/manifest.webmanifest', (_req, res) => {
-  res.type('application/manifest+json').sendFile(path.join(__dirname, 'admin/public/manifest.webmanifest'));
+  res.type('application/manifest+json').sendFile('manifest.webmanifest', { root: ADMIN_PUBLIC });
 });
 app.get('/admin/sw.js', (_req, res) => {
-  res.type('application/javascript').set('Cache-Control', 'no-cache').sendFile(path.join(__dirname, 'admin/public/sw.js'));
+  res.type('application/javascript').set('Cache-Control', 'no-cache').sendFile('sw.js', { root: ADMIN_PUBLIC });
 });
 
 app.use('/admin', adminLoginRouter);
@@ -124,7 +129,7 @@ function adminSecurityHeaders(req, res, next) {
 
 // The dashboard page itself requires auth
 app.get('/admin/dashboard/', adminAuth, adminSecurityHeaders, (_req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/public/index.html'));
+  res.sendFile('index.html', { root: ADMIN_PUBLIC });
 });
 
 module.exports = app;
