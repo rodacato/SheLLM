@@ -111,3 +111,13 @@ select option { background-color: var(--surface-container); }
 .safe-brand      { margin-top: env(safe-area-inset-top); }
 .safe-foot       { margin-bottom: env(safe-area-inset-bottom); }
 @media (min-width: 768px) { .safe-bar-offset { padding-top: env(safe-area-inset-top); } }
+
+/* The health dot is the only sign the page is live, so it ends solid rather than frozen dim. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .animate-pulse { opacity: 1 !important; animation: none !important; }
+}
