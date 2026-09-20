@@ -34,7 +34,6 @@
 
 ## Not a `.pen` edit, listed so it is not lost
 
-- [ ] `manifest.webmanifest` `background_color` is the wrong token (D31). One-line code change.
 - [ ] The maskable icon is the plain icon (P5 in [`docs/PWA-AUDIT.md`](../docs/PWA-AUDIT.md)).
       A real maskable 512 is an asset job: the mark inside the middle 60% on `surface-shell`.
       That one **is** new drawing, not mirroring.

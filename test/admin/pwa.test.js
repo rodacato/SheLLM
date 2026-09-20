@@ -138,6 +138,21 @@ describe('installable dashboard', () => {
     assert.ok(!/\bh-14\b/.test(bar[0]), 'the mobile bar went back to a fixed height');
   });
 
+  // A coupling no file states on its own: the System page reloads after an update, and a reload
+  // does not release a waiting worker, so dropping skipWaiting serves the page it just replaced.
+  it('activates at once, because the update flow reloads instead of closing the tab', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const dir = path.join(__dirname, '../../src/admin/public');
+    const worker = fs.readFileSync(path.join(dir, 'sw.js'), 'utf8');
+    const system = fs.readFileSync(path.join(dir, 'js/system.js'), 'utf8');
+
+    assert.match(worker, /self\.skipWaiting\(\)/, 'without it the reload below is served by the old worker');
+    assert.match(worker, /self\.clients\.claim\(\)/, 'and the page that is already open stays uncontrolled');
+    assert.match(system, /window\.location\.reload\(\)/,
+      'the reload skipWaiting exists for is gone — reconsider P8 in docs/PWA-AUDIT.md');
+  });
+
   it('every icon the manifest promises is actually served', async () => {
     const manifest = JSON.parse((await request(app).get('/admin/manifest.webmanifest')).text);
     for (const icon of manifest.icons) {

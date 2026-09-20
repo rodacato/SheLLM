@@ -19,6 +19,8 @@ const SHELL = [
 // and one expired session would fail the whole install. It caches itself on the first visit.
 const PRECACHE = SHELL.filter((url) => url !== '/admin/dashboard/');
 
+// skipWaiting is load-bearing: a reload does not release a waiting worker, so the post-update
+// reload in system.js would otherwise be served by the very worker it is replacing.
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));
 });
