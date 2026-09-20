@@ -51,6 +51,14 @@
             'body':     ['"Inter"', 'system-ui', 'sans-serif'],
             'mono':     ['ui-monospace', 'SFMono-Regular', '"SF Mono"', 'Menlo', 'Consolas', '"Liberation Mono"', 'monospace'],
           },
+          transitionDuration: {
+            DEFAULT: 'var(--dur-fast)',
+            'fast':  'var(--dur-fast)',
+            'move':  'var(--dur-move)',
+          },
+          transitionTimingFunction: {
+            DEFAULT: 'var(--ease-enter)',
+          },
           borderRadius: {
             DEFAULT: '0px',
             sm:      '0px',
@@ -81,7 +89,7 @@
   <div x-show="sidebarOpen" x-transition.opacity @click="sidebarOpen = false" class="md:hidden fixed inset-0 bg-black/60 z-40" x-cloak></div>
 
   <!-- Sidebar -->
-  <aside class="w-64 bg-surface-shell min-h-screen flex flex-col shrink-0 fixed left-0 top-0 h-full z-50 transition-transform duration-200 md:translate-x-0"
+  <aside class="w-64 bg-surface-shell min-h-screen flex flex-col shrink-0 fixed left-0 top-0 h-full z-50 transition-transform duration-move md:translate-x-0"
     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
     <!-- Brand -->
     <div class="p-6 safe-brand">
@@ -97,7 +105,7 @@
           :class="page === item.id
             ? 'text-primary-container bg-nav-selected border-l-4 border-primary-container font-bold'
             : 'text-outline hover:text-white hover:bg-nav-selected border-l-4 border-transparent'"
-          class="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150 font-headline uppercase tracking-[0.15em] text-[11px]">
+          class="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-fast font-headline uppercase tracking-[0.15em] text-[11px]">
           <span class="material-symbols-outlined text-[20px]" x-text="item.icon"></span>
           <span x-text="item.label"></span>
         </button>

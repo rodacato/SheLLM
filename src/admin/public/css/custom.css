@@ -38,6 +38,12 @@
   --badge-2xx-bg:             #052e16;
   --badge-4xx-bg:             #3b2800;
   --badge-5xx-bg:             #3b0a0a;
+
+  /* Two durations and one curve. Nothing in the admin leaves the screen, so there is no exit
+     curve until something does — arriving is all this product has to say. */
+  --dur-fast:   100ms;
+  --dur-move:   200ms;
+  --ease-enter: cubic-bezier(0, 0, 0.2, 1);
 }
 
 /* Status badges */
@@ -85,7 +91,7 @@
 .toggle-track {
   width: 28px; height: 14px;
   background: var(--outline-variant);
-  transition: background-color 150ms;
+  transition: background-color 150ms var(--ease-enter);
   cursor: pointer;
   position: relative;
 }
@@ -95,7 +101,7 @@
   background: var(--on-surface);
   position: absolute;
   top: 2px; left: 2px;
-  transition: transform 150ms;
+  transition: transform 150ms var(--ease-enter);
 }
 .toggle-track.active .toggle-knob { transform: translateX(14px); background: var(--on-primary); }
 
