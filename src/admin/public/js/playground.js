@@ -16,6 +16,8 @@ function playgroundPage() {
     result: null,
     error: null,
     showRaw: false,
+    catalogsError: null,
+    catalogsLoaded: false,
     waitingMs: 0,
     _abort: null,
     _ticker: null,
@@ -34,7 +36,7 @@ function playgroundPage() {
     async fetchModels() {
       try {
         const res = await apiFetch(`${API_BASE}/providers`);
-        if (!res.ok) return;
+        if (!res.ok) throw new Error(`the gateway answered ${res.status}`);
         const { providers } = await res.json();
         const enabled = providers.filter((p) => p.enabled);
         this.catalogs = enabled.map((p) => ({ provider: p.name, running: p.version, ...(p.catalog || {}) }));
@@ -42,7 +44,11 @@ function playgroundPage() {
         if (this.models.length > 0 && !this.models.some((m) => m.id === this.model)) {
           this.model = (this.models.find((m) => m.isDefault) || this.models[0]).id;
         }
-      } catch { /* the list is a convenience; the field still accepts anything */ }
+        this.catalogsError = null;
+      } catch (err) {
+        this.catalogsError = err.message;
+      }
+      this.catalogsLoaded = true;
     },
 
     // Where the names came from, per provider. A list that cannot say it is stale is the same
