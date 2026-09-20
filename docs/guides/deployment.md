@@ -220,8 +220,14 @@ of kilobytes that a `cp` leaves behind. Use SQLite's online backup, which is saf
 service is running:
 
 ```bash
-sudo -iu shellmer sqlite3 ~/.shellm/shellm.db ".backup '/var/backups/shellm.db'"
+sudo -iu shellmer sqlite3 ~/.shellm/shellm.db ".backup '/home/shellmer/shellm-backup.db'"
+sudo mv /home/shellmer/shellm-backup.db /var/backups/shellm.db
 ```
+
+The destination of the first command has to be somewhere `shellmer` can write, which is why it
+lands in the home directory and is moved afterwards — the command runs as that user, and
+`/var/backups` is root's at mode 755. Note also that SQLite does not expand `~` inside the
+`.backup` argument: it is a literal string, so give it an absolute path.
 
 The config file is a plain file and `cp` is fine for it.
 
