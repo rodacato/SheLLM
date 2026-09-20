@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   creates and owns, and retention only matches the runner's own file names. Existing hosts keep
   whatever `/var/backups/shellm` holds; nothing here changes its ownership back, so check it with
   `ls -ld /var/backups/shellm` if the updater ever ran.
+- **admin:** serve the dashboard's own files relative to their directory — `res.sendFile` was
+  given an absolute path, and `send` refuses any path holding a dot-directory, so the page, the
+  manifest and the service worker all answered 404 when the checkout sat under one.
 
 ## [1.2.0] - 2026-09-20
 
