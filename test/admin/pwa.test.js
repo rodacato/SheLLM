@@ -33,6 +33,10 @@ describe('installable dashboard', () => {
     assert.strictEqual(manifest.display, 'standalone');
     assert.ok(manifest.icons.some((i) => i.sizes === '192x192'));
     assert.ok(manifest.icons.some((i) => i.sizes === '512x512' && i.purpose === 'maskable'));
+
+    // Without an id the install identity is start_url, so moving the dashboard path would
+    // orphan every install that already exists rather than update it.
+    assert.strictEqual(manifest.id, '/admin/');
   });
 
   it('serves the service worker from /admin so it can claim that scope', async () => {
@@ -70,6 +74,15 @@ describe('installable dashboard', () => {
     for (const src of assets) {
       assert.ok(worker.includes(`/admin/dashboard/${src}`), `${src} is loaded by the page but absent from the shell cache`);
     }
+  });
+
+  // cache.put rejects a redirected response, so precaching a page that 302s without a session
+  // fails the install outright and leaves the previous worker serving forever.
+  it('precaches the assets but not the page, which redirects without a session', async () => {
+    const worker = (await request(app).get('/admin/sw.js')).text;
+    assert.match(worker, /cache\.addAll\(PRECACHE\)/, 'install still precaches the raw shell list');
+    assert.match(worker, /PRECACHE = SHELL\.filter\(\(url\) => url !== '\/admin\/dashboard\/'\)/);
+    assert.ok(worker.includes("'/admin/dashboard/',"), 'the page is still served from cache when offline');
   });
 
   it('serves the SPA assets without a session but never the page itself', async () => {

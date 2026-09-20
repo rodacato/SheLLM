@@ -1,5 +1,5 @@
 // Shell cache only: every /admin/* response carries account data or a session, so none is stored.
-const CACHE = 'shellm-admin-v3';
+const CACHE = 'shellm-admin-v4';
 const SHELL = [
   '/admin/dashboard/',
   '/admin/dashboard/css/custom.css',
@@ -15,8 +15,12 @@ const SHELL = [
   '/admin/manifest.webmanifest',
 ];
 
+// The page is left out: without a session it redirects, cache.put rejects a redirected response,
+// and one expired session would fail the whole install. It caches itself on the first visit.
+const PRECACHE = SHELL.filter((url) => url !== '/admin/dashboard/');
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
@@ -44,6 +48,8 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       })
-      .catch(() => caches.match(request).then((cached) => cached || Response.error())),
+      // ignoreSearch, because the filter above matched on the pathname: a start_url opened with
+      // a query would otherwise pass the filter and then miss the entry it was routed to.
+      .catch(() => caches.match(request, { ignoreSearch: true }).then((cached) => cached || Response.error())),
   );
 });

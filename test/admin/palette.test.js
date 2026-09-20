@@ -90,6 +90,24 @@ describe('the palette is declared once and never retyped', () => {
     }
   });
 
+  // The exemption above says the manifest may carry the literal. It does not say the literal may
+  // be the wrong one: background_color was surface-shell, a colour the page never shows full-bleed.
+  it('keeps the manifest pinned to the tokens it has to spell out', () => {
+    const manifest = JSON.parse(fs.readFileSync(path.join(ADMIN, 'public/manifest.webmanifest'), 'utf8'));
+    const canonical = new Map([...palette].map(([value, name]) => [`--${name}`, value]));
+
+    assert.strictEqual(manifest.background_color.toLowerCase(), canonical.get('--surface'),
+      'background_color is what the splash screen resolves into — the body colour, not the chrome');
+    assert.strictEqual(manifest.theme_color.toLowerCase(), canonical.get('--surface-shell'),
+      'theme_color is the browser chrome, which sits against the sidebar colour');
+
+    const meta = /<meta name="theme-color" content="(#[0-9a-fA-F]{6})">/.exec(
+      fs.readFileSync(path.join(ADMIN, 'views/index.html'), 'utf8'));
+    assert.ok(meta, 'the page declares a theme colour');
+    assert.strictEqual(meta[1].toLowerCase(), manifest.theme_color.toLowerCase(),
+      'the page and the manifest disagree about the theme colour');
+  });
+
   it('leaves no arbitrary Tailwind colour values in the markup', () => {
     const offenders = [];
     for (const file of walk(path.join(ADMIN, 'views'))) {
