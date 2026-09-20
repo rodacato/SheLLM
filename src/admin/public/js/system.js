@@ -39,6 +39,36 @@ function systemPage() {
       return `${circuit.state} · ${circuit.failures} failures`;
     },
 
+    // What the state costs and what ends it. "open · 5 failures" said neither, and an open
+    // circuit is the one provider state where traffic is already being refused.
+    circuitVerdict(prov) {
+      const circuit = prov.circuit;
+      if (!circuit) return '';
+      if (circuit.state === 'open') {
+        const at = circuit.retry_at ? formatTime(circuit.retry_at) : 'the next reset';
+        return `nothing is routing to ${prov.name} — one request is let through at ${at} to test it`;
+      }
+      if (circuit.state === 'half_open') {
+        return `one request at a time to ${prov.name} until it answers cleanly`;
+      }
+      if (circuit.failures > 0) {
+        const left = (circuit.threshold || 3) - circuit.failures;
+        return left > 0
+          ? `routing normally — ${left} more failure${left === 1 ? '' : 's'} would stop it`
+          : 'routing normally';
+      }
+      return '';
+    },
+
+    // The state is only half the message: the other half is the command that ends it.
+    authVerdict(prov) {
+      if (!prov.enabled) return 'paused by hand — it is still signed in, just out of routing';
+      if (!prov.installed) return `the CLI is not on this host, so nothing can route to ${prov.name}`;
+      if (prov.authenticated === false) return prov.login_help || 'sign the CLI in on the host';
+      if (prov.authenticated === null) return 'the probe could not tell — the last answer was neither a refusal nor a success';
+      return '';
+    },
+
     circuitClass(prov) {
       const state = prov.circuit?.state;
       if (state === 'open') return 'text-status-fail font-bold';

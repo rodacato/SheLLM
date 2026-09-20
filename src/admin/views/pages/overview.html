@@ -81,8 +81,11 @@
                   <div class="flex items-baseline justify-between mb-3">
                     <span class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline"
                       x-text="'Last ' + (w.hours >= 24 ? (w.hours / 24) + 'd' : w.hours + 'h')"></span>
-                    <span class="text-xs font-mono text-primary-container"
-                      x-text="'$' + w.cost_per_hour + '/hr · ' + w.requests_per_minute + ' rpm'"></span>
+                    <span class="flex items-baseline gap-2">
+                      <span class="text-xs font-mono text-primary-container"
+                        x-text="'$' + w.cost_per_hour + '/hr · ' + w.requests_per_minute + ' rpm'"></span>
+                      <span x-show="burnVerdict(w)" class="text-[10px] font-mono text-outline" x-text="burnVerdict(w)"></span>
+                    </span>
                   </div>
                   <div class="grid grid-cols-3 gap-4">
                     <div>

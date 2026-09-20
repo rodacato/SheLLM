@@ -25,6 +25,8 @@ async function withLock(fn) {
   }
 }
 
+const LOGIN_HELP = 'run `codex login` on the host as the service user';
+
 // `login status` proves credentials are stored, not that they still refresh: it answered
 // "Logged in using ChatGPT" here while every call failed with an expired refresh token. That is
 // the honest limit of a free probe — a dead token surfaces on the first real request instead.
@@ -179,6 +181,7 @@ async function* chatStream({ prompt, system, response_format, model, signal }) {
 module.exports = {
   name: 'codex',
   models,
+  LOGIN_HELP,
   env: CODEX_ENV,
   chat,
   chatStream,

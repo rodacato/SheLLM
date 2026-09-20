@@ -133,6 +133,10 @@ function parseStreamLine(line) {
   return null;
 }
 
+// Shown verbatim when the probe says this provider is not signed in. The updater does the same
+// with TRIGGER_HELP: a state nobody can act on is a state reported badly.
+const LOGIN_HELP = 'run `claude setup-token` on the host, or set CLAUDE_CODE_OAUTH_TOKEN';
+
 // The token from `claude setup-token` is the only SheLLM setting the CLI may see.
 const CLAUDE_ENV = {
   XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME,
@@ -189,6 +193,7 @@ async function* chatStream({ prompt, system, response_format, model, signal }) {
 module.exports = {
   name: 'claude',
   models,
+  LOGIN_HELP,
   env: CLAUDE_ENV,
   chat,
   chatStream,
