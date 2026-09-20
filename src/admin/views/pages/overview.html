@@ -27,7 +27,7 @@
         <template x-if="stats && errorRows.length > 0">
           <div class="bg-surface-container p-5 mb-8">
             <div class="flex items-baseline justify-between mb-4">
-              <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Errors</p>
+              <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant">Errors</p>
               <span class="text-[10px] font-mono text-outline" x-text="stats.error_rate.success_pct + '% ok'"></span>
             </div>
             <table class="w-full text-xs font-mono">
@@ -79,7 +79,7 @@
               <template x-for="w in stats.quota.windows" :key="w.hours">
                 <div class="bg-surface-container p-5">
                   <div class="flex items-baseline justify-between mb-3">
-                    <span class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline"
+                    <span class="text-[10px] font-headline font-bold uppercase text-on-surface-variant"
                       x-text="quotaLabel(w)"></span>
                     <span class="flex items-baseline gap-2">
                       <span class="text-xs font-mono text-primary-container"
@@ -106,7 +106,7 @@
             </div>
 
             <div class="bg-surface-container p-5">
-              <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-4">By Subscription</p>
+              <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-4">By Subscription</p>
               <table class="w-full text-xs font-mono">
                 <thead>
                   <tr class="text-outline text-[10px] uppercase tracking-wider">
@@ -137,7 +137,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
           <div class="bg-surface-container p-5 lg:col-span-2">
             <div class="flex items-center gap-2 mb-3">
-              <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Request Queue</span>
+              <span class="text-[10px] font-headline font-bold uppercase text-on-surface-variant">Request Queue</span>
               <span class="text-[10px] text-outline" title="CLI providers run as subprocesses. Active = running now (max concurrent). Pending = waiting in line.">[?]</span>
             </div>
             <div class="flex items-end gap-8 mb-3">
@@ -171,7 +171,7 @@
           </div>
 
           <div class="bg-surface-container p-5">
-            <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-3">Providers</p>
+            <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-3">Providers</p>
             <div class="space-y-2">
               <template x-for="prov in providers" :key="prov.name">
                 <div class="flex items-center justify-between">
@@ -201,19 +201,19 @@
 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                   <div class="bg-surface-container p-5">
-                    <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">p50</p>
+                    <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-2">p50</p>
                     <p class="text-2xl font-headline font-black text-white" x-text="formatDuration(stats.latency.total_ms.p50)"></p>
                   </div>
                   <div class="bg-surface-container p-5">
-                    <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">p95</p>
+                    <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-2">p95</p>
                     <p class="text-2xl font-headline font-black text-white" x-text="formatDuration(stats.latency.total_ms.p95)"></p>
                   </div>
                   <div class="bg-surface-container p-5">
-                    <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">p99</p>
+                    <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-2">p99</p>
                     <p class="text-2xl font-headline font-black text-white" x-text="formatDuration(stats.latency.total_ms.p99)"></p>
                   </div>
                   <div class="bg-surface-container p-5">
-                    <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">First token p50</p>
+                    <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-2">First token p50</p>
                     <p class="text-2xl font-headline font-black text-white"
                       x-text="stats.latency.ttft_ms.p50 !== null ? formatDuration(stats.latency.ttft_ms.p50) : '—'"></p>
                   </div>
@@ -222,7 +222,7 @@
                 <!-- Where the time goes: the only exact split, queue vs execution -->
                 <div class="bg-surface-container p-5 mb-4">
                   <div class="flex items-baseline justify-between mb-4">
-                    <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Where the time goes (p95)</p>
+                    <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant">Where the time goes (p95)</p>
                     <span class="text-[10px] font-mono text-outline" x-text="lagVerdict()"></span>
                   </div>
                   <div class="flex h-6 mb-2">
@@ -243,7 +243,7 @@
                 <!-- One mark per request: at this volume an averaged line invents shape that is not there -->
                 <div class="bg-surface-container p-5" x-show="stats.recent_requests && stats.recent_requests.length > 1">
                   <div class="flex items-baseline justify-between mb-3">
-                    <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Every request</p>
+                    <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant">Every request</p>
                     <span class="text-[10px] font-mono text-outline" x-text="scatterCaption()"></span>
                   </div>
                   <div class="h-[200px]"><canvas x-ref="scatter"></canvas></div>
@@ -256,7 +256,7 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
               <div class="bg-surface-container p-5">
-                <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-4">By Model</p>
+                <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-4">By Model</p>
                 <table class="w-full text-xs font-mono">
                   <thead>
                     <tr class="text-outline text-[10px] uppercase tracking-wider">
@@ -284,7 +284,7 @@
               </div>
 
               <div class="bg-surface-container p-5">
-                <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-4">By Client</p>
+                <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-4">By Client</p>
                 <table class="w-full text-xs font-mono">
                   <thead>
                     <tr class="text-outline text-[10px] uppercase tracking-wider">
@@ -315,7 +315,7 @@
             <!-- Traffic over the period: how many, and how many of them failed -->
             <div class="bg-surface-container p-5" x-show="stats.timeline && stats.timeline.length > 1">
               <div class="flex items-baseline justify-between mb-4">
-                <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Traffic</p>
+                <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant">Traffic</p>
                 <span class="text-[10px] font-mono text-outline" x-text="stats.error_rate.success_pct + '% ok'"></span>
               </div>
               <div class="h-[180px]"><canvas x-ref="timeline"></canvas></div>
