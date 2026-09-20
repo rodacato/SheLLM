@@ -18,6 +18,14 @@ request that still sends it is answered with the same single window rather than 
 call this endpoint from anything other than the dashboard, read `window.from`, `window.hours` and
 `window.retention_days` in place of `period`.
 
+**Quota windows divide by observed time, and report it.** Each entry in `quota.windows` gains
+`observed_hours`, and `cost_per_hour` and `requests_per_minute` divide by it rather than by the
+nominal window. A gateway with eighteen hours of logs used to report its 7d burn rate as the
+week's spend spread over a hundred and sixty-eight hours, most of which never happened — roughly a
+tenfold understatement. `hours` still reports the window that was asked for, so a caller wanting
+the old denominator can compute it. The dashboard's label follows the number: a window that did
+not fill says the span it covered.
+
 **The p95 latency card no longer shows a delta against the previous period.** Comparing meant
 reading the window behind the current one, which retention has already deleted by the time anyone
 looks. The arrow is removed rather than rebased onto an invented baseline.
