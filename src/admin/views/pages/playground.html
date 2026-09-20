@@ -12,7 +12,7 @@
               <input type="password" x-model="apiKey" placeholder="shellm-…" autocomplete="off" class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container">
               <div class="flex items-center justify-between mt-2">
                 <label class="flex items-center gap-2 text-[10px] font-mono text-outline">
-                  <input type="checkbox" x-model="rememberKey" @change="storeKey()" class="accent-[#03e3ff]">
+                  <input type="checkbox" x-model="rememberKey" @change="storeKey()" class="accent-primary-container">
                   keep it for this tab only
                 </label>
                 <button x-show="apiKey" @click="forgetKey()" class="text-[10px] font-mono text-outline hover:text-on-surface">forget</button>
