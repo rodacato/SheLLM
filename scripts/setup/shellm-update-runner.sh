@@ -6,12 +6,12 @@
 # that what a root unit executes is not something the service user can rewrite.
 #
 # Everything here is a wrapper. Validate the request, resolve the tag to a commit id against the
-# real repository, snapshot the database, hand the id to the CLI, report what happened. The update
-# sequence itself — fetch, checkout, npm ci, migrations, unit, restart, health check, rollback —
-# stays in src/cli/update.js. A second copy of it here would diverge from the first, which is the
-# reason ADR-0003 rejected reimplementing it.
+# real repository, hand the id to the CLI, report what happened. The update sequence itself —
+# snapshot, fetch, checkout, npm ci, migrations, unit, restart, health check, rollback — stays in
+# src/cli/update.js. A second copy of it here would diverge from the first, which is the reason
+# ADR-0003 rejected reimplementing it. The snapshot moved there for that reason: see ADR-0004.
 #
-# See docs/adr/0003-release-and-update-cycle.md.
+# See docs/adr/0003-release-and-update-cycle.md and docs/adr/0004-backup-is-a-command.md.
 
 set -euo pipefail
 
@@ -28,12 +28,6 @@ CLAIMED="${REQUEST}.claimed"
 # Durable, not /run: the dashboard reads this *after* the restart, which is exactly when a
 # rollback is the thing you want to read about.
 STATUS="${STATE_DIR}/update-status.json"
-# A directory this repo creates and owns. Not /var/backups/shellm: that one belongs to whoever
-# provisioned the host, `install -d -o` below applies ownership to a directory that already
-# exists, and taking a root-only 700 directory over reinterprets it as service-user-only —
-# granting the right to delete files the service user is not even allowed to read.
-BACKUP_DIR="/var/lib/shellm/backups"
-BACKUPS_KEPT=5
 
 # git reads configuration from the current directory's repository. Root has no business picking
 # any of it up from a tree shellmer owns.
@@ -177,32 +171,14 @@ echo "    resolves to ${resolved_sha}"
 # file would break the next update.
 as_service_user git -C "${APP_DIR}" remote set-url origin "${REPO_URL}"
 
-# 4. Snapshot the database. WAL mode means cp is not a backup; .backup is safe while the service
-# is running. It runs as shellmer because opening a WAL database creates the -wal and -shm files
-# beside it: root doing that leaves root-owned files in the service user's state directory, and
-# the service cannot write its own database again until someone works out why.
-if [[ -f ${STATE_DIR}/shellm.db ]]; then
-  echo "==> Snapshotting the database"
-  install -d -m 0750 -o "${SERVICE_USER}" -g "${SERVICE_USER}" "${BACKUP_DIR}"
-  backup="${BACKUP_DIR}/shellm-$(date -u +%Y%m%dT%H%M%SZ)-before-${requested_ref}.db"
-  as_service_user sqlite3 "${STATE_DIR}/shellm.db" ".backup '${backup}'" \
-    || fail "could not snapshot the database — refusing to update without one"
-  echo "    ${backup}"
-  # Keep the last few and no more; this directory is not a backup strategy, it is an undo. The
-  # glob is the runner's own naming, so sharing the directory one day could not widen this into
-  # deleting a file it did not write.
-  ls -1t "${BACKUP_DIR}"/shellm-*-before-*.db 2>/dev/null | tail -n +$((BACKUPS_KEPT + 1)) | xargs -r rm -f
-else
-  echo "==> No database yet — nothing to snapshot"
-fi
-
-# 5. Hand the commit id to the CLI, which owns the sequence.
+# 4. Hand the commit id to the CLI, which owns the sequence — including the snapshot it takes
+# before anything moves.
 shellm_bin="$(command -v shellm)" || fail "shellm is not on the updater's PATH"
 echo "==> ${shellm_bin} update"
 SHELLM_REF="${resolved_sha}" "${shellm_bin}" update \
   || fail "shellm update failed — it rolls back on its own; journalctl -u shellm-update -n 100"
 
-# 6. Confirm the checkout is where it was told to go. This detects the case the resolution above
+# 5. Confirm the checkout is where it was told to go. This detects the case the resolution above
 # is designed around, rather than assuming it worked.
 head="$(as_service_user git -C "${APP_DIR}" rev-parse HEAD)"
 [[ ${head} == "${resolved_sha}" ]] \
