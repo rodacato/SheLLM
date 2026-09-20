@@ -115,6 +115,29 @@ describe('installable dashboard', () => {
     assert.match(res.text, /prefers-reduced-motion/);
   });
 
+  // viewport-fit=cover plus a translucent status bar puts the web view behind the notch. Nothing
+  // reads the insets by accident, so a class dropped here is a bar under the clock on a phone.
+  it('keeps the chrome out from under the status bar', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const html = require('../../src/admin/views').compose();
+    const css = fs.readFileSync(path.join(__dirname, '../../src/admin/public/css/custom.css'), 'utf8');
+
+    const used = [...new Set([...html.matchAll(/class="[^"]*?(safe-[\w-]+)/g)].map((m) => m[1]))];
+    assert.ok(used.length >= 4, `the markup uses ${used.length} safe-area classes — expected the four`);
+
+    for (const cls of used) {
+      assert.match(css, new RegExp(`\\.${cls}\\s`), `${cls} is used by the page but declared nowhere`);
+    }
+    assert.match(css, /env\(safe-area-inset-top\)/);
+    assert.match(css, /env\(safe-area-inset-bottom\)/);
+
+    // The bar owns its own height now. A fixed h-14 back on it is the regression.
+    const bar = /<div class="md:hidden fixed top-0[^"]*"/.exec(html);
+    assert.ok(bar, 'the mobile bar is gone');
+    assert.ok(!/\bh-14\b/.test(bar[0]), 'the mobile bar went back to a fixed height');
+  });
+
   it('every icon the manifest promises is actually served', async () => {
     const manifest = JSON.parse((await request(app).get('/admin/manifest.webmanifest')).text);
     for (const icon of manifest.icons) {

@@ -70,7 +70,7 @@
 <body x-data="app()" x-init="init()" class="bg-surface text-on-surface min-h-screen flex font-body">
 
   <!-- Mobile top bar -->
-  <div class="md:hidden fixed top-0 inset-x-0 h-14 z-40 bg-surface-shell border-b border-outline-variant/20 flex items-center gap-3 px-4">
+  <div class="md:hidden fixed top-0 inset-x-0 safe-bar z-40 bg-surface-shell border-b border-outline-variant/20 flex items-center gap-3 px-4">
     <button @click="sidebarOpen = !sidebarOpen" class="text-on-surface-variant hover:text-primary-container" :aria-expanded="sidebarOpen" aria-label="Toggle navigation">
       <span class="material-symbols-outlined text-[20px]" x-text="sidebarOpen ? 'close' : 'menu'"></span>
     </button>
@@ -84,7 +84,7 @@
   <aside class="w-64 bg-surface-shell min-h-screen flex flex-col shrink-0 fixed left-0 top-0 h-full z-50 transition-transform duration-200 md:translate-x-0"
     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
     <!-- Brand -->
-    <div class="p-6">
+    <div class="p-6 safe-brand">
       <img src="img/logo-dark.svg" alt="SheLLM" class="h-8 w-auto">
       <p class="font-headline uppercase tracking-[0.15em] text-[11px] text-outline mt-2">Admin Gateway</p>
     </div>
@@ -105,7 +105,7 @@
     </nav>
 
     <!-- Bottom section -->
-    <div class="mt-auto border-t border-outline-variant/20 pt-4 pb-4 px-4">
+    <div class="mt-auto border-t border-outline-variant/20 pt-4 pb-4 px-4 safe-foot">
       <!-- Uptime + icons row -->
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2 text-outline text-[10px] font-mono tracking-wider">
@@ -132,7 +132,7 @@
   </aside>
 
   <!-- Main -->
-  <div class="md:ml-64 flex-1 flex flex-col min-h-screen pt-14 md:pt-0">
+  <div class="md:ml-64 flex-1 flex flex-col min-h-screen safe-bar-offset">
 
     <!-- Content -->
     <main class="flex-1 p-4 md:p-8 overflow-auto">
