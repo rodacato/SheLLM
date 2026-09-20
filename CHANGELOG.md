@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Upgrade notes
 
+**`GET /` now sends a browser to the dashboard, and an unmatched route answers JSON.** The root
+was never a route, so the bare domain served Express's own `Cannot GET /` page — and so did every
+mistyped endpoint, including one under `/v1/`, to callers whose SDK parses JSON. A browser at the
+root is now redirected to `/admin/dashboard/`, which lands it on the sign-in page when it has no
+session; anything that did not ask for HTML gets a `404` carrying `not_found` in the same error
+shape that endpoint already uses. Responses no longer carry `X-Powered-By`. An uptime check
+pointed at `/` and asserting a 404 needs to point at `/health` instead.
+
 **`GET /admin/stats` no longer accepts `?period=`, and answers with `window` instead of
 `period`.** The dashboard offered 24h / 7d / 30d over a table the pruner already bounds at 30
 days, so `30d` was every row that exists and the other two were narrower views of it — while each

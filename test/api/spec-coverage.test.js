@@ -15,6 +15,7 @@ describe('the OpenAPI spec describes the server that ships with it', () => {
 
   // Real endpoints the spec deliberately leaves out, each with the reason it is not an API.
   const NOT_AN_API_SURFACE = new Map([
+    ['GET /', 'the entry point; redirects a browser to the dashboard'],
     ['GET /admin/dashboard/', 'the dashboard page itself, HTML'],
     ['GET /admin/login', 'the sign-in form, HTML'],
     ['POST /admin/login', 'the browser session; scripts use HTTP Basic'],

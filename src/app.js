@@ -14,6 +14,7 @@ const adminStatsRouter = require('./admin/stats');
 const adminProvidersRouter = require('./admin/providers');
 const adminUpdateRouter = require('./admin/update');
 const { dashboardHtml } = require('./admin/views');
+const { wantsHtml } = require('./middleware/admin-session');
 const { sendApiError, invalidRequest, notFound } = require('./errors');
 const path = require('node:path');
 
@@ -40,6 +41,13 @@ app.use((req, res, next) => {
   next();
 });
 
+
+// --- GET / (a browser lands on the dashboard, which bounces it to the login without a session) ---
+// Anything else is an API client on the base URL: it falls through to the 404 its SDK can parse.
+app.get('/', (req, res, next) => {
+  if (!wantsHtml(req)) return next();
+  res.redirect(302, '/admin/dashboard/');
+});
 
 // --- GET /docs/openapi.json (the bundled spec, so tooling can read it off a live instance) ---
 app.get('/docs/openapi.json', (_req, res) => {
