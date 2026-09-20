@@ -2,6 +2,9 @@
 
 - **Status:** accepted
 - **Date:** 2026-09-19
+- **Amended by:** [ADR-0004](./0004-backup-is-a-command.md), 2026-09-20 — the pre-update snapshot
+  moved from the runner into `shellm update`. Every mention of the runner snapshotting below is
+  historical; the marked notes say where.
 - **Amends:** ADR-0001's deployment description. Supersedes the manual upgrade documented in
   `docs/guides/deployment.md` and the seven-step local release in `docs/guides/releasing.md`,
   both of which stay in force until the pieces below ship.
@@ -149,9 +152,9 @@ shellm-update.path       (root)   watches /run/shellm/update-request.json
 └─ shellm-update.service (root, Type=oneshot)
    └─ shellm-update-runner.sh     installed to /usr/local/lib/shellm, outside the checkout
       └─ delete the request, validate the tag, resolve it to a commit id against the
-         literal repository URL, snapshot the database with SQLite's .backup
+         literal repository URL
       └─ shellm update            SHELLM_REF=<commit id>
-         ├─ exec()        drops to shellmer: git fetch, checkout, npm ci, migrations
+         ├─ exec()        drops to shellmer: shellm backup, git fetch, checkout, npm ci, migrations
          └─ execAsRoot()  stays root: cp the unit, daemon-reload, restart, restart on rollback
       └─ confirm HEAD is the id that was resolved, and write update-status.json
 ```
@@ -174,8 +177,14 @@ with "did the unit change between these two commits"; two copies of that will di
 **There is a root-owned script, and rejecting one was never the claim.** What was rejected is a
 root-owned script that *replaces* the update sequence. `shellm-update-runner.sh` is a wrapper
 around it: everything it does — deleting the request, validating the tag, resolving it to a
-commit id, snapshotting the database, reporting the outcome — is work the CLI does not do and
-should not, because none of it belongs in a command an operator runs over SSH. It never decides
+commit id, reporting the outcome — is work the CLI does not do and should not, because none of it
+belongs in a command an operator runs over SSH.
+
+> **Amended 2026-09-20 by [ADR-0004](./0004-backup-is-a-command.md).** This list read
+> "snapshotting the database" until then, and that was the one item on it that *was* part of the
+> sequence rather than a check around it: the snapshot is what makes the rollback below a
+> rollback, and leaving it here meant `sudo shellm update` over SSH took none. It now lives in
+> `src/cli/update.js`, before the checkout. The line to hold is unchanged. It never decides
 whether the unit changed, whether the lockfile moved, or when to roll back. Those stay in one
 place. The line to hold on any future edit is that the runner may add checks around the sequence
 and may not start performing it.
@@ -383,13 +392,14 @@ real published release, which is bounded further by refusing downgrades and unkn
   it restarts. Without the rollback in step 4, a bad release leaves no dashboard to fix it from,
   and `Restart=on-failure` retries the broken start every five seconds. The rollback is not a
   refinement of part 5; it is part of it.
-- Database migrations do not roll back. The snapshot in step 1 is what makes an update
+- Database migrations do not roll back. The pre-update snapshot is what makes an update
   reversible, and a major version jump is where that matters — which is why the dashboard marks
   those differently. It is distinct from, and does not replace, whatever periodic backup the host
   already runs: one is a synchronous pre-update snapshot, the other is a nightly safety net.
+  Since [ADR-0004](./0004-backup-is-a-command.md) both are the same command, `shellm backup`.
 - **The database must never be backed up by copying the file.** It runs in WAL mode
   (`src/db/index.js`), so a `cp` of the `.db` yields a torn copy or one missing recent commits.
-  Every backup path — the updater's and the operator's — uses SQLite's online `.backup`.
+  Every backup path goes through SQLite's online backup.
 - Confining the checkout surfaces anything that writes inside it. Nothing does at runtime; `npm ci`
   does, and it is unaffected because the updater runs outside the unit's sandbox. A provider that
   stored state under the checkout instead of the home directory would be.
