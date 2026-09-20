@@ -62,8 +62,10 @@ collapsing them.
 
 ### Open kit gap logged here
 
-`flows/admin.pen` carries exactly one hex, `#03e3ff00`, in the sign-in sweep. A gradient needs a
-fully transparent stop and the kit has no token for one — the code does not name it either
+`flows/admin.pen` carries exactly one hex **value**, `#03e3ff00`, in the sign-in sweep — on all
+three Sign in artboards since the error band copied that screen twice (2026-09-20), which is the
+same gap three times over, not three gaps. A gradient needs a fully transparent stop and the kit
+has no token for one — the code does not name it either
 (`color-mix(in srgb, var(--accent) 18%, transparent)`), so naming it would be a decision, not a
 mirror. Logged, not fixed.
 

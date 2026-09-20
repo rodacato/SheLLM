@@ -28,18 +28,24 @@ as context for AI agents (`AGENTS.md` points them here).
 
 | File | Screens | Kit | Domain entry point |
 |---|---|---|---|
-| `admin.pen` | 6 of 6 — Sign in, Overview, Request Logs, API Keys, Playground, System. One band, happy path | **0.3.0** | `/admin/login` and `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
+| `admin.pen` | 15 of 15 — two bands. Band 1, happy path: Sign in, Overview, Request Logs, API Keys, Playground, System. Band 2, error and alternate paths: nine states | **0.3.0** | `/admin/login` and `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
 
 `ui-kit.lib.pen` carries tokens as of **0.3.0** and no components yet: colour, family and radius, plus the type, icon and spacing scales 0.3.0 added. The sidebar and the page
 footer are now known to be shared — they are rebuilt per screen from one function in the flow, and
 that is the promotion candidate for the first kit component. Promoting is a batch, done when asked.
 
-There is no error band yet. Both conditional banners (`Not updating`, `USAGE LIMIT HIT`), every
-unreachable state, and the sign-in screen's 401 and 429 panels are listed in the brief's *states
-not drawn* rather than guessed at. That band is the next thing worth drawing.
+The error band is drawn since 2026-09-20. Both conditional banners (`Not updating`,
+`USAGE LIMIT HIT`), the sign-in 401 and 429 panels, the Playground's waiting clock and its three
+catalog states, and the unreachable or genuinely-empty states on Overview, Logs, Keys and System
+are artboards now rather than entries in *states not drawn*. What stayed in that section is what a
+second artboard would not have added: a pure string swap into a slot the band already draws, kept
+there with its copy. Read band 2's brief for the list.
 
-The flow and the kit are both at **0.3.0**. Installing the size tokens changed nothing on the
-canvas; applying two of them did, and what is still a pixel off the code is **D45**.
+The flow and the kit are both at **0.3.0**, and the flow now draws the type scale it mirrors:
+**D45 is closed**, so no node is a pixel off the code except the 13s on Sign in, which are correct
+because that page sets its own `.8rem`. Drawing the band opened **D46** — System's Concurrency card
+renders a health read that never happened as `0 / 0` while the sidebar beside it says
+`UNREACHABLE`.
 
 **Chart interiors are drawn since 2026-09-20, and the reason they were not is worth keeping.** The
 refusal was never "the canvas cannot draw a chart" — it was that nobody had seen the shipped one,
