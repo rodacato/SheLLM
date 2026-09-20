@@ -9,22 +9,39 @@
 > [`DESIGN-AUDIT.md`](DESIGN-AUDIT.md)'s, which closed with motion explicitly **not judged**.
 > This pass is the one it deferred.
 
-## Status — 2026-09-20, branch `design/pen-remirror`
+## Status — worked 2026-09-20, branch `design/pen-remirror`
 
 | | Landed | Open |
 |---|---|---|
-| **Pass 1** | D25 D21 | D23 D24 D26 D27 · *(D22 out of scope)* |
-| **Pass 2** | — | P1 |
-| **Bugs** | — | D29 · *(D28 out of scope)* |
+| **Pass 1** | D21 D23 D24 D25 D26 D27 | — · *(D22 out of scope)* |
+| **Pass 2** | P1 | — |
+| **Bugs** | D29 | — · *(D28 out of scope)* |
 
-The two that landed are the two the *Suggested order* puts first: `prefers-reduced-motion`, which
-is a requirement rather than a preference, and the queue bar, which removed the product's only
-`transition: all`. Both green on `npm test` and `npm run lint`.
+Everything this audit found is in, except the two mobile-drawer items `DECISIONS.md` rules out.
+Seven commits, each green on `npm test` and `npm run lint` on its own; the suite went from 677 to
+686 because the scale and the counter are now pinned by tests rather than by intention.
 
-**The two tokens and the easing rule are still unnamed**, so D23 and D24 stay open — declaring
-them is what turns those two into a one-line application rather than two more judgement calls,
-and it is the next thing worth doing here. D21 used Tailwind's own `ease-out`, which is exactly
-the `enter` curve proposed below; nothing about it has to change when the tokens land.
+**The scale landed as custom properties, not as Tailwind literals** — `--dur-fast`,
+`--dur-move`, `--ease-enter` in `custom.css`, with the Tailwind config reading them the same way
+it reads the palette, and `DEFAULT` carrying both so the three transitions that name no duration
+joined the scale without an edit.
+
+### Two places the work departed from what this document proposed
+
+- **No `exit` curve.** The vocabulary above is *arriving is `ease-out`, leaving is `ease-in`*, and
+  only half of it was declared. Nothing in this admin leaves the screen: the modal appears and
+  disappears instantly (P2, correctly rejected), and the only leaving transition is the mobile
+  drawer's backdrop, which is out of scope. A token with no user is a token nobody checks, so
+  `exit` lands with the error band — the first thing that will actually need it.
+- **The press state lightens instead of darkening.** D26 asked for *one step darker*, which works
+  on a button that has a background and does nothing at all on a transparent nav item over a
+  near-black surface. What shipped is one 8% white inset veil (`--press-veil`) over whatever the
+  target's own background is — cyan, red, grey or nothing — rather than thirty-five new
+  background tokens. No scale transform, as specified.
+
+**The one thing a browser pass should re-check** is the veil on the three icon-only links, which
+are inline elements: the inset renders around the inline box. It reads as a press target here,
+but it was verified by reading the rule, not by pressing it.
 
 ## Method — what was actually observed
 
