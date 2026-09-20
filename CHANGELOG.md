@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-09-20
+
+A recovery release. v1.6.0 took a `better-sqlite3` major whose releases publish no prebuilt
+binary, so installing it compiles from source and fails on any host without a C++ toolchain.
+Nothing else in this release.
+
+**A host whose update to v1.6.0 failed has no `node_modules` at all** — `npm ci` removes them
+before it installs, so the compile failure left nothing behind. `shellm update` cannot recover
+that host: it snapshots the database before it touches anything, and the snapshot needs
+`better-sqlite3`. It will refuse and stop. Re-run the provisioning script from a clone instead:
+
+```bash
+ssh root@your-server 'bash -s' < scripts/setup/vps.sh
+```
+
+It checks out the newest tag and reinstalls the dependencies, and it leaves the database and
+`~/.config/shellm/env` untouched.
+
+### Fixed
+
+- **deps:** revert better-sqlite3 to 12.11.1, the last release that ships a binary
+- **release:** stop the changelog dropping commits it does not recognise
+
+### Maintenance
+
+- **deps:** stop dependabot proposing a better-sqlite3 major on its own
+
+
 ## [1.6.0] - 2026-09-20
 
 ### Added
@@ -693,5 +721,5 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.6.0...HEAD
-[1.6.0]: https://github.com/rodacato/SheLLM/compare/v1.5.0...v1.6.0
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.6.1...HEAD
+[1.6.1]: https://github.com/rodacato/SheLLM/compare/v1.6.0...v1.6.1
