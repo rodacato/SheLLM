@@ -91,9 +91,8 @@ function formatCost(usd) {
   return `$${usd.toFixed(4)}`;
 }
 
-// Whose clock the page speaks. The browser's used to decide it, which meant the same dashboard
-// read differently from the laptop and from a phone abroad, and disagreed with the buckets the
-// server sent. The server names the zone; this is the fallback until its first answer arrives.
+// Whose clock the page speaks. The browser's used to, so the same dashboard read differently
+// from a laptop abroad and disagreed with the buckets. This is the fallback until health answers.
 let dashboardTimezone = 'America/Mexico_City';
 
 function setDashboardTimezone(tz) {

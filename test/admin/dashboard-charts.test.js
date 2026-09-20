@@ -10,8 +10,7 @@ const JS_DIR = path.join(__dirname, '../../src/admin/public/js');
 const HOUR_MS = 3600000;
 
 // The page's own files, loaded the way the browser loads them. Chart.js is the one boundary
-// stubbed — it is a CDN script — and it is stubbed as a recorder so the assertions read the
-// configuration the page really built.
+// stubbed, as a recorder, so the assertions read the configuration the page really built.
 function loadOverview() {
   const built = [];
   class Chart {
