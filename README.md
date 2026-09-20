@@ -111,6 +111,10 @@ A model the CLI rejects comes back as `404 model_not_found`.
 | `GET /health` | `{ "status": "ok" }`, unauthenticated |
 | `/admin/*` | Keys, request logs and provider status. Browsers sign in at `/admin/login`; scripts use HTTP Basic with `SHELLM_ADMIN_PASSWORD`. The dashboard installs as a PWA over HTTPS |
 
+The full contract — request and response schemas, the admin endpoints, streaming — is the
+OpenAPI document in [`docs/api/openapi.yaml`](docs/api/openapi.yaml). A running instance serves
+the bundled version of it at `/docs/openapi.json`, and `npm run docs:preview` opens it as a page.
+
 Requests to `/v1/*` need `Authorization: Bearer <key>` or `x-api-key`. Errors come back in the
 format of the endpoint you called:
 
