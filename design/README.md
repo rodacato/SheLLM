@@ -41,9 +41,23 @@ not drawn* rather than guessed at. That band is the next thing worth drawing.
 The flow is pinned at kit **0.2.0** while the kit is at 0.2.1. It is not diverging: the only thing
 0.2.1 removed is a token this flow never carried.
 
-**Chart interiors are not mirrored.** Chart.js draws a scatter and a line; the `.pen` layout cannot
-position individual points, and an approximation would look plausible and misrepresent what ships.
-Both plot areas carry the real card chrome and say so on the canvas.
+**Chart interiors are drawn since 2026-09-20, and the reason they were not is worth keeping.** The
+refusal was never "the canvas cannot draw a chart" — it was that nobody had seen the shipped one,
+so any drawing would have been invention that reads as evidence. Production captures exist now, and
+a capture outranks a guess ([Source of truth](#source-of-truth)), so the charts are mirrored from
+the captures **plus** the Chart.js config in `js/overview.js`: grid, axes, tick format, point
+radius, the per-status colours and the dashed `now` marker all come from the code. Two rules hold
+when they are re-drawn:
+
+- **The marks plot this flow's illustrative dataset, not the capture's.** A capture showing seven
+  requests at 100% ok next to a table reporting 107 at 84.6% would be the misrepresentation the
+  refusal existed to prevent.
+- **Never copy a capture's chrome over the code's.** The captures label their axes `02:33 PM`; the
+  shipped formatter is `hourCycle: 'h23'`, so the canvas reads `13:02`. Captures go stale; the
+  config does not.
+
+Points are absolutely positioned inside the plot frame and the lines are `path` nodes — the
+"layout cannot position individual points" limit applies to Pencil's flexbox, not to the file.
 
 The admin is the only surface with a flow. There is no public flow: the landing page and the
 hosted API reference were removed, so `site/` and `docs/index.html` do not exist. The Stitch
