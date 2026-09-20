@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.0] - 2026-09-20
 
+### Upgrade notes
+
+**Re-run `scripts/setup/vps.sh` once after this update.** An upgrade is performed by the updater
+of the release you are leaving, and that one only re-installed `shellm.service`. The systemd
+units, the `tmpfiles.d` entry and the updater script this release adds therefore do not arrive
+with it. From the next release onwards `sudo shellm update` keeps the whole set in step on its
+own, and never enables anything.
+
+The dashboard's update button is **not** in this release — only the privileged half it will use.
+That half stays inert until you opt in with `sudo systemctl enable --now shellm-update.path`.
+
 ### Added
 
 - **deploy:** the privileged half of the update button
