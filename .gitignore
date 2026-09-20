@@ -76,3 +76,9 @@ docs/screens
 
 # Design: local-only device captures, never committed (may hold real data)
 design/references/
+
+# Site: what the Pages workflow assembles into site/ at build time
+site/assets/
+site/img/
+site/api/bundled.json
+site/api/logo.svg
