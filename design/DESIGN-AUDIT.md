@@ -1306,6 +1306,14 @@ Considered and deliberately not reported:
 
 ## Notes for the next `.pen` session
 
+> **Worked 2026-09-20 on `design/pen-remirror`.** Every row below landed except the two the code
+> already settled. `D37` shipped narrower than written — `grid-fold-y = 900` is declared, and the
+> hairline is drawn on **Overview only**, because it is the one screen whose content runs past the
+> declared frame; the other five are shorter than the fold, which says the same thing without a
+> line. `D34` needed no `.pen` work (see the status section above), and `D35 / D39` stay queued:
+> the code has not named a type or spacing scale, so there is nothing to install yet. The pass
+> also re-mirrored what ten commits had moved since the last mirror — see the flow's `Log`.
+
 No `.pen` was written this pass, by instruction. What is queued:
 
 | # | Change | File |
