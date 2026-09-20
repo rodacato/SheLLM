@@ -19,19 +19,21 @@ does wrong, not how hard it is to fix.
 | | Landed | Open |
 |---|---|---|
 | 🔴 | P1 · P2 *(documented, not fixed — that was the recommendation)* | — |
-| 🟠 | P3 *(partly)* · P4 · **P5** · **P14** | P3 *(residual)* |
+| 🟠 | P3 · P4 · **P5** · **P14** | — |
 | 🟡 | P6 · P7 · P9 · P8 *(resolved as "stays" — see below)* | — |
 | 🟢 | P10 · P12 · P13 · **P11** *(closed as "not doing")* | — |
 
-Every commit green on `npm test` and `npm run lint`. What is left, and why:
+Every commit green on `npm test` and `npm run lint`. **Nothing is open.** What closed last, and how:
 
-- **P3 residual.** The sign-in page now carries the manifest, the theme colour, the safe-area
-  insets, the app's own frame and — since the icon pass — the same four icon declarations the
-  dashboard makes. One thing survives: it is still outside `SHELL`, so offline it is the browser's
-  error page inside a windowed app. Its own nine palette aliases are **D20**, an open design call,
-  not an oversight.
-
-**Closed since, 2026-09-20:**
+- **P3 residual is decided: the sign-in page stays out of `SHELL`.** It now carries the manifest,
+  the theme colour, the safe-area insets, the app's own frame and the same four icon declarations
+  the dashboard makes, so it no longer reads as a different application. Caching it would replace
+  the browser's offline error page with a branded sign-in form — which then fails on submit,
+  because the thing that is unreachable is the gateway that would answer it. The operator learns
+  nothing they did not already know, and the app gains a cached page that has to stay in sync.
+  **P2 already set the position: the install is a launcher, not an offline application**, and a
+  half-measure blurs it. Reopen only if the sign-in page ever gains something worth reading
+  offline. Its own nine palette aliases stay **D20**, an open design call, not an oversight.
 
 - **P5 is drawn.** `icon-512-maskable.png` is its own artwork — the mark scaled into the centre
   60% on `surface-shell`, every bbox corner measured at r=204 against the 205 a 512 canvas allows.
