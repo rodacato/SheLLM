@@ -11,7 +11,7 @@ const { compose } = require('../../src/admin/views');
 
 // The page's own files, loaded the way the browser loads them; only fetch is stood in for. Arrays
 // the page builds belong to the vm's realm, so assert on length rather than deep-equality.
-function loadSystem(fetchImpl) {
+function loadSystem(fetchImpl, windowOverrides = {}) {
   const stores = {};
   const context = vm.createContext({
     console, Intl, Date, URLSearchParams,
@@ -20,7 +20,7 @@ function loadSystem(fetchImpl) {
     setTimeout: (fn) => { Promise.resolve().then(fn); return 0; },
     clearTimeout: () => {}, setInterval: () => 0,
     location: { pathname: '/admin/dashboard', hash: '', replace: () => {} },
-    window: { addEventListener: () => {} },
+    window: { addEventListener: () => {}, ...windowOverrides },
     document: { addEventListener: () => {} },
   });
   for (const file of ['app.js', 'system.js']) {
@@ -104,5 +104,32 @@ describe('the System page reports a provider toggle that did not apply', () => {
     await page.toggleProvider({ name: 'claude', enabled: true });
 
     assert.strictEqual(page.toggleError, null, 'a successful toggle reports nothing');
+  });
+});
+
+// P12 in docs/PWA-AUDIT.md: iOS fires no install event, so copy is the only route — and copy that
+// shows up where the browser will not offer an install is worse than none.
+describe('the System page offers the install only where it is possible', () => {
+  const inside = (mode, extra = {}) => ({
+    isSecureContext: true,
+    matchMedia: (query) => ({ matches: query === `(display-mode: ${mode})` }),
+    ...extra,
+  });
+  const hint = (overrides) => loadSystem(answer(200, { providers: [] }), overrides).installHint;
+
+  it('offers it in a secure browser tab', () => {
+    assert.strictEqual(hint(inside('browser')), true);
+  });
+
+  it('stays quiet once the app already runs standalone', () => {
+    assert.strictEqual(hint(inside('standalone')), false);
+  });
+
+  it('stays quiet on iOS, where standalone is a navigator flag and not a media query', () => {
+    assert.strictEqual(hint(inside('browser', { navigator: { standalone: true } })), false);
+  });
+
+  it('stays quiet on an insecure origin, where no browser will offer it at all', () => {
+    assert.strictEqual(hint({ ...inside('browser'), isSecureContext: false }), false);
   });
 });

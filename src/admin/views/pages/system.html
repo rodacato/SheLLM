@@ -5,6 +5,13 @@
           <h2 class="text-xl font-bold font-headline tracking-tighter text-on-surface">SYSTEM<span class="text-primary-container">_</span></h2>
         </header>
 
+        <template x-if="installHint">
+          <p class="text-xs font-mono text-outline mb-6">
+            This dashboard installs as an app — use your browser's install or &ldquo;Add to home
+            screen&rdquo;. It runs in its own window and still needs the network.
+          </p>
+        </template>
+
         <!-- ================= BUILD ================= -->
         <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase block mb-3">Build</span>
         <div class="bg-surface-container p-5 mb-8">
