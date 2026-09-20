@@ -14,10 +14,11 @@ const adminStatsRouter = require('./admin/stats');
 const adminProvidersRouter = require('./admin/providers');
 const adminUpdateRouter = require('./admin/update');
 const { dashboardHtml } = require('./admin/views');
-const { sendApiError, invalidRequest } = require('./errors');
+const { sendApiError, invalidRequest, notFound } = require('./errors');
 const path = require('node:path');
 
 const app = express();
+app.disable('x-powered-by');
 const auth = createAuthMiddleware();
 
 // Every static file is served relative to this root rather than by absolute path: send() refuses
@@ -133,6 +134,12 @@ function adminSecurityHeaders(req, res, next) {
 // The dashboard page itself requires auth
 app.get('/admin/dashboard/', adminAuth, adminSecurityHeaders, (_req, res) => {
   res.type('html').send(dashboardHtml());
+});
+
+// Last: an unmatched route reaches Express's own handler otherwise, which answers HTML to a
+// caller that asked for JSON.
+app.use((req, res) => {
+  sendApiError(req, res, notFound(req.method, req.path.slice(0, 100)), req.requestId);
 });
 
 module.exports = app;

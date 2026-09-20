@@ -14,6 +14,10 @@ function rateLimited(message, retryAfter) {
   return appError(429, 'rate_limited', message, retryAfter ? { retry_after: retryAfter } : undefined);
 }
 
+function notFound(method, routePath) {
+  return appError(404, 'not_found', `No route for ${method} ${routePath}`);
+}
+
 function modelNotFound(model) {
   return appError(404, 'model_not_found', `The model ${model} does not exist or you do not have access to it`);
 }
@@ -70,6 +74,7 @@ const CODE_TO_TYPE = {
   auth_required: 'authentication_error',
   rate_limited: 'rate_limit_error',
   model_not_found: 'invalid_request_error',
+  not_found: 'invalid_request_error',
 };
 
 function sendOpenAIError(res, err) {
@@ -89,6 +94,7 @@ const CODE_TO_ANTHROPIC_TYPE = {
   auth_required: 'authentication_error',
   rate_limited: 'rate_limit_error',
   model_not_found: 'not_found_error',
+  not_found: 'not_found_error',
 };
 
 function sendAnthropicError(res, err) {
@@ -115,6 +121,7 @@ module.exports = {
   authRequired,
   rateLimited,
   modelNotFound,
+  notFound,
   cliFailed,
   providerUnavailable,
   timeout,
