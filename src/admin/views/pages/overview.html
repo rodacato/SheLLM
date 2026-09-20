@@ -32,8 +32,8 @@
               <span class="text-[10px] text-outline" x-text="stats.quota.note"></span>
             </div>
 
-            <div x-show="stats.quota.limited" class="bg-[#3a1d1d] border-l-2 border-[#ef4444] p-4 mb-4">
-              <span class="font-headline font-bold text-[#ffb4ab] text-sm">USAGE LIMIT HIT</span>
+            <div x-show="stats.quota.limited" class="bg-[#3a1d1d] border-l-2 border-status-fail p-4 mb-4">
+              <span class="font-headline font-bold text-error text-sm">USAGE LIMIT HIT</span>
               <span class="text-xs font-mono text-on-surface-variant ml-2"
                 x-text="stats.quota.limited ? stats.quota.limited.provider + ' · since ' + formatTime(stats.quota.limited.since) : ''"></span>
             </div>
@@ -109,7 +109,7 @@
               <div>
                 <span class="text-[10px] font-mono text-outline uppercase block">Pending</span>
                 <span class="font-headline font-bold text-lg"
-                  :class="(health?.queue?.pending ?? 0) > 0 ? 'text-[#ffb800]' : 'text-white'"
+                  :class="(health?.queue?.pending ?? 0) > 0 ? 'text-status-warn' : 'text-white'"
                   x-text="health?.queue?.pending ?? 0"></span>
               </div>
               <div>
@@ -120,7 +120,7 @@
             </div>
             <div class="bg-surface-container-lowest h-1.5">
               <div class="h-1.5 transition-all duration-300"
-                :class="(health?.queue?.pending ?? 0) > 0 ? 'bg-[#ffb800]' : 'bar-brand'"
+                :class="(health?.queue?.pending ?? 0) > 0 ? 'bg-status-warn' : 'bar-brand'"
                 :style="'width:' + queueSaturation() + '%'"></div>
             </div>
             <p class="text-[10px] font-mono text-outline mt-2" x-text="queueSaturation() + '% of concurrency in use'"></p>
@@ -141,6 +141,10 @@
                 </div>
               </template>
             </div>
+            <p x-show="!providersLoaded" class="text-outline text-xs font-mono">Loading providers...</p>
+            <p x-show="providersLoaded && providersError" class="text-status-fail text-xs font-mono"
+              x-text="'Could not read providers — ' + providersError + '.'"></p>
+            <p x-show="providersLoaded && !providersError && providers.length === 0" class="text-outline text-xs font-mono">No providers configured.</p>
           </div>
         </div>
 
@@ -160,7 +164,7 @@
                     <div class="flex items-baseline justify-between mb-2">
                       <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">p95</p>
                       <span x-show="stats.latency.delta_p95_pct !== null" class="text-[10px] font-mono"
-                        :class="stats.latency.delta_p95_pct > 0 ? 'text-[#ffb800]' : 'text-[#22c55e]'"
+                        :class="stats.latency.delta_p95_pct > 0 ? 'text-status-warn' : 'text-status-ok'"
                         x-text="(stats.latency.delta_p95_pct > 0 ? '↑' : '↓') + Math.abs(stats.latency.delta_p95_pct) + '%'"></span>
                     </div>
                     <p class="text-2xl font-headline font-black text-white" x-text="formatDuration(stats.latency.total_ms.p95)"></p>
@@ -183,7 +187,7 @@
                     <span class="text-[10px] font-mono text-outline" x-text="lagVerdict()"></span>
                   </div>
                   <div class="flex h-6 mb-2">
-                    <div class="bg-[#ffb800] flex items-center justify-center" :style="'width:' + layerPct('queued_ms') + '%'">
+                    <div class="bg-status-warn flex items-center justify-center" :style="'width:' + layerPct('queued_ms') + '%'">
                       <span x-show="layerPct('queued_ms') > 12" class="text-[10px] font-mono text-black" x-text="'queue ' + formatDuration(stats.latency.queued_ms.p95)"></span>
                     </div>
                     <div class="bar-brand flex items-center justify-center" :style="'width:' + layerPct('execution_ms') + '%'">
@@ -228,7 +232,8 @@
                         <td class="py-2 text-right text-white" x-text="m.requests"></td>
                         <td class="py-2 text-right text-outline" x-text="formatDuration(m.avg_duration_ms)"></td>
                         <td class="py-2 text-right text-outline" x-text="(m.tokens || 0).toLocaleString()"></td>
-                        <td class="py-2 text-right text-outline" x-text="formatCost(m.cost_usd)"></td>
+                        <td class="py-2 text-right" :class="m.priced_requests > 0 ? 'text-white' : 'text-outline'"
+                          x-text="m.priced_requests > 0 ? formatCost(m.cost_usd) : 'not priced'"></td>
                       </tr>
                     </template>
                   </tbody>
@@ -253,7 +258,7 @@
                       <tr class="border-t border-outline-variant/30">
                         <td class="py-2 text-on-surface-variant truncate max-w-[8rem]" x-text="c.client_name"></td>
                         <td class="py-2 text-right text-white" x-text="c.requests"></td>
-                        <td class="py-2 text-right" :class="c.errors > 0 ? 'text-[#ffb800]' : 'text-outline'" x-text="c.errors"></td>
+                        <td class="py-2 text-right" :class="c.errors > 0 ? 'text-status-warn' : 'text-outline'" x-text="c.errors"></td>
                         <td class="py-2 text-right text-outline" x-text="formatCost(c.cost_usd)"></td>
                         <td class="py-2 text-right text-outline" x-text="formatTime(c.last_seen_at)"></td>
                       </tr>
@@ -296,7 +301,7 @@
                       class="border-t border-outline-variant/20 cursor-pointer hover:bg-surface-container-high transition-colors duration-100">
                       <td class="py-2 text-outline whitespace-nowrap" x-text="formatTime(row.last_seen_at)"></td>
                       <td class="py-2 font-bold"
-                        :class="row.status < 500 ? 'text-[#ffb800]' : 'text-[#ef4444]'"
+                        :class="row.status < 500 ? 'text-status-warn' : 'text-status-fail'"
                         x-text="row.status"></td>
                       <td class="py-2 text-on-surface-variant" x-text="row.error_code"></td>
                       <td class="py-2 text-on-surface-variant" x-text="row.client_name"></td>
@@ -311,5 +316,7 @@
           </div>
         </template>
         <p x-show="loading && !stats" class="text-outline text-sm font-mono">Loading stats...</p>
+        <p x-show="!loading && !stats" class="text-status-fail text-sm font-mono"
+          x-text="'Could not read stats — ' + (statsError || 'the gateway did not answer') + '.'"></p>
 
       </div>

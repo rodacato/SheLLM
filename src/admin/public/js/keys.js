@@ -4,6 +4,7 @@ function keysPage() {
   return {
     keys: [],
     loading: true,
+    loadError: null,
     showCreateModal: false,
     newKeyResult: null,
     createForm: { name: '', rpm: 10, models: '', expires_at: '', description: '' },
@@ -11,29 +12,32 @@ function keysPage() {
     editForm: { rpm: 10, models: '', expires_at: '', description: '' },
     usagePeriod: '7d',
     auditLogs: [],
+    auditError: null,
     showAudit: false,
 
     async fetchKeys() {
       this.loading = true;
       try {
-        const res = await apiFetch(`${API_BASE}/keys`);
-        if (res.ok) {
-          const data = await res.json();
-          this.keys = data.keys;
-          this.usagePeriod = data.usage_period || '7d';
-        }
-      } catch { /* ignore */ }
+        const data = await apiRead(`${API_BASE}/keys`);
+        this.keys = data.keys;
+        this.usagePeriod = data.usage_period || '7d';
+        this.loadError = null;
+      } catch (err) {
+        this.keys = [];
+        this.loadError = err.message;
+      }
       this.loading = false;
     },
 
     async fetchAuditLogs() {
       try {
-        const res = await apiFetch(`${API_BASE}/audit?limit=50`);
-        if (res.ok) {
-          const data = await res.json();
-          this.auditLogs = data.logs;
-        }
-      } catch { /* ignore */ }
+        const data = await apiRead(`${API_BASE}/audit?limit=50`);
+        this.auditLogs = data.logs;
+        this.auditError = null;
+      } catch (err) {
+        this.auditLogs = [];
+        this.auditError = err.message;
+      }
     },
 
     async createKey() {
@@ -124,35 +128,45 @@ function keysPage() {
     async toggleActive(key) {
       const newActive = key.active ? 0 : 1;
       try {
-        await apiFetch(`${API_BASE}/keys/${key.id}`, {
+        const res = await apiFetch(`${API_BASE}/keys/${key.id}`, {
           method: 'PATCH',
           body: JSON.stringify({ active: newActive }),
         });
+        if (!res.ok) {
+          const err = await res.json();
+          return alert(err.message || 'Failed to update key');
+        }
         await this.fetchKeys();
         await this.fetchAuditLogs();
-      } catch { /* ignore */ }
+      } catch { alert('Network error'); }
     },
 
     async rotateKey(key) {
       if (!confirm(`Rotate key for "${key.name}"? The old key will stop working immediately.`)) return;
       try {
         const res = await apiFetch(`${API_BASE}/keys/${key.id}/rotate`, { method: 'POST' });
-        if (res.ok) {
-          const data = await res.json();
-          this.newKeyResult = { ...data.key, name: key.name };
-          await this.fetchKeys();
-          await this.fetchAuditLogs();
+        if (!res.ok) {
+          const err = await res.json();
+          return alert(err.message || 'Failed to rotate key');
         }
-      } catch { /* ignore */ }
+        const data = await res.json();
+        this.newKeyResult = { ...data.key, name: key.name };
+        await this.fetchKeys();
+        await this.fetchAuditLogs();
+      } catch { alert('Network error'); }
     },
 
     async deleteKey(key) {
       if (!confirm(`Delete key "${key.name}"? This cannot be undone.`)) return;
       try {
-        await apiFetch(`${API_BASE}/keys/${key.id}`, { method: 'DELETE' });
+        const res = await apiFetch(`${API_BASE}/keys/${key.id}`, { method: 'DELETE' });
+        if (!res.ok) {
+          const err = await res.json();
+          return alert(err.message || 'Failed to delete key');
+        }
         await this.fetchKeys();
         await this.fetchAuditLogs();
-      } catch { /* ignore */ }
+      } catch { alert('Network error'); }
     },
 
     isExpired(key) {

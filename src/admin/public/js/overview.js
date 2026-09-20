@@ -1,17 +1,22 @@
 /* global Alpine */
-const STATUS_COLORS = { ok: '#22c55e', client: '#ffb800', server: '#ef4444' };
+// Chart.js takes colour values, not classes, so it reads the same custom properties the
+// Tailwind tokens are built from instead of keeping a second copy of the scale.
+const statusVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
 function statusColor(status) {
-  if (status < 400) return STATUS_COLORS.ok;
-  return status < 500 ? STATUS_COLORS.client : STATUS_COLORS.server;
+  if (status < 400) return statusVar('--status-ok');
+  return status < 500 ? statusVar('--status-warn') : statusVar('--status-fail');
 }
 
 function overviewPage() {
   return {
     stats: null,
+    statsError: null,
     period: '24h',
     loading: true,
     providers: [],
+    providersError: null,
+    providersLoaded: false,
     _chart: null,
     _timelineChart: null,
     _refreshInterval: null,
@@ -19,15 +24,15 @@ function overviewPage() {
     async fetchStats() {
       this.loading = true;
       try {
-        const res = await apiFetch(`${API_BASE}/stats?period=${this.period}`);
-        if (res.ok) {
-          this.stats = await res.json();
-          this.$nextTick(() => {
-            this.renderScatter();
-            this.renderTimeline();
-          });
-        }
-      } catch { /* ignore */ }
+        this.stats = await apiRead(`${API_BASE}/stats?period=${this.period}`);
+        this.statsError = null;
+        this.$nextTick(() => {
+          this.renderScatter();
+          this.renderTimeline();
+        });
+      } catch (err) {
+        this.statsError = err.message;
+      }
       this.loading = false;
     },
 
@@ -97,8 +102,8 @@ function overviewPage() {
             {
               label: 'requests',
               data: rows.map((r) => r.requests),
-              borderColor: STATUS_COLORS.ok,
-              backgroundColor: 'rgba(34,197,94,0.12)',
+              borderColor: statusVar('--status-ok'),
+              backgroundColor: statusVar('--status-ok-fill'),
               fill: true,
               tension: 0.3,
               pointRadius: 0,
@@ -107,7 +112,7 @@ function overviewPage() {
             {
               label: 'errors',
               data: rows.map((r) => r.errors),
-              borderColor: STATUS_COLORS.server,
+              borderColor: statusVar('--status-fail'),
               backgroundColor: 'transparent',
               tension: 0.3,
               pointRadius: 0,
@@ -211,12 +216,13 @@ function overviewPage() {
 
     async fetchProviders() {
       try {
-        const res = await apiFetch(`${API_BASE}/providers`);
-        if (res.ok) {
-          const data = await res.json();
-          this.providers = data.providers;
-        }
-      } catch { /* ignore */ }
+        const data = await apiRead(`${API_BASE}/providers`);
+        this.providers = data.providers || [];
+        this.providersError = null;
+      } catch (err) {
+        this.providersError = err.message;
+      }
+      this.providersLoaded = true;
     },
 
     async changePeriod(p) {

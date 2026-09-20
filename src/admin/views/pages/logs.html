@@ -3,14 +3,20 @@
 
         <header class="mb-8 flex items-center gap-4">
           <h2 class="text-3xl font-bold font-headline tracking-tight text-on-surface">Request Logs</h2>
-          <span class="px-2.5 py-1 bg-surface-container-high text-outline text-[10px] uppercase tracking-widest font-headline font-bold">Live Feed</span>
+          <button @click="fetchLogs(); fetchStats()" :disabled="loading"
+            :class="loading ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:text-on-surface'"
+            class="px-2.5 py-1 bg-surface-container-high text-[10px] uppercase tracking-widest font-headline font-bold flex items-center gap-1.5 transition-colors duration-100"
+            title="Re-read the table">
+            <span class="material-symbols-outlined text-sm">refresh</span>
+            <span x-text="loading ? 'Reading' : 'Refresh'"></span>
+          </button>
         </header>
 
         <!-- Filters -->
         <div class="flex flex-wrap gap-4 mb-6 items-end">
           <div>
             <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Provider</label>
-            <select x-model="filterProvider" @change="applyFilters()" class="bg-[#2e3b44] border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container rounded-lg">
+            <select x-model="filterProvider" @change="applyFilters()" class="bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
               <option value="">All Providers</option>
               <option value="claude">claude</option>
               <option value="codex">codex</option>
@@ -18,7 +24,7 @@
           </div>
           <div>
             <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Status</label>
-            <select x-model="filterStatus" @change="applyFilters()" class="bg-[#2e3b44] border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container rounded-lg">
+            <select x-model="filterStatus" @change="applyFilters()" class="bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
               <option value="">All Status</option>
               <option value="2">2xx (Success)</option>
               <option value="4">4xx (Client Err)</option>
@@ -27,7 +33,7 @@
           </div>
           <div>
             <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Client</label>
-            <select x-model="filterClient" @change="applyFilters()" class="bg-[#2e3b44] border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container rounded-lg">
+            <select x-model="filterClient" @change="applyFilters()" class="bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
               <option value="">All Clients</option>
               <template x-for="name in clientOptions" :key="name">
                 <option :value="name" x-text="name"></option>
@@ -36,7 +42,7 @@
           </div>
           <div>
             <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Model</label>
-            <select x-model="filterModel" @change="applyFilters()" class="bg-[#2e3b44] border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container rounded-lg">
+            <select x-model="filterModel" @change="applyFilters()" class="bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
               <option value="">All Models</option>
               <template x-for="name in modelOptions" :key="name">
                 <option :value="name" x-text="name"></option>
@@ -45,14 +51,14 @@
           </div>
           <button x-show="hasFilters" @click="clearFilters()"
             class="self-end pb-2 text-[11px] font-mono text-primary-container hover:underline">clear filters</button>
-          <div class="text-[11px] font-mono text-outline/70 italic self-end pb-2" x-text="total + ' total logs found'"></div>
+          <div x-show="!loadError" class="text-[11px] font-mono text-outline/70 italic self-end pb-2" x-text="total + ' total logs found'"></div>
           <div class="ml-auto flex gap-2 self-end">
             <button x-show="total > 0" @click="exportCSV()"
               class="px-4 py-2 text-xs font-headline font-bold uppercase text-primary-container border border-primary-container/40 hover:bg-primary-container/10 transition-colors duration-100">
               Export CSV
             </button>
             <button x-show="total > 0" @click="clearLogs()"
-              class="px-4 py-2.5 text-xs font-headline font-bold uppercase tracking-widest text-[#ef4444] bg-[#3b1a1a] hover:bg-[#4a2020] transition-colors duration-100 flex items-center gap-2">
+              class="px-4 py-2.5 text-xs font-headline font-bold uppercase tracking-widest text-status-fail bg-[#3b1a1a] hover:bg-[#4a2020] transition-colors duration-100 flex items-center gap-2">
               <span class="material-symbols-outlined text-sm">filter_list_off</span>
               Clear All
             </button>
@@ -60,10 +66,10 @@
         </div>
 
         <!-- Table -->
-        <div class="bg-[#2e3b44] rounded-[10px] overflow-hidden">
+        <div class="bg-surface-container overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
-              <thead class="bg-[#1a1e21]">
+              <thead class="bg-surface-container-lowest">
                 <tr>
                   <th class="px-6 py-4 text-left text-[0.7rem] font-headline font-bold uppercase tracking-[0.08em] text-outline">Time</th>
                   <th class="px-6 py-4 text-left text-[0.7rem] font-headline font-bold uppercase tracking-[0.08em] text-outline">Status</th>
@@ -76,17 +82,19 @@
                   <th class="px-6 py-4 text-left text-[0.7rem] font-headline font-bold uppercase tracking-[0.08em] text-outline">Cost</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-[#2a3038]">
+              <tbody class="divide-y divide-outline-variant/20">
                 <tr x-show="logs.length === 0">
-                  <td colspan="9" class="px-6 py-10 text-center text-outline font-mono text-sm" x-text="loading ? 'Loading...' : 'No logs found'"></td>
+                  <td colspan="9" class="px-6 py-10 text-center font-mono text-sm"
+                    :class="loadError && !loading ? 'text-error' : 'text-outline'"
+                    x-text="loading ? 'Loading...' : (loadError ? 'Could not read the logs — ' + loadError : 'No logs found')"></td>
                 </tr>
                 <template x-for="log in logs" :key="log.id">
-                  <tr @click="toggleRow(log.id)" class="hover:bg-[#1a1e21] transition-colors duration-100 cursor-pointer">
+                  <tr @click="toggleRow(log.id)" class="hover:bg-surface-container-high transition-colors duration-100 cursor-pointer">
                     <td class="px-6 py-4 text-on-surface font-mono text-sm whitespace-nowrap" x-text="formatTime(log.created_at)"></td>
                     <td class="px-6 py-4">
                       <span class="px-2 py-0.5 text-[10px] font-bold font-mono"
                         :class="statusBadgeClass(log.status)" x-text="log.status"></span>
-                      <span x-show="log.error_code" class="block mt-1 text-[10px] font-mono text-[#ffb4ab]" x-text="log.error_code"></span>
+                      <span x-show="log.error_code" class="block mt-1 text-[10px] font-mono text-error" x-text="log.error_code"></span>
                     </td>
                     <td class="px-6 py-4 font-mono text-[11px] whitespace-nowrap">
                       <span class="text-outline" x-text="log.method || '-'"></span>
@@ -97,7 +105,7 @@
                     <td class="px-6 py-4 text-sm font-headline text-primary-container" x-text="log.model || '-'"></td>
                     <td class="px-6 py-4 font-mono text-sm">
                       <span class="text-white" x-text="formatDuration(log.duration_ms)"></span>
-                      <span x-show="log.queued_ms" class="text-[10px] text-[#ffb800] block" x-text="'(' + formatDuration(log.queued_ms) + ' queued)'"></span>
+                      <span x-show="log.queued_ms" class="text-[10px] text-status-warn block" x-text="'(' + formatDuration(log.queued_ms) + ' queued)'"></span>
                     </td>
                     <td class="px-6 py-4 text-on-surface font-mono text-sm" x-text="log.tokens != null ? log.tokens.toLocaleString() : '-'"></td>
                     <td class="px-6 py-4 font-mono text-sm font-bold"
@@ -106,7 +114,7 @@
                   </tr>
                 </template>
                 <template x-for="log in logs" :key="'detail-' + log.id">
-                  <tr x-show="expandedId === log.id" class="bg-[#1a1e21]">
+                  <tr x-show="expandedId === log.id" class="bg-surface-container-lowest">
                     <td colspan="9" class="px-6 py-4">
                       <dl class="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] font-mono">
                         <div>
@@ -154,12 +162,12 @@
           </div>
 
           <!-- Pagination (inside table container) -->
-          <div class="px-6 py-4 bg-[#1a1e21]/50 flex items-center justify-between border-t border-[#2a3038]">
+          <div class="px-6 py-4 bg-surface-container-lowest/50 flex items-center justify-between border-t border-outline-variant/20">
             <!-- Page size selector -->
             <div class="flex items-center gap-2">
               <span class="text-outline text-[10px] uppercase tracking-wider font-headline">Show</span>
               <select @change="changeLimit($event.target.value)" :value="limit"
-                class="bg-[#2e3b44] border border-outline-variant/30 text-on-surface text-xs font-mono px-2 py-1 focus:outline-none focus:border-primary-container rounded">
+                class="bg-surface-container border border-outline-variant/30 text-on-surface text-xs font-mono px-2 py-1 focus:outline-none focus:border-primary-container">
                 <option value="25">25</option>
                 <option value="50">50</option>
                 <option value="100">100</option>
@@ -215,6 +223,8 @@
 
         <!-- Stats Summary -->
         <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mt-6">
+          <p x-show="statsError" x-cloak class="md:col-span-5 bg-surface-container-low p-4 font-mono text-xs text-error"
+            x-text="'Could not read the stats — ' + statsError"></p>
           <div class="md:col-span-2 bg-surface-container-low p-6 border-l-4 border-primary-container">
             <p class="text-[10px] text-outline uppercase tracking-widest mb-2 font-headline">Error Rate (Last 60m)</p>
             <div class="flex items-end gap-4">
@@ -223,7 +233,7 @@
                 <div class="absolute inset-0 flex items-end gap-0.5 px-1" x-show="stats && stats.timeline">
                   <template x-for="(bucket, i) in (stats ? stats.timeline.slice(-15) : [])" :key="i">
                     <div class="flex-1 min-w-[3px]"
-                      :class="bucket.errors > 0 ? 'bg-[#ef4444]' : 'bg-outline/20'"
+                      :class="bucket.errors > 0 ? 'bg-status-fail' : 'bg-outline/20'"
                       :style="'height: ' + Math.max(8, Math.min(100, (bucket.requests / Math.max(...(stats.timeline.slice(-15).map(b => b.requests || 1)))) * 100)) + '%'">
                     </div>
                   </template>

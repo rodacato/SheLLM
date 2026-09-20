@@ -94,6 +94,7 @@ function byModel(interval) {
       COALESCE(upstream_model, model, '(unknown)') AS model,
       COUNT(*) AS requests,
       COALESCE(SUM(tokens), 0) AS tokens,
+      SUM(CASE WHEN cost_usd IS NOT NULL THEN 1 ELSE 0 END) AS priced_requests,
       COALESCE(ROUND(SUM(cost_usd), 4), 0) AS cost_usd,
       COALESCE(ROUND(AVG(duration_ms)), 0) AS avg_duration_ms,
       SUM(CASE WHEN status >= 400 THEN 1 ELSE 0 END) AS errors

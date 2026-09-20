@@ -65,10 +65,12 @@ module.exports = [
         EventSource: 'readonly',
         sessionStorage: 'readonly',
         performance: 'readonly',
+        getComputedStyle: 'readonly',
         // Shared app globals (loaded via separate <script> tags)
         API_BASE: 'readonly',
         HEALTH_URL: 'readonly',
         apiFetch: 'readonly',
+        apiRead: 'readonly',
         formatUptime: 'readonly',
         formatDuration: 'readonly',
         formatCost: 'readonly',
