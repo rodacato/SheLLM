@@ -63,6 +63,17 @@ describe('a panel looks the same on every page', () => {
   });
 });
 
+describe('a panel is as tall as what it holds', () => {
+  // CSS grid stretches its items, so the Playground's response card was the form's height
+  // whether or not an answer had arrived.
+  it('lets the Playground response card hug its content', () => {
+    const text = fs.readFileSync(path.join(PAGES, 'playground.html'), 'utf8');
+    const grid = /<div class="(grid[^"]*lg:grid-cols-2[^"]*)"/.exec(text);
+    assert.ok(grid, 'the two-column grid is gone — this check cannot say anything');
+    assert.match(grid[1], /items-start/, 'the response card stretches to the form again');
+  });
+});
+
 describe('a metric value is not a heading', () => {
   it('gives each page exactly one <h2>, its title', () => {
     for (const [file, text] of pages()) {
