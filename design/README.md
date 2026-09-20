@@ -43,9 +43,13 @@ there with its copy. Read band 2's brief for the list.
 
 The flow and the kit are both at **0.3.0**, and the flow now draws the type scale it mirrors:
 **D45 is closed**, so no node is a pixel off the code except the 13s on Sign in, which are correct
-because that page sets its own `.8rem`. Drawing the band opened **D46** — System's Concurrency card
-renders a health read that never happened as `0 / 0` while the sidebar beside it says
-`UNREACHABLE`.
+because that page sets its own `.8rem`.
+
+Drawing the band opened **D46** and the same day closed it, which is the clearest argument this
+folder has for the method: System's Concurrency card rendered a health read that never happened as
+`0 / 0` — indistinguishable from an idle gateway — while the sidebar beside it said `UNREACHABLE`.
+Reading the file had not caught it in two audits; putting the card and the sidebar on one artboard
+did. The code now guards the figure, and the artboard was re-drawn to the fix.
 
 **Chart interiors are drawn since 2026-09-20, and the reason they were not is worth keeping.** The
 refusal was never "the canvas cannot draw a chart" — it was that nobody had seen the shipped one,
