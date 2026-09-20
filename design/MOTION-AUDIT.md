@@ -9,6 +9,23 @@
 > [`DESIGN-AUDIT.md`](DESIGN-AUDIT.md)'s, which closed with motion explicitly **not judged**.
 > This pass is the one it deferred.
 
+## Status — 2026-09-20, branch `design/pen-remirror`
+
+| | Landed | Open |
+|---|---|---|
+| **Pass 1** | D25 D21 | D23 D24 D26 D27 · *(D22 out of scope)* |
+| **Pass 2** | — | P1 |
+| **Bugs** | — | D29 · *(D28 out of scope)* |
+
+The two that landed are the two the *Suggested order* puts first: `prefers-reduced-motion`, which
+is a requirement rather than a preference, and the queue bar, which removed the product's only
+`transition: all`. Both green on `npm test` and `npm run lint`.
+
+**The two tokens and the easing rule are still unnamed**, so D23 and D24 stay open — declaring
+them is what turns those two into a one-line application rather than two more judgement calls,
+and it is the next thing worth doing here. D21 used Tailwind's own `ease-out`, which is exactly
+the `enter` curve proposed below; nothing about it has to change when the tokens land.
+
 ## Method — what was actually observed
 
 Every timing below was **read from the browser**, not from a class name. The pass logged in,
