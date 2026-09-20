@@ -22,13 +22,13 @@ const nowMarker = {
     ctx.save();
     ctx.setLineDash([3, 3]);
     ctx.lineWidth = 1;
-    ctx.strokeStyle = statusVar('--outline') || '#849397';
+    ctx.strokeStyle = statusVar('--outline');
     ctx.beginPath();
     ctx.moveTo(x, chartArea.top);
     ctx.lineTo(x, chartArea.bottom);
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = statusVar('--outline') || '#849397';
+    ctx.fillStyle = statusVar('--outline');
     ctx.font = '10px monospace';
     ctx.textAlign = 'right';
     ctx.fillText('now', x - 4, chartArea.top + 9);
@@ -36,7 +36,7 @@ const nowMarker = {
   },
 };
 
-const AXIS_TICKS = { color: '#849397', font: { size: 10, family: 'monospace' } };
+const axisTicks = () => ({ color: statusVar('--outline'), font: { size: 10, family: 'monospace' } });
 
 function overviewPage() {
   return {
@@ -154,7 +154,7 @@ function overviewPage() {
             nowMarker: { at: domain.now },
             legend: {
               display: true,
-              labels: { ...AXIS_TICKS, boxWidth: 10 },
+              labels: { ...axisTicks(), boxWidth: 10 },
             },
             tooltip: {
               callbacks: { title: (items) => formatTime(new Date(items[0].parsed.x)) },
@@ -165,7 +165,7 @@ function overviewPage() {
             y: {
               beginAtZero: true,
               grid: { color: 'rgba(132,147,151,0.1)' },
-              ticks: { ...AXIS_TICKS, precision: 0 },
+              ticks: { ...axisTicks(), precision: 0 },
             },
           },
         },
@@ -223,7 +223,7 @@ function overviewPage() {
             y: {
               beginAtZero: true,
               grid: { color: 'rgba(132,147,151,0.1)' },
-              ticks: { ...AXIS_TICKS, callback: (value) => formatDuration(value) },
+              ticks: { ...axisTicks(), callback: (value) => formatDuration(value) },
             },
           },
         },
@@ -263,7 +263,7 @@ function overviewPage() {
         max: domain.max,
         grid: { color: 'rgba(132,147,151,0.1)' },
         ticks: {
-          ...AXIS_TICKS,
+          ...axisTicks(),
           maxTicksLimit: 7,
           autoSkip: true,
           callback: (value) => (multiDay ? formatDayHour(value) : formatHourMinute(value)),
