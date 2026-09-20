@@ -4,6 +4,7 @@ const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const { compose } = require('../../src/admin/views');
 
 const PUBLIC = path.join(__dirname, '../../src/admin/public');
 
@@ -11,7 +12,7 @@ function dashboardSources() {
   const js = fs.readdirSync(path.join(PUBLIC, 'js'))
     .filter((f) => f.endsWith('.js'))
     .map((f) => [`js/${f}`, fs.readFileSync(path.join(PUBLIC, 'js', f), 'utf8')]);
-  return [['index.html', fs.readFileSync(path.join(PUBLIC, 'index.html'), 'utf8')], ...js];
+  return [['index.html', compose()], ...js];
 }
 
 describe('dashboard component scope', () => {

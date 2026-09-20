@@ -1,0 +1,315 @@
+      <!-- OVERVIEW PAGE -->
+      <div x-show="page === 'overview'" x-data="overviewPage()" x-effect="if (page === 'overview') { if (!stats) fetchStats(); if (providers.length === 0) fetchProviders(); startAutoRefresh(); } else { stopAutoRefresh(); }">
+
+        <header class="mb-10">
+          <div class="flex items-baseline justify-between gap-4 flex-wrap">
+            <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">OVERVIEW<span class="text-primary-container">_</span></h2>
+            <button @click="navigate('system')" x-show="health?.build"
+              class="text-[11px] font-mono text-outline hover:text-primary-container transition-colors duration-100">
+              <span x-text="'v' + (health?.build?.version || '?')"></span>
+              <span class="text-outline/60" x-text="health?.build?.commit ? '· ' + health.build.commit : ''"></span>
+              <span class="ml-1">→</span>
+            </button>
+          </div>
+          <p class="text-on-surface-variant">System health, provider status, and request metrics at a glance.</p>
+        </header>
+
+        <!-- Period filter -->
+        <div class="flex items-center gap-2 mb-6">
+          <template x-for="p in ['24h', '7d', '30d']" :key="p">
+            <button @click="changePeriod(p)"
+              :class="period === p ? 'bg-primary-container text-on-primary font-bold' : 'bg-surface-container text-outline hover:text-white hover:bg-surface-container-high'"
+              class="px-4 py-1.5 text-xs font-headline uppercase tracking-wide transition-colors duration-100"
+              x-text="p"></button>
+          </template>
+        </div>
+
+        <!-- ================= CAPACITY ================= -->
+        <template x-if="stats && stats.quota">
+          <div class="mb-8">
+            <div class="flex items-baseline gap-3 mb-3">
+              <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Capacity</span>
+              <span class="text-[10px] text-outline" x-text="stats.quota.note"></span>
+            </div>
+
+            <div x-show="stats.quota.limited" class="bg-[#3a1d1d] border-l-2 border-[#ef4444] p-4 mb-4">
+              <span class="font-headline font-bold text-[#ffb4ab] text-sm">USAGE LIMIT HIT</span>
+              <span class="text-xs font-mono text-on-surface-variant ml-2"
+                x-text="stats.quota.limited ? stats.quota.limited.provider + ' · since ' + formatTime(stats.quota.limited.since) : ''"></span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <template x-for="w in stats.quota.windows" :key="w.hours">
+                <div class="bg-surface-container p-5">
+                  <div class="flex items-baseline justify-between mb-3">
+                    <span class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline"
+                      x-text="'Last ' + (w.hours >= 24 ? (w.hours / 24) + 'd' : w.hours + 'h')"></span>
+                    <span class="text-xs font-mono text-primary-container"
+                      x-text="'$' + w.cost_per_hour + '/hr · ' + w.requests_per_minute + ' rpm'"></span>
+                  </div>
+                  <div class="grid grid-cols-3 gap-4">
+                    <div>
+                      <p class="text-[10px] font-mono text-outline uppercase mb-1">Spent</p>
+                      <p class="text-xl font-headline font-black text-white" x-text="formatCost(w.cost_usd)"></p>
+                    </div>
+                    <div>
+                      <p class="text-[10px] font-mono text-outline uppercase mb-1">Tokens</p>
+                      <p class="text-xl font-headline font-black text-white" x-text="(w.tokens || 0).toLocaleString()"></p>
+                    </div>
+                    <div>
+                      <p class="text-[10px] font-mono text-outline uppercase mb-1">Requests</p>
+                      <p class="text-xl font-headline font-black text-white" x-text="w.requests"></p>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <div class="bg-surface-container p-5">
+              <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-4">By Subscription</p>
+              <table class="w-full text-xs font-mono">
+                <thead>
+                  <tr class="text-outline text-[10px] uppercase tracking-wider">
+                    <th class="text-left font-normal pb-2">Provider</th>
+                    <th class="text-right font-normal pb-2">Requests</th>
+                    <th class="text-right font-normal pb-2">Tokens</th>
+                    <th class="text-right font-normal pb-2">Cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="p in stats.quota.by_provider" :key="p.provider">
+                    <tr class="border-t border-outline-variant/30">
+                      <td class="py-2 text-on-surface-variant" x-text="p.provider"></td>
+                      <td class="py-2 text-right text-outline" x-text="p.requests"></td>
+                      <td class="py-2 text-right text-outline" x-text="(p.tokens || 0).toLocaleString()"></td>
+                      <td class="py-2 text-right" :class="p.priced_requests > 0 ? 'text-white' : 'text-outline'"
+                        x-text="p.priced_requests > 0 ? formatCost(p.cost_usd) : 'not priced'"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </template>
+
+        <!-- ================= NOW ================= -->
+        <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase block mb-3">Now</span>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+          <div class="bg-surface-container p-5 lg:col-span-2">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Request Queue</span>
+              <span class="text-[10px] text-outline" title="CLI providers run as subprocesses. Active = running now (max concurrent). Pending = waiting in line.">[?]</span>
+            </div>
+            <div class="flex items-end gap-8 mb-3">
+              <div>
+                <span class="text-[10px] font-mono text-outline uppercase block">Active</span>
+                <span class="font-headline font-bold text-white text-lg" x-text="health?.queue?.active ?? 0"></span>
+                <span class="text-outline text-sm">/ <span x-text="health?.queue?.max_concurrent ?? 0"></span></span>
+              </div>
+              <div>
+                <span class="text-[10px] font-mono text-outline uppercase block">Pending</span>
+                <span class="font-headline font-bold text-lg"
+                  :class="(health?.queue?.pending ?? 0) > 0 ? 'text-[#ffb800]' : 'text-white'"
+                  x-text="health?.queue?.pending ?? 0"></span>
+              </div>
+              <div>
+                <span class="text-[10px] font-mono text-outline uppercase block">Streams</span>
+                <span class="font-headline font-bold text-white text-lg" x-text="health?.queue?.active_streams ?? 0"></span>
+                <span class="text-outline text-sm">/ <span x-text="health?.queue?.max_stream_concurrent ?? 0"></span></span>
+              </div>
+            </div>
+            <div class="bg-surface-container-lowest h-1.5">
+              <div class="h-1.5 transition-all duration-300"
+                :class="(health?.queue?.pending ?? 0) > 0 ? 'bg-[#ffb800]' : 'bar-brand'"
+                :style="'width:' + queueSaturation() + '%'"></div>
+            </div>
+            <p class="text-[10px] font-mono text-outline mt-2" x-text="queueSaturation() + '% of concurrency in use'"></p>
+          </div>
+
+          <div class="bg-surface-container p-5">
+            <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-3">Providers</p>
+            <div class="space-y-2">
+              <template x-for="prov in providers" :key="prov.name">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 inline-block"
+                      :class="!prov.enabled ? 'dot-gray' : (prov.installed && prov.authenticated ? 'dot-green' : (prov.installed ? 'dot-red' : 'dot-gray'))"></span>
+                    <span class="font-headline font-bold text-white text-xs" x-text="prov.name"></span>
+                  </div>
+                  <span class="text-[10px] font-mono text-outline"
+                    x-text="!prov.enabled ? 'disabled' : (prov.installed && prov.authenticated ? 'ready' : (prov.installed ? 'no auth' : 'missing'))"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <template x-if="stats">
+          <div>
+            <!-- ================= LATENCY ================= -->
+            <template x-if="stats.latency">
+              <div class="mb-8">
+                <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase block mb-3">Latency</span>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div class="bg-surface-container p-5">
+                    <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">p50</p>
+                    <p class="text-2xl font-headline font-black text-white" x-text="formatDuration(stats.latency.total_ms.p50)"></p>
+                  </div>
+                  <div class="bg-surface-container p-5">
+                    <div class="flex items-baseline justify-between mb-2">
+                      <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">p95</p>
+                      <span x-show="stats.latency.delta_p95_pct !== null" class="text-[10px] font-mono"
+                        :class="stats.latency.delta_p95_pct > 0 ? 'text-[#ffb800]' : 'text-[#22c55e]'"
+                        x-text="(stats.latency.delta_p95_pct > 0 ? '↑' : '↓') + Math.abs(stats.latency.delta_p95_pct) + '%'"></span>
+                    </div>
+                    <p class="text-2xl font-headline font-black text-white" x-text="formatDuration(stats.latency.total_ms.p95)"></p>
+                  </div>
+                  <div class="bg-surface-container p-5">
+                    <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">p99</p>
+                    <p class="text-2xl font-headline font-black text-white" x-text="formatDuration(stats.latency.total_ms.p99)"></p>
+                  </div>
+                  <div class="bg-surface-container p-5">
+                    <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">First token p50</p>
+                    <p class="text-2xl font-headline font-black text-white"
+                      x-text="stats.latency.ttft_ms.p50 !== null ? formatDuration(stats.latency.ttft_ms.p50) : '—'"></p>
+                  </div>
+                </div>
+
+                <!-- Where the time goes: the only exact split, queue vs execution -->
+                <div class="bg-surface-container p-5 mb-4">
+                  <div class="flex items-baseline justify-between mb-4">
+                    <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Where the time goes (p95)</p>
+                    <span class="text-[10px] font-mono text-outline" x-text="lagVerdict()"></span>
+                  </div>
+                  <div class="flex h-6 mb-2">
+                    <div class="bg-[#ffb800] flex items-center justify-center" :style="'width:' + layerPct('queued_ms') + '%'">
+                      <span x-show="layerPct('queued_ms') > 12" class="text-[10px] font-mono text-black" x-text="'queue ' + formatDuration(stats.latency.queued_ms.p95)"></span>
+                    </div>
+                    <div class="bar-brand flex items-center justify-center" :style="'width:' + layerPct('execution_ms') + '%'">
+                      <span x-show="layerPct('execution_ms') > 12" class="text-[10px] font-mono text-on-primary" x-text="'execution ' + formatDuration(stats.latency.execution_ms.p95)"></span>
+                    </div>
+                  </div>
+                  <div class="flex gap-6 text-[10px] font-mono text-outline">
+                    <span>queue p95 <span class="text-on-surface-variant" x-text="formatDuration(stats.latency.queued_ms.p95)"></span></span>
+                    <span>execution p95 <span class="text-on-surface-variant" x-text="formatDuration(stats.latency.execution_ms.p95)"></span></span>
+                    <span x-show="stats.latency.api_ms.p95 !== null">CLI-reported API p95 <span class="text-on-surface-variant" x-text="formatDuration(stats.latency.api_ms.p95)"></span></span>
+                  </div>
+                </div>
+
+                <!-- One mark per request: at this volume an averaged line invents shape that is not there -->
+                <div class="bg-surface-container p-5" x-show="stats.recent_requests && stats.recent_requests.length > 1">
+                  <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-3">Every request</p>
+                  <div class="h-[200px]"><canvas x-ref="scatter"></canvas></div>
+                </div>
+              </div>
+            </template>
+
+            <!-- ================= USAGE ================= -->
+            <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase block mb-3">Usage</span>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+              <div class="bg-surface-container p-5">
+                <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-4">By Model</p>
+                <table class="w-full text-xs font-mono">
+                  <thead>
+                    <tr class="text-outline text-[10px] uppercase tracking-wider">
+                      <th class="text-left font-normal pb-2">Model</th>
+                      <th class="text-right font-normal pb-2">Reqs</th>
+                      <th class="text-right font-normal pb-2">Avg</th>
+                      <th class="text-right font-normal pb-2">Tokens</th>
+                      <th class="text-right font-normal pb-2">Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template x-for="m in stats.by_model" :key="m.model">
+                      <tr class="border-t border-outline-variant/30">
+                        <td class="py-2 text-on-surface-variant truncate max-w-[10rem]" :title="m.model" x-text="m.model"></td>
+                        <td class="py-2 text-right text-white" x-text="m.requests"></td>
+                        <td class="py-2 text-right text-outline" x-text="formatDuration(m.avg_duration_ms)"></td>
+                        <td class="py-2 text-right text-outline" x-text="(m.tokens || 0).toLocaleString()"></td>
+                        <td class="py-2 text-right text-outline" x-text="formatCost(m.cost_usd)"></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+                <p x-show="!stats.by_model || stats.by_model.length === 0" class="text-outline text-xs font-mono">No requests in this period.</p>
+              </div>
+
+              <div class="bg-surface-container p-5">
+                <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-4">By Client</p>
+                <table class="w-full text-xs font-mono">
+                  <thead>
+                    <tr class="text-outline text-[10px] uppercase tracking-wider">
+                      <th class="text-left font-normal pb-2">Client</th>
+                      <th class="text-right font-normal pb-2">Reqs</th>
+                      <th class="text-right font-normal pb-2">Errors</th>
+                      <th class="text-right font-normal pb-2">Cost</th>
+                      <th class="text-right font-normal pb-2">Last seen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template x-for="c in stats.by_client" :key="c.client_name">
+                      <tr class="border-t border-outline-variant/30">
+                        <td class="py-2 text-on-surface-variant truncate max-w-[8rem]" x-text="c.client_name"></td>
+                        <td class="py-2 text-right text-white" x-text="c.requests"></td>
+                        <td class="py-2 text-right" :class="c.errors > 0 ? 'text-[#ffb800]' : 'text-outline'" x-text="c.errors"></td>
+                        <td class="py-2 text-right text-outline" x-text="formatCost(c.cost_usd)"></td>
+                        <td class="py-2 text-right text-outline" x-text="formatTime(c.last_seen_at)"></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+                <p x-show="!stats.by_client || stats.by_client.length === 0" class="text-outline text-xs font-mono">No requests in this period.</p>
+              </div>
+            </div>
+
+            <!-- Traffic over the period: how many, and how many of them failed -->
+            <div class="bg-surface-container p-5" x-show="stats.timeline && stats.timeline.length > 1">
+              <div class="flex items-baseline justify-between mb-4">
+                <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Traffic</p>
+                <span class="text-[10px] font-mono text-outline" x-text="stats.error_rate.success_pct + '% ok'"></span>
+              </div>
+              <div class="h-[180px]"><canvas x-ref="timeline"></canvas></div>
+            </div>
+
+            <!-- What failed: a count alone cannot say whose it was or which route -->
+            <div class="bg-surface-container p-5">
+              <div class="flex items-baseline justify-between mb-4">
+                <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Errors</p>
+                <span class="text-[10px] font-mono text-outline" x-text="stats.error_rate.success_pct + '% ok'"></span>
+              </div>
+              <table class="w-full text-xs font-mono" x-show="errorRows.length > 0">
+                <thead>
+                  <tr class="text-outline text-[10px] uppercase tracking-widest">
+                    <th class="text-left pb-2 font-headline">Last seen</th>
+                    <th class="text-left pb-2 font-headline">Status</th>
+                    <th class="text-left pb-2 font-headline">Error</th>
+                    <th class="text-left pb-2 font-headline">Client</th>
+                    <th class="text-left pb-2 font-headline">Route</th>
+                    <th class="text-right pb-2 font-headline">Count</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="row in errorRows" :key="row.status + row.error_code + row.client_name + row.path">
+                    <tr @click="openErrorLogs(row)"
+                      class="border-t border-outline-variant/20 cursor-pointer hover:bg-surface-container-high transition-colors duration-100">
+                      <td class="py-2 text-outline whitespace-nowrap" x-text="formatTime(row.last_seen_at)"></td>
+                      <td class="py-2 font-bold"
+                        :class="row.status < 500 ? 'text-[#ffb800]' : 'text-[#ef4444]'"
+                        x-text="row.status"></td>
+                      <td class="py-2 text-on-surface-variant" x-text="row.error_code"></td>
+                      <td class="py-2 text-on-surface-variant" x-text="row.client_name"></td>
+                      <td class="py-2 text-outline" x-text="row.path"></td>
+                      <td class="py-2 text-right text-white font-bold" x-text="row.count"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+              <p x-show="errorRows.length === 0" class="text-outline text-xs font-mono">Nothing failed in this period.</p>
+            </div>
+          </div>
+        </template>
+        <p x-show="loading && !stats" class="text-outline text-sm font-mono">Loading stats...</p>
+
+      </div>

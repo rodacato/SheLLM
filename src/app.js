@@ -13,6 +13,7 @@ const adminLogsRouter = require('./admin/logs');
 const adminStatsRouter = require('./admin/stats');
 const adminProvidersRouter = require('./admin/providers');
 const adminUpdateRouter = require('./admin/update');
+const { dashboardHtml } = require('./admin/views');
 const { sendApiError, invalidRequest } = require('./errors');
 const path = require('node:path');
 
@@ -129,7 +130,7 @@ function adminSecurityHeaders(req, res, next) {
 
 // The dashboard page itself requires auth
 app.get('/admin/dashboard/', adminAuth, adminSecurityHeaders, (_req, res) => {
-  res.sendFile('index.html', { root: ADMIN_PUBLIC });
+  res.type('html').send(dashboardHtml());
 });
 
 module.exports = app;

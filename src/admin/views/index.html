@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1a1e21">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SheLLM">
+  <link rel="manifest" href="/admin/manifest.webmanifest">
+  <title>SheLLM Admin</title>
+  <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-dark-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-dark-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="img/favicon-dark-180.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'surface':                  '#101417',
+            'surface-container-low':    '#181c1f',
+            'surface-container':        '#1c2023',
+            'surface-container-high':   '#262a2e',
+            'surface-container-highest':'#313538',
+            'surface-container-lowest': '#0b0f12',
+            'primary-container':        '#03e3ff',
+            'on-primary':               '#00363e',
+            'on-surface':               '#e0e3e7',
+            'on-surface-variant':       '#bac9cd',
+            'outline':                  '#849397',
+            'outline-variant':          '#3b494c',
+            'error':                    '#ffb4ab',
+          },
+          fontFamily: {
+            'headline': ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+            'body':     ['"Inter"', 'system-ui', 'sans-serif'],
+          },
+          borderRadius: {
+            DEFAULT: '0px',
+            sm:      '0px',
+            md:      '0px',
+            lg:      '0px',
+            xl:      '0px',
+            full:    '9999px',
+          },
+        },
+      },
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="css/custom.css">
+</head>
+<body x-data="app()" x-init="init()" class="bg-surface text-on-surface min-h-screen flex font-body">
+
+  <!-- Mobile top bar -->
+  <div class="md:hidden fixed top-0 inset-x-0 h-14 z-40 bg-[#1a1e21] border-b border-outline-variant/20 flex items-center gap-3 px-4">
+    <button @click="sidebarOpen = !sidebarOpen" class="text-on-surface-variant hover:text-primary-container" :aria-expanded="sidebarOpen" aria-label="Toggle navigation">
+      <span class="material-symbols-outlined" x-text="sidebarOpen ? 'close' : 'menu'"></span>
+    </button>
+    <img src="img/logo-dark.svg" alt="SheLLM" class="h-6 w-auto">
+  </div>
+
+  <!-- Backdrop, mobile only -->
+  <div x-show="sidebarOpen" x-transition.opacity @click="sidebarOpen = false" class="md:hidden fixed inset-0 bg-black/60 z-40" x-cloak></div>
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-[#1a1e21] min-h-screen flex flex-col shrink-0 fixed left-0 top-0 h-full z-50 transition-transform duration-200 md:translate-x-0"
+    :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+    <!-- Brand -->
+    <div class="p-6">
+      <img src="img/logo-dark.svg" alt="SheLLM" class="h-8 w-auto">
+      <p class="font-headline uppercase tracking-[0.15em] text-[0.6875rem] text-outline mt-2">Admin Gateway</p>
+    </div>
+
+    <!-- Nav -->
+    <nav class="flex-1 mt-4">
+      <template x-for="item in nav" :key="item.id">
+        <button
+          @click="navigate(item.id)"
+          :class="page === item.id
+            ? 'text-primary-container bg-[#2e3b44] border-l-4 border-primary-container font-bold'
+            : 'text-outline hover:text-white hover:bg-[#2e3b44] border-l-4 border-transparent'"
+          class="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150 font-headline uppercase tracking-[0.15em] text-[0.6875rem]">
+          <span class="material-symbols-outlined text-[20px]" x-text="item.icon"></span>
+          <span x-text="item.label"></span>
+        </button>
+      </template>
+    </nav>
+
+    <!-- Bottom section -->
+    <div class="mt-auto border-t border-outline-variant/20 pt-4 pb-4 px-4">
+      <!-- Uptime + icons row -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 text-outline text-[10px] font-mono tracking-wider">
+          <div class="w-1.5 h-1.5 rounded-full" :class="health.uptime ? 'bg-primary-container animate-pulse' : 'bg-outline/30'"></div>
+          <span x-text="health.uptime ? 'UP ' + formatUptime(health.uptime).toUpperCase() : 'CONNECTING...'"></span>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="/docs/" target="_blank" class="text-outline/40 hover:text-primary-container transition-colors" title="API Docs">
+            <span class="material-symbols-outlined text-[18px]">help</span>
+          </a>
+          <form method="post" action="/admin/logout" class="flex">
+            <button type="submit" class="text-outline/40 hover:text-primary-container transition-colors" title="Sign out">
+              <span class="material-symbols-outlined text-[18px]">logout</span>
+            </button>
+          </form>
+          <a href="https://github.com/rodacato/SheLLM" target="_blank" class="text-outline/40 hover:text-white transition-colors" title="GitHub">
+            <svg class="w-[16px] h-[16px]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="md:ml-64 flex-1 flex flex-col min-h-screen pt-14 md:pt-0">
+
+    <!-- Content -->
+    <main class="flex-1 p-4 md:p-8 overflow-auto">
+
+      <!--#include pages/overview.html-->
+
+      <!--#include pages/logs.html-->
+
+      <!--#include pages/keys.html-->
+
+      <!--#include pages/playground.html-->
+
+      <!--#include pages/system.html-->
+
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="h-10 border-t border-surface-container-low bg-surface px-8 flex items-center justify-between text-[9px] font-mono text-outline/60 uppercase tracking-widest shrink-0">
+      <span>SheLLM Admin</span>
+      <span x-show="health.uptime" x-text="'Uptime: ' + formatUptime(health.uptime)"></span>
+    </footer>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/overview.js"></script>
+  <script src="js/logs.js"></script>
+  <script src="js/keys.js"></script>
+  <script src="js/playground.js"></script>
+  <script src="js/system.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('/admin/sw.js'));
+    }
+  </script>
+</body>
+</html>
