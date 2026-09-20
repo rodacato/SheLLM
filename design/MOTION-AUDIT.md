@@ -32,7 +32,17 @@ joined the scale without an edit.
   only half of it was declared. Nothing in this admin leaves the screen: the modal appears and
   disappears instantly (P2, correctly rejected), and the only leaving transition is the mobile
   drawer's backdrop, which is out of scope. A token with no user is a token nobody checks, so
-  `exit` lands with the error band — the first thing that will actually need it.
+  `exit` waits for a user.
+
+  **This originally read "`exit` lands with the error band — the first thing that will actually
+  need it", and that prediction was wrong.** The error band was drawn on 2026-09-20 and its one
+  candidate, the degraded banner, was then examined in a browser and **rejected for both entrance
+  and exit** — see **D48**. The band never leaves the screen; it is removed from flow, which is a
+  reflow and not a departure. `--ease-exit` stays undeclared and is now waiting for something that
+  genuinely travels off-screen — the mobile drawer, if that scope ever reopens. A named prediction
+  that failed is kept here rather than edited away, because the reason it failed is the useful
+  part: "a state disappears" and "an element leaves" are not the same event, and only the second
+  one buys a curve.
 - **The press state lightens instead of darkening.** D26 asked for *one step darker*, which works
   on a button that has a background and does nothing at all on a transparent nav item over a
   near-black surface. What shipped is one 8% white inset veil (`--press-veil`) over whatever the
