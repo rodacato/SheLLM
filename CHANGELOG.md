@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.4.0] - 2026-09-20
 
+### Upgrade notes
+
+**`shellm backup` is the answer to "how do I back this up", and it replaces any job that copied
+the database by hand.** It writes the database and the config file into one timestamped directory
+under `/var/lib/shellm/backups`, keeping the newest 7, using SQLite's online backup — a `cp` of a
+WAL database is not a backup. Point whatever you already use at that directory and retire anything
+that hardcoded `/home/shellmer/.shellm/shellm.db`: a release that moved it would have left that
+job reporting successful backups of nothing.
+
+**A snapshot contains your secrets.** `config.env` is the config file, with the admin password and
+the CLI OAuth tokens in it. Both files are `0600` and the directory is `0700`; keep them that way
+wherever you copy them to.
+
+**The nightly timer ships switched off, and this upgrade does not install it.** `shellm update`
+re-installs the system files the *previous* release knew about, and v1.3.0's updater has never
+heard of `shellm-backup.service` or `shellm-backup.timer`. Re-run `scripts/setup/vps.sh` once to
+put them in place, then decide whether to arm it:
+
+```bash
+sudo systemctl enable --now shellm-backup.timer   # or leave it off and call `shellm backup` yourself
+```
+
+The backup *directory* needs no such step — `shellm update` creates it the first time it takes a
+snapshot.
+
+**Updating over SSH now takes a snapshot too.** `sudo shellm update` snapshots before the checkout
+and refuses to go on without one, because migrations only go forward. Until now only the
+dashboard's path did. The update *into* this release is still carried out by v1.3.0's updater, so
+it is the last one that takes none.
+
 ### Added
 
 - **deploy:** ship the backup units, installed and switched off
