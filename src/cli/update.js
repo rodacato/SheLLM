@@ -3,9 +3,10 @@
 const { execSync } = require('node:child_process');
 const { existsSync } = require('node:fs');
 const path = require('node:path');
-const { PROJECT_ROOT } = require('./paths');
+const { PROJECT_ROOT, CLI_SCRIPT, BACKUP_DIR } = require('./paths');
 
 const HEALTH_URL = 'http://127.0.0.1:6100/health';
+const SERVICE_USER = 'shellmer';
 
 // Everything this repository installs outside the checkout. `scripts/setup/vps.sh` puts the same
 // set in place on a first provision, and an update has to keep them in step: a host that upgrades
@@ -43,12 +44,17 @@ function run() {
     return;
   }
 
+  // 2. Snapshot. Migrations only go forward, so the rollback at the end restores code and not
+  // data; this is what makes it a rollback. Here nothing has moved yet, so a failure costs nothing.
+  step('Snapshotting the database');
+  snapshot();
+
   console.log(`  checking out ${ref}`);
   exec(`git checkout --detach ${target}`);
   const newCommit = target;
   console.log(`  updated: ${prevCommit.slice(0, 8)} → ${newCommit.slice(0, 8)}`);
 
-  // 2. npm ci only if lockfile changed
+  // 3. npm ci only if lockfile changed
   step('Checking dependencies');
   const lockChanged = exec(`git diff ${prevCommit} ${newCommit} --name-only`).includes('package-lock.json');
   if (lockChanged) {
@@ -59,12 +65,12 @@ function run() {
     console.log('  no dependency changes — skipping npm ci');
   }
 
-  // 3. Run migrations
+  // 4. Run migrations
   step('Running migrations');
   exec('npm run migrate');
   console.log('  done');
 
-  // 4. Rebuild API docs if possible
+  // 5. Rebuild API docs if possible
   step('Rebuilding API docs');
   try {
     exec('npm run docs:build 2>/dev/null');
@@ -73,7 +79,7 @@ function run() {
     console.log('  skipped (redocly not available)');
   }
 
-  // 5. Re-install any system file this release changed
+  // 6. Re-install any system file this release changed
   step('Checking installed system files');
   const touched = new Set(exec(`git diff ${prevCommit} ${newCommit} --name-only`).split('\n').map((l) => l.trim()));
   const changed = SYSTEM_FILES.filter((f) => touched.has(f.src) && existsSync(path.join(PROJECT_ROOT, f.src)));
@@ -83,7 +89,7 @@ function run() {
       execAsRoot(`install -D -m ${file.mode || '0644'} -o root -g root ${path.join(PROJECT_ROOT, file.src)} ${file.dest}`);
     }
     if (changed.some((f) => f.dest.startsWith('/etc/systemd/'))) execAsRoot('systemctl daemon-reload');
-    // A new tmpfiles entry has to be applied now, not at the next boot. The restart in step 6
+    // A new tmpfiles entry has to be applied now, not at the next boot. The restart in step 7
     // then rebuilds the service's mount namespace, which is the only way it gains write access
     // to a runtime directory that did not exist when it started.
     for (const file of changed.filter((f) => f.dest.startsWith('/etc/tmpfiles.d/'))) {
@@ -94,12 +100,12 @@ function run() {
     console.log('  no changes');
   }
 
-  // 6. Restart service
+  // 7. Restart service
   step('Restarting service');
   execAsRoot('systemctl restart shellm');
   console.log('  done');
 
-  // 7. Health check
+  // 8. Health check
   step('Health check');
   let healthy = false;
   for (let i = 0; i < 5; i++) {
@@ -135,10 +141,31 @@ function resolveRef() {
   return exec('git symbolic-ref --short refs/remotes/origin/HEAD').trim().replace(/^origin\//, '');
 }
 
+// Through exec(), so it runs as the service user: `shellm backup` refuses to run as root, which
+// would leave root-owned -wal and -shm files the service can no longer write.
+function snapshot() {
+  // /var/lib belongs to root, so the service user cannot make this itself. A failure here is not
+  // fatal on its own — the command below says exactly what to run.
+  if (!existsSync(BACKUP_DIR)) {
+    try {
+      execAsRoot(`install -d -m 0750 -o ${SERVICE_USER} -g ${SERVICE_USER} ${BACKUP_DIR}`);
+    } catch { /* reported by the snapshot itself */ }
+  }
+
+  try {
+    for (const line of exec(`node ${CLI_SCRIPT} backup`).trim().split('\n')) console.log(`  ${line.trim()}`);
+  } catch (err) {
+    console.error(`  FAILED — ${String(err.stderr || err.message).trim()}`);
+    console.error('\nRefusing to update without a snapshot: migrations do not roll back.');
+    process.exit(1);
+  }
+}
+
 function exec(cmd) {
-  // Run as shellmer if we're root (git safe.directory issue)
+  // Run as shellmer if we're root (git safe.directory issue). -H because sudo otherwise leaves
+  // HOME pointing at root's, and npm and the CLI both resolve their state from it.
   const isRoot = process.getuid() === 0;
-  const fullCmd = isRoot ? `sudo -u shellmer bash -c 'cd ${PROJECT_ROOT} && ${cmd}'` : cmd;
+  const fullCmd = isRoot ? `sudo -u ${SERVICE_USER} -H bash -c 'cd ${PROJECT_ROOT} && ${cmd}'` : cmd;
   return execSync(fullCmd, { cwd: isRoot ? undefined : PROJECT_ROOT, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
 }
 

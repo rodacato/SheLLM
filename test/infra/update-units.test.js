@@ -214,9 +214,21 @@ describe('the runner', () => {
     );
   });
 
-  it('snapshots the database with SQLite\'s own backup, not cp', () => {
-    assert.ok(/\.backup/.test(RUNNER), 'WAL mode makes a copied .db file torn or stale');
-    assert.ok(!/\bcp\b.*shellm\.db/.test(RUNNER));
+  it('leaves the snapshot to the CLI rather than taking its own', () => {
+    assert.ok(
+      !/sqlite3|\.backup/.test(RUNNER),
+      'a second implementation of the snapshot diverges from the first, which is the reason '
+      + 'ADR-0003 refused to reimplement the update sequence here — see ADR-0004',
+    );
+    assert.ok(
+      !/\bcp\b.*shellm\.db/.test(RUNNER),
+      'WAL mode makes a copied .db file torn or stale',
+    );
+    const update = readFileSync(path.join(root, 'src/cli/update.js'), 'utf8');
+    assert.ok(
+      update.indexOf('backup') < update.indexOf("step('Running migrations')"),
+      'the update takes the snapshot before the migrations it cannot undo',
+    );
   });
 
   it('reports on every exit, including the failures', () => {
