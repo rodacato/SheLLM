@@ -76,6 +76,16 @@ function logsPage() {
       return !!(this.filterProvider || this.filterStatus || this.filterClient || this.filterModel || this.filterErrorCode);
     },
 
+    // Both figures below the table read the one window /admin/stats measures, so the panel says
+    // which one rather than naming a period it does not cover.
+    windowSpan() {
+      const hours = this.stats?.window?.hours || 0;
+      if (!hours) return '';
+      if (hours < 1) return `last ${Math.round(hours * 60)} min`;
+      if (hours < 48) return `last ${Math.round(hours)} h`;
+      return `last ${Math.round(hours / 24)} days`;
+    },
+
     get clientOptions() {
       return (this.stats?.by_client || []).map((c) => c.client_name).filter((n) => n && n !== '(unknown)');
     },
