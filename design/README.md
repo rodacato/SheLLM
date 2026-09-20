@@ -28,9 +28,9 @@ as context for AI agents (`AGENTS.md` points them here).
 
 | File | Screens | Kit | Domain entry point |
 |---|---|---|---|
-| `admin.pen` | 6 of 6 — Sign in, Overview, Request Logs, API Keys, Playground, System. One band, happy path | **0.2.0** | `/admin/login` and `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
+| `admin.pen` | 6 of 6 — Sign in, Overview, Request Logs, API Keys, Playground, System. One band, happy path | **0.3.0** | `/admin/login` and `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
 
-`ui-kit.lib.pen` carries tokens as of **0.2.1** and no components yet. The sidebar and the page
+`ui-kit.lib.pen` carries tokens as of **0.3.0** and no components yet: colour, family and radius, plus the type, icon and spacing scales 0.3.0 added. The sidebar and the page
 footer are now known to be shared — they are rebuilt per screen from one function in the flow, and
 that is the promotion candidate for the first kit component. Promoting is a batch, done when asked.
 
@@ -38,8 +38,8 @@ There is no error band yet. Both conditional banners (`Not updating`, `USAGE LIM
 unreachable state, and the sign-in screen's 401 and 429 panels are listed in the brief's *states
 not drawn* rather than guessed at. That band is the next thing worth drawing.
 
-The flow is pinned at kit **0.2.0** while the kit is at 0.2.1. It is not diverging: the only thing
-0.2.1 removed is a token this flow never carried.
+The flow and the kit are both at **0.3.0**. Installing the size tokens changed nothing on the
+canvas; applying two of them did, and what is still a pixel off the code is **D45**.
 
 **Chart interiors are drawn since 2026-09-20, and the reason they were not is worth keeping.** The
 refusal was never "the canvas cannot draw a chart" — it was that nobody had seen the shipped one,
@@ -116,6 +116,7 @@ Positions are **computed, never picked**, from five variables declared in the `.
 | `grid-gutter` | `120` | Horizontal gap between artboards |
 | `grid-y0` | `0` | Top of the first band |
 | `grid-row-gap` | `260` | Vertical gap between bands |
+| `grid-fold-y` | `900` | Where the declared frame ends. Marked on the one screen taller than it |
 
 Inserting a screen mid-journey: drop it at the `x` it belongs to (overlap is fine), then
 **reflow the band** — one call sorts by current `x` and re-snaps to the grid. It never
