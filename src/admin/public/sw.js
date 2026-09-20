@@ -12,6 +12,7 @@ const SHELL = [
   '/admin/dashboard/img/favicon.svg',
   '/admin/dashboard/img/icon-192.png',
   '/admin/dashboard/img/icon-512.png',
+  '/admin/dashboard/img/icon-512-maskable.png',
   '/admin/manifest.webmanifest',
 ];
 

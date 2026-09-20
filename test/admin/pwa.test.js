@@ -161,4 +161,47 @@ describe('installable dashboard', () => {
       assert.match(res.headers['content-type'], /image\/png/);
     }
   });
+
+  // Declaring the plain icon as maskable is not a smaller version of having one: the launcher
+  // applies its mask either way, and the mark runs to the corners.
+  it('ships a maskable icon that is its own artwork', async () => {
+    const manifest = JSON.parse((await request(app).get('/admin/manifest.webmanifest')).text);
+    const maskable = manifest.icons.filter((i) => i.purpose === 'maskable');
+    assert.strictEqual(maskable.length, 1, 'exactly one maskable icon');
+
+    const plain = manifest.icons.filter((i) => i.purpose === 'any').map((i) => i.src);
+    assert.ok(!plain.includes(maskable[0].src), 'the maskable icon is the plain icon under another purpose');
+  });
+
+  // Two icon sets shipped side by side for months: the PNG favicons were an older gradient
+  // render while the SVG and every PWA icon were the flat mark. Same app, two logos.
+  it('serves the icons assets/favicon/ holds, byte for byte', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const root = path.join(__dirname, '../..');
+    const copies = {
+      'favicon.svg': 'favicon.svg',
+      'favicon-16.png': 'favicon-16.png',
+      'favicon-32.png': 'favicon-32.png',
+      'favicon-180.png': 'favicon-180.png',
+      'icon-192.png': 'favicon-192.png',
+      'icon-512.png': 'favicon-512.png',
+    };
+
+    for (const [served, canonical] of Object.entries(copies)) {
+      const a = fs.readFileSync(path.join(root, 'src/admin/public/img', served));
+      const b = fs.readFileSync(path.join(root, 'assets/favicon', canonical));
+      assert.ok(a.equals(b), `img/${served} has drifted from assets/favicon/${canonical}`);
+    }
+  });
+
+  it('declares the same icons on the dashboard and on the front door', async () => {
+    const dashboard = require('../../src/admin/views').compose();
+    const login = (await request(app).get('/admin/login')).text;
+
+    for (const icon of ['favicon.svg', 'favicon-32.png', 'favicon-16.png', 'favicon-180.png']) {
+      assert.ok(dashboard.includes(icon), `the dashboard declares ${icon}`);
+      assert.ok(login.includes(icon), `the sign-in page declares ${icon}`);
+    }
+  });
 });
