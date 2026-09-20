@@ -23,7 +23,7 @@ async function route({ model, prompt, system, max_tokens, temperature, top_p, re
       const execStart = Date.now();
       return provider.chat({ prompt, system, max_tokens, temperature, top_p, response_format, model })
         .then((r) => ({ ...r, queued_ms: execStart - startTime }));
-    });
+    }, `${provider.name} · ${model || provider.name}`);
     recordSuccess(provider.name);
   } catch (err) {
     if (!isClientError(err)) recordFailure(provider.name);

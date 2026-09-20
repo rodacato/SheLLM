@@ -16,6 +16,7 @@ function playgroundPage() {
     result: null,
     error: null,
     showRaw: false,
+    _abort: null,
 
     initPlayground() {
       try {
@@ -96,6 +97,10 @@ function playgroundPage() {
       this.result = null;
       this.storeKey();
 
+      // Without this a hung CLI left "Waiting for the CLI…" on screen forever with the Send
+      // button disabled, and the only way out was a page reload.
+      this._abort = new AbortController();
+
       const started = performance.now();
       try {
         // Deliberately not apiFetch: a 401 here means the client key was refused, and apiFetch
@@ -107,6 +112,7 @@ function playgroundPage() {
             Authorization: `Bearer ${this.apiKey.trim()}`,
           },
           body: JSON.stringify(this.requestBody()),
+          signal: this._abort.signal,
         });
         const elapsed = Math.round(performance.now() - started);
         const body = await res.json().catch(() => null);
@@ -120,10 +126,17 @@ function playgroundPage() {
           usage: res.ok ? this.usageOf(body) : null,
           body,
         };
-      } catch {
-        this.error = 'The request never completed — is the server still running?';
+      } catch (err) {
+        this.error = err?.name === 'AbortError'
+          ? 'Stopped waiting. The request is still running on the server and will appear in the logs — giving up here does not stop the CLI.'
+          : 'The request never completed — is the server still running?';
       }
+      this._abort = null;
       this.running = false;
+    },
+
+    stopWaiting() {
+      if (this._abort) this._abort.abort();
     },
 
     storeKey() {
