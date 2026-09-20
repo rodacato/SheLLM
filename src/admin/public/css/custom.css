@@ -7,12 +7,14 @@
 }
 
 /* The status scale. The Tailwind config and Chart.js both read these, so ok/warn/fail is
-   declared once rather than once per surface. */
+   declared once rather than once per surface. --outline is here for the same reason: Chart.js
+   cannot read a Tailwind colour, and the charts draw axes and the now marker in it. */
 :root {
   --status-ok:      #22c55e;
   --status-warn:    #ffb800;
   --status-fail:    #ef4444;
   --status-ok-fill: rgba(34, 197, 94, 0.12);
+  --outline:        #849397;
 }
 
 /* Status badges */
