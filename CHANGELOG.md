@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-20
+
+### Added
+
+- **admin:** the update button, which asks rather than acts
+
+### Fixed
+
+- **admin:** serve the dashboard relative to its own directory
+- **deploy:** snapshot into a directory the updater owns
+
+### Documentation
+
+- **deployment:** stop the manual backup from destroying the previous one
+- **deployment:** back up to a path the service user can write
+
+
 ### Fixed
 
 - **deployment:** stop the documented manual backup from destroying the previous one — the
@@ -450,5 +467,5 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.2.0...HEAD
-[1.2.0]: https://github.com/rodacato/SheLLM/compare/v1.1.1...v1.2.0
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/rodacato/SheLLM/compare/v1.2.0...v1.3.0
