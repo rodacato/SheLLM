@@ -15,6 +15,9 @@ function systemPage() {
     releases: [],
     releaseError: null,
     loading: true,
+    providersError: null,
+    toggleError: null,
+    providersLoaded: false,
     busy: null,
 
     // The update button's own state. `updater` is what the server says about the trigger and the
@@ -49,11 +52,16 @@ function systemPage() {
       this.loading = false;
     },
 
+    // A swallowed read left the section rendering nothing, which reads as "no providers" on the
+    // one page whose job is saying which providers exist.
     async fetchProviders() {
       try {
-        const res = await apiFetch(`${API_BASE}/providers`);
-        if (res.ok) this.providers = (await res.json()).providers;
-      } catch { /* ignore */ }
+        this.providers = (await apiRead(`${API_BASE}/providers`)).providers || [];
+        this.providersError = null;
+      } catch (err) {
+        this.providersError = err.message;
+      }
+      this.providersLoaded = true;
     },
 
     // Asked of GitHub by the browser, not the server: the service should not need outbound
@@ -192,15 +200,24 @@ function systemPage() {
       return latest && running && latest !== running ? latest : null;
     },
 
+    // A swallowed write is worse than a swallowed read: the switch springs back and the operator
+    // is left believing a routing state that was never applied.
     async toggleProvider(prov) {
       this.busy = prov.name;
+      this.toggleError = null;
       try {
         const res = await apiFetch(`${API_BASE}/providers/${prov.name}`, {
           method: 'PATCH',
           body: JSON.stringify({ enabled: !prov.enabled }),
         });
-        if (res.ok) await this.fetchProviders();
-      } catch { /* ignore */ }
+        if (res.ok) {
+          await this.fetchProviders();
+        } else {
+          this.toggleError = `${prov.name} was not changed — the gateway answered ${res.status}.`;
+        }
+      } catch {
+        this.toggleError = `${prov.name} was not changed — the gateway did not answer.`;
+      }
       this.busy = null;
     },
 

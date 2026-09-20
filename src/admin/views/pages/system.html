@@ -219,5 +219,10 @@
             </div>
           </template>
         </div>
-        <p x-show="loading && providers.length === 0" class="text-outline text-sm font-mono">Loading…</p>
+        <p x-show="toggleError" x-cloak class="text-status-fail text-sm font-mono mt-4" x-text="toggleError"></p>
+        <p x-show="!providersLoaded" class="text-outline text-sm font-mono">Loading…</p>
+        <p x-show="providersLoaded && providersError" class="text-status-fail text-sm font-mono"
+          x-text="'Could not read the providers — ' + providersError + '.'"></p>
+        <p x-show="providersLoaded && !providersError && providers.length === 0"
+          class="text-outline text-sm font-mono">No providers configured.</p>
       </div>
