@@ -1,0 +1,72 @@
+name: Pages
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'site/**'
+      - 'assets/**'
+      - 'docs/api/**'
+      - 'design/exports/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deploy at a time; don't cancel in-progress so a deploy always finishes.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Assemble the site
+        run: |
+          mkdir -p site/assets site/img
+          cp -r assets/favicon site/assets/favicon
+          cp -r assets/logo site/assets/logo
+          cp design/exports/admin-request-logs-default.png site/img/request-logs.png
+
+      - name: Build the API reference
+        run: |
+          npm run docs:build
+          cp docs/api/bundled.json site/api/bundled.json
+          cp docs/api/logo.svg site/api/logo.svg
+
+      # The page carries no version of its own: a landing page that names a release is a landing
+      # page that is wrong one release later.
+      - name: Stamp the version
+        run: |
+          version="v$(node -p "require('./package.json').version")"
+          sed -i "s/__VERSION__/$version/" site/index.html
+          grep -q "$version" site/index.html
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

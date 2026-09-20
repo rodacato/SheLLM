@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SheLLM — your LLM subscription as a REST API</title>
+<meta name="description" content="SheLLM runs the official Claude Code or Codex CLI you already pay for behind one HTTP endpoint that speaks both the OpenAI and the Anthropic formats.">
+<meta name="theme-color" content="#101417">
+<meta property="og:title" content="SheLLM">
+<meta property="og:description" content="Your LLM subscription — as a REST API for your own apps.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://rodacato.github.io/SheLLM/">
+<meta property="og:image" content="https://rodacato.github.io/SheLLM/img/request-logs.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="assets/favicon/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/favicon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --surface:        #101417;
+    --surface-low:    #0b0f12;
+    --panel:          #1c2023;
+    --panel-high:     #262a2e;
+    --accent:         #03e3ff;
+    --on-accent:      #00363e;
+    --text:           #e0e3e7;
+    --muted:          #849397;
+    --line:           #3b494c;
+    --measure:        64rem;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin:0; background:var(--surface); color:var(--text); font:300 1rem/1.7 Inter, system-ui, sans-serif; }
+  h1, h2, h3 { font-family:"Space Grotesk", system-ui, sans-serif; font-weight:700; letter-spacing:-.02em; line-height:1.15; }
+  a { color:var(--accent); text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  code, pre { font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+  .wrap { max-width:var(--measure); margin:0 auto; padding:0 1.5rem; }
+  section { padding:5rem 0; border-top:1px solid color-mix(in srgb, var(--line) 35%, transparent); }
+  section h2 { font-size:.75rem; text-transform:uppercase; letter-spacing:.18em; color:var(--muted); margin:0 0 2rem; font-weight:500; }
+  .lede { font-size:1.15rem; max-width:44rem; margin:0 0 1.5rem; }
+
+  .btn { display:inline-block; padding:.9rem 2rem; font-family:"Space Grotesk", sans-serif; font-weight:700;
+         text-transform:uppercase; letter-spacing:.1em; font-size:.85rem; }
+  .btn:hover { text-decoration:none; }
+  .btn-solid { background:var(--accent); color:var(--on-accent); }
+  .btn-solid:hover { background:#fff; }
+  .btn-ghost { background:var(--panel-high); color:var(--text); }
+  .btn-ghost:hover { background:var(--line); }
+
+  /* Hero */
+  header { position:relative; min-height:88vh; display:grid; place-items:center; text-align:center;
+           background:var(--surface-low); overflow:hidden; }
+  header .inner { position:relative; z-index:1; padding:2rem 1.5rem; }
+  header img { width:min(22rem, 78vw); height:auto; }
+  header p { color:var(--muted); font-size:1.15rem; margin:1.75rem auto 2.75rem; max-width:34rem; }
+  .actions { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
+
+  /* The CRT layers — the same set the admin sign-in page uses. */
+  .crt { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+  .crt-grid { position:absolute; inset:0; animation:drift 20s linear infinite;
+              background-image:radial-gradient(circle, color-mix(in srgb, var(--accent) 6%, transparent) 1px, transparent 1px);
+              background-size:40px 40px; }
+  .crt-glow { position:absolute; top:50%; left:50%; width:min(38rem, 92vw); aspect-ratio:1; transform:translate(-50%,-50%);
+              background:radial-gradient(circle, color-mix(in srgb, var(--accent) 9%, transparent) 0%, transparent 70%);
+              animation:breathe 4s ease-in-out infinite; }
+  .crt-sweep { position:absolute; left:0; width:100%; height:1px; animation:sweep 6s linear infinite;
+               background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 18%, transparent), transparent); }
+  .crt-lines { position:fixed; inset:0; z-index:5; pointer-events:none;
+               background:repeating-linear-gradient(rgba(0,0,0,.18) 0 1px, transparent 1px 3px); }
+  .cursor::after { content:'_'; color:var(--accent); animation:blink 1s step-end infinite; }
+
+  @keyframes drift   { from { background-position:0 0; } to { background-position:40px 40px; } }
+  @keyframes breathe { 0%,100% { opacity:.5; transform:translate(-50%,-50%) scale(1); }
+                       50%     { opacity:1;  transform:translate(-50%,-50%) scale(1.1); } }
+  @keyframes sweep   { from { top:-1px; } to { top:100%; } }
+  @keyframes blink   { 0%,100% { opacity:1; } 50% { opacity:0; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior:auto; }
+    .crt-grid, .crt-glow, .cursor::after { animation:none; }
+    .crt-sweep { display:none; }
+  }
+
+  /* Content */
+  ul.plain { list-style:none; padding:0; margin:0; display:grid; gap:1.25rem; }
+  ul.plain li { padding-left:1.5rem; position:relative; max-width:46rem; }
+  ul.plain li::before { content:'—'; position:absolute; left:0; color:var(--accent); }
+  ul.plain strong { font-weight:500; color:#fff; }
+
+  pre { background:var(--surface-low); border:1px solid var(--line); padding:1.5rem; overflow-x:auto;
+        font-size:.85rem; line-height:1.8; margin:0; }
+  pre .c { color:var(--muted); }
+  pre .k { color:var(--accent); }
+
+  figure { margin:0; }
+  figure img { width:100%; height:auto; display:block; border:1px solid var(--line); }
+  figcaption { color:var(--muted); font-size:.8rem; margin-top:.9rem; }
+
+  table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  th, td { text-align:left; padding:.9rem 1rem; border-bottom:1px solid color-mix(in srgb, var(--line) 50%, transparent); vertical-align:top; }
+  th { font-family:"Space Grotesk", sans-serif; font-size:.7rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); font-weight:500; }
+  td:first-child { white-space:nowrap; color:#fff; font-weight:500; }
+
+  footer { border-top:1px solid color-mix(in srgb, var(--line) 35%, transparent); padding:3rem 0;
+           color:var(--muted); font-size:.85rem; display:flex; gap:1.5rem; flex-wrap:wrap; justify-content:space-between; }
+  footer nav { display:flex; gap:1.5rem; flex-wrap:wrap; }
+</style>
+</head>
+<body>
+
+<div class="crt-lines" aria-hidden="true"></div>
+
+<header>
+  <div class="crt" aria-hidden="true">
+    <div class="crt-grid"></div>
+    <div class="crt-glow"></div>
+    <div class="crt-sweep"></div>
+  </div>
+  <div class="inner">
+    <img src="assets/logo/logo-dark.svg" alt="SheLLM">
+    <p class="cursor">Your LLM subscription — as a REST API for your own apps</p>
+    <div class="actions">
+      <a class="btn btn-solid" href="api/">API Docs</a>
+      <a class="btn btn-ghost" href="https://github.com/rodacato/SheLLM">GitHub</a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section>
+  <div class="wrap">
+    <h2>What it is</h2>
+    <p class="lede">
+      You pay for Claude Code or Codex. Your own apps cannot use that subscription — they need API
+      credit you would buy separately. SheLLM runs the official CLI you already have, behind one
+      HTTP endpoint that answers in both the OpenAI and the Anthropic formats, so an official SDK
+      pointed at it works on the first try.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>What it is not</h2>
+    <ul class="plain">
+      <li><strong>Not a way to share a subscription.</strong> One owner, their own applications. No multi-tenant mode, no reselling capacity.</li>
+      <li><strong>Not a backend for coding agents.</strong> Claude Code, Cline, Aider and friends drive their own CLI; putting SheLLM in between adds latency and breaks their terms.</li>
+      <li><strong>Not an API-key gateway.</strong> If you pay per token, LiteLLM and OpenRouter do that better.</li>
+      <li><strong>Not machine-scale.</strong> Subscription quota is measured in human sessions, not throughput.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Get started</h2>
+<pre><span class="c"># Requires Node.js 24 and a logged-in claude (or codex) on the same machine</span>
+git clone git@github.com:rodacato/SheLLM.git &amp;&amp; cd SheLLM
+npm install &amp;&amp; npm link
+shellm init <span class="c"># config file, token, first API key, checks</span>
+shellm start
+
+<span class="c"># Any official SDK, no code change</span>
+export <span class="k">OPENAI_BASE_URL</span>=http://127.0.0.1:6100/v1 <span class="k">OPENAI_API_KEY</span>=$SHELLM_KEY
+export <span class="k">ANTHROPIC_BASE_URL</span>=http://127.0.0.1:6100 <span class="k">ANTHROPIC_API_KEY</span>=$SHELLM_KEY</pre>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>The dashboard</h2>
+    <figure>
+      <img src="img/request-logs.png" alt="The Request Logs page: a filterable table of every request with status, client, provider, model, duration, tokens and cost, an expanded row showing the request id and upstream detail, and an error-rate sparkline below it." loading="lazy">
+      <figcaption>
+        Every request is logged with its cost and its upstream detail. Keys, provider health and a
+        playground live next to it. Over HTTPS the dashboard installs as an app.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Fair use and provider terms</h2>
+    <p class="lede">
+      SheLLM runs the <strong>official, unmodified CLI binaries</strong> and nothing else. It never
+      extracts OAuth tokens, never calls a provider's API with subscription credentials, and never
+      pretends to be a different client. Running your own subscription through your own software
+      still carries risk, and it is yours.
+    </p>
+    <table>
+      <thead><tr><th>Provider</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Claude</td>
+          <td>Supported. Anthropic's terms forbid intermediating Claude.ai credentials; SheLLM spawns the official binary, which keeps its own login.</td>
+        </tr>
+        <tr>
+          <td>Codex</td>
+          <td>Supported, at your own risk. OpenAI documents <code>codex exec</code> for scripts, but anti-abuse classifiers are the real exposure and a suspension takes the whole ChatGPT account.</td>
+        </tr>
+        <tr>
+          <td>Gemini</td>
+          <td>Not supported. Gemini CLI stopped serving personal plans, and Antigravity's terms forbid using it with products Google does not provide.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<footer class="wrap">
+  <span>MIT · __VERSION__</span>
+  <nav>
+    <a href="api/">API Docs</a>
+    <a href="https://github.com/rodacato/SheLLM">GitHub</a>
+    <a href="https://github.com/rodacato/SheLLM/blob/master/CHANGELOG.md">Changelog</a>
+  </nav>
+</footer>
+
+</body>
+</html>
