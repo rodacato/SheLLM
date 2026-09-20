@@ -7,6 +7,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-09-20
+
+### Added
+
+- **admin:** give the Playground wait a clock (P1)
+- **admin:** confirm the press on every click target (D26)
+- **admin:** name the motion scale, and give the toggle the curve it never chose
+- **admin:** make the bare domain an entry point, not a dead end
+- **admin:** say on the System page that the dashboard installs (P12)
+- **site:** rebuild the landing page around what SheLLM actually is
+- **admin:** give the sign-in page the CRT treatment, and the app's frame
+- **admin:** let Errors lead the page on severity, not on presence
+- **admin:** say when the Overview was last read, where it is read
+- **admin:** give the hung request a home
+- **admin:** extend the verdict pattern past the two places that had it
+- **admin:** move refresh next to the other log actions
+- **admin:** say how long ago an error was, not only when
+- **admin:** put both charts on one time axis, marked at the present
+- **admin:** render every timestamp in one configured timezone
+- **admin:** drop the period selector for the one window there is
+
+### Fixed
+
+- **admin:** let the Playground say it could not read the model list (D16)
+- **admin:** one icon set, and a maskable icon that is actually maskable
+- **admin:** land at the top of a page, and stop spinning off screen
+- **admin:** stop the queue bar from animating a measurement (D21)
+- **admin:** honour prefers-reduced-motion (D25)
+- **http:** answer an unmatched route in the format the caller asked for
+- **admin:** keep the chrome out from under the status bar (P4)
+- **admin:** correct the manifest and the worker's two soft spots (P6, P7, P9, P10, P13)
+- **admin:** cache the stylesheet that declares the palette (P1)
+- **admin:** raise the text that fell below AA
+- **admin:** divide the burn rate by hours that actually happened
+- **admin:** let the System page say what it could not read, and what it could not write
+- **admin:** stop the log panels naming a period they do not measure
+- **admin:** let the charts read the outline token instead of retyping it
+
+### Changed
+
+- **admin:** read the Logs summary before the table, not after it
+- **admin:** declare the palette once, and name the five colours that had none
+
+### Documentation
+
+- close P3's residual and D18, both as decisions rather than as work
+- **pwa-audit:** add P14, close P5, and decide P11 is not worth its weight
+- **motion-audit:** close it out, and record where the work departed from it
+- **motion-audit:** record what landed, and why the two tokens gate the rest
+- say what you'd build with it, and draw where SheLLM sits
+- **pwa-audit:** close P8 as 'it stays', and correct the entry that called it a choice
+- **pwa-audit:** record what landed and why the rest has not
+- **deployment:** say that an installed dashboard is not an offline app (P2)
+- **readme:** show the dashboard, and cut the link nobody needed
+- audit what the dashboard actually does when it is installed
+- **changelog:** note that quota windows changed denominator
+- **design:** record what the second pass actually landed
+- **design:** second review pass, now that the exports exist
+- **design:** commit the design audit the close-out work came from
+- **changelog:** say what the dashboard rework asks of an operator
+
+### Maintenance
+
+- **deps:** bump better-sqlite3 from 12.11.1 to 13.0.3
+
+
 ### Upgrade notes
 
 **`GET /` now sends a browser to the dashboard, and an unmatched route answers JSON.** The root
@@ -627,5 +693,5 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.5.0...HEAD
-[1.5.0]: https://github.com/rodacato/SheLLM/compare/v1.4.0...v1.5.0
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/rodacato/SheLLM/compare/v1.5.0...v1.6.0
