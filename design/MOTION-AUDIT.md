@@ -4,7 +4,8 @@
 > (Chromium 1440×900 and 390×844), plus `css/custom.css`, `views/index.html`,
 > `views/pages/*.html` and `public/js/*.js`.
 >
-> **Date:** 2026-09-20 · **Scope:** motion only. Layout, hierarchy and colour are
+> **Date:** 2026-09-20 · **Driven at** `6da0a56`, **re-checked at** `ed653f5` — every count below
+> is identical at both, and the line numbers are the later one's. · **Scope:** motion only. Layout, hierarchy and colour are
 > [`DESIGN-AUDIT.md`](DESIGN-AUDIT.md)'s, which closed with motion explicitly **not judged**.
 > This pass is the one it deferred.
 
@@ -268,7 +269,7 @@ request, the entire visual state of the screen for the whole wait:
 
 - the button text changes `Send` → `Sending…`
 - the button drops to `opacity: 0.4` (`disabled:opacity-40`)
-- the response panel reads `Waiting for the CLI…`
+- the response panel reads `Waiting for the CLI…` (and, since `ed653f5`, a `stop waiting` link)
 - **nothing on the screen moves**, except the health dot in the sidebar, which pulses identically
   whether or not a request is running
 

@@ -71,9 +71,8 @@ describe('the palette is declared once and never retyped', () => {
     assert.deepStrictEqual(offenders, [], offenders.join('\n'));
   });
 
-  // The sign-in page ships one self-contained <style> on purpose: it has to render when the rest
-  // of the admin cannot. That earns it a second copy of the palette — it does not earn drift, so
-  // every colour it names is pinned to the canonical declaration. Consolidating is D20.
+  // The sign-in page ships one self-contained <style> so it renders when the admin cannot. That
+  // earns it a second copy of the palette; it does not earn drift. Consolidating is D20.
   it('keeps the sign-in page pinned to the same values it duplicates', () => {
     const login = fs.readFileSync(path.join(ADMIN, 'login.js'), 'utf8');
     const aliases = {
