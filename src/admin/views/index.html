@@ -24,22 +24,27 @@
       theme: {
         extend: {
           colors: {
-            'surface':                  '#101417',
-            'surface-container-low':    '#181c1f',
-            'surface-container':        '#1c2023',
-            'surface-container-high':   '#262a2e',
-            'surface-container-highest':'#313538',
-            'surface-container-lowest': '#0b0f12',
-            'primary-container':        '#03e3ff',
-            'on-primary':               '#00363e',
-            'on-surface':               '#e0e3e7',
-            'on-surface-variant':       '#bac9cd',
-            'outline':                  '#849397',
-            'outline-variant':          '#3b494c',
-            'error':                    '#ffb4ab',
+            'surface':                  'var(--surface)',
+            'surface-container-low':    'var(--surface-container-low)',
+            'surface-container':        'var(--surface-container)',
+            'surface-container-high':   'var(--surface-container-high)',
+            'surface-container-highest':'var(--surface-container-highest)',
+            'surface-container-lowest': 'var(--surface-container-lowest)',
+            'primary-container':        'var(--primary-container)',
+            'on-primary':               'var(--on-primary)',
+            'on-surface':               'var(--on-surface)',
+            'on-surface-variant':       'var(--on-surface-variant)',
+            'outline':                  'var(--outline)',
+            'outline-variant':          'var(--outline-variant)',
+            'error':                    'var(--error)',
             'status-ok':                'var(--status-ok)',
             'status-warn':              'var(--status-warn)',
             'status-fail':              'var(--status-fail)',
+            'surface-shell':            'var(--surface-shell)',
+            'nav-selected':             'var(--nav-selected)',
+            'error-container':          'var(--error-container)',
+            'danger-surface':           'var(--danger-surface)',
+            'danger-surface-hover':     'var(--danger-surface-hover)',
           },
           fontFamily: {
             'headline': ['"Space Grotesk"', 'system-ui', 'sans-serif'],
@@ -65,7 +70,7 @@
 <body x-data="app()" x-init="init()" class="bg-surface text-on-surface min-h-screen flex font-body">
 
   <!-- Mobile top bar -->
-  <div class="md:hidden fixed top-0 inset-x-0 h-14 z-40 bg-[#1a1e21] border-b border-outline-variant/20 flex items-center gap-3 px-4">
+  <div class="md:hidden fixed top-0 inset-x-0 h-14 z-40 bg-surface-shell border-b border-outline-variant/20 flex items-center gap-3 px-4">
     <button @click="sidebarOpen = !sidebarOpen" class="text-on-surface-variant hover:text-primary-container" :aria-expanded="sidebarOpen" aria-label="Toggle navigation">
       <span class="material-symbols-outlined text-[20px]" x-text="sidebarOpen ? 'close' : 'menu'"></span>
     </button>
@@ -76,7 +81,7 @@
   <div x-show="sidebarOpen" x-transition.opacity @click="sidebarOpen = false" class="md:hidden fixed inset-0 bg-black/60 z-40" x-cloak></div>
 
   <!-- Sidebar -->
-  <aside class="w-64 bg-[#1a1e21] min-h-screen flex flex-col shrink-0 fixed left-0 top-0 h-full z-50 transition-transform duration-200 md:translate-x-0"
+  <aside class="w-64 bg-surface-shell min-h-screen flex flex-col shrink-0 fixed left-0 top-0 h-full z-50 transition-transform duration-200 md:translate-x-0"
     :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
     <!-- Brand -->
     <div class="p-6">
@@ -90,8 +95,8 @@
         <button
           @click="navigate(item.id)"
           :class="page === item.id
-            ? 'text-primary-container bg-[#2e3b44] border-l-4 border-primary-container font-bold'
-            : 'text-outline hover:text-white hover:bg-[#2e3b44] border-l-4 border-transparent'"
+            ? 'text-primary-container bg-nav-selected border-l-4 border-primary-container font-bold'
+            : 'text-outline hover:text-white hover:bg-nav-selected border-l-4 border-transparent'"
           class="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150 font-headline uppercase tracking-[0.15em] text-[0.6875rem]">
           <span class="material-symbols-outlined text-[20px]" x-text="item.icon"></span>
           <span x-text="item.label"></span>

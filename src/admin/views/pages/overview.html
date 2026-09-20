@@ -69,7 +69,7 @@
               <span class="text-[10px] text-outline" x-text="stats.quota.note"></span>
             </div>
 
-            <div x-show="stats.quota.limited" class="bg-[#3a1d1d] border-l-2 border-status-fail p-4 mb-4">
+            <div x-show="stats.quota.limited" class="bg-error-container border-l-2 border-status-fail p-4 mb-4">
               <span class="font-headline font-bold text-error text-sm">USAGE LIMIT HIT</span>
               <span class="text-xs font-mono text-on-surface-variant ml-2"
                 x-text="stats.quota.limited ? stats.quota.limited.provider + ' · since ' + formatTime(stats.quota.limited.since) : ''"></span>
