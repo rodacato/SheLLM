@@ -16,7 +16,9 @@ function playgroundPage() {
     result: null,
     error: null,
     showRaw: false,
+    waitingMs: 0,
     _abort: null,
+    _ticker: null,
 
     initPlayground() {
       try {
@@ -102,6 +104,10 @@ function playgroundPage() {
       this._abort = new AbortController();
 
       const started = performance.now();
+      // A dimmed button and a static sentence are also what a hung request looks like, and what
+      // a finished-but-unrendered one looks like. The clock is what tells them apart.
+      this.waitingMs = 0;
+      this._ticker = setInterval(() => { this.waitingMs = Math.round(performance.now() - started); }, 100);
       try {
         // Deliberately not apiFetch: a 401 here means the client key was refused, and apiFetch
         // would read it as an expired admin session and navigate away mid-request.
@@ -131,6 +137,8 @@ function playgroundPage() {
           ? 'Stopped waiting. The request is still running on the server and will appear in the logs — giving up here does not stop the CLI.'
           : 'The request never completed — is the server still running?';
       }
+      clearInterval(this._ticker);
+      this._ticker = null;
       this._abort = null;
       this.running = false;
     },
