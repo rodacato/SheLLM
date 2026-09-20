@@ -13,6 +13,35 @@ diverging is not. A changed token VALUE forces every consumer.
 
 ---
 
+## 0.2.1 — 2026-09-20 · the canvas caught up with 0.2.0's own changelog
+
+`brand-hover` was gone from the flow and still on the kit — as a variable **and** as a swatch
+labelled *"brand-hover (renamed → primary-container-hover)"*, beside the token that replaced it.
+0.2.0 said the rename happened; only the consumer's half of it did. Removed here, which is a
+removal in name only: `flows/admin.pen` never carried it after the 0.2.0 re-vendor (verified —
+zero nodes reference `$brand-hover`, and the variable is absent from the flow), so nothing is
+forced on anyone and the bump stays a patch. The Brand section's note now names
+`primary-container-hover`, which is still the truth it was telling: `custom.css` declares it and
+the Tailwind config does not.
+
+Also here, from D33 (the export named `0.2.0` was the `0.1.1` canvas and its header said `0.1.0`):
+**the version string lives in exactly one place on the canvas**, the Provenance line under the
+title, and `exports/ui-kit-tokens-0.2.1.png` is cut from this canvas. The stale
+`ui-kit-tokens-0.2.0.png` is deleted rather than kept — an export that names a version it is not
+is worse than no export. The `0.1.1` and *Named in 0.2.0* notes stay: they date specific tokens,
+they do not claim to be the kit's version.
+
+Added: a note citing **D20** — the sign-in page ships nine aliases of its own instead of reading
+this palette, a test pins each one to the canonical value, and the kit mirrors that rather than
+collapsing them.
+
+### Open kit gap logged here
+
+`flows/admin.pen` carries exactly one hex, `#03e3ff00`, in the sign-in sweep. A gradient needs a
+fully transparent stop and the kit has no token for one — the code does not name it either
+(`color-mix(in srgb, var(--accent) 18%, transparent)`), so naming it would be a decision, not a
+mirror. Logged, not fixed.
+
 ## 0.2.0 — 2026-09-20 · the colours that had no name
 
 Seven tokens added, six of them because the code finally names them. D19 closed by declaring

@@ -9,6 +9,7 @@
       "name": "UI Kit / Tokens",
       "clip": true,
       "width": 1256,
+      "height": 1921,
       "fill": "$surface",
       "layout": "vertical",
       "gap": 36,
@@ -35,11 +36,11 @@
             {
               "type": "text",
               "id": "w6uNpg",
-              "name": "Provenance",
+              "name": "Provenance (the one version string on the canvas)",
               "fill": "$outline",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "Mirrored 1:1 from src/admin/views/index.html (tailwind.config) and src/admin/public/css/custom.css. kit-version 0.1.0. Names match the code's names; a name the code does not use is a kit gap, logged in ui-kit.CHANGELOG.md.",
+              "content": "kit-version 0.2.1 · mirrored 1:1 from src/admin/views/index.html (tailwind.config) and src/admin/public/css/custom.css. Names match the code's names; a name the code does not use is a kit gap, logged in ui-kit.CHANGELOG.md.",
               "lineHeight": 1.5,
               "fontFamily": "Roboto Mono",
               "fontSize": 11,
@@ -622,7 +623,7 @@
                   "fill": "$outline-variant",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "brand-hover is custom.css only — the tailwind config does not name it",
+                  "content": "primary-container-hover is custom.css only — the tailwind config does not name it",
                   "fontFamily": "Roboto Mono",
                   "fontSize": 10,
                   "fontWeight": "normal"
@@ -710,46 +711,6 @@
                       "name": "Value",
                       "fill": "$outline",
                       "content": "#00363e",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 10,
-                      "fontWeight": "normal"
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "N5dLx6",
-                  "name": "brand-hover (renamed → primary-container-hover)",
-                  "width": 180,
-                  "layout": "vertical",
-                  "gap": 7,
-                  "children": [
-                    {
-                      "type": "frame",
-                      "id": "PD9fF",
-                      "name": "Chip",
-                      "width": "fill_container",
-                      "height": 56,
-                      "fill": "$brand-hover",
-                      "stroke": "$outline-variant",
-                      "strokeWidth": 1
-                    },
-                    {
-                      "type": "text",
-                      "id": "bWeBx",
-                      "name": "Name",
-                      "fill": "$on-surface",
-                      "content": "brand-hover",
-                      "fontFamily": "Roboto Mono",
-                      "fontSize": 11,
-                      "fontWeight": "normal"
-                    },
-                    {
-                      "type": "text",
-                      "id": "vh18r",
-                      "name": "Value",
-                      "fill": "$outline",
-                      "content": "#39eeff",
                       "fontFamily": "Roboto Mono",
                       "fontSize": 10,
                       "fontWeight": "normal"
@@ -1706,6 +1667,19 @@
               ]
             }
           ]
+        },
+        {
+          "type": "text",
+          "id": "I8eGf",
+          "name": "D20 note — the sign-in page keeps its own aliases",
+          "fill": "$outline",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "D20 — the sign-in page (src/admin/login.js) does not read this palette. It ships a self-contained <style> with its own nine aliases (--bg, --panel, --line, --text, --accent, --error, --error-bg, --muted, --on-accent) so it renders when the rest of the admin cannot. A test pins each alias to the canonical value above, so the copy cannot drift while it exists. The kit mirrors that as it is and does not collapse the aliases into these names; whether to consolidate is open and Adrian's call.",
+          "lineHeight": 1.6,
+          "fontFamily": "Roboto Mono",
+          "fontSize": 10,
+          "fontWeight": "normal"
         }
       ]
     }
@@ -1713,7 +1687,7 @@
   "variables": {
     "kit-version": {
       "type": "string",
-      "value": "0.2.0"
+      "value": "0.2.1"
     },
     "grid-x0": {
       "type": "number",
@@ -1802,10 +1776,6 @@
     "status-ok-fill": {
       "type": "color",
       "value": "#22c55e1f"
-    },
-    "brand-hover": {
-      "type": "color",
-      "value": "#39eeff"
     },
     "badge-2xx-bg": {
       "type": "color",
