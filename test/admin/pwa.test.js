@@ -56,7 +56,7 @@ describe('installable dashboard', () => {
     const fs = require('node:fs');
     const path = require('node:path');
     const dir = path.join(__dirname, '../../src/admin/public');
-    const html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
+    const html = require('../../src/admin/views').compose();
     const worker = fs.readFileSync(path.join(dir, 'sw.js'), 'utf8');
 
     const scripts = [...html.matchAll(/<script src="(js\/[^"]+)"/g)].map((m) => m[1]);
@@ -73,6 +73,11 @@ describe('installable dashboard', () => {
 
     const page = await request(app).get('/admin/dashboard/');
     assert.strictEqual(page.status, 401);
+
+    // The shell used to sit in public/, where the static mount served it straight past the
+    // session check. Composing it from views/ is what takes it back behind auth.
+    const byFilename = await request(app).get('/admin/dashboard/index.html');
+    assert.notStrictEqual(byFilename.status, 200);
   });
 
   it('every icon the manifest promises is actually served', async () => {

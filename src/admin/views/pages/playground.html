@@ -1,0 +1,89 @@
+      <!-- PLAYGROUND PAGE -->
+      <div x-show="page === 'playground'" x-data="playgroundPage()" x-init="initPlayground()">
+
+        <header class="mb-10">
+          <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">PLAYGROUND<span class="text-primary-container">_</span></h2>
+          <p class="text-on-surface-variant">Send a prompt the way your own applications do — same endpoint, same key, same log.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-surface-container p-5">
+            <div class="mb-4">
+              <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Client key</label>
+              <input type="password" x-model="apiKey" placeholder="shellm-…" autocomplete="off" class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container">
+              <div class="flex items-center justify-between mt-2">
+                <label class="flex items-center gap-2 text-[10px] font-mono text-outline">
+                  <input type="checkbox" x-model="rememberKey" @change="storeKey()" class="accent-[#03e3ff]">
+                  keep it for this tab only
+                </label>
+                <button x-show="apiKey" @click="forgetKey()" class="text-[10px] font-mono text-outline hover:text-on-surface">forget</button>
+              </div>
+              <p class="text-[10px] font-mono text-outline/70 mt-2">
+                Keys are stored hashed, so an existing one cannot be filled in here. Rotate a key to get a new secret.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Format</label>
+                <select x-model="format" class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container">
+                  <option value="openai">OpenAI · /v1/chat/completions</option>
+                  <option value="anthropic">Anthropic · /v1/messages</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Model</label>
+                <input type="text" x-model="model" list="playground-models" class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container">
+                <datalist id="playground-models">
+                  <template x-for="name in models" :key="name">
+                    <option :value="name"></option>
+                  </template>
+                </datalist>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Prompt</label>
+              <textarea x-model="prompt" rows="6" class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"></textarea>
+            </div>
+
+            <button @click="send()" :disabled="running"
+              class="btn-brand px-5 py-2.5 text-xs font-headline font-bold uppercase disabled:opacity-40"
+              x-text="running ? 'Sending…' : 'Send'"></button>
+            <p class="text-[10px] font-mono text-outline/70 mt-3">
+              This spends real subscription quota and is logged like any other request.
+            </p>
+          </div>
+
+          <div class="bg-surface-container p-5">
+            <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-4">Response</p>
+
+            <p x-show="error" class="text-xs font-mono text-[#ffb4ab]" x-text="error"></p>
+            <p x-show="!error && !result && !running" class="text-xs font-mono text-outline">Nothing sent yet.</p>
+            <p x-show="running" class="text-xs font-mono text-outline">Waiting for the CLI…</p>
+
+            <template x-if="result">
+              <div>
+                <div class="flex flex-wrap gap-4 text-[11px] font-mono mb-4">
+                  <span class="px-2 py-0.5 font-bold" :class="statusBadgeClass(result.status)" x-text="result.status"></span>
+                  <span class="text-outline">round trip <span class="text-on-surface-variant" x-text="formatDuration(result.elapsed_ms)"></span></span>
+                  <template x-if="result.usage">
+                    <span class="text-outline">
+                      tokens <span class="text-on-surface-variant" x-text="result.usage.input + ' in / ' + result.usage.output + ' out'"></span>
+                    </span>
+                  </template>
+                  <span x-show="result.request_id" class="text-outline">id <span class="text-on-surface-variant" x-text="result.request_id"></span></span>
+                </div>
+
+                <pre x-show="result.ok" class="bg-surface-container-lowest p-4 text-xs font-mono text-on-surface whitespace-pre-wrap break-words max-h-[420px] overflow-y-auto terminal-scroll" x-text="result.answer"></pre>
+                <p x-show="!result.ok" class="bg-surface-container-lowest p-4 text-xs font-mono text-[#ffb4ab] break-words" x-text="errorMessage(result.body)"></p>
+
+                <button @click="showRaw = !showRaw" class="mt-3 text-[10px] font-mono text-outline hover:text-on-surface"
+                  x-text="showRaw ? 'hide raw response' : 'show raw response'"></button>
+                <pre x-show="showRaw" class="mt-2 bg-surface-container-lowest p-4 text-[10px] font-mono text-outline whitespace-pre-wrap break-words max-h-[300px] overflow-y-auto terminal-scroll"
+                  x-text="JSON.stringify(result.body, null, 2)"></pre>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>

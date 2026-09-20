@@ -1,0 +1,202 @@
+      <!-- KEYS PAGE -->
+      <div x-show="page === 'keys'" x-data="keysPage()" x-effect="if (page === 'keys' && keys.length === 0 && loading) { fetchKeys(); fetchAuditLogs(); }">
+
+        <header class="mb-10">
+          <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">API KEYS<span class="text-primary-container">_</span></h2>
+          <p class="text-on-surface-variant">Manage client credentials, rate limits, and model access controls.</p>
+        </header>
+
+        <!-- New key banner -->
+        <div x-show="newKeyResult" x-cloak class="bg-surface-container border-l-4 border-primary-container p-5 mb-6">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-sm font-headline font-bold text-white">
+                Key <span x-text="newKeyResult?.raw_key ? 'created' : 'rotated'"></span> — "<span x-text="newKeyResult?.name"></span>"
+              </p>
+              <p class="text-[11px] text-outline font-mono mt-1">Copy this key now — it won't be shown again.</p>
+              <code class="block mt-3 bg-surface-container-lowest border border-outline-variant/40 px-4 py-3 text-sm font-mono text-primary-container select-all" x-text="newKeyResult?.raw_key"></code>
+            </div>
+            <button @click="newKeyResult = null" class="text-outline hover:text-white text-xl ml-4">&times;</button>
+          </div>
+        </div>
+
+        <div class="mb-6">
+          <button @click="showCreateModal = true" class="btn-brand px-5 py-2.5 text-xs font-headline font-bold uppercase tracking-wide">
+            + Create Key
+          </button>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-surface-container overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-surface-container-lowest">
+              <tr>
+                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Name</th>
+                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Key Prefix</th>
+                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Limits</th>
+                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline"><span x-text="'Usage (' + usagePeriod + ')'"></span></th>
+                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Last used</th>
+                <th class="px-4 py-3 text-center text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Status</th>
+                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Created / expires</th>
+                <th class="px-4 py-3 text-right text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr x-show="keys.length === 0">
+                <td colspan="8" class="px-4 py-10 text-center text-outline font-mono text-sm" x-text="loading ? 'Loading...' : 'No keys created yet'"></td>
+              </tr>
+              <template x-for="key in keys" :key="key.id">
+                <tr class="border-t border-outline-variant/20 hover:bg-surface-container-high transition-colors duration-100">
+                  <td class="px-4 py-3">
+                    <span class="font-headline font-bold text-white text-sm block" x-text="key.name"></span>
+                    <span x-show="key.description" class="text-outline text-xs block mt-0.5" x-text="key.description"></span>
+                  </td>
+                  <td class="px-4 py-3 font-mono text-outline text-xs" x-text="key.key_prefix + '...'"></td>
+                  <td class="px-4 py-3 font-mono text-xs">
+                    <span class="text-on-surface" x-text="key.rpm + ' rpm'"></span>
+                    <span class="text-outline block mt-0.5" x-text="key.models ? key.models.join(', ') : 'all models'"></span>
+                  </td>
+                  <td class="px-4 py-3 font-mono text-xs">
+                    <template x-if="key.usage && key.usage.requests > 0">
+                      <div>
+                        <button @click="openKeyLogs(key)" class="link-brand" x-text="key.usage.requests + ' req'"></button>
+                        <span x-show="key.usage.errors > 0" class="text-[#ffb4ab] ml-1" x-text="errorRate(key) + '% err'"></span>
+                        <span class="text-outline block mt-0.5">
+                          <span x-text="formatCompactNumber(key.usage.tokens)"></span> tok ·
+                          <span x-text="formatCost(key.usage.cost_usd)"></span>
+                        </span>
+                      </div>
+                    </template>
+                    <span x-show="!key.usage || key.usage.requests === 0" class="text-outline">unused</span>
+                  </td>
+                  <td class="px-4 py-3 text-xs font-mono whitespace-nowrap"
+                    :class="key.usage && key.usage.last_used_at ? 'text-on-surface-variant' : 'text-outline'"
+                    x-text="key.usage && key.usage.last_used_at ? formatTime(key.usage.last_used_at) : 'never'"></td>
+                  <td class="px-4 py-3 text-center">
+                    <button @click="toggleActive(key)" class="inline-flex items-center gap-2" :title="key.active ? 'Disable this key' : 'Enable this key'">
+                      <div class="toggle-track" :class="{ 'active': key.active }">
+                        <div class="toggle-knob"></div>
+                      </div>
+                      <span class="text-[10px] font-headline font-bold uppercase"
+                        :class="key.active ? 'text-green-400' : 'text-outline'"
+                        x-text="key.active ? 'Active' : 'Off'"></span>
+                    </button>
+                  </td>
+                  <td class="px-4 py-3 text-xs font-mono whitespace-nowrap">
+                    <span class="text-outline" x-text="formatTime(key.created_at)"></span>
+                    <span class="block mt-0.5"
+                      :class="isExpired(key) ? 'text-error' : isExpiringSoon(key) ? 'text-[#ffb800]' : 'text-outline'"
+                      x-text="formatExpiry(key)"></span>
+                  </td>
+                  <td class="px-4 py-3 text-right whitespace-nowrap">
+                    <button @click="startEdit(key)" class="link-brand text-xs font-headline font-bold uppercase mr-3">Edit</button>
+                    <button @click="rotateKey(key)" class="link-brand text-xs font-headline font-bold uppercase mr-3">Rotate</button>
+                    <button @click="deleteKey(key)" class="text-error/70 hover:text-error text-xs font-headline font-bold uppercase transition-colors duration-100">Delete</button>
+                  </td>
+                </tr>
+              </template>
+              <template x-for="key in keys" :key="'edit-' + key.id">
+                <tr x-show="editing === key.id" class="border-t border-outline-variant/20 bg-surface-container-lowest">
+                  <td colspan="8" class="px-4 py-4">
+                    <p class="text-[10px] font-mono text-outline mb-3">
+                      The secret itself cannot be changed here — rotate replaces it.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div>
+                        <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">RPM</label>
+                        <input type="number" min="1" x-model="editForm.rpm" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                      </div>
+                      <div>
+                        <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Models (blank = all)</label>
+                        <input type="text" x-model="editForm.models" placeholder="claude, claude-haiku" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                      </div>
+                      <div>
+                        <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Expires (UTC, blank = never)</label>
+                        <input type="datetime-local" x-model="editForm.expires_at" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                      </div>
+                      <div>
+                        <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Description</label>
+                        <input type="text" x-model="editForm.description" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                      </div>
+                    </div>
+                    <div class="flex gap-3 mt-4">
+                      <button @click="saveEdit(key)"
+                        class="px-4 py-2 text-xs font-headline font-bold uppercase tracking-widest bg-primary-container text-surface-container-lowest">Save</button>
+                      <button @click="cancelEdit()"
+                        class="px-4 py-2 text-xs font-headline font-bold uppercase tracking-widest text-outline hover:text-on-surface">Cancel</button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="mt-6">
+          <button @click="showAudit = !showAudit; if (showAudit && auditLogs.length === 0) fetchAuditLogs()"
+            class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline hover:text-primary-container transition-colors flex items-center gap-2 mb-3">
+            <span class="material-symbols-outlined text-sm" x-text="showAudit ? 'expand_less' : 'expand_more'"></span>
+            Activity Log
+          </button>
+          <div x-show="showAudit" x-cloak class="bg-surface-container-lowest border border-outline-variant/20 p-4 font-mono text-xs max-h-[300px] overflow-y-auto terminal-scroll">
+            <template x-if="auditLogs.length === 0">
+              <p class="text-outline">No activity yet.</p>
+            </template>
+            <template x-for="entry in auditLogs" :key="entry.id">
+              <div class="flex gap-4 py-1.5 border-b border-outline-variant/10 last:border-0">
+                <span class="text-outline/50 whitespace-nowrap" x-text="formatTime(entry.created_at)"></span>
+                <span class="text-primary-container font-bold uppercase" x-text="entry.action"></span>
+                <span class="text-on-surface-variant" x-text="entry.resource + (entry.details ? ' — ' + entry.details : '')"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Create Key Modal -->
+        <div x-show="showCreateModal" x-cloak class="modal-overlay" @click.self="showCreateModal = false">
+          <div class="bg-surface-container border border-outline-variant/40 p-8 w-full max-w-md" @click.stop>
+            <h3 class="font-headline font-bold text-white text-lg uppercase mb-6">Create API Key</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Client Name</label>
+                <input type="text" x-model="createForm.name"
+                  class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"
+                  placeholder="e.g. my-app">
+              </div>
+              <div>
+                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">RPM (requests/min)</label>
+                <input type="number" x-model="createForm.rpm"
+                  class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"
+                  min="1">
+              </div>
+              <div>
+                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Models (comma-separated, blank = all)</label>
+                <input type="text" x-model="createForm.models"
+                  class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"
+                  placeholder="claude, codex">
+              </div>
+              <div>
+                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Expires At (optional)</label>
+                <input type="datetime-local" x-model="createForm.expires_at"
+                  class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container">
+              </div>
+              <div>
+                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Description (optional)</label>
+                <input type="text" x-model="createForm.description"
+                  class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"
+                  placeholder="e.g. Production key for Stockerly">
+              </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-8">
+              <button @click="showCreateModal = false"
+                class="px-5 py-2.5 text-xs font-headline font-bold uppercase text-outline border border-outline-variant/40 hover:text-white hover:bg-surface-container-high transition-colors duration-100">
+                Cancel
+              </button>
+              <button @click="createKey()" class="btn-brand px-5 py-2.5 text-xs font-headline font-bold uppercase">
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>

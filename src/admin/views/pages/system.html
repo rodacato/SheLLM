@@ -1,0 +1,224 @@
+      <!-- SYSTEM PAGE -->
+      <div x-show="page === 'system'" x-data="systemPage()" x-effect="if (page === 'system' && loading) load()">
+
+        <header class="mb-10">
+          <h2 class="text-5xl font-bold font-headline tracking-tighter text-on-surface mb-2">SYSTEM<span class="text-primary-container">_</span></h2>
+          <p class="text-on-surface-variant">What is running, and which providers are allowed to answer.</p>
+        </header>
+
+        <!-- ================= BUILD ================= -->
+        <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase block mb-3">Build</span>
+        <div class="bg-surface-container p-5 mb-8">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-4">
+            <div>
+              <p class="text-[10px] font-mono text-outline uppercase mb-1">Version</p>
+              <p class="text-2xl font-headline font-black text-white" x-text="runningVersion || '—'"></p>
+            </div>
+            <div>
+              <p class="text-[10px] font-mono text-outline uppercase mb-1">Commit</p>
+              <p class="text-2xl font-headline font-black text-white font-mono"
+                x-text="health?.build?.commit || 'unknown'"></p>
+            </div>
+            <div>
+              <p class="text-[10px] font-mono text-outline uppercase mb-1">Uptime</p>
+              <p class="text-2xl font-headline font-black text-white" x-text="formatUptime(health?.uptime) || '—'"></p>
+            </div>
+            <div>
+              <p class="text-[10px] font-mono text-outline uppercase mb-1">Status</p>
+              <p class="text-2xl font-headline font-black"
+                :class="health?.status === 'ok' ? 'text-[#22c55e]' : (health?.status === 'degraded' ? 'text-[#ffb800]' : 'text-[#ef4444]')"
+                x-text="health?.status || '—'"></p>
+            </div>
+          </div>
+
+          <div class="border-t border-outline-variant/30 pt-4">
+            <template x-if="updateAvailable">
+              <p class="text-xs font-mono text-[#ffb800]">
+                <span x-text="'v' + updateAvailable + ' is published — this host runs v' + runningVersion"></span>
+                <a :href="latestRelease.html_url" target="_blank" rel="noopener" class="underline ml-2">release notes</a>
+              </p>
+            </template>
+            <template x-if="!updateAvailable && latestRelease">
+              <p class="text-xs font-mono text-outline">Running the latest published release.</p>
+            </template>
+            <template x-if="releaseError">
+              <p class="text-xs font-mono text-outline" x-text="'Latest release unknown — ' + releaseError"></p>
+            </template>
+          </div>
+
+          <!-- The update itself. This writes a request; a root unit does the work, or nothing does. -->
+          <div class="border-t border-outline-variant/30 pt-4 mt-4" x-show="updater">
+
+            <!-- Why the button is not here, said in the operator's terms rather than the unit's -->
+            <template x-if="updater?.trigger !== 'ready'">
+              <p class="text-xs font-mono text-outline" x-text="updater?.trigger_help"></p>
+            </template>
+
+            <template x-if="updater?.trigger === 'ready' && upgradeTargets.length === 0">
+              <p class="text-xs font-mono text-outline">Nothing newer to move to.</p>
+            </template>
+
+            <template x-if="updater?.trigger === 'ready' && upgradeTargets.length > 0">
+              <div class="space-y-3">
+                <div class="flex flex-wrap items-center gap-3">
+                  <select x-model="target"
+                    class="bg-surface border border-outline-variant/40 text-white text-xs font-mono px-3 py-2">
+                    <template x-for="r in upgradeTargets" :key="r.tag_name">
+                      <option :value="r.tag_name" x-text="r.tag_name"></option>
+                    </template>
+                  </select>
+                  <template x-if="selectedRelease">
+                    <a :href="selectedRelease.html_url" target="_blank" rel="noopener"
+                      class="text-xs font-mono text-primary-container underline">release notes</a>
+                  </template>
+                  <button @click="requestUpdate()" :disabled="!canRequest"
+                    class="text-xs font-headline font-bold uppercase tracking-wider px-4 py-2 bg-primary-container text-surface disabled:opacity-40 disabled:cursor-not-allowed"
+                    x-text="updateButtonLabel"></button>
+                </div>
+
+                <!-- A major jump is where a migration can be one-way, so it asks for the version
+                     to be typed rather than clicked. -->
+                <template x-if="isMajorJump">
+                  <div class="flex flex-wrap items-center gap-3">
+                    <span class="text-xs font-mono text-[#ffb800]"
+                      x-text="'Major version jump. Type ' + target + ' to confirm:'"></span>
+                    <input x-model="confirmText" :placeholder="target" spellcheck="false"
+                      class="bg-surface border border-outline-variant/40 text-white text-xs font-mono px-3 py-2 w-32">
+                  </div>
+                </template>
+
+                <p class="text-[11px] font-mono text-outline">
+                  The host snapshots its database, moves to the tag, and rolls back on its own if
+                  the service does not answer.
+                </p>
+              </div>
+            </template>
+
+            <template x-if="updateError">
+              <p class="text-xs font-mono text-[#ef4444] mt-3" x-text="updateError"></p>
+            </template>
+
+            <!-- What happened last time. After an update this is read across a restart, which is
+                 exactly when it matters. -->
+            <template x-if="updater?.pending || updater?.last">
+              <div class="mt-4 text-[11px] font-mono">
+                <template x-if="updater.pending">
+                  <p class="text-[#ffb800]">A request is waiting to be picked up.</p>
+                </template>
+                <template x-if="updater.last && updater.last.state === 'running' && !updater.last.stalled">
+                  <p class="text-[#ffb800]" x-text="'Updating to ' + updater.last.ref + '…'"></p>
+                </template>
+                <!-- The restart happens under this page, so say what is being waited for. Without
+                     it a press looks like nothing happened, and the second press is refused. -->
+                <template x-if="watching">
+                  <p class="text-outline">
+                    Watching the host — the service restarts during this, and the page reloads
+                    itself when the update reports done.
+                  </p>
+                </template>
+                <template x-if="updater.last && updater.last.stalled">
+                  <p class="text-[#ef4444]"
+                    x-text="'The update to ' + updater.last.ref + ' stopped without reporting. Check journalctl -u shellm-update.'"></p>
+                </template>
+                <template x-if="updater.last && updater.last.state === 'ok'">
+                  <p class="text-outline"
+                    x-text="'Last update: ' + updater.last.detail + ' · ' + formatTime(updater.last.finished_at)"></p>
+                </template>
+                <template x-if="updater.last && updater.last.state === 'failed'">
+                  <p class="text-[#ef4444]"
+                    x-text="'Last update failed: ' + updater.last.detail"></p>
+                </template>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- ================= QUEUE ================= -->
+        <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase block mb-3">Concurrency</span>
+        <div class="bg-surface-container p-5 mb-8">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-[11px] font-mono">
+            <div>
+              <span class="text-outline uppercase block text-[10px]">Running</span>
+              <span class="text-white text-lg font-headline font-bold" x-text="(health?.queue?.active ?? 0) + ' / ' + (health?.queue?.max_concurrent ?? 0)"></span>
+            </div>
+            <div>
+              <span class="text-outline uppercase block text-[10px]">Waiting</span>
+              <span class="text-lg font-headline font-bold"
+                :class="(health?.queue?.pending ?? 0) > 0 ? 'text-[#ffb800]' : 'text-white'"
+                x-text="health?.queue?.pending ?? 0"></span>
+            </div>
+            <div>
+              <span class="text-outline uppercase block text-[10px]">Streams</span>
+              <span class="text-white text-lg font-headline font-bold" x-text="(health?.queue?.active_streams ?? 0) + ' / ' + (health?.queue?.max_stream_concurrent ?? 0)"></span>
+            </div>
+            <div>
+              <span class="text-outline uppercase block text-[10px]">Open circuits</span>
+              <span class="text-lg font-headline font-bold"
+                :class="openCircuits.length > 0 ? 'text-[#ef4444]' : 'text-white'"
+                x-text="openCircuits.length > 0 ? openCircuits.join(', ') : 'none'"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= PROVIDERS ================= -->
+        <div class="flex items-baseline gap-3 mb-3">
+          <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Providers</span>
+          <span class="text-[10px] text-outline">Pausing one takes it out of routing; it does not sign it out.</span>
+        </div>
+
+        <div class="space-y-4">
+          <template x-for="prov in providers" :key="prov.name">
+            <div class="bg-surface-container p-5">
+              <div class="flex items-start justify-between gap-4 mb-4">
+                <div class="flex items-center gap-3">
+                  <span class="w-2 h-2 inline-block"
+                    :class="!prov.enabled ? 'dot-gray' : (prov.installed && prov.authenticated ? 'dot-green' : (prov.installed ? 'dot-red' : 'dot-gray'))"></span>
+                  <div>
+                    <span class="font-headline font-bold text-white text-sm" x-text="prov.name"></span>
+                    <span class="text-[10px] font-mono text-outline ml-2" x-text="providerState(prov)"></span>
+                  </div>
+                </div>
+
+                <button @click="toggleProvider(prov)" :disabled="busy === prov.name"
+                  class="px-4 py-1.5 text-xs font-headline uppercase tracking-wide transition-colors duration-100 disabled:opacity-40"
+                  :class="prov.enabled
+                    ? 'bg-surface-container-high text-outline hover:text-white hover:bg-surface-container-highest'
+                    : 'bg-primary-container text-on-primary font-bold'"
+                  x-text="busy === prov.name ? '···' : (prov.enabled ? 'Pause' : 'Enable')"></button>
+              </div>
+
+              <div x-show="prov.health_error" class="bg-surface-container-lowest p-3 mb-4">
+                <p class="text-[10px] font-mono text-[#ffb4ab] break-all" x-text="prov.health_error"></p>
+              </div>
+
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] font-mono">
+                <div>
+                  <span class="text-outline uppercase block text-[10px]">CLI version</span>
+                  <span class="text-on-surface-variant"
+                    x-text="prov.version || health?.providers?.[prov.name]?.version || 'unknown'"></span>
+                </div>
+                <div>
+                  <span class="text-outline uppercase block text-[10px]">Last used</span>
+                  <span class="text-on-surface-variant" x-text="prov.last_used_at ? formatTime(prov.last_used_at) : 'never'"></span>
+                </div>
+                <div>
+                  <span class="text-outline uppercase block text-[10px]">Last status</span>
+                  <span x-show="prov.last_status" class="px-1.5 py-0.5 text-[10px] font-bold"
+                    :class="prov.last_status >= 200 && prov.last_status < 300 ? 'badge-2xx' : 'badge-5xx'"
+                    x-text="prov.last_status"></span>
+                  <span x-show="!prov.last_status" class="text-outline">—</span>
+                </div>
+                <div>
+                  <span class="text-outline uppercase block text-[10px]">Circuit</span>
+                  <span :class="circuitClass(prov)" x-text="circuitLabel(prov)"></span>
+                </div>
+                <div class="col-span-2 md:col-span-4">
+                  <span class="text-outline uppercase block text-[10px]">Models</span>
+                  <span class="text-on-surface-variant" x-text="(prov.models || []).join(', ') || '—'"></span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+        <p x-show="loading && providers.length === 0" class="text-outline text-sm font-mono">Loading…</p>
+      </div>
