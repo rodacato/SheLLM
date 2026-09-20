@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: SheLLM API
-  version: 0.1.0
+  version: 1.4.0
   description: |
     SheLLM exposes the owner's own LLM CLI subscriptions (Claude Code, Codex)
     as one REST API that answers in both the OpenAI and the Anthropic formats.
@@ -36,7 +36,7 @@ servers:
 
 tags:
   - name: Health
-    description: Service health check
+    description: Liveness, diagnostics and this specification
   - name: Chat Completions
     description: OpenAI-compatible chat completions
   - name: Messages
@@ -49,6 +49,10 @@ tags:
     description: Request log inspection
   - name: Stats
     description: Aggregated usage statistics
+  - name: Providers
+    description: Provider state and configuration
+  - name: Update
+    description: Self-update of the host
 
 x-tagGroups:
   - name: API
@@ -62,10 +66,16 @@ x-tagGroups:
       - Keys
       - Logs
       - Stats
+      - Providers
+      - Update
 
 paths:
   /health:
     $ref: "./paths/health.yaml"
+  /health/detailed:
+    $ref: "./paths/health_detailed.yaml"
+  /docs/openapi.json:
+    $ref: "./paths/docs_openapi.yaml"
   /v1/models:
     $ref: "./paths/v1_models.yaml"
   /v1/chat/completions:
@@ -82,6 +92,18 @@ paths:
     $ref: "./paths/admin_logs.yaml"
   /admin/stats:
     $ref: "./paths/admin_stats.yaml"
+  /admin/logs/export:
+    $ref: "./paths/admin_logs_export.yaml"
+  /admin/audit:
+    $ref: "./paths/admin_audit.yaml"
+  /admin/providers:
+    $ref: "./paths/admin_providers.yaml"
+  /admin/providers/{name}:
+    $ref: "./paths/admin_providers_{name}.yaml"
+  /admin/update:
+    $ref: "./paths/admin_update.yaml"
+  /admin/health:
+    $ref: "./paths/admin_health.yaml"
 
 components:
   securitySchemes:
@@ -95,10 +117,18 @@ components:
       description: Admin password via `SHELLM_ADMIN_PASSWORD`
 
   schemas:
+    LivenessResponse:
+      $ref: "./schemas/LivenessResponse.yaml"
     HealthResponse:
       $ref: "./schemas/HealthResponse.yaml"
     ProviderStatus:
       $ref: "./schemas/ProviderStatus.yaml"
+    ProviderDetail:
+      $ref: "./schemas/ProviderDetail.yaml"
+    ProviderRecord:
+      $ref: "./schemas/ProviderRecord.yaml"
+    ProviderUpdate:
+      $ref: "./schemas/ProviderUpdate.yaml"
     ModelList:
       $ref: "./schemas/ModelList.yaml"
     Model:
@@ -135,6 +165,12 @@ components:
       $ref: "./schemas/LogsResponse.yaml"
     StatsResponse:
       $ref: "./schemas/StatsResponse.yaml"
+    AuditEntry:
+      $ref: "./schemas/AuditEntry.yaml"
+    UpdateStatus:
+      $ref: "./schemas/UpdateStatus.yaml"
+    UpdateRequest:
+      $ref: "./schemas/UpdateRequest.yaml"
     Error:
       $ref: "./schemas/Error.yaml"
     OpenAIError:
@@ -151,6 +187,20 @@ components:
       $ref: "./parameters/Offset.yaml"
     Period:
       $ref: "./parameters/Period.yaml"
+    LogProvider:
+      $ref: "./parameters/LogProvider.yaml"
+    LogClient:
+      $ref: "./parameters/LogClient.yaml"
+    LogModel:
+      $ref: "./parameters/LogModel.yaml"
+    LogErrorCode:
+      $ref: "./parameters/LogErrorCode.yaml"
+    LogStatus:
+      $ref: "./parameters/LogStatus.yaml"
+    LogFrom:
+      $ref: "./parameters/LogFrom.yaml"
+    LogTo:
+      $ref: "./parameters/LogTo.yaml"
 
   responses:
     Unauthorized:

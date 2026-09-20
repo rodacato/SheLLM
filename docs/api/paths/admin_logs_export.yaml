@@ -1,0 +1,32 @@
+get:
+  operationId: exportLogs
+  tags: [Logs]
+  summary: Export request logs as CSV
+  description: |
+    The same filters as `GET /admin/logs`, with no pagination — every matching row is streamed.
+    Fields that start with `=`, `+`, `-` or `@` are prefixed with a quote, so a spreadsheet opens
+    the file as data rather than as formulas.
+  security:
+    - BasicAuth: []
+  parameters:
+    - $ref: "../parameters/LogProvider.yaml"
+    - $ref: "../parameters/LogClient.yaml"
+    - $ref: "../parameters/LogModel.yaml"
+    - $ref: "../parameters/LogErrorCode.yaml"
+    - $ref: "../parameters/LogStatus.yaml"
+    - $ref: "../parameters/LogFrom.yaml"
+    - $ref: "../parameters/LogTo.yaml"
+  responses:
+    '200':
+      description: CSV, one header row and one row per log entry
+      headers:
+        Content-Disposition:
+          schema:
+            type: string
+            example: attachment; filename="shellm-logs-2026-09-20T03-30-12.csv"
+      content:
+        text/csv:
+          schema:
+            type: string
+    '401':
+      $ref: "../responses/Unauthorized.yaml"

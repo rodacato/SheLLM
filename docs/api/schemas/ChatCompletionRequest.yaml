@@ -10,7 +10,41 @@ properties:
     minItems: 1
     items:
       $ref: "./ChatMessage.yaml"
+    description: |
+      Must contain at least one `user` message. The first `system` message becomes the system
+      prompt; the rest are flattened into one prompt, since the CLI takes a prompt, not a thread.
   max_tokens:
     type: integer
     minimum: 1
     maximum: 128000
+    description: |
+      Validated and then ignored — no CLI exposes an output cap. Bound the length in the prompt.
+  stream:
+    type: boolean
+    default: false
+    description: |
+      `true` answers `text/event-stream` with OpenAI-style `data:` chunks and a `[DONE]`
+      terminator. Streaming holds a slot for the whole response and is capped separately by
+      `MAX_STREAM_CONCURRENT`.
+  temperature:
+    type: number
+    minimum: 0
+    maximum: 2
+  top_p:
+    type: number
+    minimum: 0
+    maximum: 1
+  response_format:
+    type: object
+    properties:
+      type:
+        type: string
+        enum: [json_object, text]
+  stop:
+    description: Up to 4 stop sequences.
+    oneOf:
+      - type: string
+      - type: array
+        maxItems: 4
+        items:
+          type: string

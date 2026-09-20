@@ -1,0 +1,6 @@
+name: to
+in: query
+schema:
+  type: string
+  format: date-time
+description: End date (ISO 8601), compared against created_at

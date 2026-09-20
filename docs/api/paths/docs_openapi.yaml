@@ -1,0 +1,15 @@
+get:
+  operationId: getOpenApiSpec
+  tags: [Health]
+  summary: This specification
+  description: |
+    The bundled OpenAPI document the running build was shipped with, so tooling can be pointed
+    at a live instance instead of at a file in the repository.
+  security: []
+  responses:
+    '200':
+      description: The OpenAPI document
+      content:
+        application/json:
+          schema:
+            type: object

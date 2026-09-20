@@ -1,0 +1,25 @@
+get:
+  operationId: getHealthDetailed
+  tags: [Health]
+  summary: Full diagnostics
+  description: |
+    Per-provider install and login state, circuit breakers, queue depth, the running build and
+    uptime. Provider state comes from a cache refreshed by the background poller, so a login
+    that expired seconds ago can still read as authenticated.
+  security:
+    - BasicAuth: []
+  responses:
+    '200':
+      description: Diagnostics
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/HealthResponse.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+    '500':
+      description: The health probe itself failed
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/Error.yaml"

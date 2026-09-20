@@ -1,0 +1,33 @@
+get:
+  operationId: listAuditLog
+  tags: [Logs]
+  summary: Admin audit log
+  description: Key and provider changes made through the admin API, newest first.
+  security:
+    - BasicAuth: []
+  parameters:
+    - name: limit
+      in: query
+      schema:
+        type: integer
+        default: 100
+        maximum: 500
+    - name: resource_id
+      in: query
+      schema:
+        type: integer
+      description: Only entries about this resource.
+  responses:
+    '200':
+      description: Audit entries
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              logs:
+                type: array
+                items:
+                  $ref: "../schemas/AuditEntry.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"

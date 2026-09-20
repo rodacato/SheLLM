@@ -1,0 +1,43 @@
+type: object
+properties:
+  name:
+    type: string
+    example: claude
+  type:
+    type: string
+  enabled:
+    type: boolean
+  capabilities:
+    type: [string, "null"]
+  priority:
+    type: integer
+    description: Lower wins when a request names no provider.
+  installed:
+    type: [boolean, "null"]
+  authenticated:
+    type: [boolean, "null"]
+  health_error:
+    type: [string, "null"]
+  version:
+    type: [string, "null"]
+  last_used_at:
+    type: [string, "null"]
+  last_status:
+    type: [integer, "null"]
+  circuit:
+    type: object
+    properties:
+      state:
+        type: string
+        enum: [closed, open, half_open]
+      failures:
+        type: integer
+      lastFailureAt:
+        type: [integer, "null"]
+      lastTransitionAt:
+        type: [integer, "null"]
+  models:
+    type: array
+    items:
+      type: string
+    description: The model ids this provider's CLI accepts, as `/v1/models` lists them.

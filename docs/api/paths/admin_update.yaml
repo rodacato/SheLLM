@@ -1,0 +1,63 @@
+get:
+  operationId: getUpdateStatus
+  tags: [Update]
+  summary: Can this host update itself, and what happened last time
+  security:
+    - BasicAuth: []
+  responses:
+    '200':
+      description: Updater state
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/UpdateStatus.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+
+post:
+  operationId: requestUpdate
+  tags: [Update]
+  summary: Request an update to a release tag
+  description: |
+    Writes the request and returns. It does not deploy — a root systemd unit picks the request up,
+    or nothing does. Only upgrades are accepted here: rolling back stays on the SSH path
+    (`SHELLM_REF=vX.Y.Z sudo shellm update`), so the worst outcome of a forged request is an
+    upgrade rather than a downgrade to a release with a known hole.
+  security:
+    - BasicAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/UpdateRequest.yaml"
+  responses:
+    '202':
+      description: The request was written
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              requested:
+                type: string
+              from:
+                type: string
+    '400':
+      $ref: "../responses/BadRequest.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+    '409':
+      description: |
+        The request cannot be taken right now. `code` says which case: `updater_unavailable`,
+        `update_pending`, `update_running`, `not_an_upgrade` or `confirmation_required`.
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/Error.yaml"
+    '500':
+      description: The request could not be written to disk
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/Error.yaml"

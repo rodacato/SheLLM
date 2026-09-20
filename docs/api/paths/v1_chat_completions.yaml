@@ -4,7 +4,8 @@ post:
   summary: Create a chat completion
   description: |
     OpenAI-compatible endpoint. Sends the prompt to the requested provider
-    CLI and returns the response in OpenAI format.
+    CLI and returns the response in OpenAI format. Set `stream` to `true`
+    for server-sent events instead of one JSON body.
   security:
     - BearerAuth: []
   requestBody:
@@ -27,6 +28,12 @@ post:
         application/json:
           schema:
             $ref: "../schemas/ChatCompletionResponse.yaml"
+        text/event-stream:
+          schema:
+            type: string
+            description: |
+              Sent when `stream` is `true`: `data:` lines carrying
+              `chat.completion.chunk` objects, terminated by `data: [DONE]`.
     '400':
       $ref: "../responses/BadRequestOpenAI.yaml"
     '401':

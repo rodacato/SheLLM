@@ -1,0 +1,6 @@
+name: status
+in: query
+schema:
+  type: string
+  pattern: '^\d$|^\d{3}$'
+description: Status class (2–5) or exact code (e.g. 200, 429). Anything else is ignored.

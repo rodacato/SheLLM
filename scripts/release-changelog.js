@@ -104,6 +104,18 @@ function formatEntry(version, date, groups, breaking) {
   return lines.join('\n');
 }
 
+function syncSpecVersion(next) {
+  const specPath = join(ROOT, 'docs/api/openapi.yaml');
+  const spec = readFileSync(specPath, 'utf8');
+  writeFileSync(specPath, spec.replace(/^  version: .+$/m, `  version: ${next}`), 'utf8');
+
+  const bundlePath = join(ROOT, 'docs/api/bundled.json');
+  const bundle = JSON.parse(readFileSync(bundlePath, 'utf8'));
+  bundle.info.version = next;
+  // No trailing newline: redocly writes none, and adding one makes every bundle churn.
+  writeFileSync(bundlePath, JSON.stringify(bundle, null, 2), 'utf8');
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 const pkg        = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
@@ -119,6 +131,9 @@ if (DRY_RUN) {
   console.log(entry);
   process.exit(0);
 }
+
+// The spec states the version of the build it ships with, and a test compares the two.
+syncSpecVersion(version);
 
 // Prepend to CHANGELOG.md, replacing the [Unreleased] section
 const changelogPath = join(ROOT, 'CHANGELOG.md');
