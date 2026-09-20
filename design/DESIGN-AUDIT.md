@@ -653,6 +653,33 @@ by side, or a measured distance, or the artboard contradicting the file that des
 `0.1.1`. There are **seven** admin PNGs — five screens, one brief frame, one Log frame — and the
 kit export is named `ui-kit-tokens-0.2.0.png`. That last name is itself **D33**.
 
+## Status — worked 2026-09-20, branch `ui-review-pass2`
+
+| | Landed | Carded on Project 11 | Open |
+|---|---|---|---|
+| **Pass 1** | D30 D31 D32 D34 D35¹ | D33 D36 | — |
+| **Pass 2** | D38 D40 | D35² D37 D39 D41 D42 | — |
+| **Ledger** | B5 B6 B7 | — | — |
+
+¹ the mechanical half — three spellings of the 11 px step collapsed to one.
+² naming the type scale in the kit, which travels with D39.
+
+Eight commits, one per finding, on top of the commit that added this section. 668 tests pass and
+every commit passes lint and the coverage floor **on its own**, which is what rebase-merge needs.
+Nothing pushed.
+
+**D34 needed no `.pen` work after all.** `items-start` makes the shipped card hug its content,
+which is what the artboard already drew — the fix removed the divergence rather than creating a
+re-mirror.
+
+**One correction this pass made to itself.** B6's figures were derived rather than measured. The
+gate measured them: the footer is 2.9 : 1, not the 3.1 : 1 first reported, and fourteen elements
+fall short rather than eleven — the three icon-only links miss the 3:1 non-text rule too. Both are
+corrected in place below.
+
+**The one thing a command cannot answer** is whether the Overview now leads with something worth
+reading first. That is Adrian's, and it is the scope's only open gate.
+
 ## Two limits, declared
 
 **1. The charts.** Both plot interiors carry `CHART INTERIOR NOT MIRRORED` and neither is drawn.
