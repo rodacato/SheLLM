@@ -28,7 +28,11 @@ CLAIMED="${REQUEST}.claimed"
 # Durable, not /run: the dashboard reads this *after* the restart, which is exactly when a
 # rollback is the thing you want to read about.
 STATUS="${STATE_DIR}/update-status.json"
-BACKUP_DIR="/var/backups/shellm"
+# A directory this repo creates and owns. Not /var/backups/shellm: that one belongs to whoever
+# provisioned the host, `install -d -o` below applies ownership to a directory that already
+# exists, and taking a root-only 700 directory over reinterprets it as service-user-only —
+# granting the right to delete files the service user is not even allowed to read.
+BACKUP_DIR="/var/lib/shellm/backups"
 BACKUPS_KEPT=5
 
 # git reads configuration from the current directory's repository. Root has no business picking
@@ -157,8 +161,9 @@ write_status null
 # fetch and the checkout. A commit id cannot be hijacked — the worst a rewritten local ref
 # achieves is naming an object that does not exist, which fails the update.
 lines="$(git ls-remote --tags "${REPO_URL}" "refs/tags/${requested_ref}^{}" || true)"
-# refs/tags/<tag>^{} only exists for annotated tags; this repository's are lightweight, so the
-# peeled lookup comes back empty for them and the unpeeled one is the answer.
+# refs/tags/<tag>^{} only exists for an annotated tag. This repository's releases are annotated,
+# so the peeled lookup is the one that answers; the fallback covers a lightweight tag, where
+# there is nothing to peel and the ref already names the commit.
 [[ -n ${lines} ]] || lines="$(git ls-remote --tags "${REPO_URL}" "refs/tags/${requested_ref}" || true)"
 [[ -n ${lines} ]] || fail "no tag ${requested_ref} in ${REPO_URL}"
 [[ $(printf '%s\n' "${lines}" | wc -l) -eq 1 ]] || fail "${requested_ref} matches more than one ref"
@@ -173,7 +178,9 @@ echo "    resolves to ${resolved_sha}"
 as_service_user git -C "${APP_DIR}" remote set-url origin "${REPO_URL}"
 
 # 4. Snapshot the database. WAL mode means cp is not a backup; .backup is safe while the service
-# is running, and it runs as shellmer because the database is theirs.
+# is running. It runs as shellmer because opening a WAL database creates the -wal and -shm files
+# beside it: root doing that leaves root-owned files in the service user's state directory, and
+# the service cannot write its own database again until someone works out why.
 if [[ -f ${STATE_DIR}/shellm.db ]]; then
   echo "==> Snapshotting the database"
   install -d -m 0750 -o "${SERVICE_USER}" -g "${SERVICE_USER}" "${BACKUP_DIR}"
@@ -181,8 +188,10 @@ if [[ -f ${STATE_DIR}/shellm.db ]]; then
   as_service_user sqlite3 "${STATE_DIR}/shellm.db" ".backup '${backup}'" \
     || fail "could not snapshot the database — refusing to update without one"
   echo "    ${backup}"
-  # Keep the last few and no more; this directory is not a backup strategy, it is an undo.
-  ls -1t "${BACKUP_DIR}"/shellm-*.db 2>/dev/null | tail -n +$((BACKUPS_KEPT + 1)) | xargs -r rm -f
+  # Keep the last few and no more; this directory is not a backup strategy, it is an undo. The
+  # glob is the runner's own naming, so sharing the directory one day could not widen this into
+  # deleting a file it did not write.
+  ls -1t "${BACKUP_DIR}"/shellm-*-before-*.db 2>/dev/null | tail -n +$((BACKUPS_KEPT + 1)) | xargs -r rm -f
 else
   echo "==> No database yet — nothing to snapshot"
 fi

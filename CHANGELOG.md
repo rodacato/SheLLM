@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **deploy:** take the update snapshots out of `/var/backups/shellm` — the updater created that
+  directory with `install -d -o shellmer`, which also applies to a directory that already exists,
+  so on a host where something else had provisioned it as root-only the updater silently handed
+  it to the service user. Snapshots now go to `/var/lib/shellm/backups`, which this project
+  creates and owns, and retention only matches the runner's own file names. Existing hosts keep
+  whatever `/var/backups/shellm` holds; nothing here changes its ownership back, so check it with
+  `ls -ld /var/backups/shellm` if the updater ever ran.
+
 ## [1.2.0] - 2026-09-20
 
 ### Upgrade notes
