@@ -2,93 +2,9 @@ apis:
   main:
     root: docs/api/openapi.yaml
 
-theme:
-  openapi:
-    htmlTemplate: docs/template.html
-    theme:
-      colors:
-        primary:
-          main: '#03E3FF'
-          light: '#39eeff'
-          dark: '#02c8e0'
-          contrastText: '#101417'
-        success:
-          main: '#22C55E'
-          contrastText: '#fff'
-        warning:
-          main: '#FFB800'
-          contrastText: '#101417'
-        error:
-          main: '#EF4444'
-          contrastText: '#fff'
-        border:
-          dark: '#3b494c'
-          light: '#3b494c'
-        text:
-          primary: '#FFFFFF'
-          secondary: '#849397'
-        responses:
-          success:
-            color: '#22C55E'
-            backgroundColor: '#052E16'
-            tabTextColor: '#22C55E'
-          error:
-            color: '#EF4444'
-            backgroundColor: '#3B0A0A'
-          redirect:
-            color: '#FFB800'
-            backgroundColor: '#3B2800'
-          info:
-            color: '#03E3FF'
-            backgroundColor: '#002a2e'
-        http:
-          get:     '#22C55E'
-          post:    '#03E3FF'
-          put:     '#FFB800'
-          patch:   '#a855f7'
-          delete:  '#EF4444'
-          head:    '#849397'
-          options: '#849397'
+extends:
+  - recommended
 
-      schema:
-        linesColor: '#3b494c'
-        typeNameColor: '#03E3FF'
-        typeTitleColor: '#e0e3e7'
-        requireLabelColor: '#ffb4ab'
-        nestedBackground: '#0b0f12'
-        arrow:
-          color: '#849397'
-
-      typography:
-        fontSize: '15px'
-        lineHeight: '1.6'
-        fontFamily: '"Inter", system-ui, -apple-system, sans-serif'
-        headings:
-          fontFamily: '"Space Grotesk", system-ui, sans-serif'
-          fontWeight: '600'
-        code:
-          fontSize: '0.875em'
-          fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace'
-          color: '#03E3FF'
-          backgroundColor: '#0b0f12'
-        links:
-          color: '#03E3FF'
-          visited: '#00daf5'
-          hover: '#a0efff'
-
-      sidebar:
-        width: '260px'
-        backgroundColor: '#101417'
-        textColor: '#849397'
-        activeTextColor: '#FFFFFF'
-        rightLineColor: '#3b494c'
-
-      rightPanel:
-        backgroundColor: '#0b0f12'
-        width: '38%'
-        textColor: '#e0e3e7'
-        panelBackgroundColor: '#0b0f12'
-        panelControlsBackgroundColor: '#101417'
-
-      codeBlock:
-        backgroundColor: '#0b0f12'
+rules:
+  # The only server this spec can name is the caller's own machine — SheLLM is self-hosted.
+  no-server-example.com: off

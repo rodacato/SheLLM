@@ -13,6 +13,11 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Advisory: the minimum in `npm run test:coverage` reports without failing the check.
+  # Set to "true" to make a coverage drop block a merge.
+  COVERAGE_BLOCKING: "false"
+
 jobs:
   test:
     name: Lint, Audit & Test
@@ -35,8 +40,16 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Lint the OpenAPI spec
+        run: npm run docs:lint
+
       - name: Audit runtime dependencies
         run: npm run audit:security
 
       - name: Test
         run: npm test
+
+      # Separate from the step above so a failing test always blocks while the minimum only warns.
+      - name: Coverage
+        continue-on-error: ${{ env.COVERAGE_BLOCKING != 'true' }}
+        run: npm run test:coverage

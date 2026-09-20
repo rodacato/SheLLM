@@ -21,7 +21,7 @@
     "lint": "eslint src/ test/ scripts/",
     "lint:fix": "eslint --fix src/ test/ scripts/",
     "test": "node --experimental-test-module-mocks --test 'test/*.test.js' 'test/**/*.test.js'",
-    "test:coverage": "node --experimental-test-module-mocks --experimental-test-coverage --test-coverage-include='src/**' --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage/lcov.info --test 'test/*.test.js' 'test/**/*.test.js'",
+    "test:coverage": "node --experimental-test-module-mocks --experimental-test-coverage --test-coverage-include='src/**' --test-coverage-lines=85 --test-coverage-branches=78 --test-coverage-functions=85 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage/lcov.info --test 'test/*.test.js' 'test/**/*.test.js'",
     "test:e2e": "node --test --test-timeout 120000 test/e2e/*.e2e.js",
     "test:cli": "node --test --test-timeout 60000 test/cli/*.cli.js",
     "smoke": "node test/smoke.mjs",
