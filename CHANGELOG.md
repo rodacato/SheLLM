@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Upgrade notes
+
+**`GET /admin/stats` no longer accepts `?period=`, and answers with `window` instead of
+`period`.** The dashboard offered 24h / 7d / 30d over a table the pruner already bounds at 30
+days, so `30d` was every row that exists and the other two were narrower views of it — while each
+option quietly gave every figure on the page a different denominator. There is now one window,
+everything still in the database, and the page states it. The parameter is gone from the spec; a
+request that still sends it is answered with the same single window rather than an error. If you
+call this endpoint from anything other than the dashboard, read `window.from`, `window.hours` and
+`window.retention_days` in place of `period`.
+
+**The p95 latency card no longer shows a delta against the previous period.** Comparing meant
+reading the window behind the current one, which retention has already deleted by the time anyone
+looks. The arrow is removed rather than rebased onto an invented baseline.
+
+**Timestamps now render in a configured timezone, not the browser's.** `SHELLM_TZ` names it and
+defaults to `America/Mexico_City`; an unknown zone name falls back to that default instead of
+failing the request. This affects every time the dashboard draws — tables, tooltips and both
+charts' axes — so times will move for anyone whose machine was not already on that zone. Server
+logs are unchanged and stay UTC.
+
 ## [1.5.0] - 2026-09-20
 
 ### Upgrade notes
