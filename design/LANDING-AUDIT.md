@@ -17,9 +17,55 @@
 The admin dashboard is [`DESIGN-AUDIT.md`](DESIGN-AUDIT.md)'s and [`MOTION-AUDIT.md`](MOTION-AUDIT.md)'s.
 Neither of them looked at `site/`; this is the first pass over the public surface.
 
+## Status — worked 2026-09-20, branch `worktree-design-landing-revamp`
+
+| | Landed | Open |
+|---|---|---|
+| **Page** | D50 D51 D52 D53 D54 D55 | — |
+| **Pipeline** | D56 D57 | D58 — needs a capture nobody has taken yet |
+| **Docs** | D59 | — |
+| **Reported during the work** | D60 | — |
+
+Everything this audit found is in except **D58**, which is not a code change: the shipped Request
+Logs capture shows a 15.4% error rate from the maintainer's own auth tests, and replacing it needs
+the admin running against representative data in a browser. This container has neither, so writing
+a nicer caption over the same picture would have been the dishonest version of closing it.
+
+**Measured after, against the table below:** body prose **573 → 293 words**, screenshots
+**1 → 5**, and the build copies five exports instead of one hardcoded file. Motion below the fold
+exists again.
+
+**What the rebuild cost, stated plainly:** the five captures total ~1.2 MB. Four are `loading="lazy"`,
+so a first paint pulls the Overview alone at 493 KB. That is the price of D51 and it is the first
+thing to revisit if the page feels slow — a 1440px variant beside each export would roughly quarter
+it, and needs image tooling this container does not have.
+
+**Crops are done in CSS, not in pixels** — same reason. The Overview is rendered at `aspect-ratio:
+2/1` with `object-position: top`, which shows the top 1440 of its 4374 source rows and so never
+reaches the review marker at y≈1780. It works, and it still ships the whole file to show 40% of it.
+
+### Two places the work departed from what this document proposed
+
+- **Four panels, not three.** The Recommendation named request logs, playground and provider
+  health. API Keys was added because per-key attribution is half of what the Overview capture is
+  arguing — a key per app, with its own limit and its own spend — and the export was already
+  there. It also takes the screenshot count from four to five.
+- **Fair use was trimmed, not left unchanged.** The Recommendation said *unchanged*; it went from
+  119 to 84 words. Every claim survives — official unmodified binaries, no token extraction, no
+  credential calls, no client spoofing, the risk being yours, and all three provider rows
+  including *"anti-abuse classifiers are the real exposure"*. What went is phrasing the README
+  carries in full, such as Antigravity's terms quoted verbatim. Called out because `helena`'s
+  position on this section was a veto, and a 30% cut is not something to report as a rounding
+  error.
+
+**The page sits at 299 words against a 300-word budget.** That is one word of headroom: the next
+sentence anyone adds fails G1. Deliberate, and worth knowing before someone treats the failure as
+a broken gate.
+
 Findings continue the shared ledger in [`DECISIONS.md`](DECISIONS.md), which ends at **D49**, so
-this one starts at **D50**. Nothing here is implemented — this document is the analysis the
-maintainer asked for before any change.
+this one starts at **D50**. The findings below were written before any change; what became of each
+is the Status table above, and the analysis is left as it was rather than edited to match what
+shipped.
 
 ## Method
 
@@ -56,7 +102,7 @@ the page does not move.
 
 ### D50 — The landing page is the README with a stylesheet on it
 
-This is the finding the other nine are downstream of.
+This is the finding D51–D59 are downstream of.
 
 Four of the six sections are the README's prose, in the README's order, and two of them are
 **verbatim**:
@@ -165,6 +211,21 @@ that is typical, not by whichever run happened to be in the database.
 design method doc governs design work in this repo per [`AGENTS.md`](../AGENTS.md), so it being
 wrong about its own scope is load-bearing, not cosmetic. Whatever is decided about the page, that
 paragraph needs rewriting in the same change.
+
+### D60 — The API reference's logo fills the sidebar and lands on the home link
+
+Reported by Adrian with a screenshot while this audit was being worked, so it is outside the
+original pass and numbered here to keep the ledger whole.
+
+[`docs/api/logo.svg`](../docs/api/logo.svg) declared only `viewBox="0 0 264 64"` — no `width`, no
+`height`. An SVG with no intrinsic size inside an `<img>` takes whatever width its container
+offers, so Redoc rendered the wordmark across the entire sidebar. `.home` — the *"back to the
+landing page"* link — is `position: fixed` at `top: 1rem; left: 1.25rem`, which is the same band,
+so the two drew on top of each other.
+
+Two marks also say `SheLLM` in that corner: the `x-logo` and `.home`'s own text. Fixed here as
+geometry only, because the design method forbids inventing copy; whether the duplication should
+collapse into one mark is a separate call.
 
 ---
 
@@ -308,6 +369,7 @@ rollback and nothing else in the repo depends on it.
 - It does not judge the admin dashboard. That is `DESIGN-AUDIT.md` and `MOTION-AUDIT.md`.
 - It does not specify motion in exact durations and curves. If the direction is accepted, the
   reveal is worth running past the motion method the way the admin's was.
-- It does not write copy. Every replacement sentence is a decision the maintainer makes, because
-  the voice is the asset.
-- It changes nothing. No file outside this one has been touched.
+- It does not decide whether the rebuilt page is good. Nothing here has been rendered — this
+  container has no browser — so that judgement is still open and it is the maintainer's.
+- It did not re-capture anything. Every screenshot on the page is an export that already existed;
+  D58 is the finding that says one of them should not have been the one that shipped.
