@@ -45,7 +45,8 @@
                 <template x-for="row in errorRows" :key="row.status + row.error_code + row.client_name + row.path">
                   <tr @click="openErrorLogs(row)"
                     class="border-t border-outline-variant/20 cursor-pointer hover:bg-surface-container-high transition-colors duration-100">
-                    <td class="py-2 text-outline whitespace-nowrap" x-text="formatTime(row.last_seen_at)"></td>
+                    <td class="py-2 text-outline whitespace-nowrap" :title="formatTime(row.last_seen_at)"
+                      x-text="formatRelative(row.last_seen_at)"></td>
                     <td class="py-2 font-bold"
                       :class="row.status < 500 ? 'text-status-warn' : 'text-status-fail'"
                       x-text="row.status"></td>
@@ -295,7 +296,8 @@
                         <td class="py-2 text-right text-white" x-text="c.requests"></td>
                         <td class="py-2 text-right" :class="c.errors > 0 ? 'text-status-warn' : 'text-outline'" x-text="c.errors"></td>
                         <td class="py-2 text-right text-outline" x-text="formatCost(c.cost_usd)"></td>
-                        <td class="py-2 text-right text-outline" x-text="formatTime(c.last_seen_at)"></td>
+                        <td class="py-2 text-right text-outline" :title="formatTime(c.last_seen_at)"
+                          x-text="formatRelative(c.last_seen_at)"></td>
                       </tr>
                     </template>
                   </tbody>

@@ -292,5 +292,6 @@ function overviewPage() {
     formatCost,
     formatDuration,
     formatTime,
+    formatRelative,
   };
 }

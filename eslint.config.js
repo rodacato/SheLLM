@@ -76,6 +76,7 @@ module.exports = [
         formatCost: 'readonly',
         formatTime: 'readonly',
         formatHourMinute: 'readonly',
+        formatRelative: 'readonly',
         formatDayHour: 'readonly',
         formatCompactNumber: 'readonly',
         statusBadgeClass: 'readonly',
