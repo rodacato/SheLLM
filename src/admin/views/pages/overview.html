@@ -18,6 +18,10 @@
           <span class="text-on-surface-variant" x-show="stats && stats.window.from" x-text="stats ? windowSpan() : ''"></span>
           <span x-show="stats && stats.window.from" x-text="stats ? '· since ' + formatTime(stats.window.from) : ''"></span>
           <span x-show="stats && !stats.window.from">no requests recorded yet</span>
+          <!-- The only page that re-reads itself on a timer, and the only one tall enough to
+               push the footer's copy of this two screens down. -->
+          <span x-show="lastReadAt" :class="$store.connection.degraded ? 'text-status-warn' : 'text-outline'"
+            x-text="'· read ' + lastReadAt"></span>
           <span class="ml-auto text-outline/60"
             x-text="stats ? 'logs are kept ' + stats.window.retention_days + ' days' : ''"></span>
         </div>
