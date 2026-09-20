@@ -10,6 +10,10 @@
 > Rails consumer) are retired, and the panel now centers on the two things that decide whether
 > SheLLM works — driving official CLIs safely and answering like the real provider APIs. IDs are
 > permanent from this version on; a retired seat keeps its ID and says where its lens went.
+>
+> **S8 `noa` added 2026-09-20**, when [`design/LANDING-AUDIT.md`](../design/LANDING-AUDIT.md)
+> needed a lens no seat held: C8 `priya` judges whether a stranger can succeed, and nobody judged
+> whether a stranger stops.
 
 ## How to consult
 
@@ -46,6 +50,7 @@
 | **S5** | `sofia` | Admin dashboard UX and the Pencil design system | A dashboard screen, `design/` work, dense operational tables |
 | **S6** | `bruno` | Linux service operations: systemd, cloudflared, VPS setup | The install script, the unit file, log rotation, the tunnel |
 | **S7** | `fowler` | Refactoring and migration sequencing | Restructuring a module, sequencing the revamp behind tests |
+| **S8** | `noa` | Brand and positioning: what a stranger understands, and whether they stop | A public surface — the landing page, the README's opening, how the project introduces itself |
 
 Core seats are consulted whenever their lens is touched; situational seats only on their trigger.
 
@@ -209,6 +214,22 @@ that serves SheLLM's ambition over the integrator wiring it into another app.
 
 - **Trigger:** restructuring a module or sequencing the revamp.
 - **Brings:** small steps behind green tests, strangler moves, naming that survives the refactor.
+
+### S8 — Noa Feldman · `noa` · Brand and positioning
+
+> *"You have one screen. Show the thing, don't describe it."*
+
+- **Trigger:** a public surface — the landing page, the README's opening, the OG card, how the
+  project introduces itself to someone who has not decided yet. Not features, and not the docs
+  someone reads after they decided.
+- **Brings:** what a stranger understands in ten seconds and what makes them stop; showing a
+  product rather than describing it; the register that reads as written rather than generated.
+- **Her limit, which is the reason the seat is narrow:** the public page's job is
+  **qualification, not acquisition**. [`AUDIENCE.md`](./AUDIENCE.md) lists the general public
+  arriving via Google as an explicit non-user, so she argues for craft that helps the right
+  person decide quickly and has no standing to ask for SEO copy, a funnel, a newsletter or social
+  proof. On anything that changes how the project describes its relationship to a provider,
+  `helena` outranks her.
 
 ---
 
