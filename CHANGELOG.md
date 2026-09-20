@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-09-20
+
+### Added
+
+- **deploy:** ship the backup units, installed and switched off
+- **cli:** shellm backup writes one verified snapshot into one directory
+
+### Changed
+
+- **update:** take the snapshot in the CLI, not in the root runner
+
+### Documentation
+
+- **deployment:** how to back up, and how to restore
+- **adr:** a consistent snapshot is a command, and the contract is a directory
+
+
 ## [1.3.0] - 2026-09-20
 
 ### Upgrade notes
@@ -476,5 +493,5 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.3.0...HEAD
-[1.3.0]: https://github.com/rodacato/SheLLM/compare/v1.2.0...v1.3.0
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/rodacato/SheLLM/compare/v1.3.0...v1.4.0
