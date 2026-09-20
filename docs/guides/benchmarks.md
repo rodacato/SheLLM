@@ -1,4 +1,7 @@
-# Benchmarks — production, 2026-09-19
+# Benchmarks
+
+Every dated section below stands on its own; the first, from 2026-09-19, is the production
+latency run.
 
 The first latency measurement of SheLLM on the real server. Until now the only numbers were from
 a laptop (3–4 s spawned per request, ~1 s with a warm process), which is what
@@ -224,6 +227,79 @@ not that they still refresh. It answered "Logged in using ChatGPT" here while ev
 A dead token now surfaces on the first real request instead of on a probe — which is the same
 place it surfaced before, only without a blanket 503 in front of it.
 
+## Model catalog — 2026-09-20, dev container
+
+A catalog says which models exist, not which ones this subscription may run, and neither CLI
+reports entitlement: codex's `model/list` answers for the account and a model it lists can still be
+refused ("not supported when using Codex with a ChatGPT account", the failure in the section
+above), while claude's `/model` line is aliases with nothing behind them. Only a real call settles
+it, so every entry of both catalogs got one.
+
+| | |
+|---|---|
+| Where | the dev container, through each provider's own `buildArgs` — the arguments a request produces |
+| CLI | `codex` 0.154.0, `claude` 2.1.273 |
+| Prompt | `Reply with the single word: ok`, one call per model |
+| Samples | **n=1 per model.** 12 catalog models plus the two bare provider names, 14 calls |
+| Tool | [`scripts/probe-models.js`](../../scripts/probe-models.js) |
+
+**All 14 answered**, including both bare names.
+
+| Provider | Sent | Reached the CLI as |
+|---|---|---|
+| codex | `codex-gpt-6-astra` (default), `-sol`, `-terra`, `-luna`, `codex-gpt-5.5` | the same name, prefix stripped |
+| codex | `codex` | `-m gpt-6-astra`, from the baked catalog |
+| claude | `claude-sonnet`, `-opus`, `-haiku`, `-fable`, `-best`, `-opusplan`, `-default` | `sonnet`, `opus`, … prefix stripped |
+| claude | `claude` | no `--model`; the CLI's own default |
+
+### What the first version of this probe got wrong
+
+It called the CLIs directly, with the aliases the CLI accepts: `--model fable`. SheLLM does not send
+that — it sends `claude-fable`, and only the provider decides whether the prefix comes off. At the
+time it did not: `cliModel()` knew three aliases and passed the other four through whole, so
+`--model claude-fable` reached the CLI and was refused with "isn't described by this version's
+model catalog". Twelve green rows, four of them for a command no request makes.
+
+The probe now builds every call through the provider module, so what it validates is the path.
+A validation that skips the layer under test is worse than none: it is a green light with no
+circuit behind it.
+
+**The timings are not a latency measurement.** The script carries a stopwatch because it was
+already timing out calls, not because one call per model measures anything. Codex answered between
+3.6 s and 5.0 s and claude between 1.9 s and 3.9 s — a span across twelve *different* models at one
+sample each, which says every model answered well inside the 90 s timeout and nothing more. The
+per-model split is deliberately not published: at n=1 it would be read as a ranking, and the
+sections above (n=3 to n=10, same machine, one model at a time) already show the models
+indistinguishable at this prompt size. Those are the numbers to use.
+
+### What it cost
+
+Read through `account/rateLimits/read` either side of the run: fourteen completions moved codex's
+primary window from **1 % to 3 %**. That window is 300 minutes. The 7-day secondary window did not
+move. An earlier run of five codex calls moved the same window one point, so the two agree at
+roughly a point per five calls.
+
+Each reading also covers the metadata calls — `model/list` once, `account/rateLimits/read` twice —
+so they cannot be split out at this resolution. What it does bound: the metadata reads cost at most
+a fraction of one point, which makes **asking what models exist effectively free, and finding out
+whether they answer the part that costs**. There is no equivalent reading for claude, so its calls
+are unaccounted for.
+
+### One retirement, already flagged
+
+`gpt-5.5` reports `retirementAt` 2026-10-14 and an upgrade to `gpt-5.6-sol`. It answered anyway.
+Both fields ride in the catalog, which is how the admin playground warns before a name stops
+working.
+
+### What this run does not settle
+
+- **It stops at the provider module.** The calls are built the way a request builds them, but they
+  do not cross the HTTP layer, the key check or the queue. A routing change could still break a
+  name this run calls good.
+- It ran against the dev container's own installation. The server has its own binaries, which is
+  the whole reason `src/catalog/models.json` is a fallback floor and a live probe outranks it.
+- Nothing about answer quality, or whether a model that returns one word handles a real prompt.
+
 ## Reproduce it
 
 ```bash
@@ -240,10 +316,20 @@ requests of subscription quota — and a benchmark outruns the default 30 req/mi
 fast instance, so raise `SHELLM_GLOBAL_RPM` or use `--only`. The run reports how many requests came
 back 429 rather than quietly averaging them away.
 
+The catalog validation is a separate script and needs no server, only the two CLIs signed in:
+
+```bash
+node scripts/probe-models.js
+```
+
+It spends one completion per model and prints codex's rate-limit delta around the run.
+
 **The production table above predates the streaming fix.** Re-run the latency suite against the
 server after the next deploy and replace it.
 
 ## What this does not measure
 
 Token throughput as the provider counts it, a cold VPS, sustained load over hours, the behaviour
-at a usage limit, any provider other than Claude, and anything at all about answer quality.
+at a usage limit, and anything at all about answer quality. This section is the 2026-09-19
+production run, which covered Claude only; codex is measured in its own sections below, on a dev
+container rather than the server.

@@ -44,7 +44,63 @@ curl -s "$SHELLM_BASE/v1/messages" \
   -d '{"model": "claude", "max_tokens": 256, "messages": [{"role": "user", "content": "Hola"}]}'
 ```
 
-## 3. From an SDK
+## 3. Naming a model
+
+A model name is `<provider>-<the CLI's own name for the model>`. The prefix picks the provider,
+the rest is what reaches the CLI.
+
+| You send | What runs |
+|---|---|
+| `claude` | the `claude` CLI with no `--model` — its own default |
+| `claude-sonnet`, `claude-opus`, `claude-haiku` | `--model sonnet` / `opus` / `haiku` |
+| any other `claude-*` the catalog knows | the prefix comes off: `claude-fable` runs `--model fable` |
+| anything else | `--model` with the name unchanged, so a full id like `claude-sonnet-4-5-20250929` works |
+| `codex` | `-m` with the default from the baked catalog, not the CLI's own |
+| `codex-gpt-5.6-sol` | `-m gpt-5.6-sol` |
+
+Any string starting with `claude-` or `codex-` routes; there is no whitelist. A name the CLI does
+not know comes back as 404 `model_not_found`, not as a validation error. Bare `codex` has to name a
+model because without `-m` the CLI reads `~/.codex/config.toml`, and a ChatGPT account refuses the
+model it usually finds there ([`benchmarks.md`](./benchmarks.md)). That default is read from
+`src/catalog/models.json` and never from a live probe — a request must not wait on a spawn.
+
+Three tier aliases are translated unconditionally, because tier names outlive the catalog. Every
+other alias the catalog reports — `fable`, `best`, `opusplan`, `default` — is stripped of its
+prefix only because the catalog says the CLI answers to it; a name the catalog does not know is
+passed through untouched, which is what keeps full model ids working.
+
+`GET /v1/models` is not the catalog and does not list what was discovered. It returns the names
+each enabled provider declares — four for claude, one for codex — and that is deliberate.
+
+### Where the names come from
+
+SheLLM holds no provider API keys ([`../IDENTITY.md`](../IDENTITY.md)), so the catalog comes from
+the binaries. Asking costs no quota: `codex app-server` answers `model/list` with the models this
+account can use, including descriptions and retirement dates, and `claude -p '/model'` is answered
+by the CLI itself rather than by the API, which is also why the claude entries carry an alias and
+nothing else.
+
+The catalog feeds the admin dashboard's playground — a suggestion list and a retirement warning,
+not a restriction on what the field accepts. It has three sources and always reports which one it
+used, in the dashboard and in `catalog.source` on `GET /admin/providers`:
+
+| Source | When | What the dashboard says |
+|---|---|---|
+| `cli` | it asked the installed binaries; cached for `SHELLM_MODEL_CATALOG_TTL_MS`, 6 h by default | `claude: asked the CLI` |
+| `baked` | the probe failed, so `src/catalog/models.json` answered | `codex: built 2026-09-20 against CLI 0.154.0`, plus the running version when it differs |
+| `declared` | no catalog at all, only the hardcoded tier names | `claude: could not ask — built-in aliases only` |
+
+The baked file is a floor, never the source of truth: your host runs its own binaries under its own
+account, and a live probe always wins. Regenerate it in the dev container, where both CLIs are
+installed and signed in:
+
+```bash
+node scripts/build-model-catalog.js   # writes src/catalog/models.json, stamped with the date and the CLI versions
+```
+
+Commit the result. A model retiring then shows up as a deleted line in a pull request.
+
+## 4. From an SDK
 
 No client code changes — only the base URL and the key.
 
@@ -95,9 +151,9 @@ answer = JSON.parse(response.body).dig('choices', 0, 'message', 'content')
 ```
 
 The `ruby-openai` gem works the same way with `uri_base: ENV['SHELLM_BASE']` — it appends `/v1`
-itself, so do not include it twice. Set a read timeout of at least 120 s in any client: see §7.
+itself, so do not include it twice. Set a read timeout of at least 120 s in any client: see §8.
 
-## 4. What works today with Claude
+## 5. What works today with Claude
 
 Each row is a probe that ran against a live instance, not a reading of the code. Re-run them with
 `node scripts/bench.js --suite capabilities`.
@@ -109,7 +165,7 @@ Each row is a probe that ran against a live instance, not a reading of the code.
 | Steer with a system prompt (`system`) | works | top-level `system` on `/v1/messages`, or a `system` role message on `/v1/chat/completions` |
 | Get JSON back (`json-mode`) | works | `response_format: {"type": "json_object"}` returns parseable JSON |
 | Stream tokens, OpenAI style (`stream-openai`) | works | SSE `data:` chunks, `[DONE]` terminator |
-| Stream tokens, Anthropic style (`stream-anthropic`) | works | named events, first one arrives early (§8) |
+| Stream tokens, Anthropic style (`stream-anthropic`) | works | named events, first one arrives early (§9) |
 | Send a long prompt (`long-context`) | works | ~4k tokens accepted, and it barely costs latency |
 | Send the fields your SDK adds anyway (`sdk-extras`) | works | `temperature`, `top_p`, `stop`, `seed`, `n`, `user` are accepted |
 | Cap the answer length (`max-tokens`) | ignored | the claude CLI has no such flag: `max_tokens: 16` still returned 3 000 characters. Bound the length in the prompt |
@@ -129,7 +185,7 @@ the status:
 | Validation errors keep each endpoint's shape (`error-format-4xx`) | works | OpenAI errors on `/v1/chat/completions`, Anthropic errors on `/v1/messages` |
 | A 401 keeps each endpoint's shape (`error-format-401`) | works | it did not until 2026-09-19: both endpoints used to answer `{"error": "auth_required", …}`, SheLLM's own shape, so `error.message` read through an SDK came back empty |
 
-## 5. Streaming
+## 6. Streaming
 
 ```bash
 curl -N "$SHELLM_BASE/v1/chat/completions" \
@@ -148,7 +204,7 @@ Two caveats:
   are not SheLLM's and not yet understood ([`benchmarks.md`](./benchmarks.md)). Stream with
   `claude-sonnet`.
 
-## 6. Errors
+## 7. Errors
 
 Every response carries an `x-request-id` header, and the server logs the same id — quote it when
 something is wrong. You can also set it yourself to correlate with your own logs.
@@ -167,7 +223,7 @@ something is wrong. You can also set it yourself to correlate with your own logs
 SheLLM never retries for you, by design. If you retry, do it on 502/503/504 with a backoff, and
 never on 429 before `Retry-After`.
 
-## 7. Limits you will hit
+## 8. Limits you will hit
 
 | Limit | Default | Consequence |
 |---|---|---|
@@ -183,7 +239,7 @@ This is a personal subscription behind a CLI: it is sized for a person's work, n
 queue. Set your client timeout above 120 s, keep concurrency at or below 2, and do not point a
 batch process at it.
 
-## 8. What it costs in time
+## 9. What it costs in time
 
 Measured on the production server through a Cloudflare Tunnel, median of 3 ([`benchmarks.md`](./benchmarks.md)):
 
@@ -194,7 +250,7 @@ Measured on the production server through a Cloudflare Tunnel, median of 3 ([`be
 
 So: pick the model for quality, not for speed, and stream when a person is watching.
 
-## 9. What not to do
+## 10. What not to do
 
 - Do not put SheLLM behind a coding agent (Claude Code, Cline, Aider) — they drive their own CLI.
 - Do not share a key outside your own applications. One subscription, one owner.
