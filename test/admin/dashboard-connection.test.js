@@ -10,7 +10,7 @@ const JS_DIR = path.join(__dirname, '../../src/admin/public/js');
 
 // app.js is loaded the way the browser loads it. Alpine's store is the one thing stood in for —
 // it arrives from a CDN — and the page's own `alpine:init` body then runs for real against it.
-function loadApp(fetchImpl) {
+function loadApp(fetchImpl, extraFiles = []) {
   const stores = {};
   const listeners = {};
   const context = vm.createContext({
@@ -18,6 +18,7 @@ function loadApp(fetchImpl) {
     Alpine: { store: (name, value) => (value === undefined ? stores[name] : (stores[name] = value)) },
     fetch: fetchImpl,
     navigator: { onLine: true },
+    URLSearchParams,
     setTimeout: (fn) => { Promise.resolve().then(fn); return 0; },
     clearTimeout: () => {},
     setInterval: () => 0,
@@ -26,7 +27,9 @@ function loadApp(fetchImpl) {
     document: { addEventListener: (event, fn) => { listeners[event] = fn; } },
   });
 
-  vm.runInContext(fs.readFileSync(path.join(JS_DIR, 'app.js'), 'utf8'), context, { filename: 'app.js' });
+  for (const file of ['app.js', ...extraFiles]) {
+    vm.runInContext(fs.readFileSync(path.join(JS_DIR, file), 'utf8'), context, { filename: file });
+  }
   listeners['alpine:init']();
 
   return { context, stores, listeners, page: vm.runInContext('app()', context) };
@@ -34,6 +37,7 @@ function loadApp(fetchImpl) {
 
 const json = (status, body) => ({ ok: status < 400, status, json: async () => body });
 const HEALTHY = { uptime_seconds: 271_000, status: 'ok', queue: { active: 0, max_concurrent: 3 } };
+const VIEWS = path.join(__dirname, '../../src/admin/views/pages');
 
 describe('the admin knows when it could not ask', () => {
   // The sidebar dot is the one element whose job is to say the server is alive. It kept saying so
@@ -75,6 +79,37 @@ describe('the admin knows when it could not ask', () => {
     const { context } = loadApp(async () => json(503, { error: 'down' }));
     const apiRead = vm.runInContext('apiRead', context);
     await assert.rejects(() => apiRead('/admin/logs'), { name: 'ApiError', status: 503 });
+  });
+
+  // "No logs found" on a gateway that never answered reads as an empty database. The table has to
+  // hold the failure itself — the shell banner says the connection is down, not which read failed.
+  it('a table that could not be read does not report itself as empty', async () => {
+    let reachable = false;
+    const { context } = loadApp(
+      async () => { if (!reachable) throw new TypeError('Failed to fetch'); return json(200, { logs: [{ id: 1 }], total: 1 }); },
+      ['logs.js'],
+    );
+    const page = vm.runInContext('logsPage()', context);
+
+    await page.fetchLogs();
+    assert.ok(page.loadError, 'the table kept no record that the read failed');
+    assert.strictEqual(page.logs.length, 0);
+    assert.strictEqual(page.total, 0, 'a failed read left a count next to an error');
+
+    reachable = true;
+    await page.fetchLogs();
+    assert.strictEqual(page.loadError, null, 'the failure outlived the read that fixed it');
+    assert.strictEqual(page.total, 1);
+  });
+
+  // The state above is worth nothing if the markup never asks for it.
+  it('both tables branch their empty row on that failure', () => {
+    for (const [file, field] of [['logs.html', 'loadError'], ['keys.html', 'loadError']]) {
+      const html = fs.readFileSync(path.join(VIEWS, file), 'utf8');
+      const emptyRow = html.split('\n').find((line) => line.includes('Loading...'));
+      assert.ok(emptyRow, `${file} no longer has an empty-row cell — this check proves nothing`);
+      assert.match(emptyRow, new RegExp(field), `${file} still renders a failed read as an empty table`);
+    }
   });
 
   it('goes degraded when the browser goes offline, with no request involved', async () => {

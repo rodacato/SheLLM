@@ -13,7 +13,9 @@ function logsPage() {
     filterErrorCode: '',
     expandedId: null,
     loading: true,
+    loadError: null,
     stats: null,
+    statsError: null,
 
     applyPendingFilter() {
       const nav = Alpine.store('nav');
@@ -41,13 +43,15 @@ function logsPage() {
       this.appendFilters(params);
 
       try {
-        const res = await apiFetch(`${API_BASE}/logs?${params}`);
-        if (res.ok) {
-          const data = await res.json();
-          this.logs = data.logs;
-          this.total = data.total;
-        }
-      } catch { /* ignore */ }
+        const data = await apiRead(`${API_BASE}/logs?${params}`);
+        this.logs = data.logs;
+        this.total = data.total;
+        this.loadError = null;
+      } catch (err) {
+        this.logs = [];
+        this.total = 0;
+        this.loadError = err.message;
+      }
       this.loading = false;
     },
 
@@ -82,23 +86,26 @@ function logsPage() {
 
     async fetchStats() {
       try {
-        const res = await apiFetch(`${API_BASE}/stats?period=24h`);
-        if (res.ok) {
-          this.stats = await res.json();
-        }
-      } catch { /* ignore */ }
+        this.stats = await apiRead(`${API_BASE}/stats?period=24h`);
+        this.statsError = null;
+      } catch (err) {
+        this.stats = null;
+        this.statsError = err.message;
+      }
     },
 
     async clearLogs() {
       if (!confirm('Delete all request logs? This cannot be undone.')) return;
       try {
         const res = await apiFetch(`${API_BASE}/logs`, { method: 'DELETE' });
-        if (res.ok) {
-          this.logs = [];
-          this.total = 0;
-          this.offset = 0;
+        if (!res.ok) {
+          const err = await res.json();
+          return alert(err.message || 'Failed to clear logs');
         }
-      } catch { /* ignore */ }
+        this.logs = [];
+        this.total = 0;
+        this.offset = 0;
+      } catch { alert('Network error'); }
     },
 
     async applyFilters() {

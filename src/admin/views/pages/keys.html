@@ -43,7 +43,9 @@
             </thead>
             <tbody>
               <tr x-show="keys.length === 0">
-                <td colspan="8" class="px-4 py-10 text-center text-outline font-mono text-sm" x-text="loading ? 'Loading...' : 'No keys created yet'"></td>
+                <td colspan="8" class="px-4 py-10 text-center font-mono text-sm"
+                  :class="loadError && !loading ? 'text-error' : 'text-outline'"
+                  x-text="loading ? 'Loading...' : (loadError ? 'Could not read the keys — ' + loadError : 'No keys created yet')"></td>
               </tr>
               <template x-for="key in keys" :key="key.id">
                 <tr class="border-t border-outline-variant/20 hover:bg-surface-container-high transition-colors duration-100">
@@ -60,7 +62,7 @@
                     <template x-if="key.usage && key.usage.requests > 0">
                       <div>
                         <button @click="openKeyLogs(key)" class="link-brand" x-text="key.usage.requests + ' req'"></button>
-                        <span x-show="key.usage.errors > 0" class="text-[#ffb4ab] ml-1" x-text="errorRate(key) + '% err'"></span>
+                        <span x-show="key.usage.errors > 0" class="text-error ml-1" x-text="errorRate(key) + '% err'"></span>
                         <span class="text-outline block mt-0.5">
                           <span x-text="formatCompactNumber(key.usage.tokens)"></span> tok ·
                           <span x-text="formatCost(key.usage.cost_usd)"></span>
@@ -78,14 +80,14 @@
                         <div class="toggle-knob"></div>
                       </div>
                       <span class="text-[10px] font-headline font-bold uppercase"
-                        :class="key.active ? 'text-green-400' : 'text-outline'"
+                        :class="key.active ? 'text-status-ok' : 'text-outline'"
                         x-text="key.active ? 'Active' : 'Off'"></span>
                     </button>
                   </td>
                   <td class="px-4 py-3 text-xs font-mono whitespace-nowrap">
                     <span class="text-outline" x-text="formatTime(key.created_at)"></span>
                     <span class="block mt-0.5"
-                      :class="isExpired(key) ? 'text-error' : isExpiringSoon(key) ? 'text-[#ffb800]' : 'text-outline'"
+                      :class="isExpired(key) ? 'text-error' : isExpiringSoon(key) ? 'text-status-warn' : 'text-outline'"
                       x-text="formatExpiry(key)"></span>
                   </td>
                   <td class="px-4 py-3 text-right whitespace-nowrap">
@@ -141,7 +143,8 @@
           </button>
           <div x-show="showAudit" x-cloak class="bg-surface-container-lowest border border-outline-variant/20 p-4 font-mono text-xs max-h-[300px] overflow-y-auto terminal-scroll">
             <template x-if="auditLogs.length === 0">
-              <p class="text-outline">No activity yet.</p>
+              <p :class="auditError ? 'text-error' : 'text-outline'"
+                x-text="auditError ? 'Could not read the activity log — ' + auditError : 'No activity yet.'"></p>
             </template>
             <template x-for="entry in auditLogs" :key="entry.id">
               <div class="flex gap-4 py-1.5 border-b border-outline-variant/10 last:border-0">
