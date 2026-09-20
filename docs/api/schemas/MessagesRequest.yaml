@@ -18,5 +18,8 @@ properties:
     description: Optional system prompt
   stream:
     type: boolean
-    description: Must be false (streaming not supported)
-    enum: [false]
+    default: false
+    description: |
+      `true` answers `text/event-stream` with Anthropic's named events. `message_start` is sent
+      before the CLI has produced anything, so wait for `content_block_delta` to call it the first
+      token. Streaming is capped separately by `MAX_STREAM_CONCURRENT`.

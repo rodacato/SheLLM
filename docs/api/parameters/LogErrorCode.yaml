@@ -1,0 +1,6 @@
+name: error_code
+in: query
+schema:
+  type: string
+  example: cli_failed
+description: Filter by SheLLM error code

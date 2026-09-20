@@ -40,8 +40,10 @@ app.use((req, res, next) => {
 });
 
 
-// --- API docs (Redocly build output) ---
-app.use('/docs', express.static(path.join(__dirname, '..', 'docs')));
+// --- GET /docs/openapi.json (the bundled spec, so tooling can read it off a live instance) ---
+app.get('/docs/openapi.json', (_req, res) => {
+  res.type('application/json').sendFile('bundled.json', { root: path.join(__dirname, '..', 'docs/api') });
+});
 
 // --- Admin auth (created early for /health/detailed) ---
 const adminAuth = createAdminAuth();

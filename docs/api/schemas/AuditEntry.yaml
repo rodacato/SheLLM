@@ -1,0 +1,17 @@
+type: object
+properties:
+  id:
+    type: integer
+  action:
+    type: string
+    example: rotate
+  resource:
+    type: string
+    example: key
+  resource_id:
+    type: [integer, "null"]
+  details:
+    type: [string, "null"]
+    description: A JSON string of whatever the action recorded.
+  created_at:
+    type: string

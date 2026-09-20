@@ -1,0 +1,5 @@
+name: model
+in: query
+schema:
+  type: string
+description: Filter by the requested model or the one the CLI actually ran

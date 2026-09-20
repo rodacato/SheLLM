@@ -1,19 +1,16 @@
 get:
   operationId: getHealth
   tags: [Health]
-  summary: Service health check
-  description: Returns provider status, queue depth, and uptime. No authentication required.
+  summary: Liveness check
+  description: |
+    Answers `{"status":"ok"}` as soon as the process is listening. It never reports on
+    providers, so a monitor cannot mistake an expired CLI login for a dead service.
+    `GET /health/detailed` is the one that knows.
   security: []
   responses:
     '200':
-      description: Health status
+      description: The process is up
       content:
         application/json:
           schema:
-            $ref: "../schemas/HealthResponse.yaml"
-    '500':
-      description: Internal error
-      content:
-        application/json:
-          schema:
-            $ref: "../schemas/Error.yaml"
+            $ref: "../schemas/LivenessResponse.yaml"

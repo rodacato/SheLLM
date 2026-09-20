@@ -2,11 +2,35 @@ type: object
 properties:
   status:
     type: string
-    example: ok
+    enum: [ok, degraded, down]
+    description: |
+      `degraded` when some enabled provider is not authenticated, `down` when none is,
+      `ok` when all are — or when no provider is enabled at all.
   providers:
     type: object
     additionalProperties:
       $ref: "./ProviderStatus.yaml"
+  build:
+    type: object
+    properties:
+      version:
+        type: string
+      commit:
+        type: string
+  circuit_breakers:
+    type: object
+    additionalProperties:
+      type: object
+      properties:
+        state:
+          type: string
+          enum: [closed, open, half_open]
+        failures:
+          type: integer
+        lastFailureAt:
+          type: [integer, "null"]
+        lastTransitionAt:
+          type: [integer, "null"]
   queue:
     type: object
     properties:

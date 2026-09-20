@@ -1,0 +1,22 @@
+type: object
+description: The stored row, without the health and circuit fields the list endpoint adds.
+properties:
+  name:
+    type: string
+  type:
+    type: string
+    enum: [subprocess, http]
+  enabled:
+    description: A boolean on the enable/disable path, the stored 0/1 on a general update.
+    oneOf:
+      - type: boolean
+      - type: integer
+        enum: [0, 1]
+  capabilities:
+    type: string
+  health_check:
+    type: string
+  priority:
+    type: integer
+  updated_at:
+    type: string

@@ -1,0 +1,13 @@
+type: object
+minProperties: 1
+properties:
+  enabled:
+    description: A disabled provider answers 503 without spawning its CLI.
+    oneOf:
+      - type: boolean
+      - type: integer
+        enum: [0, 1]
+  capabilities:
+    type: string
+  priority:
+    type: integer

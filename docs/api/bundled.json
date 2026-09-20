@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "SheLLM API",
-    "version": "0.1.0",
+    "version": "1.4.0",
     "description": "SheLLM exposes the owner's own LLM CLI subscriptions (Claude Code, Codex)\nas one REST API that answers in both the OpenAI and the Anthropic formats.\nIt spawns the official CLI binary per request; see the repository README for\nthe fair-use position on provider terms.\n\n## Authentication\n\n**Client endpoints** (`/v1/*`) take an API key as `Authorization: Bearer <key>`\nor `x-api-key`. Keys are created by `shellm init` and managed through the Admin API.\n\n**Admin endpoints** (`/admin/*`) use HTTP Basic authentication.\nThe password is set via the `SHELLM_ADMIN_PASSWORD` environment variable.\n\n## Rate Limiting\n\nWhen rate-limited, responses include a `Retry-After` header (seconds).\n- **Global limit**: configurable via `SHELLM_GLOBAL_RPM` (default 30 RPM)\n- **Per-client limit**: configurable per API key (default 10 RPM)\n- **Admin brute-force**: 5 failed attempts per IP triggers a 5-minute lockout\n",
     "x-logo": {
       "url": "logo.svg",
@@ -23,7 +23,7 @@
   "tags": [
     {
       "name": "Health",
-      "description": "Service health check"
+      "description": "Liveness, diagnostics and this specification"
     },
     {
       "name": "Chat Completions",
@@ -48,6 +48,14 @@
     {
       "name": "Stats",
       "description": "Aggregated usage statistics"
+    },
+    {
+      "name": "Providers",
+      "description": "Provider state and configuration"
+    },
+    {
+      "name": "Update",
+      "description": "Self-update of the host"
     }
   ],
   "paths": {
@@ -57,12 +65,39 @@
         "tags": [
           "Health"
         ],
-        "summary": "Service health check",
-        "description": "Returns provider status, queue depth, and uptime. No authentication required.",
+        "summary": "Liveness check",
+        "description": "Answers `{\"status\":\"ok\"}` as soon as the process is listening. It never reports on\nproviders, so a monitor cannot mistake an expired CLI login for a dead service.\n`GET /health/detailed` is the one that knows.\n",
         "security": [],
         "responses": {
           "200": {
-            "description": "Health status",
+            "description": "The process is up",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LivenessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/detailed": {
+      "get": {
+        "operationId": "getHealthDetailed",
+        "tags": [
+          "Health"
+        ],
+        "summary": "Full diagnostics",
+        "description": "Per-provider install and login state, circuit breakers, queue depth, the running build and\nuptime. Provider state comes from a cache refreshed by the background poller, so a login\nthat expired seconds ago can still read as authenticated.\n",
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Diagnostics",
             "content": {
               "application/json": {
                 "schema": {
@@ -71,12 +106,38 @@
               }
             }
           },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
           "500": {
-            "description": "Internal error",
+            "description": "The health probe itself failed",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docs/openapi.json": {
+      "get": {
+        "operationId": "getOpenApiSpec",
+        "tags": [
+          "Health"
+        ],
+        "summary": "This specification",
+        "description": "The bundled OpenAPI document the running build was shipped with, so tooling can be pointed\nat a live instance instead of at a file in the repository.\n",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "The OpenAPI document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
                 }
               }
             }
@@ -121,7 +182,7 @@
           "Chat Completions"
         ],
         "summary": "Create a chat completion",
-        "description": "OpenAI-compatible endpoint. Sends the prompt to the requested provider\nCLI and returns the response in OpenAI format.\n",
+        "description": "OpenAI-compatible endpoint. Sends the prompt to the requested provider\nCLI and returns the response in OpenAI format. Set `stream` to `true`\nfor server-sent events instead of one JSON body.\n",
         "security": [
           {
             "BearerAuth": []
@@ -156,6 +217,12 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ChatCompletionResponse"
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "Sent when `stream` is `true`: `data:` lines carrying\n`chat.completion.chunk` objects, terminated by `data: [DONE]`.\n"
                 }
               }
             }
@@ -209,7 +276,7 @@
           "Messages"
         ],
         "summary": "Create a message",
-        "description": "Anthropic-compatible endpoint. Sends the prompt to the requested provider\nCLI and returns the response in Anthropic Messages format.\nStreaming is not supported (`stream` must be `false` or omitted).\n",
+        "description": "Anthropic-compatible endpoint. Sends the prompt to the requested provider\nCLI and returns the response in Anthropic Messages format. Set `stream` to `true`\nfor server-sent events instead of one JSON body.\n",
         "security": [
           {
             "BearerAuth": []
@@ -244,6 +311,12 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MessagesResponse"
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "Sent when `stream` is `true`: `message_start`, `content_block_start`, a run of\n`content_block_delta`, `content_block_stop`, `message_delta`, `message_stop`.\n"
                 }
               }
             }
@@ -538,46 +611,25 @@
             "$ref": "#/components/parameters/Offset"
           },
           {
-            "name": "provider",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter by provider name"
+            "$ref": "#/components/parameters/LogProvider"
           },
           {
-            "name": "client",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter by client name"
+            "$ref": "#/components/parameters/LogClient"
           },
           {
-            "name": "status",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Status class (2–5) or exact code (e.g. 200, 429)"
+            "$ref": "#/components/parameters/LogModel"
           },
           {
-            "name": "from",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "Start date (ISO 8601)"
+            "$ref": "#/components/parameters/LogErrorCode"
           },
           {
-            "name": "to",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "End date (ISO 8601)"
+            "$ref": "#/components/parameters/LogStatus"
+          },
+          {
+            "$ref": "#/components/parameters/LogFrom"
+          },
+          {
+            "$ref": "#/components/parameters/LogTo"
           }
         ],
         "responses": {
@@ -605,6 +657,7 @@
           "Logs"
         ],
         "summary": "Delete all request logs",
+        "description": "Deletes every row, ignoring the filters the list endpoint takes.",
         "security": [
           {
             "BasicAuth": []
@@ -672,6 +725,366 @@
           }
         }
       }
+    },
+    "/admin/logs/export": {
+      "get": {
+        "operationId": "exportLogs",
+        "tags": [
+          "Logs"
+        ],
+        "summary": "Export request logs as CSV",
+        "description": "The same filters as `GET /admin/logs`, with no pagination — every matching row is streamed.\nFields that start with `=`, `+`, `-` or `@` are prefixed with a quote, so a spreadsheet opens\nthe file as data rather than as formulas.\n",
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/LogProvider"
+          },
+          {
+            "$ref": "#/components/parameters/LogClient"
+          },
+          {
+            "$ref": "#/components/parameters/LogModel"
+          },
+          {
+            "$ref": "#/components/parameters/LogErrorCode"
+          },
+          {
+            "$ref": "#/components/parameters/LogStatus"
+          },
+          {
+            "$ref": "#/components/parameters/LogFrom"
+          },
+          {
+            "$ref": "#/components/parameters/LogTo"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV, one header row and one row per log entry",
+            "headers": {
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string",
+                  "example": "attachment; filename=\"shellm-logs-2026-09-20T03-30-12.csv\""
+                }
+              }
+            },
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/admin/audit": {
+      "get": {
+        "operationId": "listAuditLog",
+        "tags": [
+          "Logs"
+        ],
+        "summary": "Admin audit log",
+        "description": "Key and provider changes made through the admin API, newest first.",
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "maximum": 500
+            }
+          },
+          {
+            "name": "resource_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Only entries about this resource."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Audit entries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "logs": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AuditEntry"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/admin/providers": {
+      "get": {
+        "operationId": "listProviders",
+        "tags": [
+          "Providers"
+        ],
+        "summary": "List providers",
+        "description": "Every configured provider with its health, its circuit breaker, when it was last used and\nwhich models it accepts.\n",
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "providers": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ProviderDetail"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/admin/providers/{name}": {
+      "patch": {
+        "operationId": "updateProvider",
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Enable, disable or reprioritize a provider",
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "claude"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The provider as stored",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "provider": {
+                      "$ref": "#/components/schemas/ProviderRecord"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/admin/update": {
+      "get": {
+        "operationId": "getUpdateStatus",
+        "tags": [
+          "Update"
+        ],
+        "summary": "Can this host update itself, and what happened last time",
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updater state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "operationId": "requestUpdate",
+        "tags": [
+          "Update"
+        ],
+        "summary": "Request an update to a release tag",
+        "description": "Writes the request and returns. It does not deploy — a root systemd unit picks the request up,\nor nothing does. Only upgrades are accepted here: rolling back stays on the SSH path\n(`SHELLM_REF=vX.Y.Z sudo shellm update`), so the worst outcome of a forged request is an\nupgrade rather than a downgrade to a release with a known hole.\n",
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "The request was written",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requested": {
+                      "type": "string"
+                    },
+                    "from": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "The request cannot be taken right now. `code` says which case: `updater_unavailable`,\n`update_pending`, `update_running`, `not_an_upgrade` or `confirmation_required`.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "The request could not be written to disk",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/health": {
+      "get": {
+        "operationId": "getAdminHealth",
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Full diagnostics, for the dashboard",
+        "description": "The same payload as `GET /health/detailed`. It exists so the dashboard reaches everything it\nneeds under `/admin`; new integrations should call `/health/detailed`.\n",
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Diagnostics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "description": "The health probe itself failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -688,17 +1101,76 @@
       }
     },
     "schemas": {
+      "LivenessResponse": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok"
+          }
+        }
+      },
       "HealthResponse": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
-            "example": "ok"
+            "enum": [
+              "ok",
+              "degraded",
+              "down"
+            ],
+            "description": "`degraded` when some enabled provider is not authenticated, `down` when none is,\n`ok` when all are — or when no provider is enabled at all.\n"
           },
           "providers": {
             "type": "object",
             "additionalProperties": {
               "$ref": "#/components/schemas/ProviderStatus"
+            }
+          },
+          "build": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "string"
+              },
+              "commit": {
+                "type": "string"
+              }
+            }
+          },
+          "circuit_breakers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "closed",
+                    "open",
+                    "half_open"
+                  ]
+                },
+                "failures": {
+                  "type": "integer"
+                },
+                "lastFailureAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "lastTransitionAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              }
             }
           },
           "queue": {
@@ -727,10 +1199,191 @@
             "type": "boolean"
           },
           "authenticated": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "`null` when the probe could not decide. Only an unmistakable credential failure reads as\n`false`; any other probe error leaves it unknown rather than taking the provider offline.\n"
+          },
+          "enabled": {
             "type": "boolean"
           },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What the CLI reports for `--version`, which costs no quota."
+          },
           "error": {
+            "type": "string",
+            "description": "The probe's stderr, truncated and with anything key-shaped redacted."
+          }
+        }
+      },
+      "ProviderDetail": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "claude"
+          },
+          "type": {
             "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "capabilities": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priority": {
+            "type": "integer",
+            "description": "Lower wins when a request names no provider."
+          },
+          "installed": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "authenticated": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "health_error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_used_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "last_status": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "circuit": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "closed",
+                  "open",
+                  "half_open"
+                ]
+              },
+              "failures": {
+                "type": "integer"
+              },
+              "lastFailureAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "lastTransitionAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
+            }
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The model ids this provider's CLI accepts, as `/v1/models` lists them."
+          }
+        }
+      },
+      "ProviderRecord": {
+        "type": "object",
+        "description": "The stored row, without the health and circuit fields the list endpoint adds.",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "subprocess",
+              "http"
+            ]
+          },
+          "enabled": {
+            "description": "A boolean on the enable/disable path, the stored 0/1 on a general update.",
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ]
+              }
+            ]
+          },
+          "capabilities": {
+            "type": "string"
+          },
+          "health_check": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "integer"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        }
+      },
+      "ProviderUpdate": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "enabled": {
+            "description": "A disabled provider answers 503 without spawning its CLI.",
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ]
+              }
+            ]
+          },
+          "capabilities": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "integer"
           }
         }
       },
@@ -791,12 +1444,56 @@
             "minItems": 1,
             "items": {
               "$ref": "#/components/schemas/ChatMessage"
-            }
+            },
+            "description": "Must contain at least one `user` message. The first `system` message becomes the system\nprompt; the rest are flattened into one prompt, since the CLI takes a prompt, not a thread.\n"
           },
           "max_tokens": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 128000
+            "maximum": 128000,
+            "description": "Validated and then ignored — no CLI exposes an output cap. Bound the length in the prompt.\n"
+          },
+          "stream": {
+            "type": "boolean",
+            "default": false,
+            "description": "`true` answers `text/event-stream` with OpenAI-style `data:` chunks and a `[DONE]`\nterminator. Streaming holds a slot for the whole response and is capped separately by\n`MAX_STREAM_CONCURRENT`.\n"
+          },
+          "temperature": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2
+          },
+          "top_p": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "response_format": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "json_object",
+                  "text"
+                ]
+              }
+            }
+          },
+          "stop": {
+            "description": "Up to 4 stop sequences.",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "maxItems": 4,
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
           }
         }
       },
@@ -917,10 +1614,8 @@
           },
           "stream": {
             "type": "boolean",
-            "description": "Must be false (streaming not supported)",
-            "enum": [
-              false
-            ]
+            "default": false,
+            "description": "`true` answers `text/event-stream` with Anthropic's named events. `message_start` is sent\nbefore the CLI has produced anything, so wait for `content_block_delta` to call it the first\ntoken. Streaming is capped separately by `MAX_STREAM_CONCURRENT`.\n"
           }
         }
       },
@@ -1251,6 +1946,98 @@
           }
         }
       },
+      "AuditEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "action": {
+            "type": "string",
+            "example": "rotate"
+          },
+          "resource": {
+            "type": "string",
+            "example": "key"
+          },
+          "resource_id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "details": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A JSON string of whatever the action recorded."
+          },
+          "created_at": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateStatus": {
+        "type": "object",
+        "properties": {
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "missing",
+              "disabled"
+            ],
+            "description": "Whether the root unit that performs the update is installed and enabled."
+          },
+          "trigger_help": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What to run to fix a trigger that is not `ready`. `null` when it is."
+          },
+          "running": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "string"
+              },
+              "commit": {
+                "type": "string"
+              }
+            }
+          },
+          "pending": {
+            "type": "boolean",
+            "description": "A request is already on disk, waiting to be picked up."
+          },
+          "last": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "What the previous run reported, as the runner left it on disk."
+          }
+        }
+      },
+      "UpdateRequest": {
+        "type": "object",
+        "required": [
+          "ref"
+        ],
+        "properties": {
+          "ref": {
+            "type": "string",
+            "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "example": "v1.4.0"
+          },
+          "confirm": {
+            "type": "string",
+            "description": "Required, and equal to `ref`, when the target is a major version jump."
+          }
+        }
+      },
       "Error": {
         "type": "object",
         "properties": {
@@ -1370,6 +2157,66 @@
           ],
           "default": "24h"
         }
+      },
+      "LogProvider": {
+        "name": "provider",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Filter by provider name"
+      },
+      "LogClient": {
+        "name": "client",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Filter by client name"
+      },
+      "LogModel": {
+        "name": "model",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Filter by the requested model or the one the CLI actually ran"
+      },
+      "LogErrorCode": {
+        "name": "error_code",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "example": "cli_failed"
+        },
+        "description": "Filter by SheLLM error code"
+      },
+      "LogStatus": {
+        "name": "status",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "pattern": "^\\d$|^\\d{3}$"
+        },
+        "description": "Status class (2–5) or exact code (e.g. 200, 429). Anything else is ignored."
+      },
+      "LogFrom": {
+        "name": "from",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "description": "Start date (ISO 8601), compared against created_at"
+      },
+      "LogTo": {
+        "name": "to",
+        "in": "query",
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "description": "End date (ISO 8601), compared against created_at"
       }
     },
     "responses": {
@@ -1575,7 +2422,9 @@
       "tags": [
         "Keys",
         "Logs",
-        "Stats"
+        "Stats",
+        "Providers",
+        "Update"
       ]
     }
   ]

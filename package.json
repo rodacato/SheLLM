@@ -13,7 +13,7 @@
   },
   "scripts": {
     "prepare": "git config core.hooksPath scripts 2>/dev/null || true",
-    "version": "node scripts/release-changelog.js && git add CHANGELOG.md",
+    "version": "node scripts/release-changelog.js && git add CHANGELOG.md docs/api/openapi.yaml docs/api/bundled.json",
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "seed": "node scripts/seed.js",

@@ -1,0 +1,5 @@
+name: client
+in: query
+schema:
+  type: string
+description: Filter by client name

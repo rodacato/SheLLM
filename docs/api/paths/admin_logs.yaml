@@ -7,33 +7,13 @@ get:
   parameters:
     - $ref: "../parameters/Limit.yaml"
     - $ref: "../parameters/Offset.yaml"
-    - name: provider
-      in: query
-      schema:
-        type: string
-      description: Filter by provider name
-    - name: client
-      in: query
-      schema:
-        type: string
-      description: Filter by client name
-    - name: status
-      in: query
-      schema:
-        type: string
-      description: Status class (2–5) or exact code (e.g. 200, 429)
-    - name: from
-      in: query
-      schema:
-        type: string
-        format: date-time
-      description: Start date (ISO 8601)
-    - name: to
-      in: query
-      schema:
-        type: string
-        format: date-time
-      description: End date (ISO 8601)
+    - $ref: "../parameters/LogProvider.yaml"
+    - $ref: "../parameters/LogClient.yaml"
+    - $ref: "../parameters/LogModel.yaml"
+    - $ref: "../parameters/LogErrorCode.yaml"
+    - $ref: "../parameters/LogStatus.yaml"
+    - $ref: "../parameters/LogFrom.yaml"
+    - $ref: "../parameters/LogTo.yaml"
   responses:
     '200':
       description: Paginated logs
@@ -50,6 +30,7 @@ delete:
   operationId: clearLogs
   tags: [Logs]
   summary: Delete all request logs
+  description: Deletes every row, ignoring the filters the list endpoint takes.
   security:
     - BasicAuth: []
   responses:

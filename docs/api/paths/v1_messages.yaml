@@ -4,8 +4,8 @@ post:
   summary: Create a message
   description: |
     Anthropic-compatible endpoint. Sends the prompt to the requested provider
-    CLI and returns the response in Anthropic Messages format.
-    Streaming is not supported (`stream` must be `false` or omitted).
+    CLI and returns the response in Anthropic Messages format. Set `stream` to `true`
+    for server-sent events instead of one JSON body.
   security:
     - BearerAuth: []
   requestBody:
@@ -28,6 +28,12 @@ post:
         application/json:
           schema:
             $ref: "../schemas/MessagesResponse.yaml"
+        text/event-stream:
+          schema:
+            type: string
+            description: |
+              Sent when `stream` is `true`: `message_start`, `content_block_start`, a run of
+              `content_block_delta`, `content_block_stop`, `message_delta`, `message_stop`.
     '400':
       $ref: "../responses/BadRequestAnthropic.yaml"
     '401':

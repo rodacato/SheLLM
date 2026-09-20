@@ -3,6 +3,15 @@ properties:
   installed:
     type: boolean
   authenticated:
+    type: [boolean, "null"]
+    description: |
+      `null` when the probe could not decide. Only an unmistakable credential failure reads as
+      `false`; any other probe error leaves it unknown rather than taking the provider offline.
+  enabled:
     type: boolean
+  version:
+    type: [string, "null"]
+    description: What the CLI reports for `--version`, which costs no quota.
   error:
     type: string
+    description: The probe's stderr, truncated and with anything key-shaped redacted.

@@ -1,0 +1,27 @@
+get:
+  operationId: getAdminHealth
+  tags: [Providers]
+  summary: Full diagnostics, for the dashboard
+  description: |
+    The same payload as `GET /health/detailed`. It exists so the dashboard reaches everything it
+    needs under `/admin`; new integrations should call `/health/detailed`.
+  security:
+    - BasicAuth: []
+  responses:
+    '200':
+      description: Diagnostics
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/HealthResponse.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+    '500':
+      description: The health probe itself failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string

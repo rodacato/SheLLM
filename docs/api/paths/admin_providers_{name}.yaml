@@ -1,0 +1,35 @@
+patch:
+  operationId: updateProvider
+  tags: [Providers]
+  summary: Enable, disable or reprioritize a provider
+  security:
+    - BasicAuth: []
+  parameters:
+    - name: name
+      in: path
+      required: true
+      schema:
+        type: string
+      example: claude
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/ProviderUpdate.yaml"
+  responses:
+    '200':
+      description: The provider as stored
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              provider:
+                $ref: "../schemas/ProviderRecord.yaml"
+    '400':
+      $ref: "../responses/BadRequest.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+    '404':
+      $ref: "../responses/NotFound.yaml"

@@ -1,0 +1,22 @@
+type: object
+properties:
+  trigger:
+    type: string
+    enum: [ready, missing, disabled]
+    description: Whether the root unit that performs the update is installed and enabled.
+  trigger_help:
+    type: [string, "null"]
+    description: What to run to fix a trigger that is not `ready`. `null` when it is.
+  running:
+    type: object
+    properties:
+      version:
+        type: string
+      commit:
+        type: string
+  pending:
+    type: boolean
+    description: A request is already on disk, waiting to be picked up.
+  last:
+    type: [object, "null"]
+    description: What the previous run reported, as the runner left it on disk.

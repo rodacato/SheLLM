@@ -1,0 +1,23 @@
+get:
+  operationId: listProviders
+  tags: [Providers]
+  summary: List providers
+  description: |
+    Every configured provider with its health, its circuit breaker, when it was last used and
+    which models it accepts.
+  security:
+    - BasicAuth: []
+  responses:
+    '200':
+      description: Provider list
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              providers:
+                type: array
+                items:
+                  $ref: "../schemas/ProviderDetail.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
