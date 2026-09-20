@@ -133,3 +133,79 @@ describe('the System page offers the install only where it is possible', () => {
     assert.strictEqual(hint({ ...inside('browser'), isSecureContext: false }), false);
   });
 });
+
+// 0 / 0 is exactly what an idle gateway renders, so a figure that falls back to zero leaves an
+// unreachable gateway indistinguishable from a healthy one — assert both states, never one.
+describe('the System page never renders an unread gateway as an idle one', () => {
+  const FIGURES = ['Running', 'Waiting', 'Streams', 'Open circuits'];
+
+  const concurrencyCard = () => {
+    const html = compose();
+    const page = html.slice(html.indexOf('<!-- SYSTEM PAGE -->'));
+    const start = page.indexOf('>Concurrency<');
+    const end = page.indexOf('<!-- ================= PROVIDERS', start);
+    assert.ok(start > -1 && end > start, 'the Concurrency card is still a section of the System page');
+    return page.slice(start, end);
+  };
+
+  const expressionFor = (card, label) => {
+    const match = card.slice(card.indexOf(`>${label}</span>`)).match(/x-text="([^"]+)"/);
+    assert.ok(match, `${label} renders through an x-text expression`);
+    return match[1];
+  };
+
+  const render = (expression, scope) => String(vm.runInNewContext(`(${expression})`, { ...scope }));
+
+  const neverAnswered = (healthRead) => ({
+    healthRead,
+    health: { uptime: null, providers: {}, queue: {} },
+    openCircuits: [],
+    providersLoaded: false,
+    providersError: null,
+  });
+
+  const idle = {
+    healthRead: 'ok',
+    health: {
+      uptime: 42,
+      providers: {},
+      queue: { active: 0, max_concurrent: 0, pending: 0, active_streams: 0, max_stream_concurrent: 0 },
+    },
+    openCircuits: [],
+    providersLoaded: true,
+    providersError: null,
+  };
+
+  for (const state of ['pending', 'failed']) {
+    it(`renders no figure as a reading while the read is ${state}`, () => {
+      const card = concurrencyCard();
+      for (const label of FIGURES) {
+        assert.strictEqual(
+          render(expressionFor(card, label), neverAnswered(state)),
+          '—',
+          `${label} claims a reading the gateway never gave it`,
+        );
+      }
+    });
+  }
+
+  it('renders an idle gateway differently from one that never answered', () => {
+    const card = concurrencyCard();
+    for (const label of FIGURES) {
+      const expression = expressionFor(card, label);
+      assert.notStrictEqual(
+        render(expression, idle),
+        render(expression, neverAnswered('failed')),
+        `${label} renders an unreachable gateway exactly like an idle one`,
+      );
+    }
+  });
+
+  it('still reports the figures it did read', () => {
+    const card = concurrencyCard();
+    assert.strictEqual(render(expressionFor(card, 'Running'), idle), '0 / 0');
+    assert.strictEqual(render(expressionFor(card, 'Waiting'), idle), '0');
+    assert.strictEqual(render(expressionFor(card, 'Streams'), idle), '0 / 0');
+    assert.strictEqual(render(expressionFor(card, 'Open circuits'), idle), 'none');
+  });
+});
