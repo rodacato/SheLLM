@@ -143,6 +143,26 @@ function formatDayHour(value) {
   return `${p.month}/${p.day} ${p.hour}:${p.minute}`;
 }
 
+// "09/19 07:14" needs arithmetic before it answers the only question being asked of it: is this
+// still happening. The exact time stays on the element's title, because triage needs both.
+function formatRelative(value, now = Date.now()) {
+  const d = parseInstant(value);
+  if (!d) return '-';
+
+  const seconds = Math.round((now - d.getTime()) / 1000);
+  if (seconds < 45) return 'just now';
+
+  // Floored, so "2 hrs ago" means two hours have passed rather than one and a half rounded up.
+  const units = [
+    { limit: 3600, size: 60, name: 'min' },
+    { limit: 86400, size: 3600, name: 'hr' },
+    { limit: Infinity, size: 86400, name: 'day' },
+  ];
+  const unit = units.find((u) => seconds < u.limit);
+  const n = Math.max(1, Math.floor(seconds / unit.size));
+  return `${n} ${unit.name}${n === 1 ? '' : 's'} ago`;
+}
+
 // Wall-clock only: this answers "how stale is what I am looking at", never which day it was.
 function formatClock(date) {
   const d = parseInstant(date);

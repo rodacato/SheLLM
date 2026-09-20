@@ -64,3 +64,44 @@ describe('the dashboard renders time in one configured zone', () => {
     assert.strictEqual(page.formatTime(INSTANT), '09/19 17:00:00');
   });
 });
+
+// Every case names its own `now`, so these pin the boundaries rather than one comfortable value.
+describe('the dashboard says how long ago, not only when', () => {
+  const NOW = Date.parse('2026-09-20T12:00:00Z');
+  let page;
+  const ago = (seconds) => page.formatRelative(new Date(NOW - seconds * 1000).toISOString(), NOW);
+
+  before(() => { page = loadApp(); });
+
+  it('calls the last few seconds what they are', () => {
+    assert.strictEqual(ago(0), 'just now');
+    assert.strictEqual(ago(44), 'just now');
+  });
+
+  it('counts minutes, singular at the boundary', () => {
+    assert.strictEqual(ago(45), '1 min ago');
+    assert.strictEqual(ago(120), '2 mins ago');
+    assert.strictEqual(ago(59 * 60 + 59), '59 mins ago', 'it never reads "60 mins ago"');
+  });
+
+  it('switches to hours on the hour, and to days on the day', () => {
+    assert.strictEqual(ago(3600), '1 hr ago');
+    assert.strictEqual(ago(90 * 60), '1 hr ago', 'floored: an hour and a half is not two hours');
+    assert.strictEqual(ago(23 * 3600 + 3599), '23 hrs ago');
+    assert.strictEqual(ago(86400), '1 day ago');
+    assert.strictEqual(ago(29 * 86400), '29 days ago');
+  });
+
+  it('does not read a clock skew as the far future', () => {
+    assert.strictEqual(page.formatRelative(new Date(NOW + 30000).toISOString(), NOW), 'just now');
+  });
+
+  it('says nothing about a time it does not have', () => {
+    assert.strictEqual(page.formatRelative(null, NOW), '-');
+    assert.strictEqual(page.formatRelative('not a date', NOW), '-');
+  });
+
+  it('keeps the exact time available beside it', () => {
+    assert.strictEqual(page.formatTime('2026-09-20T12:00:00Z'), '09/20 06:00:00');
+  });
+});
