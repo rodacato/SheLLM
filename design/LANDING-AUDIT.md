@@ -22,14 +22,23 @@ Neither of them looked at `site/`; this is the first pass over the public surfac
 | | Landed | Open |
 |---|---|---|
 | **Page** | D50 D51 D52 D53 D54 D55 | — |
-| **Pipeline** | D56 D57 | D58 — needs a capture nobody has taken yet |
+| **Pipeline** | D56 D57 D58 | — |
 | **Docs** | D59 | — |
 | **Reported during the work** | D60 — geometry, then the duplicate mark it left behind | — |
 
-Everything this audit found is in except **D58**, which is not a code change: the shipped Request
-Logs capture shows a 15.4% error rate from the maintainer's own auth tests, and replacing it needs
-the admin running against representative data in a browser. This container has neither, so writing
-a nicer caption over the same picture would have been the dishonest version of closing it.
+Everything this audit found is in, D58 included — but it closed 2026-09-21 in a way this document
+got wrong, and the correction is worth more than the fix.
+
+**D58 assumed the export was a screenshot. It is not.** `design/exports/admin-request-logs-default.png`
+is a Pencil canvas export of the `Admin / Request Logs / Default` artboard, so "re-capture it" was
+never the fix — a screenshot dropped into `exports/` is reverted by the next re-export. The real
+fix was to redraw the artboard's illustrative dataset, which is what happened.
+
+**Two code defects had to land first**, because the drawing mirrored intent rather than output and
+redrawing before them would have meant either drawing bars the code never painted or drawing the
+broken state: alpha-modified theme colours emitted no CSS, so the sparkline's quiet buckets never
+rendered, and the expanded detail row rendered after the whole table instead of under its row. Both
+are on master.
 
 **Measured after, against the table below:** body prose **573 → 293 words**, screenshots
 **1 → 5**, and the build copies five exports instead of one hardcoded file. Motion below the fold

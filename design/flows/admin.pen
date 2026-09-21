@@ -481,6 +481,7 @@
                       "content": "REQUEST LOGS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -520,6 +521,7 @@
                       "content": "API KEYS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -559,6 +561,7 @@
                       "content": "PLAYGROUND",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -598,6 +601,7 @@
                       "content": "SYSTEM",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -1914,7 +1918,8 @@
                           "width": 220,
                           "content": "7 mins ago",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -1937,7 +1942,8 @@
                           "width": 190,
                           "content": "(none)",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -1948,7 +1954,8 @@
                           "width": 250,
                           "content": "Benchmark",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -1959,7 +1966,8 @@
                           "width": 210,
                           "content": "claude-fable",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -1999,7 +2007,8 @@
                           "width": 220,
                           "content": "6 mins ago",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -2022,7 +2031,8 @@
                           "width": 190,
                           "content": "(none)",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -2033,7 +2043,8 @@
                           "width": 250,
                           "content": "(unauthenticated)",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -2044,7 +2055,8 @@
                           "width": 210,
                           "content": "-",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -2084,7 +2096,8 @@
                           "width": 220,
                           "content": "5 mins ago",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -2107,7 +2120,8 @@
                           "width": 190,
                           "content": "(none)",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -2118,7 +2132,8 @@
                           "width": 250,
                           "content": "(unauthenticated)",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -2129,7 +2144,8 @@
                           "width": 210,
                           "content": "-",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -2169,7 +2185,8 @@
                           "width": 220,
                           "content": "8 mins ago",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -2192,7 +2209,8 @@
                           "width": 190,
                           "content": "(none)",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -2203,7 +2221,8 @@
                           "width": 250,
                           "content": "Benchmark",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -2214,7 +2233,8 @@
                           "width": 210,
                           "content": "-",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -5847,6 +5867,7 @@
                       "content": "OVERVIEW",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -5926,6 +5947,7 @@
                       "content": "API KEYS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -5965,6 +5987,7 @@
                       "content": "PLAYGROUND",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -6004,6 +6027,7 @@
                       "content": "SYSTEM",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -6402,7 +6426,7 @@
                       "id": "HlWs8",
                       "name": "Total",
                       "fill": "$outline",
-                      "content": "107 total logs found",
+                      "content": "94 total logs found",
                       "fontFamily": "$font-mono-render",
                       "fontSize": 11,
                       "fontWeight": "normal",
@@ -6549,7 +6573,7 @@
                               "id": "RfsBl",
                               "name": "Window",
                               "fill": "$outline",
-                              "content": "last 18 h",
+                              "content": "last 19 h",
                               "fontFamily": "$font-mono-render",
                               "fontSize": 10,
                               "fontWeight": "normal"
@@ -6569,7 +6593,7 @@
                               "id": "Vtoed",
                               "name": "Pct",
                               "fill": "$on-surface",
-                              "content": "15.4%",
+                              "content": "2.2%",
                               "fontFamily": "$font-headline",
                               "fontSize": "$text-2xl",
                               "fontWeight": "700"
@@ -6615,7 +6639,7 @@
                                   "name": "Bar",
                                   "width": "fill_container",
                                   "height": 32,
-                                  "fill": "$status-fail"
+                                  "fill": "$outline-variant"
                                 },
                                 {
                                   "type": "frame",
@@ -6750,7 +6774,7 @@
                                   "id": "MUOma",
                                   "name": "Window",
                                   "fill": "$outline",
-                                  "content": "last 18 h",
+                                  "content": "last 19 h",
                                   "fontFamily": "$font-mono-render",
                                   "fontSize": 10,
                                   "fontWeight": "normal"
@@ -6762,7 +6786,7 @@
                               "id": "aiTX3",
                               "name": "Value",
                               "fill": "$primary-container",
-                              "content": "512.9K",
+                              "content": "434.4K",
                               "fontFamily": "$font-headline",
                               "fontSize": "$text-2xl",
                               "fontWeight": "700"
@@ -6791,7 +6815,7 @@
                               "id": "C8xvg",
                               "name": "Value",
                               "fill": "$on-surface",
-                              "content": "$3.91",
+                              "content": "$2.89",
                               "fontFamily": "$font-headline",
                               "fontSize": "$text-2xl",
                               "fontWeight": "700"
@@ -7337,7 +7361,7 @@
                                   "id": "saFK3",
                                   "name": "Code",
                                   "fill": "$status-warn",
-                                  "content": "401",
+                                  "content": "429",
                                   "fontFamily": "$font-mono-render",
                                   "fontSize": 10,
                                   "fontWeight": "700"
@@ -7349,7 +7373,7 @@
                               "id": "FqgMj",
                               "name": "Error code",
                               "fill": "$error",
-                              "content": "auth_required",
+                              "content": "rate_limited",
                               "fontFamily": "$font-mono-render",
                               "fontSize": 10,
                               "fontWeight": "normal"
@@ -7392,7 +7416,7 @@
                           "fill": "$on-surface",
                           "textGrowth": "fixed-width",
                           "width": 130,
-                          "content": "-",
+                          "content": "Benchmark",
                           "fontFamily": "$font-body",
                           "fontSize": "$text-sm",
                           "fontWeight": "normal"
@@ -7532,7 +7556,7 @@
                               "id": "Hojzm",
                               "name": "Val",
                               "fill": "$on-surface-variant",
-                              "content": "auth_required",
+                              "content": "rate_limited",
                               "fontFamily": "$font-mono-render",
                               "fontSize": 11,
                               "fontWeight": "normal"
@@ -7825,7 +7849,7 @@
                               "id": "J4Rp0K",
                               "name": "Page",
                               "fill": "$outline",
-                              "content": "Page 1 of 5",
+                              "content": "Page 1 of 4",
                               "fontFamily": "$font-mono-render",
                               "fontSize": 11,
                               "fontWeight": "normal"
@@ -8259,6 +8283,7 @@
                       "content": "OVERVIEW",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -8298,6 +8323,7 @@
                       "content": "REQUEST LOGS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -8377,6 +8403,7 @@
                       "content": "PLAYGROUND",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -8416,6 +8443,7 @@
                       "content": "SYSTEM",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -9939,6 +9967,7 @@
                       "content": "OVERVIEW",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -9978,6 +10007,7 @@
                       "content": "REQUEST LOGS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -10017,6 +10047,7 @@
                       "content": "API KEYS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -10096,6 +10127,7 @@
                       "content": "SYSTEM",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -10982,6 +11014,7 @@
                       "content": "OVERVIEW",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -11021,6 +11054,7 @@
                       "content": "REQUEST LOGS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -11060,6 +11094,7 @@
                       "content": "API KEYS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -11099,6 +11134,7 @@
                       "content": "PLAYGROUND",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -13530,6 +13566,7 @@
                       "content": "REQUEST LOGS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -13569,6 +13606,7 @@
                       "content": "API KEYS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -13608,6 +13646,7 @@
                       "content": "PLAYGROUND",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -13647,6 +13686,7 @@
                       "content": "SYSTEM",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -14371,6 +14411,7 @@
                       "content": "REQUEST LOGS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -14410,6 +14451,7 @@
                       "content": "API KEYS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -14449,6 +14491,7 @@
                       "content": "PLAYGROUND",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -14488,6 +14531,7 @@
                       "content": "SYSTEM",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -15852,7 +15896,8 @@
                           "width": 220,
                           "content": "7 mins ago",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -15875,7 +15920,8 @@
                           "width": 190,
                           "content": "(none)",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -15886,7 +15932,8 @@
                           "width": 250,
                           "content": "Benchmark",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -15897,7 +15944,8 @@
                           "width": 210,
                           "content": "claude-fable",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -15937,7 +15985,8 @@
                           "width": 220,
                           "content": "6 mins ago",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -15960,7 +16009,8 @@
                           "width": 190,
                           "content": "(none)",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -15971,7 +16021,8 @@
                           "width": 250,
                           "content": "(unauthenticated)",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -15982,7 +16033,8 @@
                           "width": 210,
                           "content": "-",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -16022,7 +16074,8 @@
                           "width": 220,
                           "content": "5 mins ago",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -16045,7 +16098,8 @@
                           "width": 190,
                           "content": "(none)",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -16056,7 +16110,8 @@
                           "width": 250,
                           "content": "(unauthenticated)",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -16067,7 +16122,8 @@
                           "width": 210,
                           "content": "-",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -16107,7 +16163,8 @@
                           "width": 220,
                           "content": "8 mins ago",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -16130,7 +16187,8 @@
                           "width": 190,
                           "content": "(none)",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -16141,7 +16199,8 @@
                           "width": 250,
                           "content": "Benchmark",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -16152,7 +16211,8 @@
                           "width": 210,
                           "content": "-",
                           "fontFamily": "$font-mono-render",
-                          "fontSize": 12
+                          "fontSize": 12,
+                          "fontWeight": "normal"
                         },
                         {
                           "type": "text",
@@ -19785,6 +19845,7 @@
                       "content": "OVERVIEW",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -19864,6 +19925,7 @@
                       "content": "API KEYS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -19903,6 +19965,7 @@
                       "content": "PLAYGROUND",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -19942,6 +20005,7 @@
                       "content": "SYSTEM",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -21089,6 +21153,7 @@
                       "content": "OVERVIEW",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -21128,6 +21193,7 @@
                       "content": "REQUEST LOGS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -21207,6 +21273,7 @@
                       "content": "PLAYGROUND",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -21246,6 +21313,7 @@
                       "content": "SYSTEM",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -21835,6 +21903,7 @@
                       "content": "OVERVIEW",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -21874,6 +21943,7 @@
                       "content": "REQUEST LOGS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -21913,6 +21983,7 @@
                       "content": "API KEYS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -21992,6 +22063,7 @@
                       "content": "SYSTEM",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -22848,6 +22920,7 @@
                       "content": "OVERVIEW",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -22887,6 +22960,7 @@
                       "content": "REQUEST LOGS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -22926,6 +23000,7 @@
                       "content": "API KEYS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -23005,6 +23080,7 @@
                       "content": "SYSTEM",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -23755,6 +23831,7 @@
                       "content": "OVERVIEW",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -23794,6 +23871,7 @@
                       "content": "REQUEST LOGS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -23833,6 +23911,7 @@
                       "content": "API KEYS",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
@@ -23872,6 +23951,7 @@
                       "content": "PLAYGROUND",
                       "fontFamily": "$font-headline",
                       "fontSize": 11,
+                      "fontWeight": "normal",
                       "letterSpacing": 1.65
                     }
                   ]
