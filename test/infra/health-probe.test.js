@@ -83,6 +83,46 @@ process.exit(1);`);
     assert.notStrictEqual(reason, 'not authenticated', 'this verdict is what refused every codex request with 503');
   });
 
+  // Measured against claude 2.1.273 on 2026-09-21: the refusal is JSON on stdout, stderr is
+  // empty, and the exit code is 1 — so a probe that only reads a resolved promise never sees it.
+  it('reads a claude logout from stdout even though the CLI exits 1', async () => {
+    writeCli('claude', `${recordArgv('claude')}
+process.stdout.write(JSON.stringify({ loggedIn: false, authMethod: 'none' }));
+process.exit(1);`);
+
+    const result = await health.checkProvider({ name: 'claude', type: 'subprocess' });
+    assert.strictEqual(result.authenticated, false, 'the clearest refusal the CLI can give was read as unknown');
+    assert.strictEqual(result.installed, true);
+  });
+
+  // codex writes its verdict to stderr and leaves stdout empty. 'Not logged in' also contains
+  // 'logged in', so the negative has to be read first.
+  it('reads a codex logout from stderr even though the CLI exits 1', async () => {
+    writeCli('codex', `${recordArgv('codex')}
+process.stderr.write('Not logged in\\n');
+process.exit(1);`);
+
+    const result = await health.checkProvider({ name: 'codex', type: 'subprocess' });
+    assert.strictEqual(result.authenticated, false, 'Not logged in read as unknown, or as logged in');
+    assert.strictEqual(result.installed, true);
+  });
+
+  it('still reads a codex login from stderr, where the CLI puts it', async () => {
+    writeCli('codex', `${recordArgv('codex')}
+process.stderr.write('Logged in using ChatGPT\\n');`);
+
+    const result = await health.checkProvider({ name: 'codex', type: 'subprocess' });
+    assert.strictEqual(result.authenticated, true);
+  });
+
+  // The verdict is now read from a failed probe too, so an absent binary — empty output, no exit
+  // code of its own — must not come back as a login. parseCheckError classifies that case.
+  it('yields no verdict from an empty output, so ENOENT stays not-installed', () => {
+    const claude = require('../../src/providers/claude');
+    assert.strictEqual(claude.authProbe.parse('', ''), null);
+    assert.strictEqual(codex.authProbe.parse('', ''), null);
+  });
+
   it('takes the provider\'s lock, so a probe never overlaps a request', async () => {
     writeCli('codex', `${recordArgv('codex')}
 const args = process.argv.slice(2);

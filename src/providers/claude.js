@@ -145,7 +145,8 @@ const CLAUDE_ENV = {
 };
 
 // `auth status` reads the stored credentials and prints JSON. It spends no quota, which is the
-// whole point: a health probe must not cost a request.
+// whole point: a health probe must not cost a request. It prints the JSON on stdout and exits 1
+// when `loggedIn` is false, so the refusal arrives as a rejected execute().
 const authProbe = {
   args: ['auth', 'status'],
   parse(stdout) {

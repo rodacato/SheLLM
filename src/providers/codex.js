@@ -30,9 +30,17 @@ const LOGIN_HELP = 'run `codex login` on the host as the service user';
 // `login status` proves credentials are stored, not that they still refresh: it answered
 // "Logged in using ChatGPT" here while every call failed with an expired refresh token. That is
 // the honest limit of a free probe — a dead token surfaces on the first real request instead.
+//
+// It writes both verdicts to stderr and leaves stdout empty, and exits 1 for the negative one.
+// "Not logged in" contains "logged in", so the refusal has to be matched first.
 const authProbe = {
   args: ['login', 'status'],
-  parse: () => true,
+  parse(stdout, stderr) {
+    const said = `${stdout || ''}${stderr || ''}`;
+    if (/not logged in/i.test(said)) return false;
+    if (/logged in/i.test(said)) return true;
+    return null;
+  },
 };
 
 function cliModel(model) {
