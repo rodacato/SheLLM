@@ -95,9 +95,12 @@ async function checkProvider(provider) {
   try {
     const result = module?.withLock ? await module.withLock(run) : await run();
     if (!probe) return { installed: true, authenticated: null };
-    const loggedIn = probe.parse(result.stdout);
-    return { installed: true, authenticated: loggedIn === null ? null : loggedIn };
+    return { installed: true, authenticated: probe.parse(result.stdout, result.stderr) };
   } catch (err) {
+    // Both CLIs deliver a refusal with a non-zero exit, so the verdict is read here too; only an
+    // output naming neither state falls through to the classifier below.
+    const refusal = probe ? probe.parse(err.stdout || '', err.stderr || '') : null;
+    if (refusal !== null) return { installed: true, authenticated: refusal };
     return parseCheckError(err, providerSecrets(name));
   }
 }
