@@ -29,12 +29,15 @@ Decisions already taken live in [`docs/adr/`](docs/adr/); ADR-0001 is the baseli
 
 ## Work tracking
 
-Planned work lives in the maintainer's **private tracker**, never in a markdown file and never as
-an issue here. This repo is public and the service handles subscription credentials, so nothing
-planned, triaged or in flight is filed in it — an empty issue list is the intended state, not a
-sign that nothing is happening.
+Planned work lives on a **private board**, never in a markdown file. An item becomes an **issue in
+this repo when work on it starts** — so the open issues are what is actually being worked on, not a
+backlog. A short list is the intended state.
 
+Two things stay off the issue tracker until they are fixed: anything with a security impact, and
+anything that would describe a live weakness in a service that handles subscription credentials.
 Report security problems as `SECURITY.md` describes.
+
+A pull request closes its issue with `Closes #<n>`.
 
 ## Design
 
