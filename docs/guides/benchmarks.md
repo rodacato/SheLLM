@@ -333,3 +333,139 @@ Token throughput as the provider counts it, a cold VPS, sustained load over hour
 at a usage limit, and anything at all about answer quality. This section is the 2026-09-19
 production run, which covered Claude only; codex is measured in its own sections below, on a dev
 container rather than the server.
+
+## Warm pool and CLI behaviour under concurrency — 2026-09-21, on the server
+
+Run on the production VPS as the service user, against the CLIs directly — no SheLLM, no tunnel.
+These are process-level numbers and do not compare to the end-to-end tables above.
+
+| | |
+|---|---|
+| CLIs | `claude` 2.1.273, `codex` 0.154.0 |
+| Host | Ubuntu 24.04.4, Node 24.21.0, 8 vCPU, 15 GB |
+| Cost | about 35 real requests |
+| Credentials | `CLAUDE_CODE_OAUTH_TOKEN` from the environment, as the service uses |
+
+### A warm process cannot be re-targeted, and it remembers
+
+One `claude --print --input-format stream-json --output-format stream-json --verbose`, spawned with
+`--model haiku` and a system prompt naming itself ALPHA. Two turns; the second carried
+`model: "sonnet"` and a BETA system prompt in its envelope. The model is read from the protocol's
+own events, not from what the model says about itself.
+
+| What turn 2 tried to change | What happened |
+|---|---|
+| Model → `sonnet` | Ignored. `init` and every `assistant` event still report `claude-haiku-4-5-20251001` |
+| System prompt → BETA | Ignored. The reply still opens with `ALPHA` |
+| Nothing — history | **Leaked.** Turn 2 answered "The word you asked me to remember is PINEAPPLE" |
+
+**All three fields were accepted without an error and ignored.** A harness that checked only for
+errors would have reported this as a working re-target.
+
+The CLI documents the middle row: `--system-prompt-snapshot` defaults to `on`, which records the
+prompt on the conversation's first request, and "every later request and resume sends the record
+as-is, even when a later launch passes different text".
+
+**A control channel exists and was not enumerated.** A
+`{"type":"control_request","request":{"subtype":"interrupt"}}` returned a `control_response` with
+`subtype: success`. `--help` documents no reset subtype and only `interrupt` was probed, so "cannot
+be reset" is what the documented surface says, not an exhaustive result.
+
+### Idle cost of a warm process
+
+Spawned, sent nothing, sampled `/proc` every 30 s for 10 minutes.
+
+| Measure | Value |
+|---|---|
+| RSS at 30 s | 215 MB |
+| RSS steady, 1.5–10 min | 150–163 MB |
+| TCP connections held | 6 at 30 s, 2 at 10 min |
+| CPU while idle | 4.2 s over 570 s — about 0.7 % of one core |
+| Tokens spent while idle | none: no `assistant` and no `result` events |
+
+Idle quota is nil, so the reading that would have killed the idea outright does not apply. Idle CPU
+and two held sockets are not nil: ten warm processes would sit on ~1.5 GB and poll continuously.
+
+**Time to ready could not be measured as planned.** `system/init` is not emitted at spawn — it
+arrives once a turn is sent. With a turn sent immediately it lands at **514 ms** (494–538, n=3).
+
+### What a pool would actually save
+
+Spawn, turn 1, then a second turn in the same process. `haiku`, tiny prompt, one-word answer, n=3.
+
+| | Median | Range |
+|---|---|---|
+| spawn → `init` | 514 ms | 494–538 ms |
+| spawn → first result (cold) | 1.68 s | 1.59–1.79 s |
+| second turn, same process (warm) | 0.78 s | 0.75–0.84 s |
+| **what a pool removes** | **0.90 s** | |
+
+**This corrects the 2026-09-19 figure.** That run derived "roughly 2.2 s per request is process
+startup" by subtracting network from a 2.5 s end-to-end floor. Measured at the process itself the
+startup component is about **0.9 s**; the rest of that floor is generation and protocol, which a
+pool does not touch. Decision 4 currently says "about 2 s on a short call" — on this box it is
+closer to one.
+
+### Concurrency and the credential race
+
+**File credentials: blocked, not measured.** `~/.claude/.credentials.json` is expired. With the
+environment token unset the CLI answers `Failed to authenticate: OAuth session expired and could
+not be refreshed`, and `claude auth status` reports `loggedIn: false`. There is no refresh race to
+observe because nothing refreshes. Re-authenticating needs `claude setup-token`, which is
+interactive.
+
+**Environment token: no race, and possibly no surface for one.** The token is static and the CLI
+cannot write it back, so rotation has nowhere to happen.
+
+| Measure | Value |
+|---|---|
+| 5 parallel `claude -p`, wall clock | 2.45 s, 2.44 s (two waves) |
+| Requests | 15, all `rc=0`, no auth errors |
+| `~/.claude.json` | 45476 bytes and valid JSON throughout; md5 changed every wave |
+
+**Every spawn rewrites `~/.claude.json`.** A process that receives no turn at all still writes it,
+together with `policy-limits.json` and `remote-settings.json`. That — not token refresh — is the
+shared-write surface under concurrency, and it is the file that logs the account out if it is
+corrupted. It survived every wave.
+
+**A false positive worth recording.** The harness stopped after 10 of 15 requests because its own
+limit detector matched. It was wrong: the pattern is absent from normal responses, five parallel
+repeats did not reproduce it, and the detector's `429` term matches a hex substring of the
+response's UUIDs. No request failed and the CLI reported no limit.
+
+**codex: nothing moved.** Three parallel `codex exec`, wall 5.66 s, all `rc=0`. `~/.codex/auth.json`
+came out byte-identical — same size, same md5, same mtime, `last_refresh` still
+`2026-09-19T15:01:39Z`. No rotation occurred, so the failure mode reported in `openai/codex#17340`
+was not exercised. It also logs `error trying to find AGENTS.md docs: Permission denied` on every
+run; noise, not failure.
+
+### `claude auth status` is a usable health signal
+
+The suspicion was that it reports on file credentials and ignores the environment. It does not.
+
+| | `loggedIn` | `authMethod` |
+|---|---|---|
+| environment token unset | `false` | `none` |
+| environment token set | `true` | `oauth_token` |
+
+It emits JSON without `--json`. On this host it is the only thing that separates "the service can
+call the CLI" from "someone could log in at a terminal" — which, right now, are different answers.
+
+### The answer
+
+**Spawn-per-request stays.** A warm process cannot be re-targeted, carries conversation history
+between turns, and has no documented reset, so decision 4's isolation requirement is what fails —
+and that decision drops the pool rather than redesigning around the leak. The latency it would have
+bought is about 0.9 s on a short call, not the 2 s previously estimated.
+
+### Not measured, and why
+
+- **File-credential concurrency** — the credentials are expired.
+- **Token refresh for either CLI** — neither refreshed during the run, so the race was never armed.
+- **The control protocol's subtypes** — only `interrupt` was probed.
+- **Ten minutes of sustained concurrency.** Reduced to 15 requests deliberately. With file
+  credentials expired and the environment token static there was no refresh to race, and the real
+  shared-write surface is exercised by a burst rather than by duration. Sustaining it would have
+  spent hundreds of requests to watch a mechanism that cannot fire.
+- **The old VPS concurrency error that motivated this** — no detail was available, so step 3 ran
+  blind and describes what it saw.
