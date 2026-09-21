@@ -1,6 +1,6 @@
 'use strict';
 
-const { execSync } = require('node:child_process');
+const { execSync, execFileSync } = require('node:child_process');
 const { existsSync } = require('node:fs');
 const path = require('node:path');
 const { PROJECT_ROOT, CLI_SCRIPT, BACKUP_DIR } = require('./paths');
@@ -25,19 +25,43 @@ const SYSTEM_FILES = [
   { src: 'scripts/setup/shellm-update-runner.sh', dest: '/usr/local/lib/shellm/shellm-update-runner.sh', mode: '0755' },
 ];
 
+// The three shapes SHELLM_REF is allowed to take, and nothing else. A release tag is what the
+// dashboard asks for, a commit id is what the root update runner hands over once it has resolved
+// that tag against the remote, and a branch is the deliberate SSH deploy the deployment guide
+// documents. A branch name is restricted further than git would allow: no `..`, nothing outside
+// letters, digits, `.`, `_`, `-` and a path separator, and never a leading `-`.
+const REF_FORMS = [
+  /^v\d+\.\d+\.\d+$/,
+  /^[0-9a-f]{40}$/,
+  /^[A-Za-z0-9][A-Za-z0-9._-]*(?:\/[A-Za-z0-9][A-Za-z0-9._-]*)*$/,
+];
+const REF_MAX_LENGTH = 128;
+
+function isSupportedRef(ref) {
+  if (typeof ref !== 'string' || ref.length === 0 || ref.length > REF_MAX_LENGTH) return false;
+  if (ref.includes('..')) return false;
+  return REF_FORMS.some((form) => form.test(ref));
+}
+
 function run() {
   const startTime = Date.now();
+
+  // Before anything else runs. SHELLM_REF is the only input this command takes from outside, and
+  // the root update runner fills it from a file under /run — so a ref that is not shaped like one
+  // has to cost a message, not a git invocation.
+  const requested = requestedRef();
+
   console.log('shellm update — pulling latest and restarting service\n');
 
   // Save current commit for rollback
-  const prevCommit = exec('git rev-parse HEAD').trim();
+  const prevCommit = git('rev-parse', 'HEAD').trim();
   console.log(`  current: ${prevCommit.slice(0, 8)}`);
 
   // 1. Move to the release being deployed
   step('Fetching releases');
-  exec('git fetch --tags --force --prune origin');
-  const ref = resolveRef();
-  const target = exec(`git rev-parse ${ref}^{commit}`).trim();
+  git('fetch', '--tags', '--force', '--prune', 'origin');
+  const ref = resolveRef(requested);
+  const target = resolveCommit(ref);
 
   if (target === prevCommit) {
     console.log(`  Already on ${ref} — nothing to do.`);
@@ -50,13 +74,13 @@ function run() {
   snapshot();
 
   console.log(`  checking out ${ref}`);
-  exec(`git checkout --detach ${target}`);
+  git('checkout', '--detach', target);
   const newCommit = target;
   console.log(`  updated: ${prevCommit.slice(0, 8)} → ${newCommit.slice(0, 8)}`);
 
   // 3. npm ci only if lockfile changed
   step('Checking dependencies');
-  const lockChanged = exec(`git diff ${prevCommit} ${newCommit} --name-only`).includes('package-lock.json');
+  const lockChanged = git('diff', prevCommit, newCommit, '--name-only').includes('package-lock.json');
   if (lockChanged) {
     console.log('  package-lock.json changed — installing deps...');
     exec('npm ci --omit=dev');
@@ -81,7 +105,7 @@ function run() {
 
   // 6. Re-install any system file this release changed
   step('Checking installed system files');
-  const touched = new Set(exec(`git diff ${prevCommit} ${newCommit} --name-only`).split('\n').map((l) => l.trim()));
+  const touched = new Set(git('diff', prevCommit, newCommit, '--name-only').split('\n').map((l) => l.trim()));
   const changed = SYSTEM_FILES.filter((f) => touched.has(f.src) && existsSync(path.join(PROJECT_ROOT, f.src)));
   if (changed.length) {
     for (const file of changed) {
@@ -126,19 +150,41 @@ function run() {
   } else {
     console.error('  FAILED — service is not healthy');
     console.error(`\nRolling back to ${prevCommit.slice(0, 8)}...`);
-    exec(`git checkout ${prevCommit}`);
+    git('checkout', prevCommit);
     execAsRoot('systemctl restart shellm');
     console.error('Rollback complete. Check logs: journalctl -u shellm -n 50');
     process.exit(1);
   }
 }
 
-// The host follows published releases; SHELLM_REF deploys a specific one, or a branch.
-function resolveRef() {
-  if (process.env.SHELLM_REF) return process.env.SHELLM_REF;
-  const latest = exec("git tag -l 'v*' --sort=-v:refname").split('\n')[0].trim();
+// The host follows published releases; SHELLM_REF deploys a specific one, a commit id, or a branch.
+function requestedRef() {
+  const ref = process.env.SHELLM_REF;
+  if (!ref) return null;
+  if (!isSupportedRef(ref)) {
+    console.error(`SHELLM_REF is not a release tag (v1.2.3), a commit id or a branch name: ${JSON.stringify(ref)}`);
+    process.exit(1);
+  }
+  return ref;
+}
+
+function resolveRef(requested) {
+  if (requested) return requested;
+  const latest = git('tag', '-l', 'v*', '--sort=-v:refname').split('\n')[0].trim();
   if (latest) return latest;
-  return exec('git symbolic-ref --short refs/remotes/origin/HEAD').trim().replace(/^origin\//, '');
+  return git('symbolic-ref', '--short', 'refs/remotes/origin/HEAD').trim().replace(/^origin\//, '');
+}
+
+// Run after the fetch, so a release published since the last update resolves. `--verify` is what
+// makes an unknown name an error rather than itself: without it `git rev-parse` echoes the string
+// back, and the checkout is where that would be discovered.
+function resolveCommit(ref) {
+  try {
+    return git('rev-parse', '--verify', '--quiet', `${ref}^{commit}`).trim();
+  } catch {
+    console.error(`  FAILED — ${ref} is not a ref this checkout knows about after fetching`);
+    return process.exit(1);
+  }
 }
 
 // Through exec(), so it runs as the service user: `shellm backup` refuses to run as root, which
@@ -159,6 +205,18 @@ function snapshot() {
     console.error('\nRefusing to update without a snapshot: migrations do not roll back.');
     process.exit(1);
   }
+}
+
+// Every git command the update runs, as an argument vector rather than a command string: a ref
+// reaches git as one argument and no shell ever sees it. Same privilege drop as exec() below.
+function git(...args) {
+  const isRoot = process.getuid() === 0;
+  const [file, argv] = isRoot
+    ? ['sudo', ['-u', SERVICE_USER, '-H', 'git', '-C', PROJECT_ROOT, ...args]]
+    : ['git', args];
+  return execFileSync(file, argv, {
+    cwd: isRoot ? undefined : PROJECT_ROOT, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'],
+  });
 }
 
 function exec(cmd) {
@@ -182,4 +240,4 @@ function step(label) {
 
 // SYSTEM_FILES is exported so a test can hold it against what vps.sh installs. The two drifting
 // apart is silent on the host that finds out.
-module.exports = { run, SYSTEM_FILES };
+module.exports = { run, SYSTEM_FILES, isSupportedRef };
