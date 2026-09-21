@@ -100,12 +100,25 @@ function failureFrom(event, model) {
   return cliFailed('codex', message);
 }
 
+// A counter the CLI never sent stays absent, so the log keeps "not reported" (NULL) and a
+// measured zero apart.
+function reported(value) {
+  return typeof value === 'number' ? value : null;
+}
+
+// codex breaks its cache counters out OF input_tokens, the shared usage shape is Anthropic's
+// (input_tokens is the fresh remainder), and subtracting here is what keeps one logging path.
 function usageFrom(event) {
   if (!event.usage) return null;
-  return {
-    input_tokens: event.usage.input_tokens || 0,
+  const cacheRead = reported(event.usage.cached_input_tokens);
+  const cacheWrite = reported(event.usage.cache_write_input_tokens);
+  const usage = {
+    input_tokens: Math.max((event.usage.input_tokens || 0) - (cacheRead || 0) - (cacheWrite || 0), 0),
     output_tokens: event.usage.output_tokens || 0,
   };
+  if (cacheRead !== null) usage.cache_read_input_tokens = cacheRead;
+  if (cacheWrite !== null) usage.cache_creation_input_tokens = cacheWrite;
+  return usage;
 }
 
 function parseOutput(stdout, model) {

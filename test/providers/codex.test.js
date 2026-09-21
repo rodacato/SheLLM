@@ -71,9 +71,16 @@ process.exit(file === 'exec-json-unknown-model.jsonl' ? 1 : 0);
     assert.match(sent, /^Be terse\.\n\nRespond with valid JSON only\.\n\n---\n\nping$/);
   });
 
+  // The CLI's 12683 input tokens include the 10624 it served from cache; input_tokens carries the
+  // fresh remainder so it means the same thing here as it does for claude.
   it('reports the token usage the CLI reported', async () => {
     const result = await codex.chat({ prompt: 'ping', model: 'codex' });
-    assert.deepEqual(result.usage, { input_tokens: 12683, output_tokens: 5 });
+    assert.deepEqual(result.usage, {
+      input_tokens: 2059,
+      output_tokens: 5,
+      cache_read_input_tokens: 10624,
+      cache_creation_input_tokens: 0,
+    });
     assert.equal(result.cost_usd, null);
   });
 
@@ -95,7 +102,12 @@ process.exit(file === 'exec-json-unknown-model.jsonl' ? 1 : 0);
     const events = [];
     for await (const event of codex.chatStream({ prompt: 'ping', model: 'codex' })) events.push(event);
     assert.deepEqual(events.filter((e) => e.type === 'delta').map((e) => e.content), ['OK']);
-    assert.deepEqual(events.find((e) => e.type === 'usage').usage, { input_tokens: 12683, output_tokens: 5 });
+    assert.deepEqual(events.find((e) => e.type === 'usage').usage, {
+      input_tokens: 2059,
+      output_tokens: 5,
+      cache_read_input_tokens: 10624,
+      cache_creation_input_tokens: 0,
+    });
     assert.equal(events.at(-1).type, 'done');
   });
 
