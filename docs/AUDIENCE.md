@@ -2,7 +2,7 @@
 
 > For something to qualify as a feature, someone on this list must actually need it.
 > If nobody here needs it, it doesn't get built.
-> Last updated: **2026-09-16** (revamp kickoff).
+> Last updated: **2026-09-21** — the latency note now reflects ADR-0006.
 
 ## Primary user — the maintainer, integrating his own work
 
@@ -20,9 +20,11 @@ What he needs from SheLLM, in the order he feels it:
 - **It answers like the real API.** An SDK pointed at SheLLM behaves as if it were talking to
   OpenAI or Anthropic: same request shape, same response shape, same error shape, streaming
   included. Every divergence is something he has to remember in every app.
-- **It is fast enough to sit in a request path.** A spawn-per-request CLI costs 3–4 s before the
-  model starts; a warm process answers in about 1 s (measured 2026-09-16 on his laptop, not yet on
-  the server).
+- **It is fast enough to sit in a request path.** Every request starts a CLI and pays for it —
+  about 0.9 s of a short call on the server, and that cold start is permanent
+  ([ADR-0006](./adr/0006-spawn-per-request-stays.md): a pooled process would leak context between
+  callers). What made it usable was streaming, so he sees the first words in under two seconds
+  rather than waiting for the whole answer.
 - **It never gets his accounts banned.** He would rather lose speed than a subscription.
 - **He can tell whether he can keep using it.** Before starting work, not after something breaks:
   how much of each subscription he has burned and at what pace, without opening each provider's
