@@ -49,6 +49,7 @@ src/
 │   ├── request-logs.js    # Request log insertion and pruning
 │   ├── providers.js       # Provider CRUD and settings
 │   ├── audit.js           # Admin audit log
+│   ├── migrate.js         # Migration runner (one statement at a time, one transaction per file)
 │   └── migrations/        # SQL migration files (001–013)
 │
 ├── lib/                   # Shared utilities
@@ -168,7 +169,10 @@ SQLite (better-sqlite3) with synchronous API. Each domain has its own module:
 - **clients.js** — API key management with HMAC-SHA256 hashing. Legacy SHA-256 keys are auto-upgraded on successful auth.
 - **providers.js** — Provider registry with capabilities JSON and health check config.
 
-Migrations live in `src/db/migrations/` and run automatically on startup.
+Migrations live in `src/db/migrations/` and run automatically on startup. `migrate.js` applies a
+file one statement at a time inside a single transaction: a `duplicate column` error is ignored for
+an `ALTER TABLE` and nothing else, and any other failure rolls the file back and leaves it
+unrecorded, so it is retried on the next start.
 
 ### middleware/ — Request Processing
 
@@ -212,7 +216,8 @@ db/
   ├── clients.js → index (getDb)
   ├── request-logs.js → index (getDb)
   ├── providers.js → index (getDb)
-  └── audit.js → index (getDb)
+  ├── audit.js → index (getDb)
+  └── migrate.js (no deps)
 ```
 
 ---

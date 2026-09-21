@@ -1,37 +1,12 @@
 'use strict';
 
-const { mkdirSync, chmodSync, existsSync, readdirSync, readFileSync } = require('node:fs');
+const { mkdirSync, chmodSync, existsSync } = require('node:fs');
 const path = require('node:path');
+
+const { runMigrations } = require('./migrate');
 
 let db = null;
 let pruneInterval = null;
-
-function runMigrations(database, _dbPath) {
-  database.exec('CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT (datetime(\'now\')))');
-
-  const applied = new Set(database.prepare('SELECT name FROM _migrations').all().map(r => r.name));
-
-  // Find migrations directory — handle both normal and :memory: paths
-  const migrationsDir = path.join(__dirname, 'migrations');
-  if (!existsSync(migrationsDir)) return;
-
-  const files = readdirSync(migrationsDir)
-    .filter(f => f.endsWith('.sql'))
-    .sort();
-
-  for (const file of files) {
-    if (applied.has(file)) continue;
-    const sql = readFileSync(path.join(migrationsDir, file), 'utf-8');
-    try {
-      database.exec(sql);
-    } catch (err) {
-      // Ignore "duplicate column" errors for idempotent ALTER TABLE migrations
-      if (err.message && err.message.includes('duplicate column')) { /* ok */ }
-      else throw err;
-    }
-    database.prepare('INSERT OR IGNORE INTO _migrations (name) VALUES (?)').run(file);
-  }
-}
 
 function initDb(dbPath) {
   if (db) return db;
@@ -57,7 +32,7 @@ function initDb(dbPath) {
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
 
-  runMigrations(db, dbPath);
+  runMigrations(db);
 
   // Initialize HMAC secret (auto-generates if needed)
   const { resetHmacCache, getHmacSecret } = require('./clients');
