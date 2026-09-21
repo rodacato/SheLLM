@@ -20,32 +20,38 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
+    // Tailwind substitutes <alpha-value> into a colour to build the /N modifier, and a bare
+    // var(--x) has no placeholder — bg-outline/20 and friends then emit no rule at all.
+    const themeColor = (name) => `color-mix(in srgb, var(--${name}) calc(<alpha-value> * 100%), transparent)`;
+
+    const THEME_COLORS = [
+      'surface',
+      'surface-container-low',
+      'surface-container',
+      'surface-container-high',
+      'surface-container-highest',
+      'surface-container-lowest',
+      'primary-container',
+      'on-primary',
+      'on-surface',
+      'on-surface-variant',
+      'outline',
+      'outline-variant',
+      'error',
+      'status-ok',
+      'status-warn',
+      'status-fail',
+      'surface-shell',
+      'nav-selected',
+      'error-container',
+      'danger-surface',
+      'danger-surface-hover',
+    ];
+
     tailwind.config = {
       theme: {
         extend: {
-          colors: {
-            'surface':                  'var(--surface)',
-            'surface-container-low':    'var(--surface-container-low)',
-            'surface-container':        'var(--surface-container)',
-            'surface-container-high':   'var(--surface-container-high)',
-            'surface-container-highest':'var(--surface-container-highest)',
-            'surface-container-lowest': 'var(--surface-container-lowest)',
-            'primary-container':        'var(--primary-container)',
-            'on-primary':               'var(--on-primary)',
-            'on-surface':               'var(--on-surface)',
-            'on-surface-variant':       'var(--on-surface-variant)',
-            'outline':                  'var(--outline)',
-            'outline-variant':          'var(--outline-variant)',
-            'error':                    'var(--error)',
-            'status-ok':                'var(--status-ok)',
-            'status-warn':              'var(--status-warn)',
-            'status-fail':              'var(--status-fail)',
-            'surface-shell':            'var(--surface-shell)',
-            'nav-selected':             'var(--nav-selected)',
-            'error-container':          'var(--error-container)',
-            'danger-surface':           'var(--danger-surface)',
-            'danger-surface-hover':     'var(--danger-surface-hover)',
-          },
+          colors: Object.fromEntries(THEME_COLORS.map((name) => [name, themeColor(name)])),
           fontFamily: {
             'headline': ['"Space Grotesk"', 'system-ui', 'sans-serif'],
             'body':     ['"Inter"', 'system-ui', 'sans-serif'],

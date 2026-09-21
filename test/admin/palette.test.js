@@ -4,6 +4,7 @@ const { describe, it, before } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const ADMIN = path.join(__dirname, '../../src/admin');
 const CSS = path.join(ADMIN, 'public/css/custom.css');
@@ -22,6 +23,16 @@ function paletteFromRoot() {
     palette.set(value.toLowerCase(), name);
   }
   return { palette, rootBlock: root[0], css };
+}
+
+function tailwindConfig() {
+  const html = fs.readFileSync(path.join(ADMIN, 'views/index.html'), 'utf8');
+  const script = /<script>([\s\S]*?tailwind\.config[\s\S]*?)<\/script>/.exec(html);
+  assert.ok(script, 'index.html declares an inline tailwind.config');
+
+  const sandbox = { tailwind: {} };
+  vm.runInNewContext(script[1], sandbox);
+  return { source: script[1], colors: sandbox.tailwind.config.theme.extend.colors };
 }
 
 function walk(dir) {
@@ -43,14 +54,30 @@ describe('the palette is declared once and never retyped', () => {
   });
 
   it('has the Tailwind config read those declarations rather than repeat them', () => {
-    const html = fs.readFileSync(path.join(ADMIN, 'views/index.html'), 'utf8');
-    const colors = /colors:\s*\{([\s\S]*?)\n\s*\},/.exec(html);
-    assert.ok(colors, 'the config declares a colors block');
+    const { source, colors } = tailwindConfig();
 
-    const literals = [...colors[1].matchAll(/'(#[0-9a-fA-F]{6})'/g)].map((m) => m[1]);
+    const literals = [...source.matchAll(/'(#[0-9a-fA-F]{6})'/g)].map((m) => m[1]);
     assert.deepStrictEqual(literals, [],
       `the Tailwind config retypes ${literals.join(', ')} instead of reading a custom property`);
-    assert.ok(colors[1].includes('var(--surface)'), 'and it does read them — control for the line above');
+
+    const declared = new Set(palette.values());
+    const offenders = Object.entries(colors)
+      .filter(([name, value]) => !String(value).includes(`var(--${name})`) || !declared.has(name))
+      .map(([name]) => name);
+    assert.deepStrictEqual(offenders, [],
+      `these colours do not read a custom property declared in :root: ${offenders.join(', ')}`);
+    assert.ok(colors.surface.includes('var(--surface)'), 'and it does read them — control for the lines above');
+  });
+
+  // Tailwind builds bg-outline/20 by substituting <alpha-value> into the colour; a value with no
+  // placeholder emits no rule at all, so the modified class fails silently.
+  it('keeps every theme colour usable with an alpha modifier', () => {
+    const { colors } = tailwindConfig();
+    const missing = Object.entries(colors)
+      .filter(([, value]) => !String(value).includes('<alpha-value>'))
+      .map(([name]) => name);
+    assert.deepStrictEqual(missing, [],
+      `every /N class on these colours emits nothing: ${missing.join(', ')}`);
   });
 
   it('finds no palette value retyped anywhere the dashboard can reach a custom property', () => {
