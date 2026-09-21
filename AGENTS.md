@@ -29,9 +29,12 @@ Decisions already taken live in [`docs/adr/`](docs/adr/); ADR-0001 is the baseli
 
 ## Work tracking
 
-Planned work lives in the maintainer's **private GitHub Project**, never in a markdown file. Items
-stay drafts; nothing is promoted to a public issue, because the repo is public and handles
-subscription credentials. Report security problems as `SECURITY.md` describes.
+Planned work lives in the maintainer's **private tracker**, never in a markdown file and never as
+an issue here. This repo is public and the service handles subscription credentials, so nothing
+planned, triaged or in flight is filed in it — an empty issue list is the intended state, not a
+sign that nothing is happening.
+
+Report security problems as `SECURITY.md` describes.
 
 ## Design
 
