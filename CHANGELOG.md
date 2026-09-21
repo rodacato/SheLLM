@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-09-21
+
+### Added
+
+- **scripts:** decompose request latency from the log instead of benchmarking it
+- **site:** add landing crops cut from the admin exports
+
+### Fixed
+
+- **health:** report a logout as a logout, not as an unknown
+- **admin:** let the alpha modifier reach the theme colours
+- **codex:** carry the cache token counters into the request log
+- **admin:** put an expanded log detail under the row it belongs to
+- **changelog:** clear the Unreleased block the generator would orphan
+- **cli:** validate SHELLM_REF before it reaches git
+- **site:** collapse the API reference's duplicate SheLLM mark (#82)
+- **changelog:** drop the hand-written Unreleased entry the generator would orphan
+- **db:** run migrations one statement at a time
+- **site:** render the landing screenshots at a size someone can read
+
+### Documentation
+
+- **benchmarks:** price CLAUDE_CONFIG_DIR, and find the reason not to pull it
+- **adr:** drop the warm pool, and say why it was never the shape here
+- **benchmarks:** measure the warm pool on the server, and drop it
+- **design:** replace the three audits with a finding ledger
+- **agents:** issues live here, and they mean work in flight
+- **contributing:** describe the release flow the workflow implements
+- point decision 4 at the server run that already measured it
+- **agents:** say plainly that no work is tracked as an issue here
+
+
 ## [1.7.0] - 2026-09-20
 
 ### Added
@@ -748,5 +780,5 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.7.0...HEAD
-[1.7.0]: https://github.com/rodacato/SheLLM/compare/v1.6.1...v1.7.0
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.8.0...HEAD
+[1.8.0]: https://github.com/rodacato/SheLLM/compare/v1.7.0...v1.8.0
