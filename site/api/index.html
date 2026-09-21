@@ -49,15 +49,21 @@
       .menu-content img {
         max-height: 2rem !important;
         width: auto !important;
-        /* Top margin clears the band .home is fixed into, below. */
-        margin: 2.75rem 0 1.25rem 1.25rem !important;
+        margin: 1.5rem 0 1.25rem 1.25rem !important;
       }
 
-      /* ── Back to the landing page: Redoc owns the whole viewport, so this floats over it ── */
-      .home { position: fixed; z-index: 100; top: 1rem; left: 1.25rem;
-              font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; letter-spacing: 0.12em;
-              text-transform: uppercase; color: #849397; text-decoration: none; }
-      .home:hover { color: #03E3FF; }
+      /* ── Back to the landing page: x-logo.href wraps the mark in a link Redoc centers ── */
+      .menu-content a:has(> img) { display: block; text-align: left; }
+      .menu-content a:has(> img):hover { opacity: 0.7; }
+
+      /* ── Below Redoc's 50rem breakpoint the sidebar and its linked logo are gone, so this floats instead ── */
+      .home { display: none; }
+      @media (max-width: 50rem) {
+        .home { display: block; position: fixed; z-index: 100; top: 1rem; left: 1.25rem;
+                font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; letter-spacing: 0.12em;
+                text-transform: uppercase; color: #849397; text-decoration: none; }
+        .home:hover { color: #03E3FF; }
+      }
 
       /* ── Scrollbar ── */
       ::-webkit-scrollbar { width: 6px; height: 6px; }
