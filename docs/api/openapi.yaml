@@ -26,6 +26,7 @@ info:
     url: logo.svg
     altText: SheLLM
     backgroundColor: transparent
+    href: ../
   license:
     name: MIT
     identifier: MIT

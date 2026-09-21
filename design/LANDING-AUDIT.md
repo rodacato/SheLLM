@@ -24,7 +24,7 @@ Neither of them looked at `site/`; this is the first pass over the public surfac
 | **Page** | D50 D51 D52 D53 D54 D55 | — |
 | **Pipeline** | D56 D57 | D58 — needs a capture nobody has taken yet |
 | **Docs** | D59 | — |
-| **Reported during the work** | D60 | — |
+| **Reported during the work** | D60 — geometry, then the duplicate mark it left behind | — |
 
 Everything this audit found is in except **D58**, which is not a code change: the shipped Request
 Logs capture shows a 15.4% error rate from the maintainer's own auth tests, and replacing it needs
