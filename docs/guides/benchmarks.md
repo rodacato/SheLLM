@@ -5,8 +5,8 @@ latency run.
 
 The first latency measurement of SheLLM on the real server. Until now the only numbers were from
 a laptop (3–4 s spawned per request, ~1 s with a warm process), which is what
-[`IDENTITY.md`](../IDENTITY.md) decision 4 rests on. These replace them with something measured
-where the service actually runs.
+[`IDENTITY.md`](../IDENTITY.md) decision 4 rested on until this run. These replace them with
+something measured where the service actually runs.
 
 ## What was measured, and how
 

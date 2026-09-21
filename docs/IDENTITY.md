@@ -41,8 +41,11 @@ Reopening any of these needs an ADR, not a PR.
 3. **Both API formats are first-class.** `/v1/chat/completions` and `/v1/messages` get the same
    care; neither is a translation afterthought of the other.
 4. **Latency is fixed by keeping processes warm, not by leaving the CLI** — one process per
-   request, discarded after, so context never leaks between requests. The claim rests on a laptop
-   measurement (3–4 s spawned vs ~1 s warm); it is not yet measured on the server.
+   request, discarded after, so context never leaks between requests. Measured on the server
+   2026-09-19 ([`benchmarks.md`](./guides/benchmarks.md)): roughly 2.2 s of every answer is process
+   startup, which is what a warm pool removes. The decision stands and the prize is smaller than
+   the laptop suggested — about 2 s on a short call, 13 % of the wall clock on a long one — and
+   the cheaper win was streaming, already taken.
 5. **SheLLM never inspects prompt content.** It does not classify, filter or flag what callers
    send; anonymizing data is the caller's job. Isolating what the CLI can reach is the defense
    that works.
