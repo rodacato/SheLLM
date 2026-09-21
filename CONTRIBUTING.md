@@ -263,15 +263,22 @@ refactor(router): extract queue logic into separate module
 
 ### Release flow
 
-```bash
-# 1. Bump version, auto-generate CHANGELOG entry, create git tag
-npm version patch    # or: minor | major
+Releases are cut by CI from a dispatch. No step below pushes to `master` or creates a tag by
+hand — `npm version` runs inside the workflow, never on your machine.
 
-# 2. Push commit and tag
-git push && git push --tags
-
-# 3. CI detects the tag → runs tests → creates GitHub Release
-```
+1. Run the **Release** workflow from the Actions tab and pick the bump (`patch`, `minor` or
+   `major`). It bumps `package.json`, generates the `CHANGELOG.md` entry from the commits since
+   the last tag, and pushes a `release/vX.Y.Z` branch.
+2. **Open the pull request yourself**, from the link in the run summary. The workflow stops
+   short of opening it: letting Actions open pull requests needs a repository setting that also
+   lets it *approve* them, and a token-authored pull request runs no CI — opening it by hand is
+   what gives the release branch its checks.
+3. Read the generated changelog entry on that branch before merging. Anything that breaks an
+   existing install belongs under **Breaking Changes**, and it only lands there when the commit
+   was written as `type!:`; a missed marker is fixed on the branch, not after publication.
+4. Merge the pull request. That push to `master` carries a version with no tag yet, which is
+   what makes CI run the tests, create `vX.Y.Z` and publish the GitHub Release with that
+   changelog entry as its notes.
 
 ## Pull Requests
 
