@@ -7,11 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- **db:** run migrations one statement at a time, so a file whose first `ALTER TABLE` hits an
-  existing column still applies the rest instead of being recorded as applied half-way
-
 ## [1.7.0] - 2026-09-20
 
 ### Added
