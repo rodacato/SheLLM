@@ -120,13 +120,47 @@ The admin dashboard CSP allows `unsafe-inline` and `unsafe-eval` for Tailwind CS
 - **Rate limiting bypass**: A compromised client key still allows requests up to its RPM limit.
 - **CLI vulnerabilities**: If a CLI tool has a vulnerability, SheLLM inherits it. Keep CLI tools updated.
 
+## Supported Versions
+
+Only the latest released version receives security patches. See [CHANGELOG.md](CHANGELOG.md) for
+the current version.
+
 ## Reporting Vulnerabilities
 
-If you discover a security issue, do **not** open a public issue. Instead:
+**Do not open a public issue.** Report privately through
+[GitHub private vulnerability reporting](https://github.com/rodacato/SheLLM/security/advisories/new)
+(**Security → Report a vulnerability**) with:
 
-1. Email the maintainer directly
-2. Include a description of the vulnerability, reproduction steps, and potential impact
-3. Allow reasonable time for a fix before disclosure
+- A description of the vulnerability
+- Steps to reproduce it
+- The potential impact
+- A suggested fix, if you have one
+
+### Disclosure timeline
+
+- **0 days** — reported
+- **48 hours** — acknowledgment
+- **7 days** — assessment and fix development
+- **30 days** — fix released and **advisory published**
+
+The advisory is the point. SheLLM is self-hosted: an operator running an older copy learns they
+must upgrade from the published advisory and from nothing else, so a silent patch leaves them
+exposed. It is drafted privately and published only once the fix has shipped.
+
+### Severity
+
+SheLLM holds credentials for the operator's own LLM subscriptions. Anything touching admin
+authentication, the key store, or subprocess construction is treated as high severity by default.
+
+### Scope
+
+In scope: authentication and authorization bypass, command and prompt injection reaching a
+subprocess, key or token disclosure, SSRF through a provider gateway, and anything that exposes one
+client's traffic to another.
+
+Out of scope: vulnerabilities in third-party dependencies (report those upstream), denial of
+service, social engineering, and anything requiring access to the host the operator already
+controls. The accepted risks named above are accepted, not vulnerabilities.
 
 ## Dependency Policy
 
