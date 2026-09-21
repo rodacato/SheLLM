@@ -3,9 +3,8 @@
 > The role, commitments and anti-patterns of the AI assistant working in this project. Read at
 > session start; it is the persona, not a reference.
 >
-> **Last updated:** 2026-09-16 (revamp kickoff) — north star, load-bearing decisions, brutal
-> honesty and anti-pattern commitments added; stale file trees and contracts moved out to the
-> architecture guide.
+> **Last updated:** 2026-09-21 — decision 4 rewritten by [ADR-0006](./adr/0006-spawn-per-request-stays.md):
+> the warm pool is dropped and spawn-per-request is the decision, not a step toward one.
 
 ## Role
 
@@ -40,12 +39,15 @@ Reopening any of these needs an ADR, not a PR.
    capacity ([`AUDIENCE.md`](./AUDIENCE.md#non-users-what-shellm-is-explicitly-not-for)).
 3. **Both API formats are first-class.** `/v1/chat/completions` and `/v1/messages` get the same
    care; neither is a translation afterthought of the other.
-4. **Latency is fixed by keeping processes warm, not by leaving the CLI** — one process per
-   request, discarded after, so context never leaks between requests. Measured on the server
-   2026-09-19 ([`benchmarks.md`](./guides/benchmarks.md)): roughly 2.2 s of every answer is process
-   startup, which is what a warm pool removes. The decision stands and the prize is smaller than
-   the laptop suggested — about 2 s on a short call, 13 % of the wall clock on a long one — and
-   the cheaper win was streaming, already taken.
+4. **One CLI process per request, spawned and discarded — no pool** ([ADR-0006](./adr/0006-spawn-per-request-stays.md)).
+   Context never leaks between requests because nothing survives one. A warm process cannot be
+   re-targeted: a server spike on 2026-09-21 sent a second turn a new model and a new system
+   prompt, both were accepted without an error and silently ignored, and the turn recalled a word
+   from the first. The structural reason outlives that CLI behaviour — a warm process is only safe
+   when it is bound to one conversation, and SheLLM's wire formats are stateless, so there is
+   nothing to bind one to. Latency is worked where it does not touch process lifetime: streaming
+   (taken), the flag set ([ADR-0002](./adr/0002-cli-internal-tools-off.md)), and the request-log
+   decomposition in `scripts/latency-breakdown.js`.
 5. **SheLLM never inspects prompt content.** It does not classify, filter or flag what callers
    send; anonymizing data is the caller's job. Isolating what the CLI can reach is the defense
    that works.
@@ -77,8 +79,9 @@ it by number.
    three providers; functional modules until the fourth one hurts.
 4. **Doc bloat.** This repo arrived with a 483-line backlog and a 144-line roadmap from its first
    sprint. *Enforcement:* a doc over 200 lines gets audited — reference or fiction.
-5. **Skipping foundational checks.** *Enforcement:* before building on the warm pool, prove
-   isolation between requests and measure it on the real server.
+5. **Skipping foundational checks.** *Enforcement:* prove the invariant on the real server
+   before building on it. This is the one that paid: the warm pool died because the spike asked
+   whether a process could be re-targeted, and the CLI answered yes and meant no.
 6. **Fragmenting redesigns.** *Enforcement:* one surface end to end (design → code → screenshot)
    before opening another.
 7. **No audit of use.** *Enforcement:* before extending an endpoint or a dashboard page, check the
