@@ -469,3 +469,82 @@ bought is about 0.9 s on a short call, not the 2 s previously estimated.
   spent hundreds of requests to watch a mechanism that cannot fire.
 - **The old VPS concurrency error that motivated this** — no detail was available, so step 3 ran
   blind and describes what it saw.
+
+## `CLAUDE_CONFIG_DIR` and the shared write surface — 2026-09-21, dev container
+
+The section above found that every `claude` spawn rewrites `~/.claude.json`, and that this — not
+the token refresh everyone watches — is the file concurrent requests share. This prices the lever
+that removes it, and finds the reason not to pull it yet.
+
+| | |
+|---|---|
+| Where | the dev container (`claude` 2.1.273), not the server |
+| Cost | none. `auth status` spends no quota |
+| Samples | 10 per row, run interleaved |
+
+### It does remove the shared surface
+
+Running one `claude auth status` with `CLAUDE_CONFIG_DIR` pointed at a fresh temp directory, with
+`~/.claude.json` fingerprinted either side:
+
+```
+before:  030b6e79…  mtime 1789960227
+after:   030b6e79…  mtime 1789960227
+```
+
+Untouched — not merely uncorrupted. The CLI wrote its own `.claude.json`, a `.claude.json.lock`
+directory and `backups/` inside the temp dir instead. The lock is worth noting on its own: it is
+how the binary serialises its own writes, which is why fifteen parallel spawns did not corrupt the
+shared file. That protection is the CLI's, not SheLLM's.
+
+`XDG_CONFIG_HOME` does **not** do this — `configDirectory` still resolved to `~/.claude` with it
+set, so the `XDG_CONFIG_HOME` that `CLAUDE_ENV` passes to claude does nothing. `CLAUDE_CONFIG_DIR`
+is the only lever.
+
+### And it is close to free
+
+| Config directory | Median | Range |
+|---|---|---|
+| a fresh one per invocation | 100 ms | 97–113 ms |
+| one reused across invocations | 85 ms | 83–119 ms |
+| the host's real `~/.claude` | 102 ms | 99–116 ms |
+
+About 15 ms against a reused directory, and **indistinguishable from what the host pays today** —
+a fresh directory is marginally faster than the real one, which on the server holds a 45 KB
+`.claude.json`. Against a 2.5 s request this is noise.
+
+This measures CLI boot, not a served request: `auth status` reads the config directory and
+answers, where a real call does more with it. It bounds the startup component, which is the part
+the directory can affect.
+
+### The reason not to adopt it, which is not the cost
+
+A config directory the CLI has never seen has no credentials in it. On this host, signed in as
+`authMethod: "claude.ai"`:
+
+| | `loggedIn` | `authMethod` |
+|---|---|---|
+| as the host runs | `true` | `claude.ai` |
+| `CLAUDE_CONFIG_DIR` empty, no environment token | **`false`** | `none` |
+| `CLAUDE_CONFIG_DIR` empty, environment token set | `true` | `oauth_token` |
+
+The last row is the good news — credential resolution does not depend on the directory, so a
+server running on `CLAUDE_CODE_OAUTH_TOKEN` would not notice. (`auth status` accepts any token
+string, so this proves which path is taken, not that a real token still serves; one real call on
+the server would settle that.)
+
+The middle row is the blocker. `.env.example` calls the token *"optional when the CLI is logged in
+for this user"* and `README.md` says to press Enter past it if `claude` is signed in — so an
+install authenticated by `claude login` alone is a documented, supported path, and a per-request
+config directory silently breaks every one of them.
+
+**So this is a decision, not a fix.** Adopting it makes `CLAUDE_CODE_OAUTH_TOKEN` mandatory and
+retires a supported setup, which belongs in the security-model ADR alongside the other isolation
+controls — not in a patch that closes a concurrency finding. The finding it would close has held
+under every burst measured so far, so nothing is on fire while that decision waits.
+
+### Noted in passing
+
+`queued_ms` is recorded only on the non-streaming path (`res.locals.queued_ms` is set in the
+buffered branch of both endpoints and never in the streaming one), so a streamed request's queue
+time is absent from the log. The dashboard's "% spent queueing" reads only the rows that have it.
