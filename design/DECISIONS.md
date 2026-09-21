@@ -8,7 +8,7 @@
 
 **The registry collided with itself on 2026-09-20, and this is the repair.** Two documents
 claimed `D30` and `D31` the same day for different findings: the design audit's second pass took
-**D30–D42** ([DESIGN-AUDIT.md](DESIGN-AUDIT.md), commits `617bd30` and `f7efc6a`), and this file
+**D30–D42** (the design audit's third pass, commits `617bd30` and `f7efc6a`), and this file
 then assigned the same two numbers to the undrawn sign-in screen and the manifest literals
 (commit `c528f97`). The audit's range wins, because thirteen entries, two tables and several
 commits already cite it. **This file's two are renumbered: old D30 → `D43`, old D31 → `D44`.**
@@ -21,8 +21,7 @@ entries survive as drafts on the project board, cited there by number. New findi
 **D15** — reusing a number would collide with a card that still says "Design audit D11".
 
 **D21–D29 are spent too.** The 2026-09-20 motion audit claimed that range the same way —
-seven findings and two 🐞 bugs, all of them held in [MOTION-AUDIT.md](MOTION-AUDIT.md) rather than
-copied here. Two of them, D22 and D28, are the mobile drawer, which
+seven findings and two 🐞 bugs, now carried in the ledger at the end of this file. Two of them, D22 and D28, are the mobile drawer, which
 *Out of scope (confirmed)* below already rules out; they are recorded so the next pass does not
 re-find them, not proposed.
 
@@ -57,7 +56,7 @@ that doc tracks landing them.
 
 | **D45** ✅ | The canvas drew two type steps a pixel off the code, in 40 places. `text-sm` was 13px on the canvas against 14 in the code (36 nodes, 25 of them Logs table cells), and `text-lg` was 17 against 18 (4 nodes on System). | Measured 2026-09-20 across the flow: canvas sizes were 9·10·11·12·13·17·18·20·23·24·26, the code's scale is 10·11·12·14·18·20·24 plus icons at 16·18·20 (the 23 is the logo's SVG text and the 13s on Sign in are correct — `login.js` sets `.8rem`) | ✅ **Closed 2026-09-20**, in the first session that could render an image — which is the whole point of the entry, not an aside. 52 nodes moved to `$text-sm` and 8 to `$text-lg`: the original 40, plus the 16 the error band inherited by being copied from band 1 before the fix. Order mattered and was followed — the Logs table's 25 fixed-width cells went first and alone, with `ctx.bounds` read before and after; no cell wrapped to a second line and both Logs artboards kept their exact height. `ctx.problems` is empty across every artboard in the file. The 17 thirteens on the three Sign in artboards were deliberately left: that page sets `.8rem` and they were never wrong. What remains numeric in the flow is 10·11·12·18·20·24 plus the logo's 23 and those Sign in 13s. Was: ⏳ do it in a session that can screenshot, and check bounds on Logs first. |
 | **D46** ✅ 🐞 | System's Concurrency card reports a health read that never happened as data. When the gateway does not answer, it renders `0 / 0`, `0`, `0 / 0` and `none` — which is exactly what an idle, healthy gateway looks like — while the sidebar a few inches to its left says `UNREACHABLE`. Two elements on one screen answer the same question differently, and the more prominent one is wrong. | [`system.html:148`](../src/admin/views/pages/system.html#L148) reads `(health?.queue?.active ?? 0) + ' / ' + (health?.queue?.max_concurrent ?? 0)` with no guard. Overview asks the same store for the same four figures and guards every one with `healthRead === 'ok' ? … : '—'` ([`overview.html:152`](../src/admin/views/pages/overview.html#L152)). `healthRead` lives on the root component ([`app.js:207`](../src/admin/public/js/app.js#L207)) and reaches System through the same scope inheritance Overview uses, so the guard is available and simply not applied. The sidebar already branches on it ([`index.html:123`](../src/admin/views/index.html#L123)) | ✅ **Fixed 2026-09-20**, the same day the drawing opened it, and like D17 it was fixed without ever being filed. Running, Waiting and Streams now guard on `healthRead === 'ok'` and render the em dash Overview always used. **Open circuits guards on `providersLoaded && !providersError` instead**, and that correction came out of the fix rather than out of this entry: `openCircuits` filters `this.providers` ([`system.js:31`](../src/admin/public/js/system.js#L31)), not `health`, so guarding it on the health read would have lied in the opposite direction and hidden a genuinely open circuit while the providers read was fine. Four tests pin it in [`system-states.test.js`](../../test/admin/system-states.test.js); the load-bearing one pulls each figure's real `x-text` out of the composed markup and asserts that a never-answered read and a genuine zero cannot render alike — no sentinel colliding with a real zero can satisfy it, and a fifth unguarded figure fails it. `Admin / System / Unreachable` was re-drawn to the fix, which is the point of having drawn the defect at all. Was: ⏳ found by **drawing** the state, not by reading the file — the canvas put the card and the sidebar side by side and the contradiction was the picture. This is D15's shape a third time: Overview got the fix, System kept the defect. |
-| **D48** ✅ | Should the degraded banner animate in or out, and does that finally give `--ease-exit` a user? [MOTION-AUDIT.md](MOTION-AUDIT.md) predicted it would: *"exit lands with the error band — the first thing that will actually need it"*. Drawing the band is what made the question askable. | Measured in Chromium at 1440×900 against the running admin, 2026-09-20. The band is 48px + 24px margin = **72px of displacement**, inserted in one frame. Mid-page, `overflow-anchor` absorbs it completely — `scrollY` 500→572 with the tracked element unmoved at 390. At `scrollY` 0 it is one discrete 72px jump, and **every navigation lands there**, because `show()` calls `window.scrollTo(0, 0)` ([`app.js:224`](../src/admin/public/js/app.js#L224)) | ❌ **Rejected, both directions.** A prototyped 200ms height entrance was watched at `scrollY` 0: **three different table rows pass under one fixed screen point during the run** — motion may not move a target the operator is aiming at, and this is the surface whose job is reading numbers. The cheaper forms do not survive either: opacity or transform alone leaves the 72px reflow instant, so nothing is prevented and only decoration is left. Exit fails earlier, on purpose rather than on function: it would hold *"Nothing below is being updated"* on screen for 150–200ms **after it stopped being true**, which on this product is a small lie with a curve on it. Two independent secondary kills: the band is already present at first render when the page cold-loads with the gateway down, so an entrance would ramp a state that predates the page — D21's exact defect; and a measured 151ms on/off flash (two 30s pollers feeding a last-write-wins `reportRead`) becomes a visible stutter instead of a blink. **Cost of rejecting: nothing measurable.** `--ease-exit` stays undeclared, and the audit's prediction is corrected in place rather than deleted — the band is removed from flow, which is a reflow, not a departure. **Left open deliberately, and it is a layout question, not a motion one:** the 72px snap at `scrollY` 0 is a genuine defect. Reserve the slot, take the band out of flow the way the sidebar health readout already is, or accept it as one frame once per incident. Flagged for a `ui-review` pass, not decided here. |
+| **D48** ✅ | Should the degraded banner animate in or out, and does that finally give `--ease-exit` a user? the motion audit predicted it would: *"exit lands with the error band — the first thing that will actually need it"*. Drawing the band is what made the question askable. | Measured in Chromium at 1440×900 against the running admin, 2026-09-20. The band is 48px + 24px margin = **72px of displacement**, inserted in one frame. Mid-page, `overflow-anchor` absorbs it completely — `scrollY` 500→572 with the tracked element unmoved at 390. At `scrollY` 0 it is one discrete 72px jump, and **every navigation lands there**, because `show()` calls `window.scrollTo(0, 0)` ([`app.js:224`](../src/admin/public/js/app.js#L224)) | ❌ **Rejected, both directions.** A prototyped 200ms height entrance was watched at `scrollY` 0: **three different table rows pass under one fixed screen point during the run** — motion may not move a target the operator is aiming at, and this is the surface whose job is reading numbers. The cheaper forms do not survive either: opacity or transform alone leaves the 72px reflow instant, so nothing is prevented and only decoration is left. Exit fails earlier, on purpose rather than on function: it would hold *"Nothing below is being updated"* on screen for 150–200ms **after it stopped being true**, which on this product is a small lie with a curve on it. Two independent secondary kills: the band is already present at first render when the page cold-loads with the gateway down, so an entrance would ramp a state that predates the page — D21's exact defect; and a measured 151ms on/off flash (two 30s pollers feeding a last-write-wins `reportRead`) becomes a visible stutter instead of a blink. **Cost of rejecting: nothing measurable.** `--ease-exit` stays undeclared, and the audit's prediction is corrected in place rather than deleted — the band is removed from flow, which is a reflow, not a departure. **Left open deliberately, and it is a layout question, not a motion one:** the 72px snap at `scrollY` 0 is a genuine defect. Reserve the slot, take the band out of flow the way the sidebar health readout already is, or accept it as one frame once per incident. Flagged for a `ui-review` pass, not decided here. |
 
 ## Real app bugs — logged here until filed on the board
 
@@ -70,3 +69,92 @@ that doc tracks landing them.
 
 - A light theme. The code ships one dark palette; the kit does not invent another.
 - A mobile layout for the dashboard. It is an operator tool used from a desktop browser.
+
+---
+
+## Retired audits — the finding ledger
+
+Three audit documents produced 46 numbered findings between 2026-09-19 and 2026-09-21 and were
+**deleted on 2026-09-21** once every one of them had landed, been carded, or been ruled out. This
+table replaces them: it is the record a later pass reads so it does not re-find what was already
+decided.
+
+**What was deliberately not kept:** the evidence prose — the quoted markup, the measured pixel
+positions, the before/after counts. That material is *how* each finding was established, and it is
+recoverable from git history (`design/DESIGN-AUDIT.md`, `design/MOTION-AUDIT.md`,
+`design/LANDING-AUDIT.md` before their deletion commit). What survives here is the outcome, which
+is what the next decision needs.
+
+### Design audit — first pass
+
+| # | Tag | Finding | Outcome |
+|---|---|---|---|
+| D2 | drift | Four status palettes, zero tokens | Landed |
+| D3 | vice | The Logs page is a different design system | Landed |
+| D4 | drift | 103 mono elements, no mono typeface | Landed — the stand-in is recorded as D18 above |
+| D5 | vice | "By Model" conflates free with not-priced | Landed |
+| D6 | drift | "Live Feed" on a table that never refreshes | Landed |
+| D7 | vice | The front door shares nothing with the dashboard | Landed |
+| D8 | slop | Landing-page headers on an operator tool | Landed |
+
+### Design audit — second pass
+
+| # | Tag | Finding | Outcome |
+|---|---|---|---|
+| D9 | gap | Down, empty and idle render identically | Landed |
+| D10 | gap | A PWA with no offline state | Landed |
+| D11 | gap | The hung request has no home | **Open** — on the project board |
+| D12 | gap | Auto-refreshing data with no "as of" | Landed — the stamp's prominence became D38 |
+| D13 | gap | The Errors table is last | Landed |
+| D14 | lift | The product wrote one verdict and stopped | Resolved 2026-09-20 — see the note above |
+
+### Design audit — third pass, with the exports in hand
+
+| # | Tag | Finding | Outcome |
+|---|---|---|---|
+| D30 | vice | One label treatment, five jobs | Landed |
+| D31 | vice | Errors leads on `length > 0` | Landed |
+| D32 | vice | The Logs summary band never joined the system | **Open** — carded 2026-09-21 |
+| D33 | drift | The kit export is three versions at once | **Open** — on the project board |
+| D34 | drift | The Playground artboard draws a card the CSS stretches | **Open** — carded 2026-09-21 |
+| D35 | vice | Fifteen type sizes, three spellings of one step | Landed — kit 0.3.0 |
+| D36 | drift | `Last 7d` over eighteen hours of data | **Open** — on the project board |
+| D37 | gap | The fold is not drawn | **Open** — on the project board |
+| D38 | gap | The freshness stamp is the least visible thing on the page | **Open** — carded 2026-09-21. Its premise changed: `text-outline/60` emitted no CSS until the alpha-modifier fix |
+| D39 | gap | No spacing scale in the kit | Landed — kit 0.3.0 |
+| D40 | gap | Logs buries the aggregate the Overview promotes | **Open, half landed** — carded 2026-09-21. The stats band moved above the table; the `% ok` vs `% error` polarity did not |
+| D41 | lift | The page's headline number never gets a verdict | **Open** — on the project board |
+| D42 | lift | The card is not a component | Recorded above |
+
+### Motion audit
+
+| # | Finding | Outcome |
+|---|---|---|
+| D21 | The queue saturation bar animates a measurement | Landed |
+| D22 | The drawer and its backdrop disagree on the way out | Out of scope — the mobile drawer, ruled out below |
+| D23 | Everything opens on `ease-in-out` | Landed |
+| D24 | The toggle is on a curve nothing else uses | Landed |
+| D25 | `prefers-reduced-motion` is ignored | Landed |
+| D26 | 35 hover targets, zero press states | Landed |
+| D27 | The Logs spinner runs on a hidden page | Landed |
+| D28 | 🐞 mobile drawer | Out of scope — ruled out below |
+| D29 | 🐞 | Landed |
+
+### Landing page audit
+
+| # | Finding | Outcome |
+|---|---|---|
+| D50 | The landing page is the README with a stylesheet on it | Landed |
+| D51 | 573 words of prose against one image | Landed — 299 words, five screenshots |
+| D52 | Everything below the fold is motionless | Landed |
+| D53 | The second thing a visitor reads is four things the product is not | Landed |
+| D54 | The page has no scannable structure | Landed |
+| D55 | No navigation | Landed |
+| D56 | Eighteen of nineteen exports are unused, and the build knows one | Landed |
+| D57 | The exports cannot be shipped as they are | Landed — crops in `assets/site/`, cut from the exports |
+| D58 | The one screenshot that ships leads with a 15.4% error rate | Landed 2026-09-21. **The finding was wrong about the artefact**: the export is this flow's Pencil export, not a screenshot, so the fix was to redraw the artboard's dataset. Two code defects had to land first — alpha-modified colours emitted no CSS, and the expanded detail row rendered after the whole table |
+| D59 | `design/README.md` says this surface does not exist | Landed |
+| D60 | The API reference's logo fills the sidebar and lands on the home link | Landed in two parts — geometry, then the duplicate mark it left behind |
+
+**Next free number: D61.** D15–D20 and D43–D49 are this file's own and are above; D50–D60 are
+spent by the landing audit.

@@ -11,7 +11,7 @@
 > SheLLM works — driving official CLIs safely and answering like the real provider APIs. IDs are
 > permanent from this version on; a retired seat keeps its ID and says where its lens went.
 >
-> **S8 `noa` added 2026-09-20**, when [`design/LANDING-AUDIT.md`](../design/LANDING-AUDIT.md)
+> **S8 `noa` added 2026-09-20**, when the landing page audit
 > needed a lens no seat held: C8 `priya` judges whether a stranger can succeed, and nobody judged
 > whether a stranger stops.
 
