@@ -118,14 +118,17 @@
                   <th class="px-6 py-4 text-left text-[11px] font-headline font-bold uppercase tracking-[0.08em] text-outline">Cost</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-outline-variant/20">
+              <tbody>
                 <tr x-show="logs.length === 0">
                   <td colspan="9" class="px-6 py-10 text-center font-mono text-sm"
                     :class="loadError && !loading ? 'text-error' : 'text-outline'"
                     x-text="loading ? 'Loading...' : (loadError ? 'Could not read the logs — ' + loadError : 'No logs found')"></td>
                 </tr>
-                <template x-for="log in logs" :key="log.id">
-                  <tr @click="toggleRow(log.id)" class="hover:bg-surface-container-high transition-colors duration-fast cursor-pointer">
+              </tbody>
+              <!-- One tbody per row: x-for takes a single root element, and a row plus its detail are two. -->
+              <template x-for="log in logs" :key="log.id">
+                <tbody>
+                  <tr @click="toggleRow(log.id)" class="border-t border-outline-variant/20 hover:bg-surface-container-high transition-colors duration-fast cursor-pointer">
                     <td class="px-6 py-4 text-on-surface font-mono text-sm whitespace-nowrap" x-text="formatTime(log.created_at)"></td>
                     <td class="px-6 py-4">
                       <span class="px-2 py-0.5 text-[10px] font-bold font-mono"
@@ -148,9 +151,7 @@
                       :class="log.cost_usd > 0 ? 'text-primary-container' : 'text-outline'"
                       x-text="formatCost(log.cost_usd)"></td>
                   </tr>
-                </template>
-                <template x-for="log in logs" :key="'detail-' + log.id">
-                  <tr x-show="expandedId === log.id" class="bg-surface-container-lowest">
+                  <tr x-show="expandedId === log.id" class="border-t border-outline-variant/20 bg-surface-container-lowest">
                     <td colspan="9" class="px-6 py-4">
                       <dl class="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] font-mono">
                         <div>
@@ -192,8 +193,8 @@
                       </dl>
                     </td>
                   </tr>
-                </template>
-              </tbody>
+                </tbody>
+              </template>
             </table>
           </div>
 

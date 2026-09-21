@@ -77,3 +77,28 @@ describe('the logs panels do not name a period they do not measure', () => {
     assert.strictEqual(matches.length, 2, 'both panels state the window they measured');
   });
 });
+
+describe('an expanded log detail sits under the row it belongs to', () => {
+  let page;
+
+  before(() => { page = logsPage(compose()); });
+
+  // Two loops over the same array rendered every detail row below the whole table: the third
+  // row sat at y=502 and its detail at y=2181, past the other twenty-four.
+  it('renders the row and its detail in one pass over the logs', () => {
+    const loops = page.match(/x-for="log in logs"/g) || [];
+    assert.strictEqual(loops.length, 1, 'a second pass over the same array puts its rows after the first');
+    assert.ok(!page.includes("'detail-' + log.id"), 'the detail rows had their own keyed loop');
+
+    const loop = slice(page, '<template x-for="log in logs"', '</template>');
+    assert.ok(loop.includes('@click="toggleRow(log.id)"'), 'the data row is inside the loop');
+    assert.ok(loop.includes('x-show="expandedId === log.id"'), 'and so is the detail it expands to');
+  });
+
+  it('gives each row its own tbody, the single root x-for allows', () => {
+    const loop = slice(page, '<template x-for="log in logs"', '</template>');
+    assert.match(loop.trim(), /^<template[^>]*>\s*<tbody>/, 'two <tr> need a row group to be one root');
+    assert.strictEqual((loop.match(/<tbody>/g) || []).length, 1, 'one root, not a row group per <tr>');
+    assert.match(loop.trim(), /<\/tbody>\s*$/, 'the group closes inside the loop');
+  });
+});
