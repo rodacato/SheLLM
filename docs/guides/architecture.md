@@ -155,6 +155,14 @@ Every provider implements this interface:
 }
 ```
 
+`usage` is Anthropic-shaped for every provider, because one logging path serves them all:
+`input_tokens` is the **fresh** input only, with `cache_read_input_tokens` and
+`cache_creation_input_tokens` beside it rather than inside it, and `output_tokens` already
+including any reasoning tokens. A CLI that reports its counters another way converts in its own
+`usageFrom` — codex breaks its cache counters out of a total `input_tokens`, so it subtracts them.
+A counter the CLI did not report is **omitted**, which the log stores as NULL; a reported zero is
+stored as `0`.
+
 **Adding a new subprocess provider:**
 
 1. Create `src/providers/<name>.js` implementing the interface above
