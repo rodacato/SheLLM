@@ -64,6 +64,7 @@ module.exports = [
         URLSearchParams: 'readonly',
         EventSource: 'readonly',
         sessionStorage: 'readonly',
+        localStorage: 'readonly',
         performance: 'readonly',
         getComputedStyle: 'readonly',
         // Shared app globals (loaded via separate <script> tags)
@@ -82,6 +83,9 @@ module.exports = [
         statusBadgeClass: 'readonly',
         copyToClipboard: 'readonly',
         poller: 'readonly',
+        REFRESH_LADDER: 'readonly',
+        storedInterval: 'readonly',
+        storeInterval: 'readonly',
         Chart: 'readonly',
       },
     },

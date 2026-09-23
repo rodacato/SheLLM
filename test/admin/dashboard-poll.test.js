@@ -10,7 +10,7 @@ const JS_DIR = path.join(__dirname, '../../src/admin/public/js');
 
 // A hand-driven clock and a hand-driven visibility flag — the two boundaries the poller does not
 // own. Everything below them is the real factory, loaded the way the browser loads it.
-function browser() {
+function browser(localStorage) {
   let nextId = 1;
   const timers = new Map();
   const onVisibility = [];
@@ -30,11 +30,15 @@ function browser() {
     fetch: async () => ({ ok: true, status: 200, json: async () => ({}) }),
     location: { pathname: '/admin/dashboard', hash: '', replace() {} },
     window: { addEventListener() {} },
+    localStorage: localStorage || { getItem: () => null, setItem: () => {} },
   });
 
   vm.runInContext(fs.readFileSync(path.join(JS_DIR, 'app.js'), 'utf8'), context, { filename: 'app.js' });
 
   return {
+    read: (key, fallback) => vm.runInContext('storedInterval', context)(key, fallback),
+    write: (key, ms) => vm.runInContext('storeInterval', context)(key, ms),
+    ladder: () => vm.runInContext('REFRESH_LADDER', context),
     make() {
       const reads = { count: 0 };
       const poller = vm.runInContext('poller', context);
@@ -155,5 +159,46 @@ describe('every repeating read goes through the poller', () => {
       const expected = file === 'app.js' ? 1 : 0;
       assert.strictEqual(calls, expected, `${file} schedules a read outside poller()`);
     }
+  });
+});
+
+describe('the remembered interval', () => {
+  const KEY = 'shellm.refresh.overview';
+  const stored = (value) => ({ getItem: () => value, setItem: () => {} });
+
+  it('offers Off and four rungs, in ascending order', () => {
+    const ladder = browser().ladder();
+    assert.deepEqual(Array.from(ladder, (step) => step.label), ['Off', '10s', '30s', '1m', '5m']);
+    assert.deepEqual(Array.from(ladder, (step) => step.ms), [0, 10000, 30000, 60000, 300000]);
+  });
+
+  // Number(null) is 0 and 0 is a real rung, so a page that has never been configured would
+  // silently come up with auto-refresh switched off.
+  it('falls back when nothing was ever stored, rather than reading it as Off', () => {
+    assert.strictEqual(browser().read(KEY, 30000), 30000);
+  });
+
+  it('honours a stored Off', () => {
+    assert.strictEqual(browser(stored('0')).read(KEY, 30000), 0);
+  });
+
+  it('restores a value that is on the ladder', () => {
+    assert.strictEqual(browser(stored('10000')).read(KEY, 30000), 10000);
+  });
+
+  it('ignores a value that is not on the ladder', () => {
+    assert.strictEqual(browser(stored('7000')).read(KEY, 30000), 30000);
+    assert.strictEqual(browser(stored('every minute')).read(KEY, 30000), 30000);
+  });
+
+  // Private windows and blocked site data throw on access instead of answering.
+  it('survives storage that throws in either direction', () => {
+    const hostile = {
+      getItem() { throw new Error('denied'); },
+      setItem() { throw new Error('denied'); },
+    };
+    const page = browser(hostile);
+    assert.strictEqual(page.read(KEY, 30000), 30000);
+    assert.doesNotThrow(() => page.write(KEY, 10000));
   });
 });

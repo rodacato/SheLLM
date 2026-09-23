@@ -84,6 +84,29 @@ function poller(read) {
   };
 }
 
+const REFRESH_LADDER = [
+  { ms: 0, label: 'Off' },
+  { ms: 10000, label: '10s' },
+  { ms: 30000, label: '30s' },
+  { ms: 60000, label: '1m' },
+  { ms: 300000, label: '5m' },
+];
+
+// A private window, blocked site data or a thumbnail capture makes storage throw rather than
+// answer, and a remembered preference is never worth failing a page over. A missing key has to be
+// told apart from a stored zero, because zero is a real rung of the ladder.
+function storedInterval(key, fallback) {
+  let raw = null;
+  try { raw = localStorage.getItem(key); } catch { return fallback; }
+  if (raw === null) return fallback;
+  const ms = Number(raw);
+  return REFRESH_LADDER.some((step) => step.ms === ms) ? ms : fallback;
+}
+
+function storeInterval(key, ms) {
+  try { localStorage.setItem(key, String(ms)); } catch { /* the loop still runs unremembered */ }
+}
+
 // navigator.clipboard is absent on an insecure origin, which a self-hosted install reached over
 // plain http on a LAN address is — a caller has to be able to say so instead of appearing to work.
 async function copyToClipboard(text) {
