@@ -144,7 +144,7 @@ printed; scripts use HTTP Basic with the same `SHELLM_ADMIN_PASSWORD`. Over HTTP
 an app: its own window and icon, and a warm start. Not an offline dashboard — every number on it
 comes from the gateway ([ADR-0007](docs/adr/0007-installed-dashboard-is-a-launcher.md)).
 
-![Request logs — a filterable table of every request with its status, client, provider, model, duration, tokens and cost, one row expanded to show the request id and the upstream detail, and an error-rate sparkline below it](design/exports/admin-request-logs-default.png)
+![Request logs — a filterable table of every request with its status, client, provider, model, duration, tokens and cost, one row expanded to show the request id and the upstream detail, an error-rate sparkline below it, and a refresh control beside the filters set to re-read the table on a timer](design/exports/admin-request-logs-default.png)
 
 Every request is logged with what it cost and how long the CLI took, so "which app is burning the
 subscription" is a question with an answer. Nothing about the prompt is stored or inspected.
