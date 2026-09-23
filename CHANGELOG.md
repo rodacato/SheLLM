@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-09-23
+
+### Added
+
+- **admin:** say which command applies a settings change
+- **admin:** group the settings by section and move them last
+- **config:** declare every setting in one schema and generate .env.example
+
+### Fixed
+
+- **cli:** make init resolve values the way the server does
+- **config:** stop a fresh install being warned about settings nobody added
+
+### Documentation
+
+- say how configuration works and how to change it
+
+### Maintenance
+
+- pin Node once, in .nvmrc, and have CI read it
+
+### Testing
+
+- stop the settings cases depending on what the release added
+
+
 ## [1.10.0] - 2026-09-23
 
 ### Added
@@ -858,7 +884,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.10.0...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.11.0...HEAD
+[1.11.0]: https://github.com/rodacato/SheLLM/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/rodacato/SheLLM/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/rodacato/SheLLM/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/rodacato/SheLLM/compare/v1.7.0...v1.8.0
