@@ -80,6 +80,7 @@ module.exports = [
         formatDayHour: 'readonly',
         formatCompactNumber: 'readonly',
         statusBadgeClass: 'readonly',
+        copyToClipboard: 'readonly',
         Chart: 'readonly',
       },
     },

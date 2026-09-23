@@ -62,6 +62,18 @@ async function apiRead(url, options = {}) {
   return res.json();
 }
 
+// navigator.clipboard is absent on an insecure origin, which a self-hosted install reached over
+// plain http on a LAN address is — a caller has to be able to say so instead of appearing to work.
+async function copyToClipboard(text) {
+  if (!navigator.clipboard || !navigator.clipboard.writeText) return false;
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function formatUptime(seconds) {
   if (!seconds) return '';
   const d = Math.floor(seconds / 86400);
