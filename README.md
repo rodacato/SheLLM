@@ -305,9 +305,71 @@ shellm start [-d] [-p PORT]    Start the server (foreground or daemon)
 shellm stop | restart          Control the daemon
 shellm status                  Report whether the server answers
 shellm logs [-f] [-n N]        View daemon logs
+shellm config [--new]          Show every setting and where its value came from
 shellm backup [--dir DIR]      Snapshot the database and config file into one directory
 shellm update | version        Update the install, print the version
 ```
+
+## Configuration
+
+Settings live in `~/.config/shellm/env`, written by `shellm init` with mode 600 and read at
+startup. Anything not set there falls back to a default declared in
+[`src/config/schema.js`](src/config/schema.js) — the single place a default exists.
+[`.env.example`](.env.example) is the full reference list and is **generated** from that schema by
+`npm run config:build`, so edit the schema and never the generated file.
+
+`shellm config` prints what is actually in effect and where each value came from:
+
+```
+SETTING              VALUE                     SOURCE         SINCE    RELOAD
+MAX_CONCURRENT       4                         default        v0.1.0   live
+SHELLM_CORS_ORIGINS  https://you.github.io     config file    v1.10.0  live
+LOG_LEVEL            debug                     environment    v0.1.0   restart
+```
+
+`SOURCE` is `default`, `config file` or `environment`, and a value in the real environment wins
+over the file.
+
+`RELOAD` says whether the code re-reads the value while running (`live`) or froze it at startup
+(`restart`). **Editing the config file needs a restart either way** — the file is loaded into the
+environment once, when the process starts. The distinction is there for changing a value in place,
+which nothing does yet, and it is why `PORT` can never be one of them: the socket is already bound.
+
+### Changing a setting
+
+Locally, append it and restart:
+
+```bash
+echo 'MAX_CONCURRENT=8' >> ~/.config/shellm/env
+shellm restart
+```
+
+On a server the file belongs to the service user, and systemd owns the restart:
+
+```bash
+sudo -iu shellmer bash -c "echo 'SHELLM_CORS_ORIGINS=https://you.github.io' >> ~/.config/shellm/env"
+sudo systemctl restart shellm
+```
+
+Look for an existing line before appending — a key written twice is ambiguous:
+
+```bash
+sudo -iu shellmer grep -nE '^#? *SHELLM_CORS_ORIGINS=' ~/.config/shellm/env
+```
+
+### After an update
+
+A release can add a setting, and a config file written before it will not mention it. `shellm
+doctor` says so, and the dashboard's System page shows the same list:
+
+```
+! Settings: 1 available and unset: SHELLM_CORS_ORIGINS
+      fix: shellm config --new
+```
+
+`shellm config --new` prints each one with what it does and a line ready to paste. Re-running
+`shellm init` will not add them — it only writes the handful of keys it knows about, and never
+touches a key you already have.
 
 ## How it works
 
@@ -325,8 +387,8 @@ graph LR
 Each request spawns a CLI process in its own temporary directory and discards it, so nothing leaks
 between requests — about 0.9 s of process startup, inside a floor of roughly 2.5 s for the whole
 short answer, measured on a production server in
-[`docs/guides/benchmarks.md`](docs/guides/benchmarks.md). Configuration lives in
-`~/.config/shellm/env`; SQLite holds keys, request logs and the audit trail. [`docs/guides/architecture.md`](docs/guides/architecture.md) has the module
+[`docs/guides/benchmarks.md`](docs/guides/benchmarks.md). SQLite holds keys, request logs and the
+audit trail. [`docs/guides/architecture.md`](docs/guides/architecture.md) has the module
 map and [`docs/adr/`](docs/adr/) the decisions.
 
 ## Contributing

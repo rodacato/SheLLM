@@ -44,7 +44,10 @@ keeps the old values; **Dev Containers: Rebuild Container** picks up new ones.
    Doing this after the container exists works too, followed by a rebuild.
 3. Open the folder in VS Code and run **Dev Containers: Reopen in Container**. `post-create.sh`
    fixes volume ownership, runs `npm install`, installs the Codex CLI when missing,
-   and creates `~/.config/shellm/env` from `.env.example` on first creation.
+   and creates `~/.config/shellm/env` from `.env.example` on first creation. That copy has every
+   secret commented out, so `shellm init` is still what makes `/admin/*` answer. `.env.example` is
+   generated from `src/config/schema.js`; to change a setting, edit your own
+   `~/.config/shellm/env` and restart, and run `shellm config` to see what is in effect.
 4. Check, in a container terminal:
    ```bash
    gh auth status          # "Logged in … (GH_TOKEN)" when the host was logged in

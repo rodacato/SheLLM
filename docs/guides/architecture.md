@@ -44,6 +44,10 @@ src/
 │   ├── messages.js        # POST /v1/messages (Anthropic format)
 │   └── models.js          # GET /v1/models
 │
+├── config/                # The configuration surface (ADR-0008)
+│   ├── schema.js          # Every setting: default, since, reload, describe — the only defaults
+│   └── index.js           # get/sourceOf/isInConfigFile; .env.example is generated from the schema
+│
 ├── middleware/            # Express middleware
 │   ├── auth.js            # Bearer token auth + per-client/global rate limiting + per-key origins
 │   ├── admin-auth.js      # Admin authentication: session cookie for browsers, Basic for scripts
