@@ -7,6 +7,7 @@ const { requestLogger } = require('./middleware/logging');
 const { requestId } = require('./middleware/request-id');
 const { createAuthMiddleware } = require('./middleware/auth');
 const { corsV1 } = require('./middleware/cors');
+const config = require('./config');
 const { createAdminAuth } = require('./middleware/admin-auth');
 const adminLoginRouter = require('./admin/login');
 const adminKeysRouter = require('./admin/keys');
@@ -14,6 +15,7 @@ const adminLogsRouter = require('./admin/logs');
 const adminStatsRouter = require('./admin/stats');
 const adminProvidersRouter = require('./admin/providers');
 const adminUpdateRouter = require('./admin/update');
+const adminConfigRouter = require('./admin/config');
 const { dashboardHtml } = require('./admin/views');
 const { wantsHtml } = require('./middleware/admin-session');
 const { sendApiError, invalidRequest, notFound } = require('./errors');
@@ -24,9 +26,9 @@ app.disable('x-powered-by');
 
 // Off by default: with no proxy in front, an X-Forwarded-For header is whatever the caller wrote,
 // and the admin login lockout counts per IP. Set it only when something really does sit in front.
-if (process.env.SHELLM_TRUST_PROXY) {
-  const value = process.env.SHELLM_TRUST_PROXY;
-  app.set('trust proxy', /^\d+$/.test(value) ? parseInt(value, 10) : value);
+const trustProxy = config.get('SHELLM_TRUST_PROXY');
+if (trustProxy) {
+  app.set('trust proxy', /^\d+$/.test(trustProxy) ? parseInt(trustProxy, 10) : trustProxy);
 }
 
 const auth = createAuthMiddleware();
@@ -115,6 +117,7 @@ app.use('/admin', adminAuth, adminLogsRouter);
 app.use('/admin', adminAuth, adminStatsRouter);
 app.use('/admin', adminAuth, adminProvidersRouter);
 app.use('/admin', adminAuth, adminUpdateRouter);
+app.use('/admin', adminAuth, adminConfigRouter);
 
 // Admin health endpoint (detailed, for dashboard)
 app.get('/admin/health', adminAuth, async (req, res) => {

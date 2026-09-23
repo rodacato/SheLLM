@@ -1,4 +1,6 @@
-const MAX_STREAM_CONCURRENT = parseInt(process.env.MAX_STREAM_CONCURRENT || '4', 10);
+const config = require('../config');
+
+const MAX_STREAM_CONCURRENT = config.get('MAX_STREAM_CONCURRENT');
 
 let _activeStreams = 0;
 

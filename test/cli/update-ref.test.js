@@ -30,6 +30,7 @@ function buildCheckout() {
   fs.mkdirSync(path.join(app, 'src'), { recursive: true });
   fs.copyFileSync(path.join(SOURCE_ROOT, 'src/cli.js'), path.join(app, 'src/cli.js'));
   fs.cpSync(path.join(SOURCE_ROOT, 'src/cli'), path.join(app, 'src/cli'), { recursive: true });
+  fs.cpSync(path.join(SOURCE_ROOT, 'src/config'), path.join(app, 'src/config'), { recursive: true });
 
   git(app, 'add', '-A');
   git(app, 'commit', '-m', 'initial');

@@ -1,7 +1,8 @@
 const logger = require('../lib/logger');
+const config = require('../config');
 
-const THRESHOLD = parseInt(process.env.CIRCUIT_BREAKER_THRESHOLD || '3', 10);
-const RESET_MS = parseInt(process.env.CIRCUIT_BREAKER_RESET_MS || '60000', 10);
+const THRESHOLD = config.get('CIRCUIT_BREAKER_THRESHOLD');
+const RESET_MS = config.get('CIRCUIT_BREAKER_RESET_MS');
 
 // Per-provider state: { state, failures, lastFailureAt, lastTransitionAt, probing }
 const circuits = {};

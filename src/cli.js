@@ -11,6 +11,7 @@ const commands = {
   logs: './cli/logs',
   update: './cli/update',
   backup: './cli/backup',
+  config: './cli/config',
   version: './cli/version',
   help: './cli/help',
 };

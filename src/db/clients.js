@@ -1,6 +1,7 @@
 'use strict';
 
 const { createHash, createHmac, randomBytes } = require('node:crypto');
+const config = require('../config');
 
 const KEY_PREFIX_LEN = 8;
 let _hmacSecret = null;
@@ -18,8 +19,9 @@ function hashKey(rawKey, secret) {
 
 function getHmacSecret() {
   if (_hmacSecret) return _hmacSecret;
-  if (process.env.SHELLM_HMAC_SECRET) {
-    _hmacSecret = process.env.SHELLM_HMAC_SECRET;
+  const configured = config.get('SHELLM_HMAC_SECRET');
+  if (configured) {
+    _hmacSecret = configured;
     return _hmacSecret;
   }
   const { getDb } = require('./index');

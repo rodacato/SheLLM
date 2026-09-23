@@ -1,0 +1,39 @@
+type: object
+description: |
+  One configuration setting as src/config/schema.js declares it, with the value currently in
+  effect. A secret's value is always the literal mask and never the real one.
+properties:
+  name:
+    type: string
+    example: SHELLM_CORS_ORIGINS
+  value:
+    description: The value in effect, coerced to the declared type. `null` when nothing sets it.
+    oneOf:
+      - type: string
+      - type: integer
+      - type: boolean
+      - type: array
+        items: { type: string }
+      - type: 'null'
+  source:
+    type: string
+    description: Where the value came from, after PostgreSQL's pg_settings.
+    enum: [default, config file, environment]
+  since:
+    type: string
+    description: The release whose code first read this setting.
+    example: v1.10.0
+  reload:
+    type: string
+    description: |
+      Whether the code re-reads the value while running (`live`) or froze it at startup
+      (`restart`). Editing the config file needs a restart either way — it is read once, at boot.
+    enum: [live, restart]
+  describe:
+    type: string
+  example:
+    type: [string, 'null']
+    description: What to write after the equals sign when the default is empty. Null for a secret.
+  secret:
+    type: boolean
+    description: When true, `value` is a mask and the real value never leaves the process.

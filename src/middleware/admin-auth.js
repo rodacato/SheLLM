@@ -4,9 +4,10 @@ const { timingSafeEqual } = require('node:crypto');
 const { sendError, rateLimited } = require('../errors');
 const { verify, readCookie, isCrossSiteWrite, wantsHtml, isBrowserRequest } = require('./admin-session');
 const logger = require('../lib/logger');
+const config = require('../config');
 
 function getAdminMaxAttempts() {
-  return parseInt(process.env.SHELLM_ADMIN_MAX_ATTEMPTS || '5', 10);
+  return config.get('SHELLM_ADMIN_MAX_ATTEMPTS');
 }
 const ADMIN_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -69,7 +70,7 @@ let credentials = { password: undefined, expectedUser: null };
 function loadCredentials() {
   credentials = {
     password: process.env.SHELLM_ADMIN_PASSWORD,
-    expectedUser: process.env.SHELLM_ADMIN_USER || null,
+    expectedUser: config.get('SHELLM_ADMIN_USER'),
   };
   delete process.env.SHELLM_ADMIN_PASSWORD;
   return credentials;
@@ -107,7 +108,7 @@ function createAdminAuth() {
       logger.warn({ event: 'admin_password_weak', message: msg });
     }
     // F-04: Refuse to start with weak password in production
-    if (process.env.NODE_ENV === 'production' && warnings.length > 0) {
+    if (config.get('NODE_ENV') === 'production' && warnings.length > 0) {
       throw new Error(`Refusing to start: admin password is too weak. ${warnings.join('; ')}`);
     }
   }

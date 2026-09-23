@@ -3,6 +3,8 @@
 const { execFile } = require('node:child_process');
 const fs = require('node:fs');
 const { CONFIG_FILE } = require('./paths');
+const config = require('../config');
+const { unseen } = require('./config');
 
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);
 const CLAUDE_INSTALL = 'curl -fsSL https://claude.ai/install.sh | bash';
@@ -33,7 +35,7 @@ function checkConfig() {
 }
 
 function checkHost() {
-  const host = process.env.HOST || '127.0.0.1';
+  const host = config.get('HOST');
   if (LOOPBACK_HOSTS.has(host)) return pass('Bind address', host);
   return warn('Bind address', `HOST=${host} exposes SheLLM beyond this machine`, `set HOST=127.0.0.1 in ${CONFIG_FILE}`);
 }
@@ -46,7 +48,8 @@ async function checkClaude() {
   }
 
   const env = { PATH: process.env.PATH, HOME: process.env.HOME };
-  if (process.env.CLAUDE_CODE_OAUTH_TOKEN) env.CLAUDE_CODE_OAUTH_TOKEN = process.env.CLAUDE_CODE_OAUTH_TOKEN;
+  const token = config.get('CLAUDE_CODE_OAUTH_TOKEN');
+  if (token) env.CLAUDE_CODE_OAUTH_TOKEN = token;
   const status = await exec('claude', ['auth', 'status', '--json'], env);
   let auth = {};
   try { auth = JSON.parse(status.stdout); } catch { /* reported below */ }
@@ -80,6 +83,14 @@ async function checkLive() {
   }
 }
 
+// Settings a release introduced that this config has never been shown. The operator learns about
+// a new knob here rather than from a failure weeks later; `shellm config --new` prints them.
+function checkNewSettings() {
+  const names = unseen();
+  if (names.length === 0) return pass('Settings', 'nothing new since this release');
+  return warn('Settings', `${names.length} available and unset: ${names.join(', ')}`, 'shellm config --new');
+}
+
 const SYMBOLS = { pass: '✓', warn: '!', fail: '✗' };
 
 function report(results) {
@@ -91,7 +102,7 @@ function report(results) {
 
 async function diagnose({ live = false } = {}) {
   require('dotenv').config({ path: CONFIG_FILE, quiet: true });
-  const results = [checkNode(), checkConfig(), checkHost(), ...(await checkClaude()), checkApiKeys()];
+  const results = [checkNode(), checkConfig(), checkHost(), ...(await checkClaude()), checkApiKeys(), checkNewSettings()];
   if (live) results.push(await checkLive());
   return results;
 }

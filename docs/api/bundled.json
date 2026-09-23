@@ -969,6 +969,61 @@
         }
       }
     },
+    "/admin/config": {
+      "get": {
+        "operationId": "getConfig",
+        "tags": [
+          "Config"
+        ],
+        "summary": "Every setting, the value in effect, and where it came from",
+        "description": "The same view `shellm config` prints. `unseen` is the bounded list the dashboard leads with:\nsettings absent from the operator's config file that were introduced by the running release or\na later one — what an update added and a config file written before it will never mention.\n\nSecrets are masked before they leave the process.\n",
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The configuration surface",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "running": {
+                      "type": "string",
+                      "example": "v1.10.0"
+                    },
+                    "config_file": {
+                      "type": "string",
+                      "example": "/home/shellmer/.config/shellm/env"
+                    },
+                    "settings": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ConfigSetting"
+                      }
+                    },
+                    "unseen": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [
+                        "SHELLM_CORS_ORIGINS"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
     "/admin/update": {
       "get": {
         "operationId": "getUpdateStatus",
@@ -2257,6 +2312,75 @@
               "null"
             ],
             "description": "Time to the first token. Streamed responses only; null otherwise."
+          }
+        }
+      },
+      "ConfigSetting": {
+        "type": "object",
+        "description": "One configuration setting as src/config/schema.js declares it, with the value currently in\neffect. A secret's value is always the literal mask and never the real one.\n",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "SHELLM_CORS_ORIGINS"
+          },
+          "value": {
+            "description": "The value in effect, coerced to the declared type. `null` when nothing sets it.",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "type": "string",
+            "description": "Where the value came from, after PostgreSQL's pg_settings.",
+            "enum": [
+              "default",
+              "config file",
+              "environment"
+            ]
+          },
+          "since": {
+            "type": "string",
+            "description": "The release whose code first read this setting.",
+            "example": "v1.10.0"
+          },
+          "reload": {
+            "type": "string",
+            "description": "Whether the code re-reads the value while running (`live`) or froze it at startup\n(`restart`). Editing the config file needs a restart either way — it is read once, at boot.\n",
+            "enum": [
+              "live",
+              "restart"
+            ]
+          },
+          "describe": {
+            "type": "string"
+          },
+          "example": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What to write after the equals sign when the default is empty. Null for a secret."
+          },
+          "secret": {
+            "type": "boolean",
+            "description": "When true, `value` is a mask and the real value never leaves the process."
           }
         }
       }

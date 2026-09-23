@@ -1,11 +1,12 @@
 const { rateLimited } = require('../errors');
 const logger = require('../lib/logger');
+const config = require('../config');
 
 function getMaxConcurrent() {
-  return parseInt(process.env.MAX_CONCURRENT || '4', 10);
+  return config.get('MAX_CONCURRENT');
 }
 function getMaxQueueDepth() {
-  return parseInt(process.env.MAX_QUEUE_DEPTH || '10', 10);
+  return config.get('MAX_QUEUE_DEPTH');
 }
 
 // A count says how many are running, never that one has been running nine minutes. These are CLI

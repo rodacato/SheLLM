@@ -1,11 +1,12 @@
 'use strict';
 
+const config = require('../config');
 
 const LEVELS = { debug: 0, info: 1, warn: 2, error: 3 };
-const startupLevel = LEVELS[process.env.LOG_LEVEL || 'info'] ?? LEVELS.info;
+const startupLevel = LEVELS[config.get('LOG_LEVEL')] ?? LEVELS.info;
 
 // Warn if debug logging is enabled in production (may expose sensitive data)
-if (process.env.NODE_ENV === 'production' && startupLevel === LEVELS.debug) {
+if (config.get('NODE_ENV') === 'production' && startupLevel === LEVELS.debug) {
   process.stderr.write(JSON.stringify({
     ts: new Date().toISOString(),
     level: 'warn',

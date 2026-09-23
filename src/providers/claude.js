@@ -1,5 +1,6 @@
 const { execute, executeStream, stripNonPrintable } = require('./base');
 const { modelNotFound } = require('../errors');
+const config = require('../config');
 
 const MODEL_ALIASES = { 'claude-haiku': 'haiku', 'claude-sonnet': 'sonnet', 'claude-opus': 'opus' };
 const models = ['claude', ...Object.keys(MODEL_ALIASES)];
@@ -18,7 +19,7 @@ function cliModel(model) {
 }
 
 function shouldSkipPermissions() {
-  return process.env.SHELLM_CLAUDE_SKIP_PERMISSIONS !== 'false';
+  return config.get('SHELLM_CLAUDE_SKIP_PERMISSIONS');
 }
 
 function systemPromptFor({ system, response_format }) {
@@ -141,7 +142,8 @@ const LOGIN_HELP = 'run `claude setup-token` on the host, or set CLAUDE_CODE_OAU
 const CLAUDE_ENV = {
   XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME,
   XDG_DATA_HOME: process.env.XDG_DATA_HOME,
-  CLAUDE_CODE_OAUTH_TOKEN: process.env.CLAUDE_CODE_OAUTH_TOKEN,
+  // An unset value has to stay undefined: spawn() renders a null as the literal string "null".
+  CLAUDE_CODE_OAUTH_TOKEN: config.get('CLAUDE_CODE_OAUTH_TOKEN') ?? undefined,
 };
 
 // `auth status` reads the stored credentials and prints JSON. It spends no quota, which is the

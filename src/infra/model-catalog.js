@@ -1,9 +1,10 @@
 'use strict';
 
 const { listCodexModels, listClaudeModels } = require('../providers/model-list');
+const config = require('../config');
 
 // Asking a CLI costs a spawn, and a model catalog changes on the order of weeks.
-const TTL_MS = parseInt(process.env.SHELLM_MODEL_CATALOG_TTL_MS || String(6 * 60 * 60 * 1000), 10);
+const TTL_MS = config.get('SHELLM_MODEL_CATALOG_TTL_MS');
 
 const LISTERS = { codex: listCodexModels, claude: listClaudeModels };
 

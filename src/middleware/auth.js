@@ -1,15 +1,15 @@
 const { sendApiError, authRequired, rateLimited, originNotAllowed } = require('../errors');
 const { findClientByKey, listClients } = require('../db');
 const logger = require('../lib/logger');
+const config = require('../config');
 
-// Dynamic: reads from DB > env > default (30)
 function getGlobalRpm() {
-  return parseInt(process.env.SHELLM_GLOBAL_RPM || '60', 10);
+  return config.get('SHELLM_GLOBAL_RPM');
 }
 const WINDOW_MS = 60_000;
-const REQUIRE_AUTH = process.env.SHELLM_REQUIRE_AUTH !== 'false';
+const REQUIRE_AUTH = config.get('SHELLM_REQUIRE_AUTH');
 function getAuthAlertThreshold() {
-  return parseInt(process.env.SHELLM_AUTH_ALERT_THRESHOLD || '10', 10);
+  return config.get('SHELLM_AUTH_ALERT_THRESHOLD');
 }
 
 // Track auth failures for alerting
@@ -61,7 +61,7 @@ function recordAuthFailure() {
 }
 
 function sendAuthAlert(count) {
-  const webhookUrl = process.env.SHELLM_ALERT_WEBHOOK_URL;
+  const webhookUrl = config.get('SHELLM_ALERT_WEBHOOK_URL');
   if (!webhookUrl) return;
   logger.warn({ event: 'auth_failure_spike', count });
   const payload = {
@@ -80,7 +80,7 @@ function sendAuthAlert(count) {
 
 function createAuthMiddleware() {
   // Startup warning: no keys in production
-  if (REQUIRE_AUTH && process.env.NODE_ENV === 'production') {
+  if (REQUIRE_AUTH && config.get('NODE_ENV') === 'production') {
     try {
       const clients = listClients();
       if (clients.length === 0) {

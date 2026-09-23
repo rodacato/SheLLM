@@ -5,8 +5,9 @@ const { acquireStreamSlot, releaseStreamSlot } = require('../infra/stream-slots'
 const { engines } = require('./engines');
 const { resolveProvider, selectProvider, getAvailableProviders } = require('./provider-select');
 const { routeWithFallback, listProviders } = require('./fallback');
+const config = require('../config');
 
-const FALLBACK_ENABLED = (process.env.SHELLM_FALLBACK_ENABLED || 'false') === 'true';
+const FALLBACK_ENABLED = config.get('SHELLM_FALLBACK_ENABLED');
 
 async function route({ model, prompt, system, max_tokens, temperature, top_p, response_format, request_id, allowFallback }) {
   const useFallback = allowFallback ?? FALLBACK_ENABLED;
