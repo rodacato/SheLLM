@@ -24,12 +24,20 @@ src/
 │   ├── queue.js           # RequestQueue — concurrency control (max_concurrent, max_queue_depth)
 │   ├── circuit-breaker.js # Per-provider circuit breaker (closed → open → half_open)
 │   ├── stream-slots.js    # Streaming concurrency slots (acquireStreamSlot/releaseStreamSlot)
-│   └── health.js          # Provider health checks, caching, background polling, alerts
+│   ├── health.js          # Provider health checks, caching, background polling, alerts
+│   ├── model-catalog.js   # Live model list from the CLIs, cached (ADR-0005)
+│   ├── build-info.js      # Version and commit the running process reports
+│   ├── provider-lock.js   # Serializes operations that must not overlap per provider
+│   └── updater.js         # `shellm update` orchestration behind /admin/update
+│
+├── catalog/               # Baked model catalog
+│   └── models.json        # Fallback list when the CLIs cannot be asked
 │
 ├── providers/             # LLM provider adapters
 │   ├── base.js            # Subprocess execution (spawn, timeout, output capture, env isolation)
 │   ├── claude.js          # Claude Code CLI adapter
 │   ├── codex.js           # Codex CLI adapter
+│   └── model-list.js      # Shared model enumeration across adapters
 │
 ├── api/v1/                # API endpoint handlers (versioned)
 │   ├── chat-completions.js # POST /v1/chat/completions (OpenAI format)
@@ -38,7 +46,8 @@ src/
 │
 ├── middleware/            # Express middleware
 │   ├── auth.js            # Bearer token auth + per-client/global rate limiting
-│   ├── admin-auth.js      # Basic auth for admin dashboard
+│   ├── admin-auth.js      # Admin authentication: session cookie for browsers, Basic for scripts
+│   ├── admin-session.js   # HMAC-signed session cookie, content negotiation (wantsHtml)
 │   ├── request-id.js      # Request ID generation/pass-through
 │   ├── logging.js         # Request/response logging to DB
 │   └── sanitize.js        # Input normalization
@@ -48,22 +57,27 @@ src/
 │   ├── clients.js         # Client CRUD + key hashing (HMAC-SHA256, legacy SHA-256)
 │   ├── request-logs.js    # Request log insertion and pruning
 │   ├── providers.js       # Provider CRUD and settings
+│   ├── stats.js           # Aggregate queries behind the dashboard
 │   ├── audit.js           # Admin audit log
 │   ├── migrate.js         # Migration runner (one statement at a time, one transaction per file)
-│   └── migrations/        # SQL migration files (001–013)
+│   └── migrations/        # SQL migration files (001–016)
 │
 ├── lib/                   # Shared utilities
 │   ├── logger.js          # Structured JSON logger (level-aware)
 │   ├── sse.js             # Server-Sent Events helpers (OpenAI format)
 │   ├── sse-anthropic.js   # Anthropic-specific SSE formatting
-│   └── log-emitter.js     # Event emitter for live log streaming
+│   └── time.js            # Window and duration helpers shared by stats and health
 │
 ├── admin/                 # Admin dashboard backend
 │   ├── keys.js            # API key management routes
 │   ├── logs.js            # Request log query routes
 │   ├── stats.js           # Analytics routes
 │   ├── providers.js       # Provider management routes
-│   └── public/            # Dashboard frontend (vanilla JS SPA)
+│   ├── login.js           # Sign-in page and session routes
+│   ├── update.js          # Update check and trigger routes
+│   ├── views.js           # Server-side page composition
+│   ├── views/             # Dashboard markup — the design system's fidelity target
+│   └── public/            # Dashboard frontend (Alpine.js, Tailwind and Chart.js from CDN)
 ```
 
 ---
@@ -123,7 +137,9 @@ HTTP Request
 
 The routing layer maps a model name to a provider engine and dispatches the request:
 
-1. **engines.js** — Maintains the `engines` registry object; every provider is a CLI subprocess registered at require-time.
+1. **index.js** — `route()`, the entry point: selects a provider, enqueues the call, dispatches it and records the outcome on the circuit breaker. Also the barrel the rest of the app imports from.
+
+2. **engines.js** — Maintains the `engines` registry object; every provider is a CLI subprocess registered at require-time.
 
 3. **provider-select.js** — `selectProvider(model)` resolves a model to an engine, then runs fail-fast checks: is the provider enabled? Is it authenticated (from cached health)? Is the circuit breaker allowing traffic?
 
@@ -131,7 +147,7 @@ The routing layer maps a model name to a provider engine and dispatches the requ
 
 ### infra/ — Reliability Primitives
 
-1. **queue.js** — `RequestQueue` limits concurrent CLI executions. Default: 2 concurrent, 10 queue depth. Returns 429 when full. Settings are hot-reloadable from DB.
+1. **queue.js** — `RequestQueue` limits concurrent CLI executions. Default: 4 concurrent, 10 queue depth. Returns 429 when full. Read from the environment on every call; migration 013 dropped the settings table, so there is nothing to hot-reload.
 
 2. **circuit-breaker.js** — Per-provider state machine: `closed → open → half_open → closed`. Opens after 3 consecutive failures (configurable). Resets after 60s timeout. Only allows one probe request in half_open state.
 
@@ -150,8 +166,9 @@ Every provider implements this interface:
     return { content, cost_usd, usage };
   },
   chatStream: async function* ({ ... }, { signal }) { ... },  // optional
-  validModels: ['model-a', 'model-b'],
-  capabilities: { supports_system_prompt, supports_json_output, ... },
+  models: ['model-a', 'model-b'],
+  authProbe: async () => ({ ok, reason }),
+  env: { /* the only variables the subprocess receives */ },
 }
 ```
 
@@ -237,7 +254,7 @@ db/
 - **SQLite, not Postgres** — Single-file database. No connection pool, no migration tooling. `better-sqlite3` is synchronous, which simplifies the code.
 - **No ORM** — Raw SQL in prepared statements. The schema is small enough that an ORM adds complexity without value.
 - **Subprocess providers** — CLI tools are invoked via `spawn()`, not SDK imports. This keeps auth isolated to the host (CLI subscriptions, not API keys).
-- **No TypeScript** — The codebase is ~3000 lines. TypeScript would add a build step for a project that fits in your head.
+- **No TypeScript** — The codebase is about 6,200 lines of server JavaScript (7,700 with the dashboard's browser assets). TypeScript would add a build step for a project that fits in your head.
 - **Debuggability > simplicity > elegance** — When in doubt, choose the option that's easiest to debug at 2 AM.
 - **The service does not deploy itself** — It reports what it is running and can request an
   update; a privileged component outside the process performs one, checking out a published tag.
