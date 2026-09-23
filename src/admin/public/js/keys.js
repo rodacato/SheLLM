@@ -2,6 +2,9 @@
 
 function keysPage() {
   return {
+    // Shut until asked: the same two lines arrive filled in when a key is created, so this card
+    // is the reference you return to rather than something to read on arrival.
+    connectionOpen: false,
     keys: [],
     loading: true,
     loadError: null,

@@ -49,7 +49,16 @@
         </div>
 
         <!-- How a key is used -->
-        <div class="bg-surface-container p-5 mb-6">
+        <!-- Shut by default: creating a key already hands you these same lines with the key
+             filled in, so this is the copy you come back to rather than one to read on arrival. -->
+        <button type="button" @click="connectionOpen = !connectionOpen"
+          class="flex items-center gap-3 w-full text-left mb-2 cursor-pointer">
+          <span class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Connection</span>
+          <span class="text-[11px] font-mono text-primary-container truncate" x-show="!connectionOpen" x-text="baseUrl"></span>
+          <span class="material-symbols-outlined text-[16px] text-outline ml-auto shrink-0"
+            x-text="connectionOpen ? 'expand_less' : 'expand_more'"></span>
+        </button>
+        <div class="bg-surface-container p-5 mb-6" x-show="connectionOpen" x-cloak>
           <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Base URL</p>
           <div class="flex items-stretch gap-2">
             <code class="flex-1 min-w-0 bg-surface-container-lowest border border-outline-variant/40 px-4 py-3 text-sm font-mono text-primary-container select-all break-all" x-text="baseUrl"></code>
