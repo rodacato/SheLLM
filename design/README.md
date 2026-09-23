@@ -28,7 +28,16 @@ as context for AI agents (`AGENTS.md` points them here).
 
 | File | Screens | Kit | Domain entry point |
 |---|---|---|---|
-| `admin.pen` | 16 of 16 — two bands. Band 1, happy path: Sign in, Overview, Request Logs, API Keys, Playground, System. Band 2, error and alternate paths: ten states, the tenth being API Keys / Key created | **0.3.0** | `/admin/login` and `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
+| `admin.pen` | 16 of 16 — two mirror bands plus one proposal band. Band 1, happy path: Sign in, Overview, Request Logs, API Keys, Playground, System. Band 2, error and alternate paths: ten states, the tenth being API Keys / Key created. Band 3 is **not a mirror** — see below | **0.3.0** | `/admin/login` and `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
+
+**Band 3 draws something that does not exist yet, and that is the one band you must not read as
+evidence.** Every other artboard in this folder mirrors shipped code; the auto-refresh band
+proposes a control before it is built, so that the shape could be argued over on a real screen
+instead of in the abstract. It is temporary: when the control ships, the Default artboards get
+re-drawn to what actually landed and the whole band is deleted. Its brief says so in its first
+line, and its kit pin reads `NOT a mirror` rather than a screen count. A proposal band is worth
+the confusion it risks only while it is clearly labelled and short-lived — if one is still here
+after the feature ships, that is a defect.
 
 `ui-kit.lib.pen` carries tokens as of **0.3.0** and no components yet: colour, family and radius, plus the type, icon and spacing scales 0.3.0 added. The sidebar and the page
 footer are now known to be shared — they are rebuilt per screen from one function in the flow, and
