@@ -7973,6 +7973,19 @@
         },
         {
           "type": "text",
+          "id": "n6dOj",
+          "name": "2026-09-23b",
+          "fill": "$on-surface-variant",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "2026-09-23 · The API Keys page never said what host to send a key to, so the code gained two things and the canvas one. In code: a Base URL in the page header, read from window.location.origin, and inside the new-key banner the two SDK exports with the key already in them — OPENAI_BASE_URL carries /v1 and ANTHROPIC_BASE_URL must not, which is the whole reason a snippet beats a sentence. On canvas only the header could be mirrored, on both Keys artboards, because the banner has no artboard at all; that is now written into band 2's states-not-drawn rather than left as a silent hole. The drawn URL is http://127.0.0.1:6100, the documented default, not a real deployment — the header sits above every published crop, but a hostname is data and the repo is public. ui-review moved two things before they shipped: the header line started as a paragraph stacked under the title, which is a second header pattern for a job Overview had already solved with space_between and an 11px mono outline on the right, and the block's eyebrow read 'Point a client at it' where every other eyebrow in this UI is a noun. It also found a dead branch nobody had noticed: both create and rotate return raw_key, so the banner inferred its verb from a value that is always present and said 'created' after every rotation. The verb is explicit now.",
+          "lineHeight": 1.6,
+          "fontFamily": "$font-mono-render",
+          "fontSize": 10,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
           "id": "C5Vrcz",
           "name": "2026-09-23",
           "fill": "$on-surface-variant",
@@ -8579,6 +8592,8 @@
                   "id": "u7htX",
                   "name": "Header",
                   "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -8605,6 +8620,35 @@
                           "fontFamily": "$font-headline",
                           "fontSize": 20,
                           "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "JYsRP",
+                      "name": "Base URL",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "E3wdGI",
+                          "name": "Label",
+                          "fill": "$outline",
+                          "content": "Base URL",
+                          "fontFamily": "$font-mono-render",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "aIhS0",
+                          "name": "Value",
+                          "fill": "$on-surface-variant",
+                          "content": "http://127.0.0.1:6100",
+                          "fontFamily": "$font-mono-render",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
                         }
                       ]
                     }
@@ -21449,6 +21493,8 @@
                   "id": "zr06k",
                   "name": "Header",
                   "width": "fill_container",
+                  "justifyContent": "space_between",
+                  "alignItems": "center",
                   "children": [
                     {
                       "type": "frame",
@@ -21475,6 +21521,35 @@
                           "fontFamily": "$font-headline",
                           "fontSize": 20,
                           "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "luS7p",
+                      "name": "Base URL",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "zEBlb",
+                          "name": "Label",
+                          "fill": "$outline",
+                          "content": "Base URL",
+                          "fontFamily": "$font-mono-render",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
+                        },
+                        {
+                          "type": "text",
+                          "id": "R7csk",
+                          "name": "Value",
+                          "fill": "$on-surface-variant",
+                          "content": "http://127.0.0.1:6100",
+                          "fontFamily": "$font-mono-render",
+                          "fontSize": 11,
+                          "fontWeight": "normal"
                         }
                       ]
                     }
@@ -24849,7 +24924,7 @@
               "fill": "$on-surface-variant",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "Five sentences that are a pure string swap into a slot this band already draws, kept here with their copy instead of given an artboard: 'Loading stats...' and 'Loading providers...' (overview.html:334, :194), 'Loading...' (logs.html:125, keys.html:47), 'Loading…' with the other ellipsis (system.html:234), and 'No providers configured.' (overview.html:197, system.html:239). Two are real states with a home already on the canvas: System's refused toggle, 'claude was not changed — the gateway answered 403.' in status-fail under the providers list (system.js:254, the D17 fix), and the offline flavour of the banner, 'This browser is offline. Nothing below is being updated.', which swaps only the middle sentence. Sign in's 501, 'SHELLM_ADMIN_PASSWORD not configured', is not drawn because it is a JSON error page rather than this form. The CRT texture note stays on band 1's Sign in artboard alone — these two states inherit the same untileable layers and do not repeat the note.",
+              "content": "Five sentences that are a pure string swap into a slot this band already draws, kept here with their copy instead of given an artboard: 'Loading stats...' and 'Loading providers...' (overview.html:334, :194), 'Loading...' (logs.html:125, keys.html:47), 'Loading…' with the other ellipsis (system.html:234), and 'No providers configured.' (overview.html:197, system.html:239). Two are real states with a home already on the canvas: System's refused toggle, 'claude was not changed — the gateway answered 403.' in status-fail under the providers list (system.js:254, the D17 fix), and the offline flavour of the banner, 'This browser is offline. Nothing below is being updated.', which swaps only the middle sentence. Sign in's 501, 'SHELLM_ADMIN_PASSWORD not configured', is not drawn because it is a JSON error page rather than this form. The CRT texture note stays on band 1's Sign in artboard alone — these two states inherit the same untileable layers and do not repeat the note. API Keys' new-key banner is not drawn on either Keys artboard and was not drawn before this either: it is the only place a raw key, and now the two SDK exports beside it, ever render (keys.html:11), and it needs an artboard of its own rather than a string swap. Drawing it is open work, not a state this band decided to leave out.",
               "lineHeight": 1.6,
               "fontFamily": "$font-mono-render",
               "fontSize": 10,
