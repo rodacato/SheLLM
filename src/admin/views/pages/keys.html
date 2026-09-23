@@ -1,8 +1,11 @@
       <!-- KEYS PAGE -->
       <div x-show="page === 'keys'" x-data="keysPage()" x-effect="if (page === 'keys' && keys.length === 0 && loading) { fetchKeys(); fetchAuditLogs(); }">
 
-        <header class="mb-6">
+        <header class="mb-6 flex items-baseline justify-between gap-4 flex-wrap">
           <h2 class="text-xl font-bold font-headline tracking-tighter text-on-surface">API KEYS<span class="text-primary-container">_</span></h2>
+          <p class="text-[11px] font-mono text-outline">
+            Base URL <span class="text-on-surface-variant select-all" x-text="baseUrl"></span>
+          </p>
         </header>
 
         <!-- New key banner -->
@@ -10,10 +13,12 @@
           <div class="flex justify-between items-start">
             <div>
               <p class="text-sm font-headline font-bold text-white">
-                Key <span x-text="newKeyResult?.raw_key ? 'created' : 'rotated'"></span> — "<span x-text="newKeyResult?.name"></span>"
+                Key <span x-text="newKeyResult?.action"></span> — "<span x-text="newKeyResult?.name"></span>"
               </p>
               <p class="text-[11px] text-outline font-mono mt-1">Copy this key now — it won't be shown again.</p>
               <code class="block mt-3 bg-surface-container-lowest border border-outline-variant/40 px-4 py-3 text-sm font-mono text-primary-container select-all" x-text="newKeyResult?.raw_key"></code>
+              <p class="text-[11px] text-outline font-mono mt-4">Point a client at it — the official SDKs read these, anything else sends the key as <span class="text-on-surface-variant">Authorization: Bearer</span> or <span class="text-on-surface-variant">x-api-key</span>.</p>
+              <code class="block mt-2 bg-surface-container-lowest border border-outline-variant/40 px-4 py-3 text-[11px] font-mono text-on-surface-variant whitespace-pre-wrap select-all" x-text="usageSnippet"></code>
             </div>
             <button @click="newKeyResult = null" class="text-outline hover:text-white text-xl ml-4">&times;</button>
           </div>

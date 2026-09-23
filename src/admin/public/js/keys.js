@@ -15,6 +15,19 @@ function keysPage() {
     auditError: null,
     showAudit: false,
 
+    get baseUrl() {
+      return window.location.origin;
+    },
+
+    // The two base URLs differ on purpose: the OpenAI clients append /v1 to nothing, the Anthropic
+    // ones append it themselves.
+    get usageSnippet() {
+      const key = this.newKeyResult?.raw_key;
+      if (!key) return '';
+      return `export OPENAI_BASE_URL=${this.baseUrl}/v1 OPENAI_API_KEY=${key}\n`
+        + `export ANTHROPIC_BASE_URL=${this.baseUrl} ANTHROPIC_API_KEY=${key}`;
+    },
+
     async fetchKeys() {
       this.loading = true;
       try {
@@ -62,7 +75,7 @@ function keysPage() {
         });
         if (res.ok) {
           const data = await res.json();
-          this.newKeyResult = data.key;
+          this.newKeyResult = { ...data.key, action: 'created' };
           this.createForm = { name: '', rpm: 10, models: '', expires_at: '', description: '' };
           this.showCreateModal = false;
           await this.fetchKeys();
@@ -150,7 +163,7 @@ function keysPage() {
           return alert(err.message || 'Failed to rotate key');
         }
         const data = await res.json();
-        this.newKeyResult = { ...data.key, name: key.name };
+        this.newKeyResult = { ...data.key, name: key.name, action: 'rotated' };
         await this.fetchKeys();
         await this.fetchAuditLogs();
       } catch { alert('Network error'); }
