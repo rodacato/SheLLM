@@ -244,6 +244,7 @@ describe('the System page reads the settings it renders', () => {
     assert.strictEqual(page.configLoaded, true);
     assert.ok(page.configError, 'a failed read leaves nothing for the table to say');
     assert.strictEqual(page.settings.length, 0, 'and it must not invent settings');
+    assert.strictEqual(page.settingsExpanded, true, 'the one line saying the read failed is folded away');
   });
 });
 
@@ -291,9 +292,15 @@ describe('the System page shows what the release added', () => {
 
   it('draws the whole table underneath, and says where the file lives', () => {
     const block = settingsBlock();
-    for (const column of ['Setting', 'Value', 'Source', 'Since', 'Reload']) {
+    for (const column of ['Setting', 'Value', 'Source', 'Since']) {
       assert.ok(block.includes(`>${column}</th>`), `the table lost its ${column} column`);
     }
+
+    // Dropped on purpose: `reload` describes the code re-reading process.env, and the config file
+    // is read once at startup, so every edit needs a restart whatever the column said. The fact
+    // still reaches the page — the new-settings block is where it is actionable.
+    assert.ok(!block.includes('>Reload</th>'), 'the reload column is back and it cannot be acted on');
+    assert.match(block, /x-text="setting\.describe"/, 'a row names a setting without saying what it does');
     assert.ok(block.includes('x-text="settingValue(setting)"'), 'the value cell reads nothing');
     assert.match(block, /x-text="settingsSummary"/, 'the header renders nothing');
   });

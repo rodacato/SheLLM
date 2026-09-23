@@ -289,13 +289,12 @@
                   <th class="py-2 pr-6 text-left text-[11px] font-headline font-bold uppercase tracking-[0.08em] text-outline">Setting</th>
                   <th class="py-2 pr-6 text-left text-[11px] font-headline font-bold uppercase tracking-[0.08em] text-outline">Value</th>
                   <th class="py-2 pr-6 text-left text-[11px] font-headline font-bold uppercase tracking-[0.08em] text-outline">Source</th>
-                  <th class="py-2 pr-6 text-left text-[11px] font-headline font-bold uppercase tracking-[0.08em] text-outline">Since</th>
-                  <th class="py-2 text-left text-[11px] font-headline font-bold uppercase tracking-[0.08em] text-outline">Reload</th>
+                  <th class="py-2 text-left text-[11px] font-headline font-bold uppercase tracking-[0.08em] text-outline">Since</th>
                 </tr>
               </thead>
               <tbody>
                 <tr x-show="settings.length === 0">
-                  <td colspan="5" class="py-6 text-center font-mono text-sm"
+                  <td colspan="4" class="py-6 text-center font-mono text-sm"
                     :class="configError ? 'text-status-fail' : 'text-outline'"
                     x-text="!configLoaded ? 'Loading…' : (configError ? 'Could not read the settings — ' + configError : 'No settings declared.')"></td>
                 </tr>
@@ -303,18 +302,20 @@
               <template x-for="group in groupedSettings" :key="group.section">
                 <tbody>
                   <tr>
-                    <td colspan="5" class="pt-6 pb-1 text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase"
+                    <td colspan="4" class="pt-6 pb-1 text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase"
                       x-text="group.section"></td>
                   </tr>
                   <template x-for="setting in group.rows" :key="setting.name">
-                    <tr class="border-t border-outline-variant/20">
-                      <td class="py-2 pr-6 font-mono text-[11px] text-white whitespace-nowrap" x-text="setting.name"></td>
-                      <td class="py-2 pr-6 font-mono text-[11px] break-all"
+                    <tr class="border-t border-outline-variant/20 align-top">
+                      <td class="py-3 pr-6 max-w-sm">
+                        <p class="font-mono text-[11px] text-white" x-text="setting.name"></p>
+                        <p class="font-mono text-[11px] text-outline mt-1" x-text="setting.describe"></p>
+                      </td>
+                      <td class="py-3 pr-6 font-mono text-[11px] break-all"
                         :class="setting.source === 'default' ? 'text-outline' : 'text-on-surface-variant'"
                         x-text="settingValue(setting)"></td>
-                      <td class="py-2 pr-6 font-mono text-[11px] text-outline whitespace-nowrap" x-text="setting.source"></td>
-                      <td class="py-2 pr-6 font-mono text-[11px] text-outline whitespace-nowrap" x-text="setting.since"></td>
-                      <td class="py-2 font-mono text-[11px] text-outline whitespace-nowrap" x-text="setting.reload"></td>
+                      <td class="py-3 pr-6 font-mono text-[11px] text-outline whitespace-nowrap" x-text="setting.source"></td>
+                      <td class="py-3 font-mono text-[11px] text-outline whitespace-nowrap" x-text="setting.since"></td>
                     </tr>
                   </template>
                 </tbody>
