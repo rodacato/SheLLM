@@ -7,7 +7,13 @@ const readline = require('node:readline/promises');
 const dotenv = require('dotenv');
 const { CONFIG_FILE } = require('./paths');
 
-const DEFAULTS = { PORT: '6100', HOST: '127.0.0.1' };
+const DEFAULTS = {
+  PORT: '6100',
+  HOST: '127.0.0.1',
+  MAX_CONCURRENT: '4',
+  MAX_STREAM_CONCURRENT: '4',
+  SHELLM_GLOBAL_RPM: '60',
+};
 
 function readConfig() {
   if (!fs.existsSync(CONFIG_FILE)) return { text: '', values: {} };

@@ -46,6 +46,9 @@ process.exit(2);
     const config = dotenv.parse(fs.readFileSync(configFile));
     assert.strictEqual(config.CLAUDE_CODE_OAUTH_TOKEN, 'fake-oauth-token-for-tests');
     assert.strictEqual(config.HOST, '127.0.0.1');
+    assert.strictEqual(config.MAX_CONCURRENT, '4');
+    assert.strictEqual(config.MAX_STREAM_CONCURRENT, '4');
+    assert.strictEqual(config.SHELLM_GLOBAL_RPM, '60');
     assert.ok(config.SHELLM_ADMIN_PASSWORD.length >= 24);
 
     assert.match(result.stdout, /API key \(shown once, store it now\): shellm-[0-9a-f]{32}/);
@@ -67,13 +70,14 @@ process.exit(2);
 
   it('adds only what is missing to a config written by hand', async () => {
     fs.mkdirSync(path.dirname(configFile), { recursive: true });
-    fs.writeFileSync(configFile, '# mine\nPORT=7000\nSHELLM_ADMIN_PASSWORD=my-own-long-password\n', { mode: 0o644 });
+    fs.writeFileSync(configFile, '# mine\nPORT=7000\nMAX_CONCURRENT=2\nSHELLM_ADMIN_PASSWORD=my-own-long-password\n', { mode: 0o644 });
 
     await init('\n');
     const text = fs.readFileSync(configFile, 'utf8');
     const config = dotenv.parse(text);
     assert.ok(text.startsWith('# mine\n'));
     assert.strictEqual(config.PORT, '7000');
+    assert.strictEqual(config.MAX_CONCURRENT, '2');
     assert.strictEqual(config.SHELLM_ADMIN_PASSWORD, 'my-own-long-password');
     assert.strictEqual(config.CLAUDE_CODE_OAUTH_TOKEN, undefined);
     assert.strictEqual(fs.statSync(configFile).mode & 0o777, 0o600);

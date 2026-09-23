@@ -66,8 +66,27 @@ Everything else is documented in [`.env.example`](../../.env.example). What matt
 | `HOST` | `127.0.0.1` | Keep it. Expose SheLLM through a tunnel or proxy, not by binding publicly |
 | `PORT` | `6100` | A port collision |
 | `MAX_CONCURRENT` | `4` | Each CLI process costs 150–215 MB of RAM (measured in [`benchmarks.md`](./benchmarks.md)) |
-| `SHELLM_ADMIN_PASSWORD` | generated | The dashboard login, at `/admin/login` |
+| `MAX_STREAM_CONCURRENT` | `4` | Streaming holds a slot for the whole response and is capped separately |
 | `SHELLM_GLOBAL_RPM` | `60` | Requests per minute across all keys |
+| `SHELLM_ADMIN_PASSWORD` | generated | The dashboard login, at `/admin/login` |
+
+`init` writes the load knobs into the config file rather than leaving them implicit, so the file
+lists what you can tune. Changing one is an edit and a restart:
+
+```bash
+sudo -iu shellmer sed -i 's/^MAX_CONCURRENT=.*/MAX_CONCURRENT=6/' ~/.config/shellm/env
+sudo systemctl restart shellm
+curl -su "admin:$SHELLM_ADMIN_PASSWORD" localhost:6100/health/detailed | jq .queue
+```
+
+That last line reports the values the process is running, which is the only thing that proves the
+restart took — the dashboard's System page reads the same figures.
+
+Every limit is read from the environment, so nothing takes effect until the restart. The pair worth
+moving together is `MAX_CONCURRENT` and `SHELLM_GLOBAL_RPM`: at ~3 s per request, 60 req/min
+sustains about 3 concurrent, so raising the process cap alone only absorbs bursts. Overview says
+which of the two is binding — it splits the time a request spent queueing from the time it spent
+executing, and only queueing is fixed by raising a limit.
 
 ## 4. Start
 
