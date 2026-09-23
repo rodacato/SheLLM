@@ -12,7 +12,7 @@ anything yet.
 |---|---|---|---|
 | `overview.png` | `admin-overview-default.png` | `0, 0, 2880, 1440` | The whole top band, sidebar included. Exactly 2:1, which is also why it is the OG card. |
 | `request-logs.png` | `admin-request-logs-default.png` | `511, 354, 2369, 845` | Error rate, tokens and cost, then three rows and one expanded detail row. |
-| `api-keys.png` | `admin-api-keys-default.png` | `511, 938, 2369, 488` | The three keys with limits, usage and expiry — and the browser origin the middle one is scoped to. |
+| `api-keys.png` | `admin-api-keys-default.png` | `511, 938, 2369, 456` | The three keys with limits, usage and expiry — and the browser origin the middle one is scoped to. |
 | `playground.png` | `admin-playground-answered.png` | `511, 150, 2369, 480` | The client key, format and model beside an answered response. |
 | `system.png` | `admin-system-default.png` | `511, 2342, 2369, 700` | Both provider cards: CLI version, circuit state, last status, models. |
 
