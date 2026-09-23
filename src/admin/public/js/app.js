@@ -79,7 +79,13 @@ function poller(read) {
   });
 
   return {
-    every(next) { ms = next; arm(); },
+    // Idempotent on purpose: the Alpine effects that call this re-run on every read, and a loop
+    // that restarts its own countdown each time it completes never reaches the next one.
+    every(next) {
+      if (next === ms && id !== null) return;
+      ms = next;
+      arm();
+    },
     stop() { ms = 0; clear(); },
   };
 }

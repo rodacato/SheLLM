@@ -45,6 +45,7 @@ function browser(localStorage) {
       return { reads, poller: poller(() => { reads.count += 1; }) };
     },
     get armed() { return [...timers.values()]; },
+    get armedIds() { return [...timers.keys()]; },
     tick(times = 1) {
       for (let i = 0; i < times; i += 1) for (const timer of [...timers.values()]) timer.fn();
     },
@@ -136,6 +137,18 @@ describe('the poller only runs while someone is looking', () => {
     page.setHidden(false);
     page.tick(3);
     assert.strictEqual(reads.count, 0, 'a stopped poller came back on a visibility change');
+  });
+
+  // The Alpine effects that drive these call startAutoRefresh on every read. Re-arming there would
+  // reset the countdown each time the loop completed, so the next read never arrives.
+  it('ignores a repeated call with the interval it is already running', () => {
+    const page = browser();
+    const { poller } = page.make();
+    poller.every(1000);
+    const first = page.armedIds[0];
+    poller.every(1000);
+
+    assert.deepEqual(page.armedIds, [first], 'the timer was torn down and rebuilt');
   });
 
   it('treats an interval of zero as off', () => {

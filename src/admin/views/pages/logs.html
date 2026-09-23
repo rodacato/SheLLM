@@ -1,5 +1,5 @@
       <!-- LOGS PAGE -->
-      <div x-show="page === 'logs'" x-data="logsPage()" x-effect="if (page === 'logs') { if (!applyPendingFilter() && logs.length === 0 && loading) fetchLogs(); fetchStats(); }">
+      <div x-show="page === 'logs'" x-data="logsPage()" x-effect="if (page === 'logs') { if (!applyPendingFilter() && logs.length === 0 && loading) fetchLogs(); fetchStats(); startAutoRefresh(); } else { stopAutoRefresh(); }">
 
         <header class="mb-6 flex items-baseline gap-4">
           <h2 class="text-xl font-bold font-headline tracking-tighter text-on-surface">REQUEST LOGS<span class="text-primary-container">_</span></h2>
@@ -7,40 +7,77 @@
 
         <!-- Filters -->
         <div class="flex flex-wrap gap-4 mb-3 items-end">
-          <div>
-            <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Provider</label>
-            <select x-model="filterProvider" @change="applyFilters()" class="w-44 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
-              <option value="">All Providers</option>
-              <option value="claude">claude</option>
-              <option value="codex">codex</option>
-            </select>
+          <div class="flex flex-wrap gap-4 items-end">
+            <div>
+              <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Provider</label>
+              <select x-model="filterProvider" @change="applyFilters()" class="w-40 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
+                <option value="">All Providers</option>
+                <option value="claude">claude</option>
+                <option value="codex">codex</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Status</label>
+              <select x-model="filterStatus" @change="applyFilters()" class="w-40 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
+                <option value="">All Status</option>
+                <option value="2">2xx (Success)</option>
+                <option value="4">4xx (Client Err)</option>
+                <option value="5">5xx (Server Err)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Client</label>
+              <select x-model="filterClient" @change="applyFilters()" class="w-40 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
+                <option value="">All Clients</option>
+                <template x-for="name in clientOptions" :key="name">
+                  <option :value="name" x-text="name"></option>
+                </template>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Model</label>
+              <select x-model="filterModel" @change="applyFilters()" class="w-40 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
+                <option value="">All Models</option>
+                <template x-for="name in modelOptions" :key="name">
+                  <option :value="name" x-text="name"></option>
+                </template>
+              </select>
+            </div>
           </div>
-          <div>
-            <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Status</label>
-            <select x-model="filterStatus" @change="applyFilters()" class="w-44 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
-              <option value="">All Status</option>
-              <option value="2">2xx (Success)</option>
-              <option value="4">4xx (Client Err)</option>
-              <option value="5">5xx (Server Err)</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Client</label>
-            <select x-model="filterClient" @change="applyFilters()" class="w-44 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
-              <option value="">All Clients</option>
-              <template x-for="name in clientOptions" :key="name">
-                <option :value="name" x-text="name"></option>
-              </template>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Model</label>
-            <select x-model="filterModel" @change="applyFilters()" class="w-44 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
-              <option value="">All Models</option>
-              <template x-for="name in modelOptions" :key="name">
-                <option :value="name" x-text="name"></option>
-              </template>
-            </select>
+
+          <div class="ml-auto flex items-center gap-4">
+            <!-- Never gated on total > 0: an empty table is exactly when you want to re-read it -->
+            <div class="flex items-stretch h-8 border border-outline-variant/30">
+              <button @click="refreshNow()" :disabled="manualLoading" aria-label="Re-read the table now"
+                :title="manualLoading ? 'Reading the table' : 'Re-read the table now'"
+                :class="manualLoading ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:bg-surface-container-high hover:text-on-surface'"
+                class="px-3 flex items-center transition-colors duration-fast">
+                <span class="material-symbols-outlined text-[16px]" :class="manualLoading ? 'animate-spin' : ''">refresh</span>
+              </button>
+              <div class="w-px bg-outline-variant/30"></div>
+              <div x-show="autoRefreshHeld" x-cloak class="flex items-center bg-surface-container pl-2">
+                <span class="material-symbols-outlined text-[16px] text-outline">pause</span>
+              </div>
+              <select @change="setRefresh($event.target.value)"
+                aria-label="Auto-refresh interval" :title="intervalTitle"
+                :class="autoRefreshHeld ? 'text-outline' : 'text-on-surface'"
+                class="bg-surface-container font-mono text-xs px-2 focus:outline-none focus:text-primary-container">
+                <template x-for="step in ladder" :key="step.ms">
+                  <option :value="step.ms" :selected="step.ms === refreshMs" x-text="step.label"></option>
+                </template>
+              </select>
+            </div>
+            <div class="flex gap-2">
+              <button x-show="total > 0" @click="exportCSV()"
+                class="px-4 py-2 text-xs font-headline font-bold uppercase text-primary-container border border-primary-container/40 hover:bg-primary-container/10 transition-colors duration-fast">
+                Export CSV
+              </button>
+              <button x-show="total > 0" @click="clearLogs()"
+                class="px-4 py-2.5 text-xs font-headline font-bold uppercase tracking-widest text-status-fail bg-danger-surface hover:bg-danger-surface-hover transition-colors duration-fast flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">filter_list_off</span>
+                Clear All
+              </button>
+            </div>
           </div>
         </div>
 
@@ -48,24 +85,6 @@
           <button x-show="hasFilters" @click="clearFilters()"
             class="text-[11px] font-mono text-primary-container hover:underline">clear filters</button>
           <div x-show="!loadError" class="text-[11px] font-mono text-outline italic" x-text="total + ' total logs found'"></div>
-          <div class="ml-auto flex gap-2">
-            <!-- Never gated on total > 0: an empty table is exactly when you want to re-read it -->
-            <button @click="fetchLogs(); fetchStats()" :disabled="loading"
-              :class="loading ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:text-on-surface'"
-              class="px-3 py-2 border border-outline-variant/30 hover:border-outline/50 transition-colors duration-fast flex items-center"
-              :title="loading ? 'Reading the table' : 'Re-read the table'" aria-label="Refresh">
-              <span class="material-symbols-outlined text-[16px]" :class="loading && page === 'logs' ? 'animate-spin' : ''">refresh</span>
-            </button>
-            <button x-show="total > 0" @click="exportCSV()"
-              class="px-4 py-2 text-xs font-headline font-bold uppercase text-primary-container border border-primary-container/40 hover:bg-primary-container/10 transition-colors duration-fast">
-              Export CSV
-            </button>
-            <button x-show="total > 0" @click="clearLogs()"
-              class="px-4 py-2.5 text-xs font-headline font-bold uppercase tracking-widest text-status-fail bg-danger-surface hover:bg-danger-surface-hover transition-colors duration-fast flex items-center gap-2">
-              <span class="material-symbols-outlined text-sm">filter_list_off</span>
-              Clear All
-            </button>
-          </div>
         </div>
 
         <!-- Stats Summary -->

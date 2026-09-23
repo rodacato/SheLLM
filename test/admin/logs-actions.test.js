@@ -36,14 +36,16 @@ describe('refresh is an action on the logs table', () => {
     assert.ok(header.includes('REQUEST LOGS'), 'the heading is still there — otherwise this proves nothing');
   });
 
+  // It shares a row with the filters now, but it is still an action: the group it sits in is the
+  // one holding export and clear, not the group holding the four selects.
   it('sits in the same group as export and clear', () => {
-    const actions = slice(page, 'ml-auto flex gap-2', 'Clear All');
+    const actions = slice(page, 'ml-auto flex items-center gap-4', 'Clear All');
     assert.ok(actions.includes('>refresh<'), 'the reload icon belongs with the other actions');
     assert.ok(actions.includes('exportCSV()'), 'and that group is the one holding Export CSV');
   });
 
   it('stays reachable when the table is empty', () => {
-    const button = slice(page, '<button @click="fetchLogs(); fetchStats()"', '</button>');
+    const button = slice(page, '<button @click="refreshNow()"', '</button>');
     assert.ok(!button.includes('total > 0'),
       'an empty table is exactly when re-reading it is worth doing');
     assert.ok(slice(page, '@click="exportCSV()"', '</button>').includes('total > 0')
@@ -52,10 +54,19 @@ describe('refresh is an action on the logs table', () => {
   });
 
   it('says what it does, now that it is only an icon', () => {
-    const button = slice(page, '<button @click="fetchLogs(); fetchStats()"', '</button>');
-    assert.ok(button.includes('aria-label="Refresh"'), 'an icon-only control needs a name');
+    const button = slice(page, '<button @click="refreshNow()"', '</button>');
+    assert.ok(button.includes('aria-label="Re-read the table now"'), 'an icon-only control needs a name');
     assert.ok(/:title=/.test(button), 'and a tooltip on hover');
-    assert.ok(button.includes(':disabled="loading"'), 'it cannot be pressed while it is already reading');
+    assert.ok(button.includes(':disabled="manualLoading"'), 'it cannot be pressed while it is already reading');
+  });
+
+  // animate-spin runs for one second and a local read finishes in tens of milliseconds, so bound
+  // to every read the glyph twitches rather than spins — at a 10s interval, forever, beside the
+  // table being read. The spin belongs to the press, not to the loop.
+  it('spins only for a read the operator asked for', () => {
+    const button = slice(page, '<button @click="refreshNow()"', '</button>');
+    assert.match(button, /manualLoading \? 'animate-spin'/, 'the press has no feedback');
+    assert.doesNotMatch(button, /[^l]loading \? 'animate-spin'/, 'an automatic poll spins the glyph too');
   });
 });
 
