@@ -21,13 +21,14 @@ function requestLogger(req, res, next) {
     const entry = {
       event: 'request',
       method: req.method,
-      url: req.url,
+      url: req.originalUrl || req.url,
       status: res.statusCode,
       duration_ms,
       request_id: req.requestId || null,
       client: req.clientName || null,
       provider: res.locals.provider || null,
       model: res.locals.model || null,
+      origin: req.headers?.origin || null,
     };
 
     if (res.statusCode >= 500) {
@@ -40,8 +41,9 @@ function requestLogger(req, res, next) {
       logger.info(entry);
     }
 
-    // Persist /v1/* requests to SQLite and emit for live feed
-    if (req.url.startsWith('/v1/') && getDb()) {
+    // Persist /v1/* requests to SQLite and emit for live feed. A CORS preflight is not a call
+    // to a provider, and counting it would skew every per-key request and cost figure.
+    if (req.url.startsWith('/v1/') && req.method !== 'OPTIONS' && getDb()) {
       const usage = res.locals.usage;
       const metrics = res.locals.metrics || {};
       insertRequestLog({
