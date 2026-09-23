@@ -77,7 +77,7 @@ graph LR
 ```
 
 **A chatbot or an assistant inside your app.** Someone is waiting, so latency is the constraint:
-the floor for any answer is about 2.5 s ([benchmarks](docs/guides/benchmarks.md)) and two requests
+the floor for any answer is about 2.5 s ([benchmarks](docs/guides/benchmarks.md)) and four requests
 run at a time by default. Fine for one person talking to your app; not a support queue.
 
 **A nightly report over your own data.** A cron job that reads yesterday's rows and leaves a
@@ -223,8 +223,9 @@ graph LR
 ```
 
 Each request spawns a CLI process in its own temporary directory and discards it, so nothing leaks
-between requests — which costs about 2.5 s before the model starts, measured on a production
-server in [`docs/guides/benchmarks.md`](docs/guides/benchmarks.md). Configuration lives in
+between requests — about 0.9 s of process startup, inside a floor of roughly 2.5 s for the whole
+short answer, measured on a production server in
+[`docs/guides/benchmarks.md`](docs/guides/benchmarks.md). Configuration lives in
 `~/.config/shellm/env`; SQLite holds keys, request logs and the audit trail. [`docs/guides/architecture.md`](docs/guides/architecture.md) has the module
 map and [`docs/adr/`](docs/adr/) the decisions.
 
@@ -232,6 +233,10 @@ map and [`docs/adr/`](docs/adr/) the decisions.
 
 [CONTRIBUTING.md](CONTRIBUTING.md) covers setup, conventions, tests and adding a provider. Release
 history is in [CHANGELOG.md](CHANGELOG.md).
+
+Found a security problem? Do not open an issue — report it through
+[the private advisory form](https://github.com/rodacato/SheLLM/security/advisories/new).
+[SECURITY.md](SECURITY.md) has the scope, the threat model and the disclosure timeline.
 
 ## License
 
