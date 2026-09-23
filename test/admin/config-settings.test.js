@@ -225,7 +225,9 @@ describe('the System page reads the settings it renders', () => {
 
     page.unseenSettings = [];
     assert.strictEqual(page.settingsExpanded, false, 'nothing is new and the table is still in the way');
-    assert.strictEqual(page.settingsSummary, '3 settings');
+    // Shut, the header answers "has anything here been changed" rather than counting rows: one
+    // of the three fixtures comes from the environment and the other two are untouched defaults.
+    assert.strictEqual(page.settingsSummary, '1 set · 2 default');
 
     page.settingsOpen = !page.settingsExpanded;
     assert.strictEqual(page.settingsExpanded, true, 'a click does not open it');
@@ -274,6 +276,13 @@ describe('the System page shows what the release added', () => {
     const block = settingsBlock();
     assert.ok(block.includes('Then apply them:'), 'the block never says the edit needs a restart');
     assert.match(block, /x-text="restartCommand"/, 'the command itself is not rendered');
+  });
+
+  it('announces whether it is open', () => {
+    const block = settingsBlock();
+    assert.match(block, /:aria-expanded="settingsExpanded"/, 'a screen reader cannot tell the section is shut');
+    assert.match(block, /aria-controls="settings-card"/, 'the control does not say what it opens');
+    assert.match(block, /id="settings-card"/, 'nothing carries the id the control points at');
   });
 
   it('groups the rows by the section the schema declares', () => {

@@ -73,6 +73,14 @@ describe('a panel is as tall as what it holds', () => {
     assert.doesNotMatch(text, /lg:grid-cols-2/, 'the response is beside the form again, where it stretches to its height');
     assert.match(text, /<div class="grid grid-cols-1 gap-6"/, 'the two panels are no longer a stacked grid');
   });
+
+  // Stacking handed the row the whole page. Three short controls across it beats three stretched
+  // to 1400px each, and the answer has to find the eye once the form is taller than the fold.
+  it('spends the Playground width on the controls rather than on one of them', () => {
+    const text = fs.readFileSync(path.join(PAGES, 'playground.html'), 'utf8');
+    assert.match(text, /grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 items-start/, 'the short controls are stretched again');
+    assert.match(text, /id="playground-response"/, 'nothing identifies the panel the answer lands in');
+  });
 });
 
 describe('a metric value is not a heading', () => {

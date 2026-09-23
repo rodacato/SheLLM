@@ -9,8 +9,11 @@
              and half the page truncated all three while the form never needed the width. -->
         <div class="grid grid-cols-1 gap-6">
           <div class="bg-surface-container p-5">
-            <div class="mb-4">
-              <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Client key</label>
+            <!-- Three across rather than three stretched: stacking gave the row the whole page,
+                 and a select holding one fixed string does not want 1400px of hit area. -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 items-start">
+              <div>
+                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Client key</label>
               <input type="password" x-model="apiKey" placeholder="shellm-…" autocomplete="off" class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container">
               <div class="flex items-center justify-between mt-2">
                 <label class="flex items-center gap-2 text-[10px] font-mono text-outline">
@@ -24,7 +27,6 @@
               </p>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Format</label>
                 <select x-model="format" class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container">
@@ -72,7 +74,7 @@
             </p>
           </div>
 
-          <div class="bg-surface-container p-5">
+          <div id="playground-response" class="bg-surface-container p-5 scroll-mt-6">
             <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-4">Response</p>
 
             <p x-show="error" class="text-xs font-mono text-error" x-text="error"></p>

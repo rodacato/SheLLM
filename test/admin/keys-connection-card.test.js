@@ -40,6 +40,19 @@ describe('the connection card on the Keys page', () => {
     assert.match(html, /x-show="!connectionOpen"[^>]*x-text="baseUrl"/, 'the header hides the address it exists to show');
   });
 
+  // `truncate` needs the flex child to be allowed to shrink; a flex item's min-width is auto, so
+  // without min-w-0 a long base URL pushes the chevron out of the row instead of ellipsing.
+  it('lets the address ellipse rather than push the chevron out', () => {
+    assert.match(markup(), /x-show="!connectionOpen"[^>]*truncate[^>]*min-w-0|truncate min-w-0/, 'the address cannot shrink, so it will never truncate');
+  });
+
+  it('announces whether it is open', () => {
+    const html = markup();
+    assert.match(html, /:aria-expanded="connectionOpen"/, 'a screen reader cannot tell the card is shut');
+    assert.match(html, /aria-controls="connection-card"/, 'the control does not say what it opens');
+    assert.match(html, /id="connection-card"/, 'nothing carries the id the control points at');
+  });
+
   it('keeps the SDK lines behind the disclosure rather than deleting them', () => {
     const html = markup();
     assert.match(html, /x-show="connectionOpen"/, 'the card no longer collapses');

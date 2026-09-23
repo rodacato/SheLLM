@@ -152,11 +152,15 @@ function systemPage() {
       return this.unseenSettings.length > 0 || Boolean(this.configError);
     },
 
-    // Open, the header says where to write; closed, it says why you would open it.
+    // Open, the header says where to write; closed, it answers the question you ask walking past
+    // this section — has anything here been changed — rather than how many settings exist.
     get settingsSummary() {
-      if (this.settingsExpanded) return this.configFile ? `Write them in ${this.configFile}` : '';
+      if (this.settingsExpanded) return this.configFile ? `Write them in ${this.configFile}` : 'Settings in effect';
+      if (this.configError) return 'Could not be read';
       if (this.unseenSettings.length > 0) return this.unseenHeadline;
-      return `${this.settings.length} settings`;
+      if (this.settings.length === 0) return 'Loading…';
+      const set = this.settings.filter((setting) => setting.source !== 'default').length;
+      return `${set} set · ${this.settings.length - set} default`;
     },
 
     get unseenHeadline() {
