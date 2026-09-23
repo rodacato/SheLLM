@@ -67,8 +67,8 @@ function ensureApiKey() {
   return createClient({ name: 'default', rpm: 60 }).rawKey;
 }
 
-function printUsage(config, rawKey) {
-  const base = `http://${config.HOST}:${config.PORT}`;
+function printUsage(_config, rawKey) {
+  const base = `http://${process.env.HOST}:${process.env.PORT}`;
   const key = rawKey || '<your SheLLM API key>';
   console.log(`
 Start SheLLM:
@@ -105,7 +105,12 @@ async function run() {
   if (fs.existsSync(CONFIG_FILE)) fs.chmodSync(CONFIG_FILE, 0o600);
 
   const config = { ...values, ...additions };
-  Object.assign(process.env, config);
+  // Never over an existing value: dotenv leaves the real environment alone, and the server
+  // resolves the same way. Assigning over it would make init the one place where the file wins,
+  // and it is the place that prints the address you are told to call.
+  for (const [key, value] of Object.entries(config)) {
+    if (process.env[key] === undefined) process.env[key] = value;
+  }
   console.log(`Config: ${CONFIG_FILE}${Object.keys(additions).length ? ` (added ${Object.keys(additions).join(', ')})` : ' (unchanged)'}`);
 
   const rawKey = ensureApiKey();

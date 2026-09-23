@@ -76,6 +76,20 @@ process.exit(2);
     assert.doesNotMatch(text, /shellm-config-version/, 'an existing config was stamped, which would dismiss real warnings');
   });
 
+  // The server resolves environment over file, so init must print the address the server will
+  // actually listen on — not the default it just wrote into a file the environment overrides.
+  it('prints the address the environment asks for, not the one it wrote', async () => {
+    const result = await new Promise((resolve) => {
+      const child = execFile(process.execPath, [CLI, 'init'],
+        { env: { HOME: home, PATH: bin, PORT: '6199', HOST: '0.0.0.0' }, timeout: 30000 },
+        (err, stdout, stderr) => resolve({ code: err ? err.code : 0, stdout, stderr }));
+      child.stdin.end('\n');
+    });
+
+    assert.match(result.stdout, /http:\/\/0\.0\.0\.0:6199/, 'init advertised an address the server will not use');
+    assert.doesNotMatch(result.stdout, /http:\/\/127\.0\.0\.1:6100/);
+  });
+
   it('keeps existing values and keys when run again', async () => {
     await init('fake-oauth-token-for-tests\n');
     const before = fs.readFileSync(configFile, 'utf8');
