@@ -3,7 +3,7 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { groupCommits, formatEntry, TYPE_LABELS, TYPE_ORDER } = require('../../scripts/release-changelog');
+const { groupCommits, formatEntry, mergeLinkBlock, TYPE_LABELS, TYPE_ORDER } = require('../../scripts/release-changelog');
 
 const commit = (subject, hash = 'a'.repeat(40)) => ({ subject, hash, author: 'Adrian Castillo' });
 
@@ -74,5 +74,49 @@ describe('release-changelog', () => {
     for (const type of TYPE_ORDER) {
       assert.ok(TYPE_LABELS[type], `${type} is ordered but has no label`);
     }
+  });
+});
+
+const REPO = 'https://github.com/rodacato/SheLLM';
+
+const EXISTING_LINKS = [
+  '',
+  '## [1.8.0] - 2026-09-20',
+  '',
+  '- something',
+  '',
+  `[Unreleased]: ${REPO}/compare/v1.8.0...HEAD`,
+  `[1.8.0]: ${REPO}/compare/v1.7.0...v1.8.0`,
+  `[1.7.0]: ${REPO}/compare/v1.6.1...v1.7.0`,
+  '',
+].join('\n');
+
+// v1.9.0 shipped with 17 of 18 versions unlinked: the release step deleted the whole block and
+// re-added two lines.
+describe('release-changelog link block', () => {
+  it('keeps every released version when a new one is cut', () => {
+    const merged = mergeLinkBlock(EXISTING_LINKS, '1.9.0', 'v1.8.0', REPO);
+
+    assert.match(merged, /^\[Unreleased\]: .+\/compare\/v1\.9\.0\.\.\.HEAD$/m);
+    assert.match(merged, /^\[1\.9\.0\]: .+\/compare\/v1\.8\.0\.\.\.v1\.9\.0$/m);
+    assert.match(merged, /^\[1\.8\.0\]: .+\/compare\/v1\.7\.0\.\.\.v1\.8\.0$/m);
+    assert.match(merged, /^\[1\.7\.0\]: .+\/compare\/v1\.6\.1\.\.\.v1\.7\.0$/m);
+  });
+
+  it('carries exactly one Unreleased line forward', () => {
+    const merged = mergeLinkBlock(EXISTING_LINKS, '1.9.0', 'v1.8.0', REPO);
+    const unreleased = merged.split('\n').filter((line) => line.startsWith('[Unreleased]:'));
+    assert.strictEqual(unreleased.length, 1);
+  });
+
+  it('grows the block by one line per release', () => {
+    const before = EXISTING_LINKS.match(/^\[\d+\.\d+\.\d+\]:/gm).length;
+    const after = mergeLinkBlock(EXISTING_LINKS, '1.9.0', 'v1.8.0', REPO).match(/^\[\d+\.\d+\.\d+\]:/gm).length;
+    assert.strictEqual(after, before + 1);
+  });
+
+  it('still works on a changelog that has no link block yet', () => {
+    const merged = mergeLinkBlock('## [0.1.0]\n\n- first\n', '0.1.0', null, REPO);
+    assert.match(merged, /^\[0\.1\.0\]: .+\/compare\/v0\.0\.0\.\.\.v0\.1\.0$/m);
   });
 });
