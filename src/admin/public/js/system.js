@@ -145,8 +145,11 @@ function systemPage() {
       this.configLoaded = true;
     },
 
+    // A read that failed has to open itself too, or the one line saying so is folded away behind
+    // a header that looks like an ordinary quiet one.
     get settingsExpanded() {
-      return this.settingsOpen === null ? this.unseenSettings.length > 0 : this.settingsOpen;
+      if (this.settingsOpen !== null) return this.settingsOpen;
+      return this.unseenSettings.length > 0 || Boolean(this.configError);
     },
 
     // Open, the header says where to write; closed, it says why you would open it.
