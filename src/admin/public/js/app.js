@@ -90,6 +90,10 @@ function poller(read) {
   };
 }
 
+// A local read finishes in tens of milliseconds. A spinner that runs only that long is a twitch
+// rather than feedback, so a manual press holds it for at least this.
+const SPINNER_FLOOR_MS = 400;
+
 const REFRESH_LADDER = [
   { ms: 0, label: 'Off' },
   { ms: 10000, label: '10s' },

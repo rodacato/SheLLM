@@ -52,11 +52,14 @@ function overviewPage() {
     _timelineChart: null,
     _domain: null,
     _poller: null,
+    manualLoading: false,
     refreshMs: storedInterval(OVERVIEW_REFRESH_KEY, 30000),
     ladder: REFRESH_LADDER,
 
-    async fetchStats() {
+    async fetchStats({ manual = false } = {}) {
+      const startedAt = Date.now();
       this.loading = true;
+      if (manual) this.manualLoading = true;
       try {
         this.stats = await apiRead(`${API_BASE}/stats`);
         this.statsError = null;
@@ -68,6 +71,20 @@ function overviewPage() {
         this.statsError = err.message;
       }
       this.loading = false;
+      if (manual) this.settleSpinner(startedAt);
+    },
+
+    settleSpinner(startedAt) {
+      const remaining = SPINNER_FLOOR_MS - (Date.now() - startedAt);
+      if (remaining <= 0) {
+        this.manualLoading = false;
+        return;
+      }
+      setTimeout(() => { this.manualLoading = false; }, remaining);
+    },
+
+    refreshNow() {
+      this.fetchStats({ manual: true });
     },
 
     startAutoRefresh() {

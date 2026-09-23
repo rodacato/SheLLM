@@ -2,10 +2,6 @@
 
 const LOGS_REFRESH_KEY = 'shellm.refresh.logs';
 
-// A local read finishes in tens of milliseconds. A spinner that runs only that long is a twitch
-// rather than feedback, so a manual press holds it for at least this.
-const SPINNER_FLOOR_MS = 400;
-
 function logsPage() {
   return {
     logs: [],

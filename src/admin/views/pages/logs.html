@@ -61,7 +61,7 @@
               <select @change="setRefresh($event.target.value)"
                 aria-label="Auto-refresh interval" :title="intervalTitle"
                 :class="autoRefreshHeld ? 'text-outline' : 'text-on-surface'"
-                class="bg-surface-container font-mono text-xs px-2 focus:outline-none focus:text-primary-container">
+                class="bg-surface-container font-mono text-xs px-2 focus:outline-none focus:bg-surface-container-high focus:text-primary-container">
                 <template x-for="step in ladder" :key="step.ms">
                   <option :value="step.ms" :selected="step.ms === refreshMs" x-text="step.label"></option>
                 </template>
