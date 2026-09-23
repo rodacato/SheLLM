@@ -33390,7 +33390,7 @@
           "id": "zNij6",
           "name": "Sidebar",
           "width": 256,
-          "height": 668,
+          "height": 651,
           "fill": "$surface-shell",
           "layout": "vertical",
           "children": [
@@ -33843,62 +33843,244 @@
                       "id": "B3t5A",
                       "name": "Filters",
                       "width": "fill_container",
-                      "gap": 16,
                       "alignItems": "end",
                       "children": [
                         {
                           "type": "frame",
-                          "id": "pWrHN",
-                          "name": "Provider",
-                          "width": 176,
-                          "layout": "vertical",
-                          "gap": 8,
+                          "id": "tB35U",
+                          "name": "Filter group",
+                          "gap": 16,
+                          "alignItems": "end",
                           "children": [
                             {
-                              "type": "text",
-                              "id": "qzpTY",
-                              "name": "Label",
-                              "fill": "$outline",
-                              "content": "PROVIDER",
-                              "fontFamily": "$font-headline",
-                              "fontSize": 10,
-                              "fontWeight": "700",
-                              "letterSpacing": 2
-                            },
-                            {
                               "type": "frame",
-                              "id": "kkCSu",
-                              "name": "Select",
-                              "width": "fill_container",
-                              "fill": "$surface-container",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                10,
-                                12
-                              ],
-                              "justifyContent": "space_between",
-                              "alignItems": "center",
+                              "id": "pWrHN",
+                              "name": "Provider",
+                              "width": 160,
+                              "layout": "vertical",
+                              "gap": 8,
                               "children": [
                                 {
                                   "type": "text",
-                                  "id": "H8T2K",
-                                  "name": "Value",
-                                  "fill": "$on-surface",
-                                  "content": "All Providers",
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": "$text-sm",
-                                  "fontWeight": "normal"
+                                  "id": "qzpTY",
+                                  "name": "Label",
+                                  "fill": "$outline",
+                                  "content": "PROVIDER",
+                                  "fontFamily": "$font-headline",
+                                  "fontSize": 10,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 2
                                 },
                                 {
-                                  "type": "icon",
-                                  "id": "m9H3D",
-                                  "name": "Chevron",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "chevron-down",
-                                  "library": "lucide",
-                                  "fill": "$outline"
+                                  "type": "frame",
+                                  "id": "kkCSu",
+                                  "name": "Select",
+                                  "width": "fill_container",
+                                  "fill": "$surface-container",
+                                  "stroke": "$outline-variant",
+                                  "strokeWidth": 1,
+                                  "padding": [
+                                    10,
+                                    12
+                                  ],
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "H8T2K",
+                                      "name": "Value",
+                                      "fill": "$on-surface",
+                                      "content": "All Providers",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": "$text-sm",
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "m9H3D",
+                                      "name": "Chevron",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "chevron-down",
+                                      "library": "lucide",
+                                      "fill": "$outline"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "bX3UA",
+                              "name": "Status",
+                              "width": 160,
+                              "layout": "vertical",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "gGTsi",
+                                  "name": "Label",
+                                  "fill": "$outline",
+                                  "content": "STATUS",
+                                  "fontFamily": "$font-headline",
+                                  "fontSize": 10,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "c4eSK",
+                                  "name": "Select",
+                                  "width": "fill_container",
+                                  "fill": "$surface-container",
+                                  "stroke": "$outline-variant",
+                                  "strokeWidth": 1,
+                                  "padding": [
+                                    10,
+                                    12
+                                  ],
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "O5mfN8",
+                                      "name": "Value",
+                                      "fill": "$on-surface",
+                                      "content": "All Status",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": "$text-sm",
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "R6cx0y",
+                                      "name": "Chevron",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "chevron-down",
+                                      "library": "lucide",
+                                      "fill": "$outline"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "TKSgN",
+                              "name": "Client",
+                              "width": 160,
+                              "layout": "vertical",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "yLsky",
+                                  "name": "Label",
+                                  "fill": "$outline",
+                                  "content": "CLIENT",
+                                  "fontFamily": "$font-headline",
+                                  "fontSize": 10,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "OLYVw",
+                                  "name": "Select",
+                                  "width": "fill_container",
+                                  "fill": "$surface-container",
+                                  "stroke": "$outline-variant",
+                                  "strokeWidth": 1,
+                                  "padding": [
+                                    10,
+                                    12
+                                  ],
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "SDz17",
+                                      "name": "Value",
+                                      "fill": "$on-surface",
+                                      "content": "All Clients",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": "$text-sm",
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "iOg1R",
+                                      "name": "Chevron",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "chevron-down",
+                                      "library": "lucide",
+                                      "fill": "$outline"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "MNwoA",
+                              "name": "Model",
+                              "width": 160,
+                              "layout": "vertical",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "G8ytJ",
+                                  "name": "Label",
+                                  "fill": "$outline",
+                                  "content": "MODEL",
+                                  "fontFamily": "$font-headline",
+                                  "fontSize": 10,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "mlPwz",
+                                  "name": "Select",
+                                  "width": "fill_container",
+                                  "fill": "$surface-container",
+                                  "stroke": "$outline-variant",
+                                  "strokeWidth": 1,
+                                  "padding": [
+                                    10,
+                                    12
+                                  ],
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "FtOsS",
+                                      "name": "Value",
+                                      "fill": "$on-surface",
+                                      "content": "All Models",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": "$text-sm",
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "KVDJG",
+                                      "name": "Chevron",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "chevron-down",
+                                      "library": "lucide",
+                                      "fill": "$outline"
+                                    }
+                                  ]
                                 }
                               ]
                             }
@@ -33906,202 +34088,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "bX3UA",
-                          "name": "Status",
-                          "width": 176,
-                          "layout": "vertical",
-                          "gap": 8,
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "gGTsi",
-                              "name": "Label",
-                              "fill": "$outline",
-                              "content": "STATUS",
-                              "fontFamily": "$font-headline",
-                              "fontSize": 10,
-                              "fontWeight": "700",
-                              "letterSpacing": 2
-                            },
-                            {
-                              "type": "frame",
-                              "id": "c4eSK",
-                              "name": "Select",
-                              "width": "fill_container",
-                              "fill": "$surface-container",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                10,
-                                12
-                              ],
-                              "justifyContent": "space_between",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "O5mfN8",
-                                  "name": "Value",
-                                  "fill": "$on-surface",
-                                  "content": "All Status",
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": "$text-sm",
-                                  "fontWeight": "normal"
-                                },
-                                {
-                                  "type": "icon",
-                                  "id": "R6cx0y",
-                                  "name": "Chevron",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "chevron-down",
-                                  "library": "lucide",
-                                  "fill": "$outline"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "TKSgN",
-                          "name": "Client",
-                          "width": 176,
-                          "layout": "vertical",
-                          "gap": 8,
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "yLsky",
-                              "name": "Label",
-                              "fill": "$outline",
-                              "content": "CLIENT",
-                              "fontFamily": "$font-headline",
-                              "fontSize": 10,
-                              "fontWeight": "700",
-                              "letterSpacing": 2
-                            },
-                            {
-                              "type": "frame",
-                              "id": "OLYVw",
-                              "name": "Select",
-                              "width": "fill_container",
-                              "fill": "$surface-container",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                10,
-                                12
-                              ],
-                              "justifyContent": "space_between",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "SDz17",
-                                  "name": "Value",
-                                  "fill": "$on-surface",
-                                  "content": "All Clients",
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": "$text-sm",
-                                  "fontWeight": "normal"
-                                },
-                                {
-                                  "type": "icon",
-                                  "id": "iOg1R",
-                                  "name": "Chevron",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "chevron-down",
-                                  "library": "lucide",
-                                  "fill": "$outline"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "MNwoA",
-                          "name": "Model",
-                          "width": 176,
-                          "layout": "vertical",
-                          "gap": 8,
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "G8ytJ",
-                              "name": "Label",
-                              "fill": "$outline",
-                              "content": "MODEL",
-                              "fontFamily": "$font-headline",
-                              "fontSize": 10,
-                              "fontWeight": "700",
-                              "letterSpacing": 2
-                            },
-                            {
-                              "type": "frame",
-                              "id": "mlPwz",
-                              "name": "Select",
-                              "width": "fill_container",
-                              "fill": "$surface-container",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                10,
-                                12
-                              ],
-                              "justifyContent": "space_between",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "FtOsS",
-                                  "name": "Value",
-                                  "fill": "$on-surface",
-                                  "content": "All Models",
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": "$text-sm",
-                                  "fontWeight": "normal"
-                                },
-                                {
-                                  "type": "icon",
-                                  "id": "KVDJG",
-                                  "name": "Chevron",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "chevron-down",
-                                  "library": "lucide",
-                                  "fill": "$outline"
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "R2FoA",
-                      "name": "Toolbar",
-                      "width": "fill_container",
-                      "gap": 16,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "JpOrK",
-                          "name": "Total",
-                          "fill": "$outline",
-                          "content": "94 total logs found",
-                          "fontFamily": "$font-mono-render",
-                          "fontSize": 11,
-                          "fontWeight": "normal",
-                          "fontStyle": "italic"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "q7slf",
+                          "id": "puiHt",
                           "name": "Spacer",
                           "width": "fill_container",
                           "height": 1
@@ -34110,7 +34097,7 @@
                           "type": "frame",
                           "id": "bmflx",
                           "name": "Actions",
-                          "gap": 8,
+                          "gap": 16,
                           "alignItems": "center",
                           "children": [
                             {
@@ -34190,64 +34177,101 @@
                             },
                             {
                               "type": "frame",
-                              "id": "XhX0H",
-                              "name": "Export CSV",
-                              "stroke": "$primary-container",
-                              "strokeWidth": 1,
-                              "padding": [
-                                8,
-                                16
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "mr31s",
-                                  "name": "Label",
-                                  "fill": "$primary-container",
-                                  "content": "EXPORT CSV",
-                                  "fontFamily": "$font-headline",
-                                  "fontSize": 11,
-                                  "fontWeight": "700"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "kRSJz",
-                              "name": "Clear All",
-                              "fill": "$danger-surface",
+                              "id": "x1LCuY",
+                              "name": "Data actions",
                               "gap": 8,
-                              "padding": [
-                                9,
-                                16
-                              ],
                               "alignItems": "center",
                               "children": [
                                 {
-                                  "type": "icon",
-                                  "id": "AkHiO",
-                                  "name": "Icon",
-                                  "width": 14,
-                                  "height": 14,
-                                  "icon": "filter_list_off",
-                                  "library": "Material Symbols Outlined",
-                                  "fill": "$status-fail"
+                                  "type": "frame",
+                                  "id": "XhX0H",
+                                  "name": "Export CSV",
+                                  "stroke": "$primary-container",
+                                  "strokeWidth": 1,
+                                  "padding": [
+                                    8,
+                                    16
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "mr31s",
+                                      "name": "Label",
+                                      "fill": "$primary-container",
+                                      "content": "EXPORT CSV",
+                                      "fontFamily": "$font-headline",
+                                      "fontSize": 11,
+                                      "fontWeight": "700"
+                                    }
+                                  ]
                                 },
                                 {
-                                  "type": "text",
-                                  "id": "sZpPL",
-                                  "name": "Label",
-                                  "fill": "$status-fail",
-                                  "content": "CLEAR ALL",
-                                  "fontFamily": "$font-headline",
-                                  "fontSize": 11,
-                                  "fontWeight": "700",
-                                  "letterSpacing": 1.4
+                                  "type": "frame",
+                                  "id": "kRSJz",
+                                  "name": "Clear All",
+                                  "fill": "$danger-surface",
+                                  "gap": 8,
+                                  "padding": [
+                                    9,
+                                    16
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "AkHiO",
+                                      "name": "Icon",
+                                      "width": 14,
+                                      "height": 14,
+                                      "icon": "filter_list_off",
+                                      "library": "Material Symbols Outlined",
+                                      "fill": "$status-fail"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "sZpPL",
+                                      "name": "Label",
+                                      "fill": "$status-fail",
+                                      "content": "CLEAR ALL",
+                                      "fontFamily": "$font-headline",
+                                      "fontSize": 11,
+                                      "fontWeight": "700",
+                                      "letterSpacing": 1.4
+                                    }
+                                  ]
                                 }
                               ]
                             }
                           ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "R2FoA",
+                      "name": "Toolbar",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "JpOrK",
+                          "name": "Total",
+                          "fill": "$outline",
+                          "content": "94 total logs found",
+                          "fontFamily": "$font-mono-render",
+                          "fontSize": 11,
+                          "fontWeight": "normal",
+                          "fontStyle": "italic"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "q7slf",
+                          "name": "Spacer",
+                          "width": "fill_container",
+                          "height": 1
                         }
                       ]
                     }
@@ -35881,62 +35905,244 @@
                       "id": "VFSRk",
                       "name": "Filters",
                       "width": "fill_container",
-                      "gap": 16,
                       "alignItems": "end",
                       "children": [
                         {
                           "type": "frame",
-                          "id": "ACDJF",
-                          "name": "Provider",
-                          "width": 176,
-                          "layout": "vertical",
-                          "gap": 8,
+                          "id": "tUnfM",
+                          "name": "Filter group",
+                          "gap": 16,
+                          "alignItems": "end",
                           "children": [
                             {
-                              "type": "text",
-                              "id": "PQrrl",
-                              "name": "Label",
-                              "fill": "$outline",
-                              "content": "PROVIDER",
-                              "fontFamily": "$font-headline",
-                              "fontSize": 10,
-                              "fontWeight": "700",
-                              "letterSpacing": 2
-                            },
-                            {
                               "type": "frame",
-                              "id": "m5igF",
-                              "name": "Select",
-                              "width": "fill_container",
-                              "fill": "$surface-container",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                10,
-                                12
-                              ],
-                              "justifyContent": "space_between",
-                              "alignItems": "center",
+                              "id": "ACDJF",
+                              "name": "Provider",
+                              "width": 160,
+                              "layout": "vertical",
+                              "gap": 8,
                               "children": [
                                 {
                                   "type": "text",
-                                  "id": "WHNNY",
-                                  "name": "Value",
-                                  "fill": "$on-surface",
-                                  "content": "All Providers",
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": "$text-sm",
-                                  "fontWeight": "normal"
+                                  "id": "PQrrl",
+                                  "name": "Label",
+                                  "fill": "$outline",
+                                  "content": "PROVIDER",
+                                  "fontFamily": "$font-headline",
+                                  "fontSize": 10,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 2
                                 },
                                 {
-                                  "type": "icon",
-                                  "id": "Gcs3Y",
-                                  "name": "Chevron",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "chevron-down",
-                                  "library": "lucide",
-                                  "fill": "$outline"
+                                  "type": "frame",
+                                  "id": "m5igF",
+                                  "name": "Select",
+                                  "width": "fill_container",
+                                  "fill": "$surface-container",
+                                  "stroke": "$outline-variant",
+                                  "strokeWidth": 1,
+                                  "padding": [
+                                    10,
+                                    12
+                                  ],
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "WHNNY",
+                                      "name": "Value",
+                                      "fill": "$on-surface",
+                                      "content": "All Providers",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": "$text-sm",
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "Gcs3Y",
+                                      "name": "Chevron",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "chevron-down",
+                                      "library": "lucide",
+                                      "fill": "$outline"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "j3Fv6O",
+                              "name": "Status",
+                              "width": 160,
+                              "layout": "vertical",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "thlmr",
+                                  "name": "Label",
+                                  "fill": "$outline",
+                                  "content": "STATUS",
+                                  "fontFamily": "$font-headline",
+                                  "fontSize": 10,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "vYGox",
+                                  "name": "Select",
+                                  "width": "fill_container",
+                                  "fill": "$surface-container",
+                                  "stroke": "$outline-variant",
+                                  "strokeWidth": 1,
+                                  "padding": [
+                                    10,
+                                    12
+                                  ],
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "HlTcE",
+                                      "name": "Value",
+                                      "fill": "$on-surface",
+                                      "content": "All Status",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": "$text-sm",
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "NWNEp",
+                                      "name": "Chevron",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "chevron-down",
+                                      "library": "lucide",
+                                      "fill": "$outline"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "m5X0h",
+                              "name": "Client",
+                              "width": 160,
+                              "layout": "vertical",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "biDnc",
+                                  "name": "Label",
+                                  "fill": "$outline",
+                                  "content": "CLIENT",
+                                  "fontFamily": "$font-headline",
+                                  "fontSize": 10,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "v7BxC9",
+                                  "name": "Select",
+                                  "width": "fill_container",
+                                  "fill": "$surface-container",
+                                  "stroke": "$outline-variant",
+                                  "strokeWidth": 1,
+                                  "padding": [
+                                    10,
+                                    12
+                                  ],
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "E5Apv",
+                                      "name": "Value",
+                                      "fill": "$on-surface",
+                                      "content": "All Clients",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": "$text-sm",
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "RDnCW",
+                                      "name": "Chevron",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "chevron-down",
+                                      "library": "lucide",
+                                      "fill": "$outline"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "g9MG42",
+                              "name": "Model",
+                              "width": 160,
+                              "layout": "vertical",
+                              "gap": 8,
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "id": "JityS",
+                                  "name": "Label",
+                                  "fill": "$outline",
+                                  "content": "MODEL",
+                                  "fontFamily": "$font-headline",
+                                  "fontSize": 10,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 2
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "p7ZIml",
+                                  "name": "Select",
+                                  "width": "fill_container",
+                                  "fill": "$surface-container",
+                                  "stroke": "$outline-variant",
+                                  "strokeWidth": 1,
+                                  "padding": [
+                                    10,
+                                    12
+                                  ],
+                                  "justifyContent": "space_between",
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "x4hEu",
+                                      "name": "Value",
+                                      "fill": "$on-surface",
+                                      "content": "All Models",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": "$text-sm",
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "icon",
+                                      "id": "IFD2z",
+                                      "name": "Chevron",
+                                      "width": 16,
+                                      "height": 16,
+                                      "icon": "chevron-down",
+                                      "library": "lucide",
+                                      "fill": "$outline"
+                                    }
+                                  ]
                                 }
                               ]
                             }
@@ -35944,202 +36150,7 @@
                         },
                         {
                           "type": "frame",
-                          "id": "j3Fv6O",
-                          "name": "Status",
-                          "width": 176,
-                          "layout": "vertical",
-                          "gap": 8,
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "thlmr",
-                              "name": "Label",
-                              "fill": "$outline",
-                              "content": "STATUS",
-                              "fontFamily": "$font-headline",
-                              "fontSize": 10,
-                              "fontWeight": "700",
-                              "letterSpacing": 2
-                            },
-                            {
-                              "type": "frame",
-                              "id": "vYGox",
-                              "name": "Select",
-                              "width": "fill_container",
-                              "fill": "$surface-container",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                10,
-                                12
-                              ],
-                              "justifyContent": "space_between",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "HlTcE",
-                                  "name": "Value",
-                                  "fill": "$on-surface",
-                                  "content": "All Status",
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": "$text-sm",
-                                  "fontWeight": "normal"
-                                },
-                                {
-                                  "type": "icon",
-                                  "id": "NWNEp",
-                                  "name": "Chevron",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "chevron-down",
-                                  "library": "lucide",
-                                  "fill": "$outline"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "m5X0h",
-                          "name": "Client",
-                          "width": 176,
-                          "layout": "vertical",
-                          "gap": 8,
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "biDnc",
-                              "name": "Label",
-                              "fill": "$outline",
-                              "content": "CLIENT",
-                              "fontFamily": "$font-headline",
-                              "fontSize": 10,
-                              "fontWeight": "700",
-                              "letterSpacing": 2
-                            },
-                            {
-                              "type": "frame",
-                              "id": "v7BxC9",
-                              "name": "Select",
-                              "width": "fill_container",
-                              "fill": "$surface-container",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                10,
-                                12
-                              ],
-                              "justifyContent": "space_between",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "E5Apv",
-                                  "name": "Value",
-                                  "fill": "$on-surface",
-                                  "content": "All Clients",
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": "$text-sm",
-                                  "fontWeight": "normal"
-                                },
-                                {
-                                  "type": "icon",
-                                  "id": "RDnCW",
-                                  "name": "Chevron",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "chevron-down",
-                                  "library": "lucide",
-                                  "fill": "$outline"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "g9MG42",
-                          "name": "Model",
-                          "width": 176,
-                          "layout": "vertical",
-                          "gap": 8,
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "JityS",
-                              "name": "Label",
-                              "fill": "$outline",
-                              "content": "MODEL",
-                              "fontFamily": "$font-headline",
-                              "fontSize": 10,
-                              "fontWeight": "700",
-                              "letterSpacing": 2
-                            },
-                            {
-                              "type": "frame",
-                              "id": "p7ZIml",
-                              "name": "Select",
-                              "width": "fill_container",
-                              "fill": "$surface-container",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                10,
-                                12
-                              ],
-                              "justifyContent": "space_between",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "x4hEu",
-                                  "name": "Value",
-                                  "fill": "$on-surface",
-                                  "content": "All Models",
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": "$text-sm",
-                                  "fontWeight": "normal"
-                                },
-                                {
-                                  "type": "icon",
-                                  "id": "IFD2z",
-                                  "name": "Chevron",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "chevron-down",
-                                  "library": "lucide",
-                                  "fill": "$outline"
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "s3545",
-                      "name": "Toolbar",
-                      "width": "fill_container",
-                      "gap": 16,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "OuPMN",
-                          "name": "Total",
-                          "fill": "$outline",
-                          "content": "94 total logs found",
-                          "fontFamily": "$font-mono-render",
-                          "fontSize": 11,
-                          "fontWeight": "normal",
-                          "fontStyle": "italic"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "Xx2lb",
+                          "id": "pj2KZ",
                           "name": "Spacer",
                           "width": "fill_container",
                           "height": 1
@@ -36148,20 +36159,9 @@
                           "type": "frame",
                           "id": "LSY6j",
                           "name": "Actions",
-                          "gap": 8,
+                          "gap": 16,
                           "alignItems": "center",
                           "children": [
-                            {
-                              "type": "text",
-                              "id": "QXBaj",
-                              "name": "Paused note",
-                              "fill": "$outline",
-                              "content": "paused while a row is open",
-                              "fontFamily": "$font-mono-render",
-                              "fontSize": 11,
-                              "fontWeight": "normal",
-                              "fontStyle": "italic"
-                            },
                             {
                               "type": "frame",
                               "id": "EP6EQ",
@@ -36214,6 +36214,16 @@
                                   "alignItems": "center",
                                   "children": [
                                     {
+                                      "type": "icon",
+                                      "id": "B550S",
+                                      "name": "Paused",
+                                      "width": 14,
+                                      "height": 14,
+                                      "icon": "pause",
+                                      "library": "lucide",
+                                      "fill": "$outline"
+                                    },
+                                    {
                                       "type": "text",
                                       "id": "moQQP",
                                       "name": "Value",
@@ -36239,64 +36249,101 @@
                             },
                             {
                               "type": "frame",
-                              "id": "DS93E",
-                              "name": "Export CSV",
-                              "stroke": "$primary-container",
-                              "strokeWidth": 1,
-                              "padding": [
-                                8,
-                                16
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "I0Ogkh",
-                                  "name": "Label",
-                                  "fill": "$primary-container",
-                                  "content": "EXPORT CSV",
-                                  "fontFamily": "$font-headline",
-                                  "fontSize": 11,
-                                  "fontWeight": "700"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "t0AXN",
-                              "name": "Clear All",
-                              "fill": "$danger-surface",
+                              "id": "EdaL4",
+                              "name": "Data actions",
                               "gap": 8,
-                              "padding": [
-                                9,
-                                16
-                              ],
                               "alignItems": "center",
                               "children": [
                                 {
-                                  "type": "icon",
-                                  "id": "eYqnD",
-                                  "name": "Icon",
-                                  "width": 14,
-                                  "height": 14,
-                                  "icon": "filter_list_off",
-                                  "library": "Material Symbols Outlined",
-                                  "fill": "$status-fail"
+                                  "type": "frame",
+                                  "id": "DS93E",
+                                  "name": "Export CSV",
+                                  "stroke": "$primary-container",
+                                  "strokeWidth": 1,
+                                  "padding": [
+                                    8,
+                                    16
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "I0Ogkh",
+                                      "name": "Label",
+                                      "fill": "$primary-container",
+                                      "content": "EXPORT CSV",
+                                      "fontFamily": "$font-headline",
+                                      "fontSize": 11,
+                                      "fontWeight": "700"
+                                    }
+                                  ]
                                 },
                                 {
-                                  "type": "text",
-                                  "id": "Kbj5M",
-                                  "name": "Label",
-                                  "fill": "$status-fail",
-                                  "content": "CLEAR ALL",
-                                  "fontFamily": "$font-headline",
-                                  "fontSize": 11,
-                                  "fontWeight": "700",
-                                  "letterSpacing": 1.4
+                                  "type": "frame",
+                                  "id": "t0AXN",
+                                  "name": "Clear All",
+                                  "fill": "$danger-surface",
+                                  "gap": 8,
+                                  "padding": [
+                                    9,
+                                    16
+                                  ],
+                                  "alignItems": "center",
+                                  "children": [
+                                    {
+                                      "type": "icon",
+                                      "id": "eYqnD",
+                                      "name": "Icon",
+                                      "width": 14,
+                                      "height": 14,
+                                      "icon": "filter_list_off",
+                                      "library": "Material Symbols Outlined",
+                                      "fill": "$status-fail"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "Kbj5M",
+                                      "name": "Label",
+                                      "fill": "$status-fail",
+                                      "content": "CLEAR ALL",
+                                      "fontFamily": "$font-headline",
+                                      "fontSize": 11,
+                                      "fontWeight": "700",
+                                      "letterSpacing": 1.4
+                                    }
+                                  ]
                                 }
                               ]
                             }
                           ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "s3545",
+                      "name": "Toolbar",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "OuPMN",
+                          "name": "Total",
+                          "fill": "$outline",
+                          "content": "94 total logs found",
+                          "fontFamily": "$font-mono-render",
+                          "fontSize": 11,
+                          "fontWeight": "normal",
+                          "fontStyle": "italic"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Xx2lb",
+                          "name": "Spacer",
+                          "width": "fill_container",
+                          "height": 1
                         }
                       ]
                     }
