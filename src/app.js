@@ -139,6 +139,11 @@ function adminSecurityHeaders(req, res, next) {
   next();
 }
 
+// `/admin` is the address the README and `shellm init` print; the page lives one level down.
+app.get('/admin', adminAuth, (_req, res) => {
+  res.redirect(302, '/admin/dashboard/');
+});
+
 // The dashboard page itself requires auth
 app.get('/admin/dashboard/', adminAuth, adminSecurityHeaders, (_req, res) => {
   res.type('html').send(dashboardHtml());

@@ -94,7 +94,7 @@ experiment its own key and the dashboard answers which of them is worth paying f
 Requires Node.js 24 and a logged-in `claude` (or `codex`) on the same machine.
 
 ```bash
-git clone git@github.com:rodacato/SheLLM.git && cd SheLLM
+git clone https://github.com/rodacato/SheLLM.git && cd SheLLM
 npm install && npm link    # dependencies and the shellm command
 shellm init                # config file, Claude token, first API key, checks
 shellm start
@@ -109,6 +109,8 @@ sends one real request.
 Then, with the key it printed:
 
 ```bash
+export SHELLM_KEY=shellm-...   # the key init printed, shown once
+
 curl http://127.0.0.1:6100/v1/chat/completions \
   -H "Authorization: Bearer $SHELLM_KEY" -H "Content-Type: application/json" \
   -d '{"model": "claude-haiku", "messages": [{"role": "user", "content": "Hello"}]}'
