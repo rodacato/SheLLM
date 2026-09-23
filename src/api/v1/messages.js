@@ -2,6 +2,7 @@ const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releas
 const { sanitize } = require('../../middleware/sanitize');
 const { invalidRequest, fromCatchable, sendAnthropicError } = require('../../errors');
 const { initSSE, announceQueued } = require('../../lib/sse');
+const { shellmMeta } = require('../../lib/shellm-meta');
 const {
   sendMessageStart, sendContentBlockStart, sendContentBlockDelta,
   sendContentBlockStop, sendMessageDelta, sendMessageStop, sendStreamError,
@@ -240,6 +241,11 @@ async function messagesHandler(req, res) {
         input_tokens: result.usage?.input_tokens ?? 0,
         output_tokens: result.usage?.output_tokens ?? 0,
       },
+      x_shellm: shellmMeta({
+        cost_usd: result.cost_usd ?? null,
+        queue_ms: result.queued_ms ?? null,
+        cli_ms: result.duration_ms != null ? result.duration_ms - (result.queued_ms ?? 0) : null,
+      }),
     });
   } catch (catchErr) {
     const errObj = fromCatchable(catchErr, model);
@@ -292,10 +298,14 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
   const responseModel = model;
   let slotAcquired = false;
   let stopQueueNotices = null;
+  let queuedMs = null;
+  let cliStart = null;
 
   try {
     await queue.enqueue(async ({ queued_ms }) => {
       if (stopQueueNotices) stopQueueNotices();
+      queuedMs = queued_ms;
+      cliStart = Date.now();
       res.locals.queued_ms = queued_ms;
       // Stream concurrency check (inside queue to avoid holding slots while waiting)
       if (!acquireStreamSlot()) {
@@ -345,7 +355,16 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
       if (!ac.signal.aborted) {
         const outputTokens = reportedUsage?.output_tokens ?? Math.ceil(totalChars / 4);
         sendContentBlockStop(res, 0);
-        sendMessageDelta(res, 'end_turn', outputTokens, ttftMs);
+        sendMessageDelta(res, 'end_turn', outputTokens, {
+          ttft_ms: ttftMs,
+          input_tokens: reportedUsage?.input_tokens ?? null,
+          meta: shellmMeta({
+            cost_usd: res.locals.cost_usd ?? null,
+            queue_ms: queuedMs,
+            cli_ms: cliStart == null ? null : Date.now() - cliStart,
+            ttft_ms: ttftMs,
+          }),
+        });
         sendMessageStop(res);
         logger.debug({ event: 'stream_complete', format: 'anthropic', ttft_ms: ttftMs, request_id: req.requestId });
       }

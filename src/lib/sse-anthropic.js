@@ -48,13 +48,17 @@ function sendContentBlockStop(res, index) {
   });
 }
 
-function sendMessageDelta(res, stopReason, outputTokens, ttftMs) {
+function sendMessageDelta(res, stopReason, outputTokens, { ttft_ms, input_tokens, meta } = {}) {
   const data = {
     type: 'message_delta',
     delta: { stop_reason: stopReason, stop_sequence: null },
     usage: { output_tokens: outputTokens },
   };
-  if (ttftMs != null) data.shellm = { ttft_ms: ttftMs };
+  // message_start could only estimate the input, so the real count lands here once the CLI has
+  // reported it — which is where the API puts it too.
+  if (input_tokens != null) data.usage.input_tokens = input_tokens;
+  if (ttft_ms != null) data.shellm = { ttft_ms };
+  if (meta) data.x_shellm = meta;
   sendEvent(res, 'message_delta', data);
 }
 
