@@ -11,18 +11,31 @@
 ### Development Setup
 
 ```bash
-# Clone and install
-git clone git@github.com:rodacato/SheLLM.git && cd shellm
+git clone https://github.com/rodacato/SheLLM.git && cd SheLLM
 npm install
-npm link    # makes `shellm` CLI available globally
+npm link                   # puts `shellm` on PATH; or call `node src/cli.js` directly
 
-# Start in development mode (auto-restart on changes)
-shellm start
-# or: npm run dev
+shellm init                # config file, first API key, admin password, checks
+npm run dev                # starts on :6100 and restarts on changes
 
-# Run tests
 npm test
 ```
+
+`shellm init` is not optional. Without it there is no config file, so every `/v1/*` request
+answers `401 auth_required` and every `/admin/*` route answers `501 admin_disabled`. It prints the
+API key and the admin password once — that is the only time either is shown.
+
+Four scripts worth knowing:
+
+| Command | What it does |
+|---|---|
+| `npm run seed` | Three demo keys and a synthetic request log, so the dashboard has something to render |
+| `npm run smoke` | End-to-end check against a running server |
+| `npm run migrate` | Applies pending SQL migrations |
+| `npm run catalog:build` | Rebuilds the baked model catalog from the CLIs |
+
+`npm install` also sets `core.hooksPath` to `scripts/`, which installs the pre-commit hook that
+lints and scans staged changes for secrets.
 
 ### Using the Dev Container
 

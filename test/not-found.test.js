@@ -44,6 +44,18 @@ describe('entry point and unmatched routes', () => {
     assert.match(login.text, /<form method="post" action="\/admin\/login">/);
   });
 
+  it('sends an authenticated /admin to the dashboard rather than answering 404', async () => {
+    const res = await request(app).get('/admin').set('Accept', 'text/html').auth('any-username', PASSWORD);
+    assert.strictEqual(res.status, 302);
+    assert.strictEqual(res.headers.location, '/admin/dashboard/');
+  });
+
+  it('sends /admin without a session to the login page', async () => {
+    const res = await request(app).get('/admin').set('Accept', 'text/html');
+    assert.strictEqual(res.status, 302);
+    assert.match(res.headers.location, /^\/admin\/login\?next=/);
+  });
+
   it('answers a client on the root with JSON, not a redirect', async () => {
     const res = await request(app).get('/').set('Accept', 'application/json');
     assert.strictEqual(res.status, 404);

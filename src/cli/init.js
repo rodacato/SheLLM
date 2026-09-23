@@ -67,6 +67,11 @@ function printUsage(config, rawKey) {
 Start SheLLM:
   shellm start
 
+Dashboard:
+  ${base}/admin/dashboard/
+  Any username works unless SHELLM_ADMIN_USER is set; the password is
+  SHELLM_ADMIN_PASSWORD in ${CONFIG_FILE}
+
 Try it:
   curl ${base}/v1/chat/completions \\
     -H "Authorization: Bearer ${key}" -H "Content-Type: application/json" \\
@@ -98,6 +103,9 @@ async function run() {
 
   const rawKey = ensureApiKey();
   if (rawKey) console.log(`\nAPI key (shown once, store it now): ${rawKey}`);
+  if (additions.SHELLM_ADMIN_PASSWORD) {
+    console.log(`Admin password (shown once, store it now): ${additions.SHELLM_ADMIN_PASSWORD}`);
+  }
 
   printUsage(config, rawKey);
 
