@@ -216,6 +216,27 @@ describe('the System page reads the settings it renders', () => {
     assert.strictEqual(line('SHELLM_HMAC_SECRET'), 'SHELLM_HMAC_SECRET=', 'the mask was offered as a value to paste');
   });
 
+  // Collapsed is the resting state on a host with nothing to act on, so the header has to carry
+  // the reason to open it — and the section must open itself when there is one.
+  it('collapses when there is nothing new, and opens itself when there is', async () => {
+    const page = await loaded();
+    assert.strictEqual(page.settingsExpanded, true, 'a release added a setting and the section stayed shut');
+    assert.match(page.settingsSummary, /Write them in \/home\/shellmer/);
+
+    page.unseenSettings = [];
+    assert.strictEqual(page.settingsExpanded, false, 'nothing is new and the table is still in the way');
+    assert.strictEqual(page.settingsSummary, '3 settings');
+
+    page.settingsOpen = !page.settingsExpanded;
+    assert.strictEqual(page.settingsExpanded, true, 'a click does not open it');
+  });
+
+  it('puts the reason to open it in the header while it is shut', async () => {
+    const page = await loaded();
+    page.settingsOpen = false;
+    assert.strictEqual(page.settingsSummary, '1 setting is available and not set in your config');
+  });
+
   it('says it could not read, rather than rendering an empty table as the answer', async () => {
     const page = loadSystemPage(answer(500, { error: 'boom' }));
     await page.fetchConfig();
@@ -274,6 +295,7 @@ describe('the System page shows what the release added', () => {
       assert.ok(block.includes(`>${column}</th>`), `the table lost its ${column} column`);
     }
     assert.ok(block.includes('x-text="settingValue(setting)"'), 'the value cell reads nothing');
-    assert.match(block, /x-text="'Write them in ' \+ configFile"/, 'the page never says which file to write');
+    assert.match(block, /x-text="settingsSummary"/, 'the header renders nothing');
   });
+
 });
