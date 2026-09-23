@@ -14,18 +14,59 @@ function keysPage() {
     auditLogs: [],
     auditError: null,
     showAudit: false,
+    copied: null,
+    copyError: null,
 
     get baseUrl() {
       return window.location.origin;
     },
 
-    // The two base URLs differ on purpose: the OpenAI clients append /v1 to nothing, the Anthropic
-    // ones append it themselves.
-    get usageSnippet() {
+    get snippets() {
       const key = this.newKeyResult?.raw_key;
-      if (!key) return '';
-      return `export OPENAI_BASE_URL=${this.baseUrl}/v1 OPENAI_API_KEY=${key}\n`
-        + `export ANTHROPIC_BASE_URL=${this.baseUrl} ANTHROPIC_API_KEY=${key}`;
+      return key ? this.snippetsFor(key) : [];
+    },
+
+    // The same two lines answer "how do I use this?" for a key created long ago, whose own value
+    // is unrecoverable — so the page states them with a placeholder instead of only at creation.
+    get sampleSnippets() {
+      return this.snippetsFor('$SHELLM_KEY');
+    },
+
+    snippetsFor(key) {
+      return [
+        {
+          id: 'openai',
+          label: 'OpenAI SDKs',
+          help: 'Read the base URL as given, so it carries /v1.',
+          command: `export OPENAI_BASE_URL=${this.baseUrl}/v1 OPENAI_API_KEY=${key}`,
+        },
+        {
+          id: 'anthropic',
+          label: 'Anthropic SDKs',
+          help: 'Append /v1 themselves, so the base URL must not carry it.',
+          command: `export ANTHROPIC_BASE_URL=${this.baseUrl} ANTHROPIC_API_KEY=${key}`,
+        },
+      ];
+    },
+
+    // The key is legible exactly once and the banner renders at the top of the page, so a key
+    // created from the modal with the table scrolled down would appear off-screen.
+    showNewKey(result) {
+      this.newKeyResult = result;
+      window.scrollTo(0, 0);
+    },
+
+    async copy(id, text) {
+      if (await copyToClipboard(text)) {
+        this.copied = id;
+        this.copyError = null;
+        setTimeout(() => { if (this.copied === id) this.copied = null; }, 1500);
+        return;
+      }
+      // Left standing until the next attempt: it is the only thing telling the operator to fall
+      // back to selecting the text by hand.
+      this.copyError = id;
+      this.copied = null;
     },
 
     async fetchKeys() {
@@ -75,7 +116,7 @@ function keysPage() {
         });
         if (res.ok) {
           const data = await res.json();
-          this.newKeyResult = { ...data.key, action: 'created' };
+          this.showNewKey({ ...data.key, action: 'created' });
           this.createForm = { name: '', rpm: 10, models: '', expires_at: '', description: '' };
           this.showCreateModal = false;
           await this.fetchKeys();
@@ -163,7 +204,7 @@ function keysPage() {
           return alert(err.message || 'Failed to rotate key');
         }
         const data = await res.json();
-        this.newKeyResult = { ...data.key, name: key.name, action: 'rotated' };
+        this.showNewKey({ ...data.key, name: key.name, action: 'rotated' });
         await this.fetchKeys();
         await this.fetchAuditLogs();
       } catch { alert('Network error'); }

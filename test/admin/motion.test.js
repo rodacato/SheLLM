@@ -53,6 +53,19 @@ describe('motion is two durations and one curve', () => {
     assert.deepStrictEqual(offenders, [], offenders.join('\n'));
   });
 
+  // The scale is two durations, and a transition with no token is not outside it by naming a third
+  // value — it is outside it by silently taking Tailwind's 150ms default.
+  it('has no view animating at a duration it never names', () => {
+    const offenders = [];
+    for (const file of views()) {
+      const text = fs.readFileSync(file, 'utf8');
+      for (const [, classes] of text.matchAll(/class="([^"]*\btransition-[a-z]+\b[^"]*)"/g)) {
+        if (!/\bduration-(fast|move)\b/.test(classes)) offenders.push(`${path.relative(ADMIN, file)}: ${classes.trim().slice(0, 60)}`);
+      }
+    }
+    assert.deepStrictEqual(offenders, [], offenders.join('\n'));
+  });
+
   it('has nobody retyping the curve, and no second curve in the stylesheet', () => {
     const outsideRoot = css.replace(root, '');
     assert.strictEqual(outsideRoot.includes('cubic-bezier'), false,
