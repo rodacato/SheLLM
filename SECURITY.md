@@ -49,11 +49,11 @@ Client API keys are managed via the Admin API (`/admin/keys`). Keys are stored h
 - **Production**: Database file stored on VPS (owned by `shellmer` user, mode 600, directory mode 700)
 - **Development**: In-memory or file DB — when no keys exist and `SHELLM_REQUIRE_AUTH=false`, auth is disabled
 - **Key expiration**: Expired keys are automatically marked inactive by a daily cleanup job
-- **Pre-commit hook**: `scripts/pre-commit` scans staged changes for secret patterns (`sk-*`, `csk-*`, hardcoded keys). Install with `cp scripts/pre-commit .git/hooks/pre-commit`
+- **Pre-commit hook**: `scripts/pre-commit` scans staged changes for client keys (`shellm-<32 hex>`), provider API keys (`sk-…`) and a literal `CLAUDE_CODE_OAUTH_TOKEN`. `npm install` installs it by pointing `core.hooksPath` at `scripts/`
 
 ### Auth Token Handling
 
-SheLLM manages auth tokens for three CLI tools. These tokens are **equivalent to API keys** and must be treated accordingly.
+SheLLM manages auth tokens for two CLI tools. These tokens are **equivalent to API keys** and must be treated accordingly.
 
 | Provider | Token Location | Persistence |
 |---|---|---|
@@ -62,8 +62,8 @@ SheLLM manages auth tokens for three CLI tools. These tokens are **equivalent to
 
 **Rules:**
 
-- Auth token directories live in the `shellmer` user's home directory on the VPS — never committed to version control
-- `.gitignore` excludes auth directories
+- Auth token directories live in the `shellmer` user's home directory on the VPS, outside the
+  checkout entirely — there is nothing for `.gitignore` to exclude
 - Auth tokens should be rotated by running `sudo -iu shellmer` then `<cli> auth login`
 
 ## Input Handling
@@ -99,11 +99,18 @@ All user-supplied input passes through sanitization before reaching a CLI subpro
 
 ### Claude CLI `--dangerously-skip-permissions`
 
-The Claude CLI provider uses `--dangerously-skip-permissions` for non-interactive mode. This gives the LLM unrestricted tool use within the container. **Compensating controls:**
+The Claude CLI provider uses `--dangerously-skip-permissions` so a one-shot request never stops to
+ask. The flag removes the prompt, not the sandbox. **Compensating controls:**
 
-- Container runs with `read_only: true` filesystem
-- Process runs as non-root user
-- Configurable via `SHELLM_CLAUDE_SKIP_PERMISSIONS=false` to disable the flag
+- The CLI's own tools are off — `--tools ''`, plus `--disable-slash-commands`,
+  `--strict-mcp-config` and `disableAllHooks` ([ADR-0002](docs/adr/0002-cli-internal-tools-off.md)).
+  There is nothing for skipped permissions to authorize.
+- Each request runs in an empty working directory, so a tool that did run would find no code.
+- The systemd unit sandboxes the process and every CLI it spawns: `ProtectSystem=strict`,
+  `ReadOnlyPaths=/home/shellmer/shellm` (the service cannot write the code it runs),
+  `PrivateTmp=yes`, `NoNewPrivileges=yes`.
+- The service runs as the unprivileged `shellmer` user, never root.
+- `SHELLM_CLAUDE_SKIP_PERMISSIONS=false` disables the flag.
 
 ### Claude CLI Installer
 
@@ -111,7 +118,7 @@ The Claude CLI provider uses `--dangerously-skip-permissions` for non-interactiv
 
 ### CSP `unsafe-inline` / `unsafe-eval`
 
-The admin dashboard CSP allows `unsafe-inline` and `unsafe-eval` for Tailwind CSS CDN and Alpine.js. Mitigated by: dashboard is behind Basic auth, not public-facing.
+The admin dashboard CSP allows `unsafe-inline` and `unsafe-eval` for Tailwind CSS CDN and Alpine.js. Mitigated by: the dashboard requires admin authentication — an HMAC-signed session cookie in the browser, HTTP Basic for scripts — and is not public-facing.
 
 ## What This Service Does NOT Protect Against
 

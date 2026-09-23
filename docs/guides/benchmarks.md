@@ -135,7 +135,13 @@ client, as long as you stay at this scale.
 
 ## What this says about the warm pool
 
-Decision 4 in [`IDENTITY.md`](../IDENTITY.md) says latency gets fixed by keeping processes warm.
+> **Superseded.** [ADR-0006](../adr/0006-spawn-per-request-stays.md) dropped the warm pool, and
+> the "2.2 s per request is process startup" figure below is wrong — it subtracted network from an
+> end-to-end floor instead of measuring the process. *What a pool would actually save*, further
+> down this file, measures it at **0.9 s**. The section is kept because the dated run stands on its
+> own; read it as the question, not the answer.
+
+Decision 4 in [`IDENTITY.md`](../IDENTITY.md) said latency gets fixed by keeping processes warm.
 The server numbers do not contradict it, and now it has a baseline to beat:
 
 - The floor for **any** answer is about 2.5 s, of which 0.26 s is network. So roughly **2.2 s per

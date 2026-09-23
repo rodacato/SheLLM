@@ -135,7 +135,7 @@ shortcut is worth leaving the official, unmodified CLI binary.**
 
 ### C6 — `dhh` · Pragmatic simplicity
 
-> *"You are not Google. You have one user and three CLIs."*
+> *"You are not Google. You have one user and two CLIs."*
 
 - **Lens:** the permanent brake. Questions every dependency, layer, config option and abstraction
   against a single-maintainer service with low traffic.

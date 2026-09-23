@@ -243,7 +243,8 @@ batch process at it.
 
 Measured on the production server through a Cloudflare Tunnel, median of 3 ([`benchmarks.md`](./benchmarks.md)):
 
-- A short answer costs about **3 s**, whichever model you pick — the CLI's startup dominates.
+- A short answer costs about **2.5 s**, whichever model you pick — roughly 0.9 s of that is the
+  CLI's startup, which no model choice changes.
 - Prompt size barely matters: a ~4k-token prompt lands within a second of a ten-token one.
 - Answer length is what costs: a 100-word answer ~6 s, a 500-word answer considerably more.
 - Streaming shows the first text at about **1.7 s** with `claude-sonnet`, on either endpoint.
