@@ -7,9 +7,9 @@ function keysPage() {
     loadError: null,
     showCreateModal: false,
     newKeyResult: null,
-    createForm: { name: '', rpm: 10, models: '', expires_at: '', description: '' },
+    createForm: { name: '', rpm: 10, models: '', origins: '', expires_at: '', description: '' },
     editing: null,
-    editForm: { rpm: 10, models: '', expires_at: '', description: '' },
+    editForm: { rpm: 10, models: '', origins: '', expires_at: '', description: '' },
     usagePeriod: '7d',
     auditLogs: [],
     auditError: null,
@@ -69,6 +69,10 @@ function keysPage() {
       this.copied = null;
     },
 
+    splitList(value) {
+      return value.split(',').map((item) => item.trim()).filter(Boolean);
+    },
+
     async fetchKeys() {
       this.loading = true;
       try {
@@ -100,7 +104,10 @@ function keysPage() {
         rpm: parseInt(this.createForm.rpm, 10) || 10,
       };
       if (this.createForm.models.trim()) {
-        body.models = this.createForm.models.split(',').map((m) => m.trim()).filter(Boolean);
+        body.models = this.splitList(this.createForm.models);
+      }
+      if (this.createForm.origins.trim()) {
+        body.origins = this.splitList(this.createForm.origins);
       }
       if (this.createForm.expires_at) {
         body.expires_at = new Date(this.createForm.expires_at).toISOString();
@@ -117,7 +124,7 @@ function keysPage() {
         if (res.ok) {
           const data = await res.json();
           this.showNewKey({ ...data.key, action: 'created' });
-          this.createForm = { name: '', rpm: 10, models: '', expires_at: '', description: '' };
+          this.createForm = { name: '', rpm: 10, models: '', origins: '', expires_at: '', description: '' };
           this.showCreateModal = false;
           await this.fetchKeys();
           await this.fetchAuditLogs();
@@ -133,6 +140,7 @@ function keysPage() {
       this.editForm = {
         rpm: key.rpm,
         models: (key.models || []).join(', '),
+        origins: (key.origins || []).join(', '),
         // datetime-local wants no zone and no seconds, and the API stores UTC without the marker.
         expires_at: key.expires_at ? key.expires_at.replace(' ', 'T').slice(0, 16) : '',
         description: key.description || '',
@@ -146,9 +154,8 @@ function keysPage() {
     async saveEdit(key) {
       const body = {
         rpm: parseInt(this.editForm.rpm, 10) || key.rpm,
-        models: this.editForm.models.trim()
-          ? this.editForm.models.split(',').map((m) => m.trim()).filter(Boolean)
-          : null,
+        models: this.editForm.models.trim() ? this.splitList(this.editForm.models) : null,
+        origins: this.editForm.origins.trim() ? this.splitList(this.editForm.origins) : null,
         expires_at: this.editForm.expires_at ? new Date(this.editForm.expires_at + 'Z').toISOString() : null,
         description: this.editForm.description.trim() || null,
       };

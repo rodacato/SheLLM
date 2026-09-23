@@ -1,4 +1,4 @@
-const { sendApiError, authRequired, rateLimited } = require('../errors');
+const { sendApiError, authRequired, rateLimited, originNotAllowed } = require('../errors');
 const { findClientByKey, listClients } = require('../db');
 const logger = require('../lib/logger');
 
@@ -115,6 +115,15 @@ function createAuthMiddleware() {
     if (!dbClient || !dbClient.active) {
       recordAuthFailure();
       return sendApiError(req, res, authRequired(), req.requestId);
+    }
+
+    // A request without an Origin did not come from a page, so there is nothing to scope. The
+    // list is a guardrail against a key ending up on the wrong site, not authentication: a
+    // non-browser caller holding the key can send any Origin it likes, or none.
+    const origin = req.headers.origin;
+    if (origin && dbClient.origins?.length > 0 && !dbClient.origins.includes(origin)) {
+      logger.warn({ event: 'origin_rejected', client: dbClient.name, origin, request_id: req.requestId });
+      return sendApiError(req, res, originNotAllowed(origin), req.requestId);
     }
 
     const clientName = dbClient.name;

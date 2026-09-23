@@ -116,6 +116,7 @@
                   <td class="px-4 py-3 font-mono text-xs">
                     <span class="text-on-surface" x-text="key.rpm + ' rpm'"></span>
                     <span class="text-outline block mt-0.5" x-text="key.models ? key.models.join(', ') : 'all models'"></span>
+                    <span x-show="key.origins && key.origins.length" class="text-outline block mt-0.5" x-text="'browser: ' + (key.origins || []).join(', ')"></span>
                   </td>
                   <td class="px-4 py-3 font-mono text-xs">
                     <template x-if="key.usage && key.usage.requests > 0">
@@ -179,6 +180,10 @@
                         <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Description</label>
                         <input type="text" x-model="editForm.description" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
                       </div>
+                      <div class="md:col-span-2">
+                        <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Browser origins (blank = any caller)</label>
+                        <input type="text" x-model="editForm.origins" placeholder="https://rodacato.github.io, http://localhost:5173" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                      </div>
                     </div>
                     <div class="flex gap-3 mt-4">
                       <button @click="saveEdit(key)"
@@ -237,6 +242,12 @@
                 <input type="text" x-model="createForm.models"
                   class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"
                   placeholder="claude, codex">
+              </div>
+              <div>
+                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Browser origins (comma-separated, blank = any caller)</label>
+                <input type="text" x-model="createForm.origins"
+                  class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"
+                  placeholder="https://rodacato.github.io">
               </div>
               <div>
                 <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Expires At (optional)</label>
