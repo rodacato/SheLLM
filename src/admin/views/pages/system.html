@@ -239,11 +239,17 @@
           class="text-outline text-sm font-mono">No providers configured.</p>
 
         <!-- ================= SETTINGS ================= -->
-        <div class="flex items-baseline gap-3 mb-3">
+        <!-- mt-8 rather than the spacing the other sections inherit: providers ends in its error
+             and empty paragraphs, not in a card carrying mb-8. -->
+        <button type="button" @click="settingsOpen = !settingsExpanded"
+          class="flex items-baseline gap-3 w-full text-left mt-8 mb-3 cursor-pointer">
           <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Settings</span>
-          <span class="text-[10px] text-outline" x-show="configFile" x-text="'Write them in ' + configFile"></span>
-        </div>
-        <div class="bg-surface-container p-5 mb-8">
+          <span class="text-[10px]" :class="!settingsExpanded && unseenSettings.length > 0 ? 'text-status-warn' : 'text-outline'"
+            x-text="settingsSummary"></span>
+          <span class="material-symbols-outlined text-[16px] text-outline ml-auto"
+            x-text="settingsExpanded ? 'expand_less' : 'expand_more'"></span>
+        </button>
+        <div class="bg-surface-container p-5 mb-8" x-show="settingsExpanded" x-cloak>
 
           <!-- The first thing an operator sees after an update: what the release added and they
                have not set. A setting nobody is told about is one nobody uses. -->

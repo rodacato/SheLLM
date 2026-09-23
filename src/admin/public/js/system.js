@@ -34,6 +34,9 @@ function systemPage() {
     unseenSettings: [],
     configFile: null,
     restartCommand: null,
+    // null until someone clicks: until then the section follows the data, so a release that added
+    // something opens itself and a quiet one stays out of the way.
+    settingsOpen: null,
     configError: null,
     configLoaded: false,
 
@@ -140,6 +143,17 @@ function systemPage() {
         this.configError = err.message;
       }
       this.configLoaded = true;
+    },
+
+    get settingsExpanded() {
+      return this.settingsOpen === null ? this.unseenSettings.length > 0 : this.settingsOpen;
+    },
+
+    // Open, the header says where to write; closed, it says why you would open it.
+    get settingsSummary() {
+      if (this.settingsExpanded) return this.configFile ? `Write them in ${this.configFile}` : '';
+      if (this.unseenSettings.length > 0) return this.unseenHeadline;
+      return `${this.settings.length} settings`;
     },
 
     get unseenHeadline() {
