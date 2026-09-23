@@ -4,7 +4,6 @@ const { execFile } = require('node:child_process');
 const fs = require('node:fs');
 const { CONFIG_FILE } = require('./paths');
 const config = require('../config');
-const { unseen } = require('./config');
 
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);
 const CLAUDE_INSTALL = 'curl -fsSL https://claude.ai/install.sh | bash';
@@ -86,7 +85,7 @@ async function checkLive() {
 // Settings a release introduced that this config has never been shown. The operator learns about
 // a new knob here rather than from a failure weeks later; `shellm config --new` prints them.
 function checkNewSettings() {
-  const names = unseen();
+  const names = config.unseen();
   if (names.length === 0) return pass('Settings', 'nothing new since this release');
   return warn('Settings', `${names.length} available and unset: ${names.join(', ')}`, 'shellm config --new');
 }
