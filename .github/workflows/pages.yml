@@ -7,7 +7,6 @@ on:
       - 'site/**'
       - 'assets/**'
       - 'docs/api/**'
-      - 'design/exports/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
