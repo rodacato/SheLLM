@@ -1,7 +1,7 @@
 const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../../routing');
 const { sanitize } = require('../../middleware/sanitize');
 const { invalidRequest, fromCatchable, sendAnthropicError } = require('../../errors');
-const { initSSE } = require('../../lib/sse');
+const { initSSE, announceQueued } = require('../../lib/sse');
 const {
   sendMessageStart, sendContentBlockStart, sendContentBlockDelta,
   sendContentBlockStop, sendMessageDelta, sendMessageStop, sendStreamError,
@@ -222,6 +222,8 @@ async function messagesHandler(req, res) {
     res.set('X-Powered-By', 'SheLLM');
     res.set('X-Queue-Depth', String(queue.stats.pending));
     res.set('X-Queue-Active', String(queue.stats.active));
+    res.set('x-shellm-queue-ms', String(result.queued_ms ?? 0));
+    res.set('x-shellm-queue-position', String(result.queue_position ?? 0));
     if (result.original_provider) {
       res.set('X-SheLLM-Fallback-Provider', result.provider);
     }
@@ -271,6 +273,9 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
   let ttftMs = null;
   const ac = new AbortController();
   res.set('X-Powered-By', 'SheLLM');
+  // Read before the headers go out: once they are flushed nothing else can be added, and the
+  // queue cannot move between this line and enqueue below.
+  res.set('x-shellm-queue-position', String(queue.nextPosition));
   initSSE(res);
 
   // Client disconnect detection
@@ -286,9 +291,12 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
   const id = `msg_${req.requestId}`;
   const responseModel = model;
   let slotAcquired = false;
+  let stopQueueNotices = null;
 
   try {
-    await queue.enqueue(async () => {
+    await queue.enqueue(async ({ queued_ms }) => {
+      if (stopQueueNotices) stopQueueNotices();
+      res.locals.queued_ms = queued_ms;
       // Stream concurrency check (inside queue to avoid holding slots while waiting)
       if (!acquireStreamSlot()) {
         sendStreamError(res, new Error('Too many concurrent streams, try again later'));
@@ -341,7 +349,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
         sendMessageStop(res);
         logger.debug({ event: 'stream_complete', format: 'anthropic', ttft_ms: ttftMs, request_id: req.requestId });
       }
-    });
+    }, `${provider.name} · ${model}`, { onQueued: (position) => { stopQueueNotices = announceQueued(res, position); } });
   } catch (err) {
     recordFailure(provider.name);
     logger.debug({ event: 'stream_error', format: 'anthropic', error: err.message, request_id: req.requestId });
@@ -349,6 +357,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
       sendStreamError(res, err);
     }
   } finally {
+    if (stopQueueNotices) stopQueueNotices();
     if (slotAcquired) releaseStreamSlot();
   }
 }

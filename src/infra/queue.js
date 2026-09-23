@@ -24,21 +24,31 @@ class RequestQueue {
     return this.running.size;
   }
 
-  async enqueue(fn, label = null) {
+  // 0 when a slot is free; otherwise where a request arriving now would land in line. Read it
+  // immediately before enqueue: nothing else runs in between, so the two agree.
+  get nextPosition() {
+    return this.active >= getMaxConcurrent() ? this.pending.length + 1 : 0;
+  }
+
+  async enqueue(fn, label = null, { onQueued } = {}) {
     if (this.pending.length >= getMaxQueueDepth()) {
       logger.warn({ event: 'queue_full', active: this.active, pending: this.pending.length });
       throw rateLimited('Queue is full, try again later');
     }
 
-    if (this.active >= getMaxConcurrent()) {
+    const arrivedAt = this.now();
+    const position = this.nextPosition;
+    if (position > 0) {
+      if (onQueued) onQueued(position);
       await new Promise((resolve) => this.pending.push(resolve));
     }
+    const queued_ms = this.now() - arrivedAt;
 
     const id = this.nextId++;
     this.running.set(id, { startedAt: this.now(), label });
     logger.debug({ event: 'queue_dequeue', active: this.active, pending: this.pending.length });
     try {
-      return await fn();
+      return await fn({ queued_ms, position });
     } finally {
       this.running.delete(id);
       if (this.pending.length > 0) {
