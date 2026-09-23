@@ -62,6 +62,28 @@ async function apiRead(url, options = {}) {
   return res.json();
 }
 
+// A tab nobody is looking at must stop asking. At the intervals this control offers, a dashboard
+// left open overnight would spend the night querying the same event loop that proxies the CLIs.
+// Every page-level read goes through one of these, so the rule is written once.
+function poller(read) {
+  let id = null;
+  let ms = 0;
+
+  const clear = () => { if (id !== null) { clearInterval(id); id = null; } };
+  const arm = () => { clear(); if (ms > 0 && !document.hidden) id = setInterval(read, ms); };
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) return clear();
+    // Returning to a page that stopped reading has to show current data, not wait out a period.
+    if (ms > 0) { read(); arm(); }
+  });
+
+  return {
+    every(next) { ms = next; arm(); },
+    stop() { ms = 0; clear(); },
+  };
+}
+
 // navigator.clipboard is absent on an insecure origin, which a self-hosted install reached over
 // plain http on a LAN address is — a caller has to be able to say so instead of appearing to work.
 async function copyToClipboard(text) {
@@ -248,7 +270,8 @@ function app() {
         if (VALID_PAGES.includes(id)) this.show(id);
       });
       await this.fetchHealth();
-      setInterval(() => this.fetchHealth(), 30000);
+      this._health = poller(() => this.fetchHealth());
+      this._health.every(30000);
     },
     // Keeping the last good reading and saying nothing is how the one element whose job is to
     // report the server is alive went on saying so after it died.
