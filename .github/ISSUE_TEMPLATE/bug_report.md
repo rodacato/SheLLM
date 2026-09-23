@@ -4,6 +4,9 @@ about: Something isn't working as expected
 labels: bug
 ---
 
+> Does this bug expose a credential, bypass authentication, or otherwise describe a weakness?
+> Close this and report it privately: https://github.com/rodacato/SheLLM/security/advisories/new
+
 ## What happened
 
 <!-- A clear description of the bug. -->
@@ -27,7 +30,7 @@ labels: bug
 | Provider | <!-- claude / codex --> |
 | claude version | <!-- run: claude --version --> |
 | OS | <!-- Ubuntu 22.04 / macOS 14 / etc --> |
-| Deployment | <!-- local / Docker / VPS systemd --> |
+| Deployment | <!-- local / VPS systemd --> |
 
 ## Logs
 

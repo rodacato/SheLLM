@@ -13,9 +13,9 @@ if ! npm run lint --silent 2>/dev/null; then
 fi
 
 PATTERNS=(
-  'sk-[a-zA-Z0-9_-]{10,}'     # SheLLM client keys
-  'csk-[a-zA-Z0-9_-]{10,}'    # Cerebras API keys
-  'CEREBRAS_API_KEY=[^$]'      # Hardcoded Cerebras key (not env reference)
+  'shellm-[0-9a-f]{32}'                 # SheLLM client keys, per src/db/clients.js
+  '\bsk-[a-zA-Z0-9_-]{16,}'             # Provider API keys; \b keeps csk- test fixtures out
+  'CLAUDE_CODE_OAUTH_TOKEN=[A-Za-z0-9_-]{16,}' # A literal token, not an env reference
 )
 
 STAGED=$(git diff --cached --name-only --diff-filter=ACM)

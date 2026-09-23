@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/rodacato/SheLLM/security/advisories/new
+    about: Never open a public issue for a security problem. Private reporting is enabled on this repository — use this form. SECURITY.md has the scope and the disclosure timeline.
+  - name: Setup, usage and API reference
+    url: https://rodacato.github.io/SheLLM/
+    about: Installing, the first request, the deployment runbook and the full API contract.
