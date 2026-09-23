@@ -2,6 +2,7 @@ const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releas
 const { sanitize } = require('../../middleware/sanitize');
 const { invalidRequest, fromCatchable, sendOpenAIError } = require('../../errors');
 const { initSSE, announceQueued, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../lib/sse');
+const { shellmMeta } = require('../../lib/shellm-meta');
 
 const MAX_PROMPT_LENGTH = 50000;
 
@@ -115,6 +116,18 @@ function validate(body) {
     }
   }
 
+  if (body.stream_options !== undefined && body.stream_options !== null) {
+    if (body.stream !== true) {
+      return invalidRequest('Field "stream_options" can only be used when "stream" is true');
+    }
+    if (typeof body.stream_options !== 'object' || Array.isArray(body.stream_options)) {
+      return invalidRequest('Field "stream_options" must be an object');
+    }
+    if (body.stream_options.include_usage !== undefined && typeof body.stream_options.include_usage !== 'boolean') {
+      return invalidRequest('Field "stream_options.include_usage" must be a boolean');
+    }
+  }
+
   if (body.stop !== undefined && body.stop !== null) {
     if (typeof body.stop !== 'string' && !Array.isArray(body.stop)) {
       return invalidRequest('Field "stop" must be a string or array of strings');
@@ -221,6 +234,11 @@ async function chatCompletionsHandler(req, res) {
           ? (result.usage.input_tokens + result.usage.output_tokens)
           : null,
       },
+      x_shellm: shellmMeta({
+        cost_usd: result.cost_usd ?? null,
+        queue_ms: result.queued_ms ?? null,
+        cli_ms: result.duration_ms != null ? result.duration_ms - (result.queued_ms ?? 0) : null,
+      }),
     });
   } catch (catchErr) {
     const errObj = fromCatchable(catchErr, model);
@@ -275,11 +293,16 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
   let sentRole = false;
   let slotAcquired = false;
   let stopQueueNotices = null;
+  let queuedMs = null;
+  let cliStart = null;
+  const includeUsage = req.body.stream_options?.include_usage === true;
 
   try {
     logger.debug({ event: 'stream_queue_wait', active: queue.stats.active, pending: queue.stats.pending, request_id: req.requestId });
     await queue.enqueue(async ({ queued_ms }) => {
       if (stopQueueNotices) stopQueueNotices();
+      queuedMs = queued_ms;
+      cliStart = Date.now();
       res.locals.queued_ms = queued_ms;
       logger.debug({ event: 'stream_queue_entered', request_id: req.requestId });
 
@@ -327,9 +350,35 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
 
       // Final chunk with finish_reason + TTFT metric
       if (!ac.signal.aborted) {
+        const meta = shellmMeta({
+          cost_usd: res.locals.cost_usd ?? null,
+          queue_ms: queuedMs,
+          cli_ms: cliStart == null ? null : Date.now() - cliStart,
+          ttft_ms: ttftMs,
+        });
         const finalChunk = { id, object: 'chat.completion.chunk', created, model: responseModel, choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] };
         if (ttftMs != null) finalChunk.shellm = { ttft_ms: ttftMs };
+        finalChunk.x_shellm = meta;
         sendSSEChunk(res, finalChunk);
+
+        // The usage chunk carries no choices and comes last, as the OpenAI API sends it.
+        if (includeUsage) {
+          const usage = res.locals.usage;
+          sendSSEChunk(res, {
+            id,
+            object: 'chat.completion.chunk',
+            created,
+            model: responseModel,
+            choices: [],
+            usage: {
+              prompt_tokens: usage?.input_tokens ?? null,
+              completion_tokens: usage?.output_tokens ?? null,
+              total_tokens: usage ? (usage.input_tokens + usage.output_tokens) : null,
+            },
+            x_shellm: meta,
+          });
+        }
+
         sendSSEDone(res);
         logger.debug({ event: 'stream_complete', ttft_ms: ttftMs, request_id: req.requestId });
       }
