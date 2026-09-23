@@ -64,13 +64,14 @@ describe('a panel looks the same on every page', () => {
 });
 
 describe('a panel is as tall as what it holds', () => {
-  // CSS grid stretches its items, so the Playground's response card was the form's height
-  // whether or not an answer had arrived.
-  it('lets the Playground response card hug its content', () => {
+  // CSS grid stretches its items, so beside the form the response card was the form's height
+  // whether or not an answer had arrived. Stacking removes the constraint rather than working
+  // around it: a single column has no sibling to match, and the response gets the whole width
+  // for a curl, an answer and its stats.
+  it('does not put the Playground response beside the form', () => {
     const text = fs.readFileSync(path.join(PAGES, 'playground.html'), 'utf8');
-    const grid = /<div class="(grid[^"]*lg:grid-cols-2[^"]*)"/.exec(text);
-    assert.ok(grid, 'the two-column grid is gone — this check cannot say anything');
-    assert.match(grid[1], /items-start/, 'the response card stretches to the form again');
+    assert.doesNotMatch(text, /lg:grid-cols-2/, 'the response is beside the form again, where it stretches to its height');
+    assert.match(text, /<div class="grid grid-cols-1 gap-6"/, 'the two panels are no longer a stacked grid');
   });
 });
 

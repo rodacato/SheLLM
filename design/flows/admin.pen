@@ -224,7 +224,7 @@
               "fill": "$on-surface-variant",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "The states this band leaves out are drawn in band 2 below, which exists now: Sign in's 401 and 429, the Playground's three catalog states and its waiting clock, the degraded banner, USAGE LIMIT HIT, and the unreachable or genuinely-empty states on Overview, Logs, Keys and System. That band's brief lists what it still leaves as a string swap, with the copy. What is not drawn here is only what the canvas cannot hold: two of Sign in's four CRT layers are repeating patterns it cannot tile — a 40px dot grid and a 1px/3px line texture — and they carry a CRT TEXTURE NOT MIRRORED note on the artboard with their values and timings. Overview's two chart interiors ARE drawn, from production captures plus the Chart.js config: axes, grid, colours, the dashed now marker and the mark geometry are the code's, and the marks plot this screen's illustrative dataset, not the captures'. One state is deliberately undrawn and is the resting one: Settings collapsed. The section opens itself only when a release added a setting this config does not set, or when the read failed — on a quiet host it is shut, and the header carries the setting count instead of the path. It is a disclosure of the card already drawn here, so what a second artboard would add is the closed header, which the open one already shows with its chevron flipped.",
+              "content": "The states this band leaves out are drawn in band 2 below, which exists now: Sign in's 401 and 429, the Playground's three catalog states and its waiting clock, the degraded banner, USAGE LIMIT HIT, and the unreachable or genuinely-empty states on Overview, Logs, Keys and System. That band's brief lists what it still leaves as a string swap, with the copy. What is not drawn here is only what the canvas cannot hold: two of Sign in's four CRT layers are repeating patterns it cannot tile — a 40px dot grid and a 1px/3px line texture — and they carry a CRT TEXTURE NOT MIRRORED note on the artboard with their values and timings. Overview's two chart interiors ARE drawn, from production captures plus the Chart.js config: axes, grid, colours, the dashed now marker and the mark geometry are the code's, and the marks plot this screen's illustrative dataset, not the captures'. One state is deliberately undrawn and is the resting one: Settings collapsed. The section opens itself only when a release added a setting this config does not set, or when the read failed — on a quiet host it is shut, and the header carries the setting count instead of the path. It is a disclosure of the card already drawn here, so what a second artboard would add is the closed header, which the open one already shows with its chevron flipped. The Keys page's connection card is undrawn open for the same reason and a stronger one: creating a key already renders those two SDK lines with the key in them, so the card is the copy you return to. Its header is drawn closed on all four Keys boards, carrying the base URL, which is the only part of it worth a glance without a click.",
               "lineHeight": 1.6,
               "fontFamily": "$font-mono-render",
               "fontSize": 10,
@@ -8952,287 +8952,49 @@
                 },
                 {
                   "type": "frame",
-                  "id": "V5k2aj",
-                  "name": "Usage",
+                  "id": "eveIU",
+                  "name": "Connection (collapsed)",
                   "width": "fill_container",
-                  "fill": "$surface-container",
-                  "layout": "vertical",
                   "gap": 12,
-                  "padding": 20,
+                  "alignItems": "center",
                   "children": [
                     {
                       "type": "text",
-                      "id": "lIaft",
-                      "name": "Base URL label",
+                      "id": "MsCuG",
+                      "name": "Label",
                       "fill": "$outline",
-                      "content": "BASE URL",
+                      "content": "CONNECTION",
                       "fontFamily": "$font-headline",
                       "fontSize": 10,
                       "fontWeight": "700",
                       "letterSpacing": 2
                     },
                     {
-                      "type": "frame",
-                      "id": "b5CdB",
-                      "name": "Base URL row",
-                      "width": "fill_container",
-                      "gap": 8,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "frame",
-                          "id": "q6mOZ",
-                          "name": "Box",
-                          "width": "fill_container",
-                          "fill": "$surface-container-lowest",
-                          "stroke": "$outline-variant",
-                          "strokeWidth": 1,
-                          "padding": [
-                            12,
-                            16
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "PoPdj",
-                              "name": "Text",
-                              "fill": "$primary-container",
-                              "content": "http://127.0.0.1:6100",
-                              "fontFamily": "$font-mono-render",
-                              "fontSize": 14,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "cPBJ5",
-                          "name": "Copy",
-                          "fill": "$surface-container-lowest",
-                          "stroke": "$outline-variant",
-                          "strokeWidth": 1,
-                          "padding": 12,
-                          "justifyContent": "center",
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "icon",
-                              "id": "YuIDO",
-                              "name": "Icon",
-                              "width": 16,
-                              "height": 16,
-                              "icon": "content_copy",
-                              "library": "Material Symbols Outlined",
-                              "fill": "$outline"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
                       "type": "text",
-                      "id": "WAOif",
-                      "name": "Explanation",
-                      "fill": "$outline",
-                      "textGrowth": "fixed-width",
-                      "width": "fill_container",
-                      "content": "Every key below is sent to this address, as Authorization: Bearer or x-api-key. It is the address you reached this dashboard on, so a client that cannot resolve it needs one of its own.",
+                      "id": "yk9VB",
+                      "name": "Base URL",
+                      "fill": "$primary-container",
+                      "content": "http://127.0.0.1:6100",
                       "fontFamily": "$font-mono-render",
                       "fontSize": 11,
                       "fontWeight": "normal"
                     },
                     {
                       "type": "frame",
-                      "id": "eH0uQ",
-                      "name": "OPENAI SDKS",
+                      "id": "h6rSl",
+                      "name": "Spacer",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 6,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "hYwne",
-                          "name": "Label",
-                          "fill": "$outline",
-                          "content": "OPENAI SDKS",
-                          "fontFamily": "$font-headline",
-                          "fontSize": 10,
-                          "fontWeight": "700",
-                          "letterSpacing": 2
-                        },
-                        {
-                          "type": "text",
-                          "id": "bbION",
-                          "name": "Help",
-                          "fill": "$outline",
-                          "content": "Read the base URL as given, so it carries /v1.",
-                          "fontFamily": "$font-mono-render",
-                          "fontSize": 11,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "S3FiqV",
-                          "name": "Row",
-                          "width": "fill_container",
-                          "gap": 8,
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "frame",
-                              "id": "m6ITF6",
-                              "name": "Box",
-                              "width": "fill_container",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                12,
-                                16
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "s6HmWK",
-                                  "name": "Text",
-                                  "fill": "$on-surface-variant",
-                                  "content": "export OPENAI_BASE_URL=http://127.0.0.1:6100/v1 OPENAI_API_KEY=$SHELLM_KEY",
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": 11,
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "I3Arm",
-                              "name": "Copy",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": 12,
-                              "justifyContent": "center",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon",
-                                  "id": "x9Vh6",
-                                  "name": "Icon",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "content_copy",
-                                  "library": "Material Symbols Outlined",
-                                  "fill": "$outline"
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
+                      "height": 1
                     },
                     {
-                      "type": "frame",
-                      "id": "iN9ut",
-                      "name": "ANTHROPIC SDKS",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 6,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "T9es7",
-                          "name": "Label",
-                          "fill": "$outline",
-                          "content": "ANTHROPIC SDKS",
-                          "fontFamily": "$font-headline",
-                          "fontSize": 10,
-                          "fontWeight": "700",
-                          "letterSpacing": 2
-                        },
-                        {
-                          "type": "text",
-                          "id": "I3GtIp",
-                          "name": "Help",
-                          "fill": "$outline",
-                          "content": "Append /v1 themselves, so the base URL must not carry it.",
-                          "fontFamily": "$font-mono-render",
-                          "fontSize": 11,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "riiCa",
-                          "name": "Row",
-                          "width": "fill_container",
-                          "gap": 8,
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "frame",
-                              "id": "AKhW1",
-                              "name": "Box",
-                              "width": "fill_container",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                12,
-                                16
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "nuqa3",
-                                  "name": "Text",
-                                  "fill": "$on-surface-variant",
-                                  "content": "export ANTHROPIC_BASE_URL=http://127.0.0.1:6100 ANTHROPIC_API_KEY=$SHELLM_KEY",
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": 11,
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "hPGqQ",
-                              "name": "Copy",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": 12,
-                              "justifyContent": "center",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon",
-                                  "id": "vSqJQ",
-                                  "name": "Icon",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "content_copy",
-                                  "library": "Material Symbols Outlined",
-                                  "fill": "$outline"
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "text",
-                      "id": "ASOsh",
-                      "name": "Placeholder note",
-                      "fill": "$outline",
-                      "textGrowth": "fixed-width",
-                      "width": "fill_container",
-                      "content": "$SHELLM_KEY is the key itself, shown once when it is created. A key that was never copied cannot be read back — rotate it for a new one.",
-                      "fontFamily": "$font-mono-render",
-                      "fontSize": 11,
-                      "fontWeight": "normal"
+                      "type": "icon",
+                      "id": "zmWXZ",
+                      "name": "Disclosure",
+                      "width": 16,
+                      "height": 16,
+                      "icon": "keyboard_arrow_down",
+                      "library": "Material Symbols Outlined",
+                      "fill": "$outline"
                     }
                   ]
                 },
@@ -25263,7 +25025,7 @@
       "type": "frame",
       "id": "hxpei",
       "x": 5440,
-      "y": 3624,
+      "y": 3090,
       "name": "Admin / API Keys / Empty",
       "clip": true,
       "width": 1440,
@@ -25741,287 +25503,49 @@
                 },
                 {
                   "type": "frame",
-                  "id": "I3M9K",
-                  "name": "Usage",
+                  "id": "VS0zL",
+                  "name": "Connection (collapsed)",
                   "width": "fill_container",
-                  "fill": "$surface-container",
-                  "layout": "vertical",
                   "gap": 12,
-                  "padding": 20,
+                  "alignItems": "center",
                   "children": [
                     {
                       "type": "text",
-                      "id": "lqFI6",
-                      "name": "Base URL label",
+                      "id": "lNmOw",
+                      "name": "Label",
                       "fill": "$outline",
-                      "content": "BASE URL",
+                      "content": "CONNECTION",
                       "fontFamily": "$font-headline",
                       "fontSize": 10,
                       "fontWeight": "700",
                       "letterSpacing": 2
                     },
                     {
-                      "type": "frame",
-                      "id": "R9svGw",
-                      "name": "Base URL row",
-                      "width": "fill_container",
-                      "gap": 8,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "frame",
-                          "id": "a3Zzyv",
-                          "name": "Box",
-                          "width": "fill_container",
-                          "fill": "$surface-container-lowest",
-                          "stroke": "$outline-variant",
-                          "strokeWidth": 1,
-                          "padding": [
-                            12,
-                            16
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "qmm0w",
-                              "name": "Text",
-                              "fill": "$primary-container",
-                              "content": "http://127.0.0.1:6100",
-                              "fontFamily": "$font-mono-render",
-                              "fontSize": 14,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "KAxlH",
-                          "name": "Copy",
-                          "fill": "$surface-container-lowest",
-                          "stroke": "$outline-variant",
-                          "strokeWidth": 1,
-                          "padding": 12,
-                          "justifyContent": "center",
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "icon",
-                              "id": "zUDao",
-                              "name": "Icon",
-                              "width": 16,
-                              "height": 16,
-                              "icon": "content_copy",
-                              "library": "Material Symbols Outlined",
-                              "fill": "$outline"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
                       "type": "text",
-                      "id": "Mz2gw",
-                      "name": "Explanation",
-                      "fill": "$outline",
-                      "textGrowth": "fixed-width",
-                      "width": "fill_container",
-                      "content": "Every key below is sent to this address, as Authorization: Bearer or x-api-key. It is the address you reached this dashboard on, so a client that cannot resolve it needs one of its own.",
+                      "id": "H4mjPr",
+                      "name": "Base URL",
+                      "fill": "$primary-container",
+                      "content": "http://127.0.0.1:6100",
                       "fontFamily": "$font-mono-render",
                       "fontSize": 11,
                       "fontWeight": "normal"
                     },
                     {
                       "type": "frame",
-                      "id": "T7DBdh",
-                      "name": "OPENAI SDKS",
+                      "id": "xYDKB",
+                      "name": "Spacer",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 6,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "MHAW2",
-                          "name": "Label",
-                          "fill": "$outline",
-                          "content": "OPENAI SDKS",
-                          "fontFamily": "$font-headline",
-                          "fontSize": 10,
-                          "fontWeight": "700",
-                          "letterSpacing": 2
-                        },
-                        {
-                          "type": "text",
-                          "id": "TwmNC",
-                          "name": "Help",
-                          "fill": "$outline",
-                          "content": "Read the base URL as given, so it carries /v1.",
-                          "fontFamily": "$font-mono-render",
-                          "fontSize": 11,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "do0sb",
-                          "name": "Row",
-                          "width": "fill_container",
-                          "gap": 8,
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "frame",
-                              "id": "H1Fgkw",
-                              "name": "Box",
-                              "width": "fill_container",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                12,
-                                16
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "ADfNW",
-                                  "name": "Text",
-                                  "fill": "$on-surface-variant",
-                                  "content": "export OPENAI_BASE_URL=http://127.0.0.1:6100/v1 OPENAI_API_KEY=$SHELLM_KEY",
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": 11,
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "e29tux",
-                              "name": "Copy",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": 12,
-                              "justifyContent": "center",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon",
-                                  "id": "CF3mz",
-                                  "name": "Icon",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "content_copy",
-                                  "library": "Material Symbols Outlined",
-                                  "fill": "$outline"
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
+                      "height": 1
                     },
                     {
-                      "type": "frame",
-                      "id": "xTP3y",
-                      "name": "ANTHROPIC SDKS",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 6,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "M0ghJ1",
-                          "name": "Label",
-                          "fill": "$outline",
-                          "content": "ANTHROPIC SDKS",
-                          "fontFamily": "$font-headline",
-                          "fontSize": 10,
-                          "fontWeight": "700",
-                          "letterSpacing": 2
-                        },
-                        {
-                          "type": "text",
-                          "id": "EF0VQ",
-                          "name": "Help",
-                          "fill": "$outline",
-                          "content": "Append /v1 themselves, so the base URL must not carry it.",
-                          "fontFamily": "$font-mono-render",
-                          "fontSize": 11,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "R1GbdN",
-                          "name": "Row",
-                          "width": "fill_container",
-                          "gap": 8,
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "frame",
-                              "id": "eZXc3",
-                              "name": "Box",
-                              "width": "fill_container",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                12,
-                                16
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "mi4AX",
-                                  "name": "Text",
-                                  "fill": "$on-surface-variant",
-                                  "content": "export ANTHROPIC_BASE_URL=http://127.0.0.1:6100 ANTHROPIC_API_KEY=$SHELLM_KEY",
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": 11,
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "i5Dgy",
-                              "name": "Copy",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": 12,
-                              "justifyContent": "center",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon",
-                                  "id": "v5CvY",
-                                  "name": "Icon",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "content_copy",
-                                  "library": "Material Symbols Outlined",
-                                  "fill": "$outline"
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "text",
-                      "id": "P9LCp",
-                      "name": "Placeholder note",
-                      "fill": "$outline",
-                      "textGrowth": "fixed-width",
-                      "width": "fill_container",
-                      "content": "$SHELLM_KEY is the key itself, shown once when it is created. A key that was never copied cannot be read back — rotate it for a new one.",
-                      "fontFamily": "$font-mono-render",
-                      "fontSize": 11,
-                      "fontWeight": "normal"
+                      "type": "icon",
+                      "id": "r0pZF1",
+                      "name": "Disclosure",
+                      "width": 16,
+                      "height": 16,
+                      "icon": "keyboard_arrow_down",
+                      "library": "Material Symbols Outlined",
+                      "fill": "$outline"
                     }
                   ]
                 },
@@ -29499,7 +29023,7 @@
       "type": "frame",
       "id": "RbRcj",
       "x": 5440,
-      "y": 2190,
+      "y": 1923,
       "name": "Admin / API Keys / Key created",
       "clip": true,
       "width": 1440,
@@ -30281,287 +29805,49 @@
                 },
                 {
                   "type": "frame",
-                  "id": "WVzC0",
-                  "name": "Usage",
+                  "id": "dPPQ7",
+                  "name": "Connection (collapsed)",
                   "width": "fill_container",
-                  "fill": "$surface-container",
-                  "layout": "vertical",
                   "gap": 12,
-                  "padding": 20,
+                  "alignItems": "center",
                   "children": [
                     {
                       "type": "text",
-                      "id": "NYyYK",
-                      "name": "Base URL label",
+                      "id": "I98FCO",
+                      "name": "Label",
                       "fill": "$outline",
-                      "content": "BASE URL",
+                      "content": "CONNECTION",
                       "fontFamily": "$font-headline",
                       "fontSize": 10,
                       "fontWeight": "700",
                       "letterSpacing": 2
                     },
                     {
-                      "type": "frame",
-                      "id": "ixApp",
-                      "name": "Base URL row",
-                      "width": "fill_container",
-                      "gap": 8,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "frame",
-                          "id": "ZnMEX",
-                          "name": "Box",
-                          "width": "fill_container",
-                          "fill": "$surface-container-lowest",
-                          "stroke": "$outline-variant",
-                          "strokeWidth": 1,
-                          "padding": [
-                            12,
-                            16
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "L0cs3s",
-                              "name": "Text",
-                              "fill": "$primary-container",
-                              "content": "http://127.0.0.1:6100",
-                              "fontFamily": "$font-mono-render",
-                              "fontSize": 14,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "A8i1kP",
-                          "name": "Copy",
-                          "fill": "$surface-container-lowest",
-                          "stroke": "$outline-variant",
-                          "strokeWidth": 1,
-                          "padding": 12,
-                          "justifyContent": "center",
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "icon",
-                              "id": "bPEgB",
-                              "name": "Icon",
-                              "width": 16,
-                              "height": 16,
-                              "icon": "content_copy",
-                              "library": "Material Symbols Outlined",
-                              "fill": "$outline"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
                       "type": "text",
-                      "id": "nMa5W",
-                      "name": "Explanation",
-                      "fill": "$outline",
-                      "textGrowth": "fixed-width",
-                      "width": "fill_container",
-                      "content": "Every key below is sent to this address, as Authorization: Bearer or x-api-key. It is the address you reached this dashboard on, so a client that cannot resolve it needs one of its own.",
+                      "id": "shvdW",
+                      "name": "Base URL",
+                      "fill": "$primary-container",
+                      "content": "http://127.0.0.1:6100",
                       "fontFamily": "$font-mono-render",
                       "fontSize": 11,
                       "fontWeight": "normal"
                     },
                     {
                       "type": "frame",
-                      "id": "kk0Z3",
-                      "name": "OPENAI SDKS",
+                      "id": "bTBf4",
+                      "name": "Spacer",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 6,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "rk1fs",
-                          "name": "Label",
-                          "fill": "$outline",
-                          "content": "OPENAI SDKS",
-                          "fontFamily": "$font-headline",
-                          "fontSize": 10,
-                          "fontWeight": "700",
-                          "letterSpacing": 2
-                        },
-                        {
-                          "type": "text",
-                          "id": "Lwvb2",
-                          "name": "Help",
-                          "fill": "$outline",
-                          "content": "Read the base URL as given, so it carries /v1.",
-                          "fontFamily": "$font-mono-render",
-                          "fontSize": 11,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "ST7mU",
-                          "name": "Row",
-                          "width": "fill_container",
-                          "gap": 8,
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "frame",
-                              "id": "n153rK",
-                              "name": "Box",
-                              "width": "fill_container",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                12,
-                                16
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "cdBBv",
-                                  "name": "Text",
-                                  "fill": "$on-surface-variant",
-                                  "content": "export OPENAI_BASE_URL=http://127.0.0.1:6100/v1 OPENAI_API_KEY=$SHELLM_KEY",
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": 11,
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "W53j9",
-                              "name": "Copy",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": 12,
-                              "justifyContent": "center",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon",
-                                  "id": "PSSGa",
-                                  "name": "Icon",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "content_copy",
-                                  "library": "Material Symbols Outlined",
-                                  "fill": "$outline"
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
+                      "height": 1
                     },
                     {
-                      "type": "frame",
-                      "id": "UNbMr",
-                      "name": "ANTHROPIC SDKS",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 6,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "HLcEd",
-                          "name": "Label",
-                          "fill": "$outline",
-                          "content": "ANTHROPIC SDKS",
-                          "fontFamily": "$font-headline",
-                          "fontSize": 10,
-                          "fontWeight": "700",
-                          "letterSpacing": 2
-                        },
-                        {
-                          "type": "text",
-                          "id": "e674XJ",
-                          "name": "Help",
-                          "fill": "$outline",
-                          "content": "Append /v1 themselves, so the base URL must not carry it.",
-                          "fontFamily": "$font-mono-render",
-                          "fontSize": 11,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "nDzMR",
-                          "name": "Row",
-                          "width": "fill_container",
-                          "gap": 8,
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "frame",
-                              "id": "ZMMKu",
-                              "name": "Box",
-                              "width": "fill_container",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                12,
-                                16
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "vkiME",
-                                  "name": "Text",
-                                  "fill": "$on-surface-variant",
-                                  "content": "export ANTHROPIC_BASE_URL=http://127.0.0.1:6100 ANTHROPIC_API_KEY=$SHELLM_KEY",
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": 11,
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "CCofN",
-                              "name": "Copy",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": 12,
-                              "justifyContent": "center",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon",
-                                  "id": "pqhOw",
-                                  "name": "Icon",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "content_copy",
-                                  "library": "Material Symbols Outlined",
-                                  "fill": "$outline"
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "text",
-                      "id": "taj4J",
-                      "name": "Placeholder note",
-                      "fill": "$outline",
-                      "textGrowth": "fixed-width",
-                      "width": "fill_container",
-                      "content": "$SHELLM_KEY is the key itself, shown once when it is created. A key that was never copied cannot be read back — rotate it for a new one.",
-                      "fontFamily": "$font-mono-render",
-                      "fontSize": 11,
-                      "fontWeight": "normal"
+                      "type": "icon",
+                      "id": "n2PHzJ",
+                      "name": "Disclosure",
+                      "width": 16,
+                      "height": 16,
+                      "icon": "keyboard_arrow_down",
+                      "library": "Material Symbols Outlined",
+                      "fill": "$outline"
                     }
                   ]
                 },
@@ -34181,10 +33467,11 @@
       "type": "frame",
       "id": "wY6V4",
       "x": 5440,
-      "y": 1095,
+      "y": 828,
       "name": "Admin / API Keys / Create",
       "clip": true,
       "width": 1440,
+      "height": 935,
       "fill": "$surface",
       "children": [
         {
@@ -34659,287 +33946,49 @@
                 },
                 {
                   "type": "frame",
-                  "id": "T5vcL",
-                  "name": "Usage",
+                  "id": "UFAfU",
+                  "name": "Connection (collapsed)",
                   "width": "fill_container",
-                  "fill": "$surface-container",
-                  "layout": "vertical",
                   "gap": 12,
-                  "padding": 20,
+                  "alignItems": "center",
                   "children": [
                     {
                       "type": "text",
-                      "id": "u6EJv",
-                      "name": "Base URL label",
+                      "id": "mTtn7",
+                      "name": "Label",
                       "fill": "$outline",
-                      "content": "BASE URL",
+                      "content": "CONNECTION",
                       "fontFamily": "$font-headline",
                       "fontSize": 10,
                       "fontWeight": "700",
                       "letterSpacing": 2
                     },
                     {
-                      "type": "frame",
-                      "id": "u8Dlq",
-                      "name": "Base URL row",
-                      "width": "fill_container",
-                      "gap": 8,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "frame",
-                          "id": "yIIWm",
-                          "name": "Box",
-                          "width": "fill_container",
-                          "fill": "$surface-container-lowest",
-                          "stroke": "$outline-variant",
-                          "strokeWidth": 1,
-                          "padding": [
-                            12,
-                            16
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "Uenkk",
-                              "name": "Text",
-                              "fill": "$primary-container",
-                              "content": "http://127.0.0.1:6100",
-                              "fontFamily": "$font-mono-render",
-                              "fontSize": 14,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "JBlGk",
-                          "name": "Copy",
-                          "fill": "$surface-container-lowest",
-                          "stroke": "$outline-variant",
-                          "strokeWidth": 1,
-                          "padding": 12,
-                          "justifyContent": "center",
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "icon",
-                              "id": "WTyTr",
-                              "name": "Icon",
-                              "width": 16,
-                              "height": 16,
-                              "icon": "content_copy",
-                              "library": "Material Symbols Outlined",
-                              "fill": "$outline"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
                       "type": "text",
-                      "id": "PEZwL",
-                      "name": "Explanation",
-                      "fill": "$outline",
-                      "textGrowth": "fixed-width",
-                      "width": "fill_container",
-                      "content": "Every key below is sent to this address, as Authorization: Bearer or x-api-key. It is the address you reached this dashboard on, so a client that cannot resolve it needs one of its own.",
+                      "id": "LKjI7",
+                      "name": "Base URL",
+                      "fill": "$primary-container",
+                      "content": "http://127.0.0.1:6100",
                       "fontFamily": "$font-mono-render",
                       "fontSize": 11,
                       "fontWeight": "normal"
                     },
                     {
                       "type": "frame",
-                      "id": "QVUvR",
-                      "name": "OPENAI SDKS",
+                      "id": "v1dZC0",
+                      "name": "Spacer",
                       "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 6,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "z4zt6",
-                          "name": "Label",
-                          "fill": "$outline",
-                          "content": "OPENAI SDKS",
-                          "fontFamily": "$font-headline",
-                          "fontSize": 10,
-                          "fontWeight": "700",
-                          "letterSpacing": 2
-                        },
-                        {
-                          "type": "text",
-                          "id": "d9Iq3",
-                          "name": "Help",
-                          "fill": "$outline",
-                          "content": "Read the base URL as given, so it carries /v1.",
-                          "fontFamily": "$font-mono-render",
-                          "fontSize": 11,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "rLOp2",
-                          "name": "Row",
-                          "width": "fill_container",
-                          "gap": 8,
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "frame",
-                              "id": "TBEfr",
-                              "name": "Box",
-                              "width": "fill_container",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                12,
-                                16
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "Qr99y",
-                                  "name": "Text",
-                                  "fill": "$on-surface-variant",
-                                  "content": "export OPENAI_BASE_URL=http://127.0.0.1:6100/v1 OPENAI_API_KEY=$SHELLM_KEY",
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": 11,
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "AHHXV",
-                              "name": "Copy",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": 12,
-                              "justifyContent": "center",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon",
-                                  "id": "S5uxF",
-                                  "name": "Icon",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "content_copy",
-                                  "library": "Material Symbols Outlined",
-                                  "fill": "$outline"
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
+                      "height": 1
                     },
                     {
-                      "type": "frame",
-                      "id": "vLwXG",
-                      "name": "ANTHROPIC SDKS",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 6,
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "c3NjTe",
-                          "name": "Label",
-                          "fill": "$outline",
-                          "content": "ANTHROPIC SDKS",
-                          "fontFamily": "$font-headline",
-                          "fontSize": 10,
-                          "fontWeight": "700",
-                          "letterSpacing": 2
-                        },
-                        {
-                          "type": "text",
-                          "id": "Ov7Vv",
-                          "name": "Help",
-                          "fill": "$outline",
-                          "content": "Append /v1 themselves, so the base URL must not carry it.",
-                          "fontFamily": "$font-mono-render",
-                          "fontSize": 11,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "CVrw8",
-                          "name": "Row",
-                          "width": "fill_container",
-                          "gap": 8,
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "frame",
-                              "id": "p9JzFJ",
-                              "name": "Box",
-                              "width": "fill_container",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                12,
-                                16
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "text",
-                                  "id": "CbebN",
-                                  "name": "Text",
-                                  "fill": "$on-surface-variant",
-                                  "content": "export ANTHROPIC_BASE_URL=http://127.0.0.1:6100 ANTHROPIC_API_KEY=$SHELLM_KEY",
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": 11,
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "qt5Zb",
-                              "name": "Copy",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": 12,
-                              "justifyContent": "center",
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon",
-                                  "id": "coIJh",
-                                  "name": "Icon",
-                                  "width": 16,
-                                  "height": 16,
-                                  "icon": "content_copy",
-                                  "library": "Material Symbols Outlined",
-                                  "fill": "$outline"
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "text",
-                      "id": "Q0nXQ",
-                      "name": "Placeholder note",
-                      "fill": "$outline",
-                      "textGrowth": "fixed-width",
-                      "width": "fill_container",
-                      "content": "$SHELLM_KEY is the key itself, shown once when it is created. A key that was never copied cannot be read back — rotate it for a new one.",
-                      "fontFamily": "$font-mono-render",
-                      "fontSize": 11,
-                      "fontWeight": "normal"
+                      "type": "icon",
+                      "id": "cij8K",
+                      "name": "Disclosure",
+                      "width": 16,
+                      "height": 16,
+                      "icon": "keyboard_arrow_down",
+                      "library": "Material Symbols Outlined",
+                      "fill": "$outline"
                     }
                   ]
                 },
