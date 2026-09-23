@@ -135,12 +135,12 @@
   pre .p { color:var(--accent); }
   pre .s { color:#7fd6a0; }
 
-  .nots { display:grid; gap:1px; grid-template-columns:repeat(auto-fit, minmax(16rem, 1fr));
+  .nots, .fixes { display:grid; gap:1px; grid-template-columns:repeat(auto-fit, minmax(16rem, 1fr));
           background:color-mix(in srgb, var(--line) 30%, transparent);
           border:1px solid color-mix(in srgb, var(--line) 30%, transparent); }
-  .nots div { background:var(--surface); padding:1.5rem; }
-  .nots strong { display:block; color:#fff; font-weight:500; font-family:"Space Grotesk", sans-serif; margin-bottom:.35rem; }
-  .nots span { color:var(--muted); font-size:.85rem; }
+  .nots div, .fixes div { background:var(--surface); padding:1.5rem; }
+  .nots strong, .fixes strong { display:block; color:#fff; font-weight:500; font-family:"Space Grotesk", sans-serif; margin-bottom:.35rem; }
+  .nots span, .fixes span { color:var(--muted); font-size:.85rem; }
 
   table { width:100%; border-collapse:collapse; font-size:.9rem; margin-top:2rem; }
   th, td { text-align:left; padding:.9rem 1rem; border-bottom:1px solid color-mix(in srgb, var(--line) 50%, transparent); vertical-align:top; }
@@ -292,6 +292,18 @@
   }],
   "usage": { "prompt_tokens": 10, "completion_tokens": 9, "total_tokens": 19 }
 }</pre>
+    </div>
+  </div>
+</section>
+
+<section id="stuck">
+  <div class="wrap reveal">
+    <h2>When it does not work</h2>
+    <div class="fixes">
+      <div><strong>A setting you changed did nothing.</strong><span>The config file is read once, when the service starts. Restart it: <code>sudo systemctl restart shellm</code> on a server, <code>shellm restart</code> on your machine.</span></div>
+      <div><strong>A browser page is blocked by CORS.</strong><span>Calling <code>/v1</code> from a page is off until <code>SHELLM_CORS_ORIGINS</code> names that exact origin — scheme, host and port, no trailing slash, and no wildcard.</span></div>
+      <div><strong>curl works and your app gets 403.</strong><span>That key is scoped to browser origins, and yours is not on its list. A request with no <code>Origin</code> is accepted, which is why curl still works.</span></div>
+      <div><strong>Anything else.</strong><span><code>shellm doctor</code> checks the install and prints the fix beside whatever failed. <code>shellm doctor --live</code> spends one real request to prove the whole path.</span></div>
     </div>
   </div>
 </section>
