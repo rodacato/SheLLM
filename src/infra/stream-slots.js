@@ -1,4 +1,4 @@
-const MAX_STREAM_CONCURRENT = parseInt(process.env.MAX_STREAM_CONCURRENT || '2', 10);
+const MAX_STREAM_CONCURRENT = parseInt(process.env.MAX_STREAM_CONCURRENT || '4', 10);
 
 let _activeStreams = 0;
 

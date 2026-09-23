@@ -19,7 +19,7 @@ info:
     ## Rate Limiting
 
     When rate-limited, responses include a `Retry-After` header (seconds).
-    - **Global limit**: configurable via `SHELLM_GLOBAL_RPM` (default 30 RPM)
+    - **Global limit**: configurable via `SHELLM_GLOBAL_RPM` (default 60 RPM)
     - **Per-client limit**: configurable per API key (default 10 RPM)
     - **Admin brute-force**: 5 failed attempts per IP triggers a 5-minute lockout
   x-logo:

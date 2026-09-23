@@ -562,7 +562,7 @@ async function main() {
   const failed = records.reduce((n, r) => n + r.failed, 0);
   if (rateLimited > 0) {
     console.log(`\n${YELLOW}${rateLimited} requests were rate limited (429).${RESET} The rows above are incomplete: a`
-      + ' benchmark outruns the default 30 req/min. Raise SHELLM_GLOBAL_RPM on the server, or run one'
+      + ' benchmark outruns the default 60 req/min. Raise SHELLM_GLOBAL_RPM on the server, or run one'
       + ' --only scenario at a time.');
   }
   console.log(`\n${BOLD}BENCH_RUN_COMPLETE${RESET} ${DIM}probes=${probes.length} broken=${broken} rows=${records.length} failed_requests=${failed} rate_limited=${rateLimited}${RESET}`);

@@ -4,7 +4,7 @@ const logger = require('../lib/logger');
 
 // Dynamic: reads from DB > env > default (30)
 function getGlobalRpm() {
-  return parseInt(process.env.SHELLM_GLOBAL_RPM || '30', 10);
+  return parseInt(process.env.SHELLM_GLOBAL_RPM || '60', 10);
 }
 const WINDOW_MS = 60_000;
 const REQUIRE_AUTH = process.env.SHELLM_REQUIRE_AUTH !== 'false';
