@@ -92,7 +92,7 @@
               <tr>
                 <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Name</th>
                 <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Key Prefix</th>
-                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Limits</th>
+                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline min-w-[15rem]">Limits</th>
                 <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline"><span x-text="'Usage (' + usagePeriod + ')'"></span></th>
                 <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Last used</th>
                 <th class="px-4 py-3 text-center text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Status</th>
@@ -150,10 +150,18 @@
                       :class="isExpired(key) ? 'text-error' : isExpiringSoon(key) ? 'text-status-warn' : 'text-outline'"
                       x-text="formatExpiry(key)"></span>
                   </td>
-                  <td class="px-4 py-3 text-right whitespace-nowrap">
-                    <button @click="startEdit(key)" class="link-brand text-xs font-headline font-bold uppercase mr-3">Edit</button>
-                    <button @click="rotateKey(key)" class="link-brand text-xs font-headline font-bold uppercase mr-3">Rotate</button>
-                    <button @click="deleteKey(key)" class="text-error/70 hover:text-error text-xs font-headline font-bold uppercase transition-colors duration-fast">Delete</button>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="flex items-center justify-end gap-4">
+                      <button @click="startEdit(key)" class="link-brand transition-colors duration-fast" title="Edit this key" aria-label="Edit this key">
+                        <span class="material-symbols-outlined text-[18px] block">edit</span>
+                      </button>
+                      <button @click="rotateKey(key)" class="link-brand transition-colors duration-fast" title="Rotate: the current key stops working immediately" aria-label="Rotate this key">
+                        <span class="material-symbols-outlined text-[18px] block">autorenew</span>
+                      </button>
+                      <button @click="deleteKey(key)" class="text-error/70 hover:text-error transition-colors duration-fast" title="Delete this key" aria-label="Delete this key">
+                        <span class="material-symbols-outlined text-[18px] block">delete</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               </template>
