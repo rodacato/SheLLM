@@ -94,6 +94,7 @@ function all() {
     const entry = schema[name];
     return {
       name,
+      section: entry.section,
       value: entry.secret && get(name) !== null ? '********' : get(name),
       source: sourceOf(name),
       since: entry.since,

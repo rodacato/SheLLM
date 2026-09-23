@@ -145,6 +145,18 @@ function systemPage() {
       return `${count} setting${count === 1 ? ' is' : 's are'} available and not set in your config`;
     },
 
+    // Thirty-three rows read as a wall; the schema already groups them the way the config file is
+    // written, so the table borrows that order rather than inventing one.
+    get groupedSettings() {
+      const groups = [];
+      for (const setting of this.settings) {
+        const last = groups[groups.length - 1];
+        if (last && last.section === setting.section) last.rows.push(setting);
+        else groups.push({ section: setting.section, rows: [setting] });
+      }
+      return groups;
+    },
+
     // A list arrives as an array and a secret as its mask; neither renders as a cell on its own.
     settingValue(setting) {
       const value = setting.value;
