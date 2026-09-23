@@ -169,6 +169,31 @@ describe('a created key says where to send it', () => {
     assert.doesNotMatch(src, /this\.newKeyResult = \{/, 'nothing assigns the banner around showNewKey');
   });
 
+  // An icon-only control has no name without one, and the dashboard installs on a phone, where
+  // there is no hover and title never fires. aria-label is the only label those callers get.
+  it('names every row action, since none of them carries a word any more', () => {
+    const html = compose();
+    const anchor = html.indexOf('@click="startEdit(key)"');
+    const start = html.lastIndexOf('<div', anchor);
+    const end = html.indexOf('</td>', anchor);
+    assert.ok(anchor > -1 && start > -1 && end > anchor, 'the row actions are still a cell of the Keys table');
+    const cell = html.slice(start, end);
+
+    const buttons = cell.match(/<button[\s\S]*?>/g) || [];
+    assert.strictEqual(buttons.length, 3, 'edit, rotate and delete');
+    for (const b of buttons) assert.match(b, /aria-label="[^"]+"/, `unnamed action: ${b.slice(0, 60)}`);
+    assert.doesNotMatch(cell, />\s*(Edit|Rotate|Delete)\s*</, 'the words are gone, so the labels carry the meaning');
+  });
+
+  // The product keeps its other destructive action's label (Clear All). This one gave its word up,
+  // so the colour is what is left to say it is not the other two.
+  it('keeps the destructive action visually apart from the safe ones', () => {
+    const html = compose();
+    const start = html.indexOf('@click="deleteKey(key)"');
+    assert.ok(start > -1);
+    assert.match(html.slice(start - 200, start + 200), /text-error/);
+  });
+
   it('calls a rotation a rotation', () => {
     const page = keysPageHtml();
     assert.match(page, /x-text="newKeyResult\?\.action"/);
