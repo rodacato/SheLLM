@@ -2,7 +2,7 @@ const { rateLimited } = require('../errors');
 const logger = require('../lib/logger');
 
 function getMaxConcurrent() {
-  return parseInt(process.env.MAX_CONCURRENT || '2', 10);
+  return parseInt(process.env.MAX_CONCURRENT || '4', 10);
 }
 function getMaxQueueDepth() {
   return parseInt(process.env.MAX_QUEUE_DEPTH || '10', 10);

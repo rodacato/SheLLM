@@ -53,7 +53,7 @@ Running your own subscription through your own software still carries risk, and 
 | **Gemini** | Not supported. Gemini CLI stopped serving personal plans on 2026-06-18, and Antigravity's terms forbid "using the Service in connection with products not provided by us". |
 
 Keep it human-scale. SheLLM never retries a request on its own, caps concurrent CLI processes
-(`MAX_CONCURRENT`, default 2) and probes provider health with `--version`, which spends no quota.
+(`MAX_CONCURRENT`, default 4) and probes provider health with `--version`, which spends no quota.
 Cross-provider fallback is off unless you turn it on. What is left to you: one login per provider,
 and not pointing a batch job at it. If you need machine-scale volume, buy API access — that is
 what it is for.

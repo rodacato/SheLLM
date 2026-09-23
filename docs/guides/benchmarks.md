@@ -312,7 +312,7 @@ node scripts/bench.js --suite latency --only streaming --iterations 5   # re-mea
 ```
 
 `--out run.json` records the raw result. Every request is real, so a full run spends about 50
-requests of subscription quota — and a benchmark outruns the default 30 req/min global limit on a
+requests of subscription quota — and a benchmark outruns the default 60 req/min global limit on a
 fast instance, so raise `SHELLM_GLOBAL_RPM` or use `--only`. The run reports how many requests came
 back 429 rather than quietly averaging them away.
 

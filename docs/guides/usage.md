@@ -227,16 +227,16 @@ never on 429 before `Retry-After`.
 
 | Limit | Default | Consequence |
 |---|---|---|
-| `MAX_CONCURRENT` | 2 | a third simultaneous request waits in the queue |
+| `MAX_CONCURRENT` | 4 | a fifth simultaneous request waits in the queue |
 | `MAX_QUEUE_DEPTH` | 10 | past that, 429 instead of a longer wait |
-| `MAX_STREAM_CONCURRENT` | 2 | streaming slots are counted separately |
-| Global rate limit | 30 req/min | shared by every key |
+| `MAX_STREAM_CONCURRENT` | 4 | streaming slots are counted separately |
+| Global rate limit | 60 req/min | shared by every key |
 | Per-key rate limit | set when the key is created | 429 with `Retry-After` |
 | `TIMEOUT_MS` | 120 000 | the CLI process is killed and you get a 504 |
 | Request body | 256 kB | 413 |
 
 This is a personal subscription behind a CLI: it is sized for a person's work, not for a job
-queue. Set your client timeout above 120 s, keep concurrency at or below 2, and do not point a
+queue. Set your client timeout above 120 s, keep concurrency at or below 4, and do not point a
 batch process at it.
 
 ## 9. What it costs in time
