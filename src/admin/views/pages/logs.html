@@ -6,10 +6,10 @@
         </header>
 
         <!-- Filters -->
-        <div class="flex flex-wrap gap-4 mb-6 items-end">
+        <div class="flex flex-wrap gap-4 mb-3 items-end">
           <div>
             <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Provider</label>
-            <select x-model="filterProvider" @change="applyFilters()" class="bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
+            <select x-model="filterProvider" @change="applyFilters()" class="w-44 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
               <option value="">All Providers</option>
               <option value="claude">claude</option>
               <option value="codex">codex</option>
@@ -17,7 +17,7 @@
           </div>
           <div>
             <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Status</label>
-            <select x-model="filterStatus" @change="applyFilters()" class="bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
+            <select x-model="filterStatus" @change="applyFilters()" class="w-44 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
               <option value="">All Status</option>
               <option value="2">2xx (Success)</option>
               <option value="4">4xx (Client Err)</option>
@@ -26,7 +26,7 @@
           </div>
           <div>
             <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Client</label>
-            <select x-model="filterClient" @change="applyFilters()" class="bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
+            <select x-model="filterClient" @change="applyFilters()" class="w-44 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
               <option value="">All Clients</option>
               <template x-for="name in clientOptions" :key="name">
                 <option :value="name" x-text="name"></option>
@@ -35,17 +35,20 @@
           </div>
           <div>
             <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Model</label>
-            <select x-model="filterModel" @change="applyFilters()" class="bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
+            <select x-model="filterModel" @change="applyFilters()" class="w-44 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
               <option value="">All Models</option>
               <template x-for="name in modelOptions" :key="name">
                 <option :value="name" x-text="name"></option>
               </template>
             </select>
           </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-4 mb-6">
           <button x-show="hasFilters" @click="clearFilters()"
-            class="self-end pb-2 text-[11px] font-mono text-primary-container hover:underline">clear filters</button>
-          <div x-show="!loadError" class="text-[11px] font-mono text-outline italic self-end pb-2" x-text="total + ' total logs found'"></div>
-          <div class="ml-auto flex gap-2 self-end">
+            class="text-[11px] font-mono text-primary-container hover:underline">clear filters</button>
+          <div x-show="!loadError" class="text-[11px] font-mono text-outline italic" x-text="total + ' total logs found'"></div>
+          <div class="ml-auto flex gap-2">
             <!-- Never gated on total > 0: an empty table is exactly when you want to re-read it -->
             <button @click="fetchLogs(); fetchStats()" :disabled="loading"
               :class="loading ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:text-on-surface'"
