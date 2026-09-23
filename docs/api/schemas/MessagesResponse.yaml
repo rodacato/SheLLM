@@ -27,3 +27,5 @@ properties:
         type: integer
       output_tokens:
         type: integer
+  x_shellm:
+    $ref: "./ShellmMeta.yaml"

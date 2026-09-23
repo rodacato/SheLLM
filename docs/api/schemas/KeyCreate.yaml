@@ -14,3 +14,13 @@ properties:
     items:
       type: string
     description: Restrict key to specific models
+  origins:
+    type: [array, 'null']
+    items:
+      type: string
+      format: uri
+    description: >
+      Browser origins allowed to use this key (scheme://host[:port], exact match). null or absent
+      means any caller. A request carrying another Origin gets 403 origin_not_allowed; a request
+      with no Origin is accepted, so this scopes pages rather than authenticating callers.
+    example: ["https://you.github.io"]

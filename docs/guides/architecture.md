@@ -45,9 +45,10 @@ src/
 │   └── models.js          # GET /v1/models
 │
 ├── middleware/            # Express middleware
-│   ├── auth.js            # Bearer token auth + per-client/global rate limiting
+│   ├── auth.js            # Bearer token auth + per-client/global rate limiting + per-key origins
 │   ├── admin-auth.js      # Admin authentication: session cookie for browsers, Basic for scripts
 │   ├── admin-session.js   # HMAC-signed session cookie, content negotiation (wantsHtml)
+│   ├── cors.js            # CORS for /v1 only, off unless SHELLM_CORS_ORIGINS names an origin
 │   ├── request-id.js      # Request ID generation/pass-through
 │   ├── logging.js         # Request/response logging to DB
 │   └── sanitize.js        # Input normalization
@@ -60,12 +61,13 @@ src/
 │   ├── stats.js           # Aggregate queries behind the dashboard
 │   ├── audit.js           # Admin audit log
 │   ├── migrate.js         # Migration runner (one statement at a time, one transaction per file)
-│   └── migrations/        # SQL migration files (001–016)
+│   └── migrations/        # SQL migration files (001–017)
 │
 ├── lib/                   # Shared utilities
 │   ├── logger.js          # Structured JSON logger (level-aware)
 │   ├── sse.js             # Server-Sent Events helpers (OpenAI format)
 │   ├── sse-anthropic.js   # Anthropic-specific SSE formatting
+│   ├── shellm-meta.js     # The x_shellm block both formats carry
 │   └── time.js            # Window and duration helpers shared by stats and health
 │
 ├── admin/                 # Admin dashboard backend
@@ -205,9 +207,12 @@ Middleware runs in order — changing the order changes behavior:
 
 1. `express.json()` — Parse JSON body (256kb limit)
 2. `requestId` — Extract `x-request-id` header or generate UUID
-3. `requestLogger` — Log request completion with timing, status, provider
-4. Content-Type check — Reject non-JSON POST/PATCH
-5. `auth` — Validate Bearer token, check rate limits (global + per-client)
+3. `requestLogger` — Log request completion with timing, status, provider, origin
+4. `corsV1` — Mounted on `/v1` only, and before `auth`: a browser sends no credentials on a
+   preflight, so the preflight has to be answered without one
+5. Content-Type check — Reject non-JSON POST/PATCH
+6. `auth` — Validate Bearer token, check rate limits (global + per-client), enforce the key's
+   own origin list
 
 ---
 

@@ -212,6 +212,18 @@
                 "schema": {
                   "type": "integer"
                 }
+              },
+              "x-shellm-queue-ms": {
+                "description": "Milliseconds the request waited for a free CLI slot.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "x-shellm-queue-position": {
+                "description": "Where the request stood in the queue, or 0 when a slot was free. A streamed response carries this header before any body, since the wait happens after the headers flush.\n",
+                "schema": {
+                  "type": "integer"
+                }
               }
             },
             "content": {
@@ -233,6 +245,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedOpenAI"
+          },
+          "403": {
+            "$ref": "#/components/responses/OriginNotAllowedOpenAI"
           },
           "429": {
             "$ref": "#/components/responses/RateLimitedOpenAI"
@@ -306,6 +321,18 @@
                 "schema": {
                   "type": "integer"
                 }
+              },
+              "x-shellm-queue-ms": {
+                "description": "Milliseconds the request waited for a free CLI slot.",
+                "schema": {
+                  "type": "integer"
+                }
+              },
+              "x-shellm-queue-position": {
+                "description": "Where the request stood in the queue, or 0 when a slot was free. A streamed response carries this header before any body, since the wait happens after the headers flush.\n",
+                "schema": {
+                  "type": "integer"
+                }
               }
             },
             "content": {
@@ -327,6 +354,9 @@
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedAnthropic"
+          },
+          "403": {
+            "$ref": "#/components/responses/OriginNotAllowedAnthropic"
           },
           "429": {
             "$ref": "#/components/responses/RateLimitedAnthropic"
@@ -1459,6 +1489,15 @@
             "default": false,
             "description": "`true` answers `text/event-stream` with OpenAI-style `data:` chunks and a `[DONE]`\nterminator. Streaming holds a slot for the whole response and is capped separately by\n`MAX_STREAM_CONCURRENT`.\n"
           },
+          "stream_options": {
+            "type": "object",
+            "description": "Only valid with `stream: true`; sending it otherwise is a 400. With `include_usage: true` a final chunk with an empty `choices` array carries `usage` and `x_shellm`.\n",
+            "properties": {
+              "include_usage": {
+                "type": "boolean"
+              }
+            }
+          },
           "temperature": {
             "type": "number",
             "minimum": 0,
@@ -1559,6 +1598,9 @@
           },
           "usage": {
             "$ref": "#/components/schemas/Usage"
+          },
+          "x_shellm": {
+            "$ref": "#/components/schemas/ShellmMeta"
           }
         }
       },
@@ -1716,6 +1758,9 @@
                 "type": "integer"
               }
             }
+          },
+          "x_shellm": {
+            "$ref": "#/components/schemas/ShellmMeta"
           }
         }
       },
@@ -1741,6 +1786,20 @@
               "type": "string"
             },
             "description": "Restrict key to specific models"
+          },
+          "origins": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Browser origins allowed to use this key (scheme://host[:port], exact match). null or absent means any caller. A request carrying another Origin gets 403 origin_not_allowed; a request with no Origin is accepted, so this scopes pages rather than authenticating callers.\n",
+            "example": [
+              "https://you.github.io"
+            ]
           }
         }
       },
@@ -1759,6 +1818,20 @@
             "items": {
               "type": "string"
             }
+          },
+          "origins": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Browser origins allowed to use this key (scheme://host[:port], exact match). null or absent means any caller. A request carrying another Origin gets 403 origin_not_allowed; a request with no Origin is accepted, so this scopes pages rather than authenticating callers.\n",
+            "example": [
+              "https://you.github.io"
+            ]
           },
           "active": {
             "type": "integer",
@@ -1793,6 +1866,20 @@
             "items": {
               "type": "string"
             }
+          },
+          "origins": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Browser origins allowed to use this key (scheme://host[:port], exact match). null or absent means any caller. A request carrying another Origin gets 403 origin_not_allowed; a request with no Origin is accepted, so this scopes pages rather than authenticating callers.\n",
+            "example": [
+              "https://you.github.io"
+            ]
           },
           "active": {
             "type": "integer",
@@ -2137,6 +2224,41 @@
             }
           }
         }
+      },
+      "ShellmMeta": {
+        "type": "object",
+        "description": "SheLLM's own numbers for the request, namespaced so no SDK collides with them. The four keys are always present; a value SheLLM could not measure is null rather than absent. On a streamed response the same block rides the final chunk (OpenAI) or the message_delta event (Anthropic).\n",
+        "properties": {
+          "cost_usd": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "What the request would have cost on the provider's API, when the CLI reports it.",
+            "example": 0.0042
+          },
+          "queue_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Time spent waiting for a free CLI slot."
+          },
+          "cli_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Time the CLI itself took, queueing excluded."
+          },
+          "ttft_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Time to the first token. Streamed responses only; null otherwise."
+          }
+        }
       }
     },
     "parameters": {
@@ -2335,6 +2457,23 @@
           }
         }
       },
+      "OriginNotAllowedOpenAI": {
+        "description": "The key is scoped to a set of browser origins and the request carried another one. Only a request that sends an Origin header can hit this.\n",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/OpenAIError"
+            }
+          }
+        }
+      },
       "RateLimitedOpenAI": {
         "description": "Rate limit exceeded",
         "headers": {
@@ -2376,6 +2515,23 @@
       },
       "UnauthorizedAnthropic": {
         "description": "Missing or invalid credentials",
+        "headers": {
+          "X-Request-Id": {
+            "schema": {
+              "type": "string"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AnthropicError"
+            }
+          }
+        }
+      },
+      "OriginNotAllowedAnthropic": {
+        "description": "The key is scoped to a set of browser origins and the request carried another one. Only a request that sends an Origin header can hit this.\n",
         "headers": {
           "X-Request-Id": {
             "schema": {

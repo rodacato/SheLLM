@@ -24,3 +24,5 @@ properties:
           enum: [stop]
   usage:
     $ref: "./Usage.yaml"
+  x_shellm:
+    $ref: "./ShellmMeta.yaml"
