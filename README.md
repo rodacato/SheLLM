@@ -149,18 +149,17 @@ comes from the gateway ([ADR-0007](docs/adr/0007-installed-dashboard-is-a-launch
 Every request is logged with what it cost and how long the CLI took, so "which app is burning the
 subscription" is a question with an answer. Nothing about the prompt is stored or inspected.
 
-![API Keys — a freshly created key shown once in full above the two SDK export lines with the key already in them, each with a copy button, and below them a card stating the base URL and the same two lines written against $SHELLM_KEY](design/exports/admin-api-keys-key-created.png)
+![API Keys — a freshly created key shown once in full above the two SDK export lines with the key already in them, each with a copy button, and under them a connection row stating the base URL, then the table of keys with their limits, usage and expiry](design/exports/admin-api-keys-key-created.png)
 
 A key is shown once and never again, so the page shows it beside the two lines that use it — the
-OpenAI base URL carries `/v1`, the Anthropic one must not. The card below states the base URL and
-the same two lines against `$SHELLM_KEY`, which is what a key created months ago still needs.
+OpenAI base URL carries `/v1`, the Anthropic one must not. The connection row below keeps the base URL
+in view and opens onto those same two lines against `$SHELLM_KEY`, which is what a key created
+months ago still needs.
 
-![Playground — a client key field, a format selector set to Anthropic /v1/messages, a model field, a prompt box, and a response panel showing a 200 with round trip, token counts and request id](design/exports/admin-playground-answered.png)
+![Playground — a client key, a format selector set to Anthropic /v1/messages and a model field across one row, a prompt box under them, and the response below at full width showing a 200 with round trip, token counts and request id](design/exports/admin-playground-answered.png)
 
 The playground sends a real request through the same path an app takes, so a key that works here
 works everywhere.
-
-<sub>Renders from the [design system](design/README.md), which mirrors the shipped code.</sub>
 
 ## Models
 
