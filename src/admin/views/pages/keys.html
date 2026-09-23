@@ -244,7 +244,8 @@
                   placeholder="claude, codex">
               </div>
               <div>
-                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Browser origins (comma-separated, blank = any caller)</label>
+                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Browser origins (comma-separated, blank = any caller)</label>
+                <p class="text-[11px] font-mono text-outline mb-2">Browsers only — a caller that sends no Origin header is never checked against this.</p>
                 <input type="text" x-model="createForm.origins"
                   class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"
                   placeholder="https://rodacato.github.io">

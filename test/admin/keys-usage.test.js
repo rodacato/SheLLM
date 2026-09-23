@@ -133,6 +133,17 @@ describe('a created key says where to send it', () => {
     assert.match(page, /copy\(snippet\.id, snippet\.command\)/);
   });
 
+  // The string is authored on the canvas first and the artboard renders it verbatim, so a silent
+  // edit here is a drift the drawing cannot report. It is also the only thing on that form saying
+  // the field is a browser mechanism at all.
+  it('says the origins field is a browser mechanism, in the words the artboard draws', () => {
+    const html = compose();
+    const start = html.indexOf('<!-- Create Key Modal -->');
+    assert.ok(start > -1, 'the create modal is still part of the Keys page');
+    const modal = html.slice(start);
+    assert.match(modal, /Browsers only — a caller that sends no Origin header is never checked against this\./);
+  });
+
   it('offers a copy control for the base URL and for every snippet', () => {
     const page = keysPageHtml();
     assert.match(page, /@click="copy\('base', baseUrl\)"/);
