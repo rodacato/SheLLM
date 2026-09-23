@@ -81,6 +81,7 @@ module.exports = [
         formatCompactNumber: 'readonly',
         statusBadgeClass: 'readonly',
         copyToClipboard: 'readonly',
+        poller: 'readonly',
         Chart: 'readonly',
       },
     },

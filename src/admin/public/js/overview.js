@@ -49,7 +49,7 @@ function overviewPage() {
     _chart: null,
     _timelineChart: null,
     _domain: null,
-    _refreshInterval: null,
+    _poller: null,
 
     async fetchStats() {
       this.loading = true;
@@ -67,15 +67,12 @@ function overviewPage() {
     },
 
     startAutoRefresh() {
-      if (this._refreshInterval) return;
-      this._refreshInterval = setInterval(() => this.fetchStats(), 30000);
+      if (!this._poller) this._poller = poller(() => this.fetchStats());
+      this._poller.every(30000);
     },
 
     stopAutoRefresh() {
-      if (this._refreshInterval) {
-        clearInterval(this._refreshInterval);
-        this._refreshInterval = null;
-      }
+      if (this._poller) this._poller.stop();
     },
 
     // The count says three are running; it cannot say one has been wedged for nine minutes —
