@@ -13,7 +13,7 @@ from openai import OpenAI
 
 client = OpenAI(
     base_url="http://localhost:6100/v1",  # SheLLM instead of api.openai.com
-    api_key="shellm_your_key_here",       # SheLLM API key, not OpenAI key
+    api_key="shellm-your-key-here",       # SheLLM API key, not OpenAI key
 )
 
 response = client.chat.completions.create(
@@ -29,7 +29,7 @@ import anthropic
 
 client = anthropic.Anthropic(
     base_url="http://localhost:6100",     # SheLLM instead of api.anthropic.com
-    api_key="shellm_your_key_here",
+    api_key="shellm-your-key-here",
 )
 
 message = client.messages.create(
@@ -208,7 +208,7 @@ Not all SheLLM providers support all parameters equally:
 
 Codex runs `codex exec --ephemeral --skip-git-repo-check -s read-only --json`, one process at a time: concurrent processes race on its OAuth refresh (openai/codex#17340). A failed turn is read from the events, never from the exit code, which can be 0 on a failure (openai/codex#1018).
 
-`codex` uses the model in `~/.codex/config.toml`; `codex-<model>` passes `<model>` to `-m`. If the configured default is one your account cannot use, the bare `codex` id fails and the prefixed form is the way in.
+Bare `codex` resolves to the default from the baked catalog, **not** to `~/.codex/config.toml`: without `-m` the CLI falls back to whatever that file names, and a ChatGPT account answers *"model is not supported"* to it. `codex-<model>` passes `<model>` to `-m` directly.
 
 ---
 
