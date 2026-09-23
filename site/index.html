@@ -73,6 +73,7 @@
   header { position:relative; min-height:64vh; display:grid; place-items:center; text-align:center;
            background:var(--surface-low); overflow:hidden; }
   header .inner { position:relative; z-index:1; padding:3rem 1.5rem; }
+  header h1 { margin:0; }
   header img { width:min(22rem, 78vw); height:auto; }
   header p { color:var(--muted); font-size:1.15rem; margin:1.75rem auto 2.5rem; max-width:34rem; }
   .actions { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
@@ -182,7 +183,7 @@
     <div class="crt-sweep"></div>
   </div>
   <div class="inner">
-    <img src="assets/logo/logo-dark.svg" alt="SheLLM">
+    <h1><img src="assets/logo/logo-dark.svg" alt="SheLLM"></h1>
     <p class="cursor">Your LLM subscription — as a REST API for your own apps</p>
     <div class="actions">
       <a class="btn btn-solid" href="#start">Get started</a>
@@ -281,10 +282,15 @@
     -d <span class="s">'{"model":"claude-haiku","messages":[{"role":"user","content":"Hello"}]}'</span>
 
 {
+  "id": "chatcmpl-9f3a41c6-0b7e-4d21-a5f8-1c2e7b904dd3",
   "object": "chat.completion",
-  "model": "claude-haiku",
-  "choices": [{ "message": { "role": "assistant", "content": "…" } }],
-  "usage": { "prompt_tokens": 12, "completion_tokens": 18, "total_tokens": 30 }
+  "model": "claude-haiku-4-5-20251001",
+  "choices": [{
+    "index": 0,
+    "message": { "role": "assistant", "content": "Hello! How can I help you today?" },
+    "finish_reason": "stop"
+  }],
+  "usage": { "prompt_tokens": 10, "completion_tokens": 9, "total_tokens": 19 }
 }</pre>
     </div>
   </div>
