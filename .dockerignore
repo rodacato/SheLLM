@@ -1,0 +1,14 @@
+# The dev container builds with `context: ..`, so this file decides what leaves the checkout.
+.git/
+node_modules/
+.claude/
+.kwik-e/
+coverage/
+data/
+*.log
+
+# initialize.sh writes the host's gh token into .host.env; local.env holds HOST_IP.
+.env
+.env.*
+.devcontainer/.host.env
+.devcontainer/local.env
