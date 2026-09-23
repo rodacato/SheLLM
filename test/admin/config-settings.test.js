@@ -115,13 +115,15 @@ describe('admin /admin/config', () => {
     assert.strictEqual(rpm.secret, false);
   });
 
-  it('names only settings this release introduced, and every one of them is a real setting', async () => {
+  // An empty list is a correct answer — most releases introduce no setting — so this asserts the
+  // rule every name must satisfy and that the endpoint agrees with the command, rather than that
+  // the list has anything in it. Whether the rule itself holds is test/config/born-at.test.js's,
+  // where the release can be pinned to one the schema actually added a setting in.
+  it('reports the same list the CLI does, and nothing that is not a real setting', async () => {
     const res = await read();
 
-    assert.ok(
-      res.body.unseen.length > 0,
-      `no setting is declared with since: ${config.running()} — point this fixture at a release that introduced one, or drop the case`,
-    );
+    assert.deepStrictEqual(res.body.unseen, config.unseen(), 'the page and `shellm config --new` disagree');
+
     const names = new Set(res.body.settings.map((setting) => setting.name));
     for (const name of res.body.unseen) {
       assert.ok(names.has(name), `${name} is reported as new and is not in the settings table`);

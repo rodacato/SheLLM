@@ -153,8 +153,10 @@ function compare(a, b) {
 // Introduced by the release this host runs, and after the release that wrote the config. The
 // second half is what stops a fresh install from being greeted by everything the current release
 // added: a config born under v1.10.0 was never without those settings, it just never set them.
-function unseen() {
-  const version = running();
+// `version` is the release to treat as current, and it exists so a test can pin one the schema
+// actually introduced a setting in. Without it every case here holds only while the running
+// release happens to have added one, which most releases do not.
+function unseen(version = running()) {
   const born = configBornAt();
   return names()
     .filter((name) => !isInConfigFile(name))
