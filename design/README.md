@@ -3,6 +3,12 @@
 Everything about SheLLM's visual design — the admin dashboard — lives here. Read this before touching a `.pen`. It doubles
 as context for AI agents (`AGENTS.md` points them here).
 
+**A brief anchors to a date, never to a commit.** This repository merges with rebase, so every
+SHA a branch commit cites is rewritten the moment it lands — a brief that named one was wrong
+before anyone could read it (D69). A date survives, and `git log --before=<date> master` recovers
+the state it means. Naming the release instead is worse: the artboards mirror master, which runs
+ahead of the last tag for most of a cycle.
+
 **Two rules that matter most:**
 
 1. The **code is the source of truth** for design and layout — not old designs, not stale
