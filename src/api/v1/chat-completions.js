@@ -1,7 +1,7 @@
 const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../../routing');
 const { sanitize } = require('../../middleware/sanitize');
 const { invalidRequest, fromCatchable, sendOpenAIError } = require('../../errors');
-const { initSSE, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../lib/sse');
+const { initSSE, announceQueued, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../lib/sse');
 
 const MAX_PROMPT_LENGTH = 50000;
 
@@ -198,6 +198,8 @@ async function chatCompletionsHandler(req, res) {
     res.set('X-Powered-By', 'SheLLM');
     res.set('X-Queue-Depth', String(queue.stats.pending));
     res.set('X-Queue-Active', String(queue.stats.active));
+    res.set('x-shellm-queue-ms', String(result.queued_ms ?? 0));
+    res.set('x-shellm-queue-position', String(result.queue_position ?? 0));
     if (result.original_provider) {
       res.set('X-SheLLM-Fallback-Provider', result.provider);
     }
@@ -251,6 +253,9 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
   let ttftMs = null;
   const ac = new AbortController();
   res.set('X-Powered-By', 'SheLLM');
+  // Read before the headers go out: once they are flushed nothing else can be added, and the
+  // queue cannot move between this line and enqueue below.
+  res.set('x-shellm-queue-position', String(queue.nextPosition));
   initSSE(res);
 
   // Detect client disconnect: poll socket state instead of relying on close events
@@ -269,10 +274,13 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
   const responseModel = model;
   let sentRole = false;
   let slotAcquired = false;
+  let stopQueueNotices = null;
 
   try {
     logger.debug({ event: 'stream_queue_wait', active: queue.stats.active, pending: queue.stats.pending, request_id: req.requestId });
-    await queue.enqueue(async () => {
+    await queue.enqueue(async ({ queued_ms }) => {
+      if (stopQueueNotices) stopQueueNotices();
+      res.locals.queued_ms = queued_ms;
       logger.debug({ event: 'stream_queue_entered', request_id: req.requestId });
 
       // Stream concurrency check (inside queue to avoid holding slots while waiting)
@@ -325,13 +333,14 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
         sendSSEDone(res);
         logger.debug({ event: 'stream_complete', ttft_ms: ttftMs, request_id: req.requestId });
       }
-    });
+    }, `${provider.name} · ${model}`, { onQueued: (position) => { stopQueueNotices = announceQueued(res, position); } });
   } catch (err) {
     logger.debug({ event: 'stream_error', error: err.message, request_id: req.requestId });
     if (!ac.signal.aborted && !res.writableEnded) {
       sendSSEError(res, err);
     }
   } finally {
+    if (stopQueueNotices) stopQueueNotices();
     if (slotAcquired) releaseStreamSlot();
   }
 }

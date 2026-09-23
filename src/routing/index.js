@@ -19,10 +19,9 @@ async function route({ model, prompt, system, max_tokens, temperature, top_p, re
 
   let result;
   try {
-    result = await queue.enqueue(() => {
-      const execStart = Date.now();
+    result = await queue.enqueue(({ queued_ms, position }) => {
       return provider.chat({ prompt, system, max_tokens, temperature, top_p, response_format, model })
-        .then((r) => ({ ...r, queued_ms: execStart - startTime }));
+        .then((r) => ({ ...r, queued_ms, queue_position: position }));
     }, `${provider.name} · ${model || provider.name}`);
     recordSuccess(provider.name);
   } catch (err) {
@@ -36,6 +35,7 @@ async function route({ model, prompt, system, max_tokens, temperature, top_p, re
     model,
     duration_ms: Date.now() - startTime,
     queued_ms: result.queued_ms,
+    queue_position: result.queue_position,
     request_id: request_id || null,
     ...(result.cost_usd != null && { cost_usd: result.cost_usd }),
     ...(result.usage && { usage: result.usage }),

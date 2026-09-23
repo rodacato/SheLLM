@@ -12,6 +12,22 @@ function initSSE(res) {
   res.flushHeaders();
 }
 
+function sendSSEComment(res, text) {
+  return res.write(`: ${text}\n\n`);
+}
+
+// A queued request has flushed its headers and written nothing yet. Comment lines say it is
+// waiting rather than wedged, and keep an intermediary from timing the connection out. Both
+// wire formats ignore a comment line, so this is shared.
+function announceQueued(res, position, intervalMs = 3000) {
+  const startedAt = Date.now();
+  sendSSEComment(res, `queued position=${position}`);
+  const timer = setInterval(() => {
+    sendSSEComment(res, `queued position=${position} waiting_ms=${Date.now() - startedAt}`);
+  }, intervalMs);
+  return () => clearInterval(timer);
+}
+
 function sendSSEChunk(res, data) {
   return res.write(`data: ${JSON.stringify(data)}\n\n`);
 }
@@ -33,4 +49,4 @@ function sendSSEError(res, error) {
   sendSSEDone(res);
 }
 
-module.exports = { initSSE, sendSSEChunk, sendSSEDone, sendSSEError };
+module.exports = { initSSE, sendSSEComment, announceQueued, sendSSEChunk, sendSSEDone, sendSSEError };
