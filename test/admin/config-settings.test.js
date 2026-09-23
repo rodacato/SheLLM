@@ -230,14 +230,25 @@ describe('the System page shows what the release added', () => {
     const html = compose();
     const page = html.slice(html.indexOf('<!-- SYSTEM PAGE -->'));
     const start = page.indexOf('<!-- ================= SETTINGS');
-    const end = page.indexOf('<!-- ================= QUEUE', start);
-    assert.ok(start > -1 && end > start, 'the Settings block is no longer a section of the System page');
-    return page.slice(start, end);
+    assert.ok(start > -1, 'the Settings block is no longer a section of the System page');
+    return page.slice(start);
   };
 
-  it('puts the block after the Build card it follows', () => {
+  // Last on the page on purpose: the settings are reference data read about once a month, and
+  // whether claude and codex are answering is what the page gets opened for.
+  it('puts the block last, after the providers', () => {
     const page = compose().slice(compose().indexOf('<!-- SYSTEM PAGE -->'));
-    assert.ok(page.indexOf('>Build<') < page.indexOf('<!-- ================= SETTINGS'));
+    const settings = page.indexOf('<!-- ================= SETTINGS');
+    for (const earlier of ['BUILD', 'QUEUE', 'PROVIDERS']) {
+      const at = page.indexOf('<!-- ================= ' + earlier);
+      assert.ok(at > -1 && at < settings, `the ${earlier} section no longer comes before Settings`);
+    }
+  });
+
+  it('groups the rows by the section the schema declares', () => {
+    const block = settingsBlock();
+    assert.match(block, /x-for="group in groupedSettings"/, 'the table is flat again');
+    assert.match(block, /x-text="group\.section"/, 'a group renders without naming its section');
   });
 
   it('leads with the settings the operator has not set, in the warning colour', () => {
