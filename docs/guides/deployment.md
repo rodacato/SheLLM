@@ -117,7 +117,8 @@ request for keys, logs or provider status still goes to the server.
 
 **The install is a launcher, not an offline app.** Tailwind, Alpine and Chart.js come from a CDN,
 so the page needs the network to assemble itself at all — and every number on every screen comes
-from the gateway, so there would be nothing to show offline anyway.
+from the gateway, so there would be nothing to show offline anyway
+([ADR-0007](../adr/0007-installed-dashboard-is-a-launcher.md)).
 
 ## Operating it
 

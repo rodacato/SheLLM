@@ -139,8 +139,10 @@ limits you will hit — read [`docs/guides/usage.md`](docs/guides/usage.md).
 ## The dashboard
 
 `/admin` is where the keys, the request log and provider health live. Browsers sign in at
-`/admin/login`; scripts use HTTP Basic with `SHELLM_ADMIN_PASSWORD`. Over HTTPS it installs as an
-app — see [`docs/PWA-AUDIT.md`](docs/PWA-AUDIT.md) for what that install does and does not do.
+`/admin/login` — any username unless `SHELLM_ADMIN_USER` is set, with the password `shellm init`
+printed; scripts use HTTP Basic with the same `SHELLM_ADMIN_PASSWORD`. Over HTTPS it installs as
+an app: its own window and icon, and a warm start. Not an offline dashboard — every number on it
+comes from the gateway ([ADR-0007](docs/adr/0007-installed-dashboard-is-a-launcher.md)).
 
 ![Request logs — a filterable table of every request with its status, client, provider, model, duration, tokens and cost, one row expanded to show the request id and the upstream detail, and an error-rate sparkline below it](design/exports/admin-request-logs-default.png)
 
