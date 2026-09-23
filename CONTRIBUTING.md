@@ -171,54 +171,16 @@ test's `NOT_AN_API_SURFACE` map with the reason.
 
 ## Testing Before Deployment
 
-Before deploying to the VPS, you can verify everything locally.
+`npm run smoke` runs the end-to-end check against a server you already started — the closest thing
+to "does this actually work" short of deploying. `shellm help` lists the CLI; daemon mode is
+`shellm start -d`, then `shellm status`, `shellm logs -n 20`, `shellm stop`. `npm unlink -g shellm`
+undoes the link.
 
-### Testing the CLI (`npm link`)
-
-```bash
-# Register the shellm command globally
-npm link
-
-# Verify the CLI works
-shellm help
-shellm version
-
-# Start the server in foreground mode
-shellm start
-
-# In another terminal, verify the health endpoint
-curl http://127.0.0.1:6100/health
-
-# Stop with Ctrl+C, then test daemon mode
-shellm start -d
-shellm status
-shellm logs -n 20
-shellm stop
-```
-
-To unlink later: `npm unlink -g shellm`
-
-### Testing the VPS Setup Script
-
-The setup script (`scripts/setup/vps.sh`) requires root and is designed for a fresh Ubuntu server. To test it safely without a real VPS, run it in a disposable Docker container:
-
-```bash
-# Launch a disposable Ubuntu container
-docker run --rm -it ubuntu:22.04 bash
-
-# Inside the container: install git and fetch the script
-apt-get update && apt-get install -y git curl sudo
-
-# Clone the repo (or copy the script in)
-git clone https://github.com/rodacato/SheLLM.git /tmp/shellm
-
-# Run the setup script as root
-bash /tmp/shellm/scripts/setup/vps.sh
-```
-
-The script will create the `shellmer` user, install Node.js 24, CLI tools, clone the repo, configure systemd, and set up cloudflared. Since this is a disposable container, nothing persists after you exit — safe to experiment freely.
-
-> **Note:** The container won't have real CLI auth tokens, so health checks will show providers as unauthenticated. The goal is to verify the script runs without errors and all components install correctly.
+**`scripts/setup/vps.sh` cannot be rehearsed in a container.** It is `set -euo pipefail` and calls
+`systemctl daemon-reload` at line 90, so a stock `ubuntu:22.04` image dies there — after creating
+a user and installing Node. Test it on a disposable VPS, or read
+[`docs/guides/deployment.md`](docs/guides/deployment.md), which documents what it does step by
+step. It does not configure cloudflared; the tunnel is a separate manual step.
 
 ## Commit Messages
 
@@ -276,22 +238,13 @@ refactor(router): extract queue logic into separate module
 
 ### Release flow
 
-Releases are cut by CI from a dispatch. No step below pushes to `master` or creates a tag by
-hand — `npm version` runs inside the workflow, never on your machine.
+Releases are cut by CI from a dispatch; nothing pushes to `master` or tags by hand. The four
+steps, and why the workflow deliberately stops short of opening the pull request itself, are in
+[`docs/guides/releasing.md`](docs/guides/releasing.md).
 
-1. Run the **Release** workflow from the Actions tab and pick the bump (`patch`, `minor` or
-   `major`). It bumps `package.json`, generates the `CHANGELOG.md` entry from the commits since
-   the last tag, and pushes a `release/vX.Y.Z` branch.
-2. **Open the pull request yourself**, from the link in the run summary. The workflow stops
-   short of opening it: letting Actions open pull requests needs a repository setting that also
-   lets it *approve* them, and a token-authored pull request runs no CI — opening it by hand is
-   what gives the release branch its checks.
-3. Read the generated changelog entry on that branch before merging. Anything that breaks an
-   existing install belongs under **Breaking Changes**, and it only lands there when the commit
-   was written as `type!:`; a missed marker is fixed on the branch, not after publication.
-4. Merge the pull request. That push to `master` carries a version with no tag yet, which is
-   what makes CI run the tests, create `vX.Y.Z` and publish the GitHub Release with that
-   changelog entry as its notes.
+What matters while you are writing the commit: a change that breaks an existing install only
+reaches **Breaking Changes** if the commit was written `type!:`. A missed marker is fixed on the
+release branch, not after publication.
 
 ## Pull Requests
 

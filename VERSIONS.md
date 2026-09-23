@@ -16,8 +16,13 @@ The last known-good version of each upstream CLI. Read this table and the tool's
 ## Tested Combinations
 
 | SheLLM | claude | codex | Node.js | Last tested |
-|---|---|---|---|---|---|
-| v0.5.0 | 2.1.273 | 0.154.0 | 24.x | 2026-09-19 — `npm run test:cli` for both CLIs; codex `exec --json` output recorded from the real binary; claude stream-json output recorded too |
+|---|---|---|---|---|
+| v1.1.1 | 2.1.273 | 0.154.0 | 24.x | 2026-09-19 — `npm run test:cli` for both CLIs; codex `exec --json` output recorded from the real binary; claude stream-json output recorded too |
+
+This row records the pinned pair at the date it was verified by hand. What keeps it honest between
+bumps is the **CLI contract** workflow, which runs `npm run test:cli` against `@latest` of both CLIs
+every Monday — so an upstream release that drops a flag the adapters pass fails there before the
+pin moves.
 
 ---
 

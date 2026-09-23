@@ -1,5 +1,10 @@
 # SheLLM — Expert Panel
 
+> **Every seat here is invented.** This is a thinking tool: a set of lenses the AI assistant argues
+> from before a decision, not people who have seen this project. Where a seat carries a real
+> practitioner's name, it stands for the position their public work is known for and nothing more
+> — no one named here has been consulted, contributed, or endorsed anything.
+>
 > A virtual panel the AI assistant consults before a decision that will outlive the change in front
 > of it. **The panel advises, the assistant recommends, the maintainer decides.** It sits beside
 > [`AUDIENCE.md`](./AUDIENCE.md) because the two answer the questions every proposal has to
