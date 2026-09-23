@@ -948,7 +948,7 @@
                                       "id": "a70eb",
                                       "name": "Max",
                                       "fill": "$outline",
-                                      "content": "/ 2",
+                                      "content": "/ 4",
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": "$text-sm",
                                       "fontWeight": "normal"
@@ -1034,7 +1034,7 @@
                                       "id": "bfBNJ",
                                       "name": "Max",
                                       "fill": "$outline",
-                                      "content": "/ 2",
+                                      "content": "/ 4",
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": "$text-sm",
                                       "fontWeight": "normal"
@@ -1057,7 +1057,7 @@
                               "type": "frame",
                               "id": "d56PeU",
                               "name": "Bar fill",
-                              "width": 558,
+                              "width": 161,
                               "height": 6,
                               "fill": "$primary-container"
                             }
@@ -1068,7 +1068,7 @@
                           "id": "OQNcX",
                           "name": "Saturation",
                           "fill": "$outline",
-                          "content": "50% of concurrency in use",
+                          "content": "25% of concurrency in use",
                           "fontFamily": "$font-mono-render",
                           "fontSize": 10,
                           "fontWeight": "normal"
@@ -7973,6 +7973,19 @@
         },
         {
           "type": "text",
+          "id": "C5Vrcz",
+          "name": "2026-09-23",
+          "fill": "$on-surface-variant",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "2026-09-23 · MAX_CONCURRENT and MAX_STREAM_CONCURRENT went from 2 to 4 in code, which stales every figure that renders them: Overview's queue panel, its usage-limit copy, and System's Concurrency card. Ten nodes across three artboards — four denominators, two Concurrency values, two saturation captions and the two bars. The band is not re-mirrored; it still reads dac0bc6 and only the figures the new default moved were touched. The bars are what the edit found. Both saturation fills were 558 wide in a 644 track — 87% — under a caption reading '50% of concurrency in use'. They had been drawn wide and never derived from the figure above them, and no screenshot review catches a bar that is merely the wrong length. They are 161 now, the 25% one active call under a cap of four actually is. That is D61.",
+          "lineHeight": 1.6,
+          "fontFamily": "$font-mono-render",
+          "fontSize": 10,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
           "id": "SYdMB",
           "name": "2026-09-20l",
           "fill": "$on-surface-variant",
@@ -11573,7 +11586,7 @@
                           "id": "kYRjE",
                           "name": "Value",
                           "fill": "$white",
-                          "content": "1 / 2",
+                          "content": "1 / 4",
                           "fontFamily": "$font-headline",
                           "fontSize": "$text-lg",
                           "fontWeight": "700"
@@ -11633,7 +11646,7 @@
                           "id": "cJ04S",
                           "name": "Value",
                           "fill": "$white",
-                          "content": "0 / 2",
+                          "content": "0 / 4",
                           "fontFamily": "$font-headline",
                           "fontSize": "$text-lg",
                           "fontWeight": "700"
@@ -14878,7 +14891,7 @@
                                       "id": "DnWJ8",
                                       "name": "Max",
                                       "fill": "$outline",
-                                      "content": "/ 2",
+                                      "content": "/ 4",
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": "$text-sm",
                                       "fontWeight": "normal"
@@ -14964,7 +14977,7 @@
                                       "id": "VKcOT",
                                       "name": "Max",
                                       "fill": "$outline",
-                                      "content": "/ 2",
+                                      "content": "/ 4",
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": "$text-sm",
                                       "fontWeight": "normal"
@@ -14987,7 +15000,7 @@
                               "type": "frame",
                               "id": "cb7Gf",
                               "name": "Bar fill",
-                              "width": 558,
+                              "width": 161,
                               "height": 6,
                               "fill": "$primary-container"
                             }
@@ -14998,7 +15011,7 @@
                           "id": "DZKKQ",
                           "name": "Saturation",
                           "fill": "$outline",
-                          "content": "50% of concurrency in use",
+                          "content": "25% of concurrency in use",
                           "fontFamily": "$font-mono-render",
                           "fontSize": 10,
                           "fontWeight": "normal"
