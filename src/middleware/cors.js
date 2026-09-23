@@ -3,6 +3,8 @@
 // CORS for /v1 only. The admin endpoints are deliberately absent: they answer to a browser
 // session, so a cross-origin page must never be able to read them.
 
+const config = require('../config');
+
 const ALLOWED_HEADERS = [
   'Authorization',
   'Content-Type',
@@ -26,16 +28,8 @@ const EXPOSED_HEADERS = [
 
 const MAX_AGE = '600';
 
-let cachedSource = null;
-let cachedOrigins = [];
-
 function allowedOrigins() {
-  const source = process.env.SHELLM_CORS_ORIGINS || '';
-  if (source !== cachedSource) {
-    cachedSource = source;
-    cachedOrigins = source.split(',').map((o) => o.trim()).filter(Boolean);
-  }
-  return cachedOrigins;
+  return config.get('SHELLM_CORS_ORIGINS');
 }
 
 function isAllowedOrigin(origin) {

@@ -28,6 +28,14 @@ function systemPage() {
     updateError: null,
     watching: false,
 
+    // What the running build can be configured with, and the subset of it this release added
+    // that the operator's config file does not set.
+    settings: [],
+    unseenSettings: [],
+    configFile: null,
+    configError: null,
+    configLoaded: false,
+
     get openCircuits() {
       return this.providers.filter((p) => p.circuit && p.circuit.state !== 'closed').map((p) => p.name);
     },
@@ -78,7 +86,9 @@ function systemPage() {
 
     async load() {
       this.loading = true;
-      await Promise.all([this.fetchProviders(), this.fetchLatestRelease(), this.fetchUpdater()]);
+      await Promise.all([
+        this.fetchProviders(), this.fetchLatestRelease(), this.fetchUpdater(), this.fetchConfig(),
+      ]);
       this.loading = false;
     },
 
@@ -112,6 +122,44 @@ function systemPage() {
       } catch {
         this.releaseError = 'could not reach GitHub';
       }
+    },
+
+    // The same read `shellm config` prints, so the page and the command cannot disagree about
+    // what is in effect or about which settings the operator has never been shown.
+    async fetchConfig() {
+      try {
+        const body = await apiRead(`${API_BASE}/config`);
+        this.settings = body.settings || [];
+        this.configFile = body.config_file || null;
+        const added = new Set(body.unseen || []);
+        this.unseenSettings = this.settings.filter((setting) => added.has(setting.name));
+        this.configError = null;
+      } catch (err) {
+        this.configError = err.message;
+      }
+      this.configLoaded = true;
+    },
+
+    get unseenHeadline() {
+      const count = this.unseenSettings.length;
+      return `${count} setting${count === 1 ? ' is' : 's are'} available and not set in your config`;
+    },
+
+    // A list arrives as an array and a secret as its mask; neither renders as a cell on its own.
+    settingValue(setting) {
+      const value = setting.value;
+      if (Array.isArray(value)) return value.length > 0 ? value.join(',') : '—';
+      if (value === null || value === '') return '—';
+      return String(value);
+    },
+
+    // Ready to paste into the config file. A secret's value is never sent here, so its line stops
+    // at the equals sign the operator types after.
+    settingLine(setting) {
+      if (setting.secret) return `${setting.name}=`;
+      const value = this.settingValue(setting);
+      if (value !== '—') return `${setting.name}=${value}`;
+      return `${setting.name}=${setting.example ?? ''}`;
     },
 
     async fetchUpdater() {

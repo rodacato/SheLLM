@@ -4,8 +4,9 @@ const { queue } = require('../infra/queue');
 const { engines } = require('./engines');
 const { resolveProvider, checkProviderAvailability, getAvailableProviders } = require('./provider-select');
 const logger = require('../lib/logger');
+const config = require('../config');
 
-const FALLBACK_ORDER_ENV = process.env.SHELLM_FALLBACK_ORDER || null;
+const FALLBACK_ORDER_ENV = config.get('SHELLM_FALLBACK_ORDER');
 
 async function routeWithFallback({ model, prompt, system, max_tokens, temperature, top_p, response_format, request_id }) {
   const primary = resolveProvider(model);

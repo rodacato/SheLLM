@@ -2,6 +2,7 @@
 
 const { readFileSync } = require('node:fs');
 const path = require('node:path');
+const config = require('../config');
 
 const VIEWS = path.join(__dirname, 'views');
 const INCLUDE = /^[ \t]*<!--#include ([\w./-]+)-->[ \t]*\r?\n/gm;
@@ -18,7 +19,7 @@ let cached = null;
 // Composed per request off production so an edited partial shows up without a restart —
 // node --watch does not see HTML.
 function dashboardHtml() {
-  if (process.env.NODE_ENV !== 'production') return compose();
+  if (config.get('NODE_ENV') !== 'production') return compose();
   if (cached === null) cached = compose();
   return cached;
 }

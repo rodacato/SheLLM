@@ -4,6 +4,7 @@ const { execSync, execFileSync } = require('node:child_process');
 const { existsSync } = require('node:fs');
 const path = require('node:path');
 const { PROJECT_ROOT, CLI_SCRIPT, BACKUP_DIR } = require('./paths');
+const config = require('../config');
 
 const HEALTH_URL = 'http://127.0.0.1:6100/health';
 const SERVICE_USER = 'shellmer';
@@ -159,7 +160,7 @@ function run() {
 
 // The host follows published releases; SHELLM_REF deploys a specific one, a commit id, or a branch.
 function requestedRef() {
-  const ref = process.env.SHELLM_REF;
+  const ref = config.get('SHELLM_REF');
   if (!ref) return null;
   if (!isSupportedRef(ref)) {
     console.error(`SHELLM_REF is not a release tag (v1.2.3), a commit id or a branch name: ${JSON.stringify(ref)}`);

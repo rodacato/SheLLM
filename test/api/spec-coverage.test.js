@@ -52,7 +52,7 @@ describe('the OpenAPI spec describes the server that ships with it', () => {
   }
 
   function serverRoutes() {
-    const adminRouters = ['login', 'keys', 'logs', 'stats', 'providers', 'update'];
+    const adminRouters = ['login', 'keys', 'logs', 'stats', 'providers', 'update', 'config'];
     const mounted = adminRouters.flatMap((name) => routesOf(require(`../../src/admin/${name}`), '/admin'));
     return [...routesOf(app.router, ''), ...mounted];
   }

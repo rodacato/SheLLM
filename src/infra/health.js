@@ -4,17 +4,18 @@ const { queue } = require('./queue');
 const { getAllCircuitStates, resetCircuit } = require('./circuit-breaker');
 const logger = require('../lib/logger');
 const { getTimezone } = require('../lib/time');
+const config = require('../config');
 
 const PROBE_TIMEOUT = 15000;
 
 function getCacheTtl() {
-  return parseInt(process.env.HEALTH_CACHE_TTL_MS || '30000', 10);
+  return config.get('HEALTH_CACHE_TTL_MS');
 }
 function getPollInterval() {
-  return parseInt(process.env.HEALTH_POLL_INTERVAL_MS || '300000', 10);
+  return config.get('HEALTH_POLL_INTERVAL_MS');
 }
 function getAlertWebhookUrl() {
-  return process.env.SHELLM_ALERT_WEBHOOK_URL || null;
+  return config.get('SHELLM_ALERT_WEBHOOK_URL');
 }
 
 let cache = { data: null, expires: 0 };

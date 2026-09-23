@@ -2,12 +2,13 @@
 
 const { readPid } = require('./pid');
 const { CONFIG_FILE } = require('./paths');
+const config = require('../config');
 
 async function run() {
   require('dotenv').config({ path: CONFIG_FILE, quiet: true });
   const daemonPid = readPid();
-  const host = process.env.HOST || '127.0.0.1';
-  const port = process.env.PORT || '6100';
+  const host = config.get('HOST');
+  const port = config.get('PORT');
   const url = `http://${host}:${port}`;
 
   let healthy = false;

@@ -1,0 +1,36 @@
+get:
+  operationId: getConfig
+  tags: [Config]
+  summary: Every setting, the value in effect, and where it came from
+  description: |
+    The same view `shellm config` prints. `unseen` is the bounded list the dashboard leads with:
+    settings absent from the operator's config file that were introduced by the running release or
+    a later one — what an update added and a config file written before it will never mention.
+
+    Secrets are masked before they leave the process.
+  security:
+    - BasicAuth: []
+  responses:
+    '200':
+      description: The configuration surface
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              running:
+                type: string
+                example: v1.10.0
+              config_file:
+                type: string
+                example: /home/shellmer/.config/shellm/env
+              settings:
+                type: array
+                items:
+                  $ref: "../schemas/ConfigSetting.yaml"
+              unseen:
+                type: array
+                items: { type: string }
+                example: [SHELLM_CORS_ORIGINS]
+    '401':
+      $ref: "../responses/Unauthorized.yaml"

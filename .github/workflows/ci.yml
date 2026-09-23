@@ -50,6 +50,13 @@ jobs:
           npm run docs:build
           git diff --exit-code docs/api/bundled.json
 
+      # .env.example is generated from src/config/schema.js and committed. Linting the schema says
+      # nothing about whether the reference operators copy from still matches it. See ADR-0008.
+      - name: Check .env.example matches the schema
+        run: |
+          npm run config:build
+          git diff --exit-code .env.example
+
       - name: Audit runtime dependencies
         run: npm run audit:security
 

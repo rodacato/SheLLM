@@ -4,6 +4,7 @@ const { Router } = require('express');
 const { getDb } = require('../db');
 const stats = require('../db/stats');
 const { RETENTION_DAYS } = require('../db/request-logs');
+const config = require('../config');
 
 const router = Router();
 
@@ -13,8 +14,8 @@ const WINDOW_INTERVAL = `-${RETENTION_DAYS} days`;
 
 // Rolling windows, not the provider's own reset cycle — no CLI reports when that cycle ends.
 const QUOTA_WINDOW_HOURS = [
-  parseInt(process.env.SHELLM_QUOTA_WINDOW_HOURS || '5', 10),
-  parseInt(process.env.SHELLM_QUOTA_WEEK_HOURS || '168', 10),
+  config.get('SHELLM_QUOTA_WINDOW_HOURS'),
+  config.get('SHELLM_QUOTA_WEEK_HOURS'),
 ];
 
 function emptyWindow() {

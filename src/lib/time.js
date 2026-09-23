@@ -1,5 +1,7 @@
 'use strict';
 
+const config = require('../config');
+
 const DEFAULT_TIMEZONE = 'America/Mexico_City';
 
 // A bad zone name would otherwise throw on every render, taking the dashboard down over a typo.
@@ -16,7 +18,7 @@ function resolveTimezone(name) {
 let cache = { env: null, zone: DEFAULT_TIMEZONE };
 
 function getTimezone() {
-  const env = process.env.SHELLM_TZ || null;
+  const env = config.get('SHELLM_TZ');
   if (env !== cache.env) cache = { env, zone: resolveTimezone(env) };
   return cache.zone;
 }

@@ -17,6 +17,7 @@ Commands:
   doctor [--live]                         Check the setup; --live sends one request to Claude
   logs [-f|--follow] [-n|--lines N]       View daemon logs
   backup [--dir DIR] [--keep N]           Snapshot the database and config file
+  config [--new]                          Show every setting and where its value came from
   update                                  Move to the newest published release
   version                                 Show version
   help                                    Show this help

@@ -4,6 +4,7 @@ const http = require('node:http');
 const https = require('node:https');
 const { readFileSync } = require('node:fs');
 
+const config = require('./config');
 const logger = require('./lib/logger');
 const { initDb } = require('./db');
 
@@ -17,13 +18,13 @@ const app = require('./app');
 // the process in IncomingMessage._read — so a browser that needs more than six connections to
 // one host gets HTTP/2 from a reverse proxy, not from here. See the README.
 function tlsOptions() {
-  const cert = process.env.SHELLM_TLS_CERT;
-  const key = process.env.SHELLM_TLS_KEY;
+  const cert = config.get('SHELLM_TLS_CERT');
+  const key = config.get('SHELLM_TLS_KEY');
   if (!cert || !key) return null;
   return { cert: readFileSync(cert), key: readFileSync(key) };
 }
 
-function startServer({ port = parseInt(process.env.PORT || '6100', 10), host = process.env.HOST || '127.0.0.1' } = {}, onListening) {
+function startServer({ port = config.get('PORT'), host = config.get('HOST') } = {}, onListening) {
   const tls = tlsOptions();
   const server = tls ? https.createServer(tls, app) : http.createServer(app);
   server.listen(port, host, () => {
