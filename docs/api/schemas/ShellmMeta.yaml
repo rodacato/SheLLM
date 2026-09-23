@@ -1,0 +1,19 @@
+type: object
+description: >
+  SheLLM's own numbers for the request, namespaced so no SDK collides with them. The four keys are
+  always present; a value SheLLM could not measure is null rather than absent. On a streamed
+  response the same block rides the final chunk (OpenAI) or the message_delta event (Anthropic).
+properties:
+  cost_usd:
+    type: ['number', 'null']
+    description: What the request would have cost on the provider's API, when the CLI reports it.
+    example: 0.0042
+  queue_ms:
+    type: ['integer', 'null']
+    description: Time spent waiting for a free CLI slot.
+  cli_ms:
+    type: ['integer', 'null']
+    description: Time the CLI itself took, queueing excluded.
+  ttft_ms:
+    type: ['integer', 'null']
+    description: Time to the first token. Streamed responses only; null otherwise.

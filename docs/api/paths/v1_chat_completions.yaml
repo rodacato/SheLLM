@@ -24,6 +24,16 @@ post:
         X-Queue-Active:
           schema:
             type: integer
+        x-shellm-queue-ms:
+          description: Milliseconds the request waited for a free CLI slot.
+          schema:
+            type: integer
+        x-shellm-queue-position:
+          description: >
+            Where the request stood in the queue, or 0 when a slot was free. A streamed response
+            carries this header before any body, since the wait happens after the headers flush.
+          schema:
+            type: integer
       content:
         application/json:
           schema:
@@ -38,6 +48,8 @@ post:
       $ref: "../responses/BadRequestOpenAI.yaml"
     '401':
       $ref: "../responses/UnauthorizedOpenAI.yaml"
+    '403':
+      $ref: "../responses/OriginNotAllowedOpenAI.yaml"
     '429':
       $ref: "../responses/RateLimitedOpenAI.yaml"
     '502':

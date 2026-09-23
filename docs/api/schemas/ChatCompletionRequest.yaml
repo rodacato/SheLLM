@@ -26,6 +26,14 @@ properties:
       `true` answers `text/event-stream` with OpenAI-style `data:` chunks and a `[DONE]`
       terminator. Streaming holds a slot for the whole response and is capped separately by
       `MAX_STREAM_CONCURRENT`.
+  stream_options:
+    type: object
+    description: >
+      Only valid with `stream: true`; sending it otherwise is a 400. With `include_usage: true` a
+      final chunk with an empty `choices` array carries `usage` and `x_shellm`.
+    properties:
+      include_usage:
+        type: boolean
   temperature:
     type: number
     minimum: 0

@@ -192,11 +192,109 @@ format of the endpoint you called:
 |---|---|---|
 | 400 | `invalid_request` | Bad input |
 | 401 | `auth_required` | Missing or invalid key |
+| 403 | `origin_not_allowed` | The key is scoped to other browser origins |
 | 404 | `model_not_found` | The CLI does not know that model |
 | 429 | `rate_limited` | Too many requests, with `Retry-After` |
 | 502 | `cli_failed` | The CLI exited with an error |
 | 503 | `provider_unavailable` | Provider disabled, not authenticated, or circuit open |
 | 504 | `timeout` | Killed after `TIMEOUT_MS` |
+
+## Using SheLLM from a browser
+
+A page on another origin — `https://you.github.io`, `http://localhost:5173` — can call `/v1`
+directly once you allow its origin. Nothing changes for existing callers: with
+`SHELLM_CORS_ORIGINS` unset, SheLLM answers exactly as it did before.
+
+```bash
+SHELLM_CORS_ORIGINS=https://you.github.io,http://localhost:5173
+```
+
+Exact match, one entry per origin — scheme, host and port, no path and no trailing slash. There is
+no wildcard: `*` matches nothing, because a page you did not mean to allow should fail rather than
+inherit access.
+
+The list covers `/v1` only. The admin endpoints never answer a cross-origin request, so no page can
+read your keys or your logs.
+
+### Scope the key to the page
+
+A key can carry its own origin list, set when you create it in the dashboard or over the admin API:
+
+```bash
+curl -u admin:$PASSWORD -X POST http://127.0.0.1:6100/admin/keys \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"bench-page","rpm":30,"origins":["https://you.github.io"]}'
+```
+
+A request carrying any other `Origin` gets `403 origin_not_allowed`. A key's list narrows
+`SHELLM_CORS_ORIGINS`, it never widens it.
+
+**This is a guardrail, not authentication.** `Origin` is set by browsers; anything else holding the
+key can send whatever it likes, or nothing at all — a request with no `Origin` is accepted, so
+`curl` still works. What the list actually buys you is that a key pasted into the wrong page stops
+working, loudly, instead of quietly running up your subscription.
+
+### The key is in the page
+
+Whatever you ship to a browser is public — view-source, devtools, the network tab. Treat a browser
+key as published:
+
+- **A dedicated key**, never the one your servers use.
+- **A low `rpm`** and a short `expires_at`. A benchmark page needs a few requests a minute.
+- **The model list** narrowed to what the page actually calls.
+- **Rotate it** when the page changes hands, and after any public demo.
+
+### Six connections, and how to get past them
+
+A browser opens about **six HTTP/1.1 connections per host**. Request seven streams at once and the
+seventh does not queue in SheLLM — it waits in the browser, invisible from the server side, which
+will quietly ruin a concurrency benchmark.
+
+HTTP/2 lifts that limit, and SheLLM does not serve it: Express 5 on Node's `http2` compat layer
+crashes the process on the first HTTP/2 request. Put a proxy in front instead.
+
+```bash
+caddy trust                                                   # once, trusts Caddy's local CA
+caddy reverse-proxy --from localhost:6443 --to 127.0.0.1:6100
+```
+
+The page then talks to `https://localhost:6443` over HTTP/2, and Caddy talks HTTP/1.1 to SheLLM.
+Caddy does not buffer SSE, so streaming still arrives token by token. If the proxy is not on the
+same machine, set `SHELLM_TRUST_PROXY` (`loopback`, a hop count, or the proxy's address) so the
+admin login lockout counts real client IPs rather than the proxy's.
+
+For TLS without a proxy — enough for a plain `fetch`, still HTTP/1.1 and still six connections:
+
+```bash
+mkcert -install && mkcert localhost 127.0.0.1                 # a locally trusted certificate
+SHELLM_TLS_CERT=./localhost+1.pem
+SHELLM_TLS_KEY=./localhost+1-key.pem
+```
+
+Chrome needs one more thing for a public `https://` page to reach `127.0.0.1`: it sends a Private
+Network Access preflight, and SheLLM answers it for allowed origins. No setting to turn on.
+
+### Reading the numbers back
+
+Every `/v1` response carries what a benchmark needs:
+
+| | Where |
+|---|---|
+| `x-shellm-queue-ms`, `x-shellm-queue-position` | response headers (a stream reports its position before it starts) |
+| `cost_usd`, `queue_ms`, `cli_ms`, `ttft_ms` | the `x_shellm` block in the body, the final stream chunk, or `message_delta` |
+| token counts | `usage` — on a stream, send `stream_options: {"include_usage": true}` |
+
+All of them are in `Access-Control-Expose-Headers`, so JavaScript can actually read them.
+
+A request waiting for a free slot flushes its headers immediately and, while streaming, writes SSE
+comment lines every few seconds:
+
+```
+: queued position=3 waiting_ms=6012
+```
+
+Every SSE parser ignores a comment line, so this needs no client change — it is there so you can
+tell a queued request from a wedged one, and so intermediaries see traffic.
 
 ## CLI
 

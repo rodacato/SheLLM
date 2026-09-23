@@ -1,0 +1,11 @@
+description: >
+  The key is scoped to a set of browser origins and the request carried another one. Only a
+  request that sends an Origin header can hit this.
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+content:
+  application/json:
+    schema:
+      $ref: "../schemas/OpenAIError.yaml"
