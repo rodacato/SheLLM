@@ -12,6 +12,7 @@ const ROOT = path.join(__dirname, '..', '..');
 // forwards it to the CLI, and cli-env-secrets.test.js bars anything the schema lists from one.
 const NOT_OURS = new Set([
   'HOME', 'PATH', 'TMPDIR', 'XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'NODE_EXTRA_CA_CERTS',
+  'INVOCATION_ID',
 ]);
 
 // The config module is the accessor every other file now goes through: the schema names all 33,

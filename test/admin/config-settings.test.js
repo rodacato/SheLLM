@@ -90,6 +90,7 @@ describe('admin /admin/config', () => {
 
     assert.strictEqual(res.body.config_file, configFile);
     assert.strictEqual(res.body.running, `v${require('../../package.json').version}`);
+    assert.match(res.body.restart_command, /^(shellm restart|sudo systemctl restart shellm)$/);
   });
 
   it('masks a secret and never sends its value', async () => {
@@ -243,6 +244,12 @@ describe('the System page shows what the release added', () => {
       const at = page.indexOf('<!-- ================= ' + earlier);
       assert.ok(at > -1 && at < settings, `the ${earlier} section no longer comes before Settings`);
     }
+  });
+
+  it('says which command applies the change, because the file is read only at startup', () => {
+    const block = settingsBlock();
+    assert.ok(block.includes('Then apply them:'), 'the block never says the edit needs a restart');
+    assert.match(block, /x-text="restartCommand"/, 'the command itself is not rendered');
   });
 
   it('groups the rows by the section the schema declares', () => {
