@@ -1,14 +1,30 @@
       <!-- OVERVIEW PAGE -->
       <div x-show="page === 'overview'" x-data="overviewPage()" x-effect="if (page === 'overview') { if (!stats) fetchStats(); if (providers.length === 0) fetchProviders(); startAutoRefresh(); } else { stopAutoRefresh(); }">
 
-        <header class="mb-6 flex items-baseline justify-between gap-4 flex-wrap">
+        <header class="mb-6 flex items-center justify-between gap-4 flex-wrap">
           <h2 class="text-xl font-bold font-headline tracking-tighter text-on-surface">OVERVIEW<span class="text-primary-container">_</span></h2>
-          <button @click="navigate('system')" x-show="health?.build"
-            class="text-[11px] font-mono text-outline hover:text-primary-container transition-colors duration-fast">
-            <span x-text="'v' + (health?.build?.version || '?')"></span>
-            <span class="text-outline" x-text="health?.build?.commit ? '· ' + health.build.commit : ''"></span>
-            <span class="ml-1">→</span>
-          </button>
+          <div class="flex items-center gap-6">
+            <button @click="navigate('system')" x-show="health?.build"
+              class="text-[11px] font-mono text-outline hover:text-primary-container transition-colors duration-fast">
+              <span x-text="'v' + (health?.build?.version || '?')"></span>
+              <span class="text-outline" x-text="health?.build?.commit ? '· ' + health.build.commit : ''"></span>
+              <span class="ml-1">→</span>
+            </button>
+            <div class="flex items-stretch h-8 border border-outline-variant/30">
+              <button @click="fetchStats()" aria-label="Re-read this page now" title="Re-read this page now"
+                class="px-3 flex items-center text-outline hover:bg-surface-container-high hover:text-on-surface transition-colors duration-fast">
+                <span class="material-symbols-outlined text-[16px]">refresh</span>
+              </button>
+              <div class="w-px bg-outline-variant/30"></div>
+              <select @change="setRefresh($event.target.value)"
+                aria-label="Auto-refresh interval" title="How often this page re-reads itself"
+                class="bg-surface-container text-on-surface font-mono text-xs px-2 focus:outline-none focus:text-primary-container">
+                <template x-for="step in ladder" :key="step.ms">
+                  <option :value="step.ms" :selected="step.ms === refreshMs" x-text="step.label"></option>
+                </template>
+              </select>
+            </div>
+          </div>
         </header>
 
         <!-- Every figure below is over this window, and nothing on the page can narrow it -->

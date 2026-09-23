@@ -38,6 +38,8 @@ const nowMarker = {
 
 const axisTicks = () => ({ color: statusVar('--outline'), font: { size: 10, family: 'monospace' } });
 
+const OVERVIEW_REFRESH_KEY = 'shellm.refresh.overview';
+
 function overviewPage() {
   return {
     stats: null,
@@ -50,6 +52,8 @@ function overviewPage() {
     _timelineChart: null,
     _domain: null,
     _poller: null,
+    refreshMs: storedInterval(OVERVIEW_REFRESH_KEY, 30000),
+    ladder: REFRESH_LADDER,
 
     async fetchStats() {
       this.loading = true;
@@ -68,7 +72,13 @@ function overviewPage() {
 
     startAutoRefresh() {
       if (!this._poller) this._poller = poller(() => this.fetchStats());
-      this._poller.every(30000);
+      this._poller.every(this.refreshMs);
+    },
+
+    setRefresh(value) {
+      this.refreshMs = Number(value);
+      storeInterval(OVERVIEW_REFRESH_KEY, this.refreshMs);
+      this.startAutoRefresh();
     },
 
     stopAutoRefresh() {
