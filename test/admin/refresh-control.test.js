@@ -23,7 +23,23 @@ describe('the Overview refresh control', () => {
   // With the interval switched off there is no loop, so the button is the only way to re-read the
   // page at all. Losing it would make Off mean "this page is now frozen until you reload".
   it('keeps a manual read that does not depend on the interval', () => {
-    assert.match(overviewHeader(), /@click="fetchStats\(\)"/);
+    assert.match(overviewHeader(), /@click="refreshNow\(\)"/);
+  });
+
+  // Same control, same press, same answer on both pages — and bound to manualLoading so the 30s
+  // loop this page has always run never spins it.
+  it('spins only for a read the operator asked for', () => {
+    const header = overviewHeader();
+    assert.match(header, /manualLoading \? 'animate-spin'/);
+    assert.doesNotMatch(header, /[^l]loading \? 'animate-spin'/);
+  });
+
+  // The four filters replace the browser ring with a border change; this select has no border of
+  // its own, so it needs a background one or it is the weakest focus target on the row.
+  it('shows keyboard focus after removing the browser ring', () => {
+    const header = overviewHeader();
+    assert.match(header, /focus:outline-none/);
+    assert.match(header, /focus:bg-surface-container-high/);
   });
 
   it('names both halves for a screen reader', () => {

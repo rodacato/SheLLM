@@ -86,6 +86,7 @@ module.exports = [
         REFRESH_LADDER: 'readonly',
         storedInterval: 'readonly',
         storeInterval: 'readonly',
+        SPINNER_FLOOR_MS: 'readonly',
         Chart: 'readonly',
       },
     },
