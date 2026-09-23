@@ -21,6 +21,14 @@ const path = require('node:path');
 
 const app = express();
 app.disable('x-powered-by');
+
+// Off by default: with no proxy in front, an X-Forwarded-For header is whatever the caller wrote,
+// and the admin login lockout counts per IP. Set it only when something really does sit in front.
+if (process.env.SHELLM_TRUST_PROXY) {
+  const value = process.env.SHELLM_TRUST_PROXY;
+  app.set('trust proxy', /^\d+$/.test(value) ? parseInt(value, 10) : value);
+}
+
 const auth = createAuthMiddleware();
 
 // Every static file is served relative to this root rather than by absolute path: send() refuses
