@@ -28,10 +28,10 @@ as context for AI agents (`AGENTS.md` points them here).
 
 | File | Screens | Kit | Domain entry point |
 |---|---|---|---|
-| `admin.pen` | 17 of 17 — two bands. Band 1, happy path: Sign in, Overview, Request Logs, API Keys, Playground, System. Band 2, error and alternate paths: eleven states, the eleventh being Request Logs / Auto-refresh held | **0.3.0** | `/admin/login` and `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
+| `admin.pen` | 18 of 18 — **six route columns, one per URL**, each stacked in flow order rather than alphabetically. `/admin/login` carries Sign in and its two failures; `#overview`, `#logs`, `#keys`, `#playground` and `#system` each carry their page and every state it can show. The briefs and the Log are the documentation column at x=0. | **0.3.0** | `/admin/login` and `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
 
-**A proposal band is allowed here, and it is expected to be temporary.** The auto-refresh control
-was drawn before it was built, in a third band whose brief said in its first line that it was not a
+**A proposal column is allowed here, and it is expected to be temporary.** The auto-refresh control
+was drawn before it was built, in a column of its own whose brief said in its first line that it was not a
 mirror, so the shape could be argued over on a real screen instead of in the abstract. It earned
 its keep — the held state and the width it needs were both settled on canvas — and it was deleted
 the day the code shipped, once the five artboards that share the header and the filter row had been
