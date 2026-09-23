@@ -43,6 +43,13 @@ jobs:
       - name: Lint the OpenAPI spec
         run: npm run docs:lint
 
+      # docs/api/bundled.json is committed and is what a self-hosted instance serves at
+      # /docs/openapi.json. Linting the source says nothing about whether the bundle matches it.
+      - name: Check the bundled spec matches its source
+        run: |
+          npm run docs:build
+          git diff --exit-code docs/api/bundled.json
+
       - name: Audit runtime dependencies
         run: npm run audit:security
 

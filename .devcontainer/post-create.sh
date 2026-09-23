@@ -20,5 +20,7 @@ config="${XDG_CONFIG_HOME:-$HOME/.config}/shellm/env"
 [ -f "$config" ] || install -D -m 600 .env.example "$config"
 
 echo ""
-echo "  shellm ready — npm run dev serves :6100, npm test runs the suite."
+echo "  shellm ready — run 'shellm init' first: the config installed here has every secret"
+echo "  commented out, so /v1/* answers 401 and /admin/* answers 501 until it runs."
+echo "  Then npm run dev serves :6100, npm test runs the suite."
 echo "  Provider logins survive rebuilds: claude and codex need one login each, once."

@@ -10,7 +10,23 @@ const { join } = require('node:path');
 const ROOT    = join(__dirname, '..');
 const DRY_RUN = process.argv.includes('--dry-run');
 
+const LINK_BLOCK = /\n\[Unreleased\]:.*$/ms;
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+// Only [Unreleased] is rewritten each release; every released version keeps the link it was
+// given, or the whole comparison history renders as literal text.
+function mergeLinkBlock(rest, version, prevTag, repoUrl) {
+  const block = rest.match(LINK_BLOCK);
+  const previous = block
+    ? block[0].split('\n').filter((line) => /^\[\d+\.\d+\.\d+\]:/.test(line))
+    : [];
+  return [
+    `[Unreleased]: ${repoUrl}/compare/v${version}...HEAD`,
+    `[${version}]: ${repoUrl}/compare/${prevTag || 'v0.0.0'}...v${version}`,
+    ...previous,
+  ].join('\n');
+}
 
 function git(cmd) {
   return execSync(cmd, { encoding: 'utf8', cwd: ROOT }).trim();
@@ -178,14 +194,11 @@ function main() {
   const header = current.slice(0, current.indexOf('## [Unreleased]'));
   const rest   = current.slice(current.indexOf('## [Unreleased]') + '## [Unreleased]'.length);
 
-  // Update the [Unreleased] diff link and add link for new version
   const repoUrl  = 'https://github.com/rodacato/SheLLM';
-  const newLinks = `\n[Unreleased]: ${repoUrl}/compare/v${version}...HEAD\n[${version}]: ${repoUrl}/compare/${prevTag || 'v0.0.0'}...v${version}`;
+  const newLinks = mergeLinkBlock(rest, version, prevTag, repoUrl);
+  const restWithoutLinks = rest.replace(LINK_BLOCK, '').trimEnd();
 
-  // Remove old version links block at the bottom
-  const restWithoutLinks = rest.replace(/\n\[Unreleased\]:.*$/ms, '').trimEnd();
-
-  const updated = `${header}## [Unreleased]\n\n${entry}${restWithoutLinks}\n${newLinks}\n`;
+  const updated = `${header}## [Unreleased]\n\n${entry}${restWithoutLinks}\n\n${newLinks}\n`;
 
   writeFileSync(changelogPath, updated, 'utf8');
   console.log(`CHANGELOG.md updated for v${version}`);
@@ -193,4 +206,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { parseCommit, groupCommits, formatEntry, TYPE_LABELS, TYPE_ORDER, SILENT_TYPES };
+module.exports = { parseCommit, groupCommits, formatEntry, mergeLinkBlock, TYPE_LABELS, TYPE_ORDER, SILENT_TYPES };
