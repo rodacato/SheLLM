@@ -11,7 +11,7 @@ anything yet.
 | Crop | Cut from | Region `x, y, w, h` | Shows |
 |---|---|---|---|
 | `overview.png` | `admin-overview-default.png` | `0, 0, 2880, 1440` | The whole top band, sidebar included. Exactly 2:1, which is also why it is the OG card. |
-| `request-logs.png` | `admin-request-logs-default.png` | `511, 388, 2369, 845` | Error rate, tokens and cost, then three rows and one expanded detail row. |
+| `request-logs.png` | `admin-request-logs-default.png` | `511, 354, 2369, 845` | Error rate, tokens and cost, then three rows and one expanded detail row. |
 | `api-keys.png` | `admin-api-keys-default.png` | `511, 938, 2369, 420` | The three keys with limits, usage and expiry. |
 | `playground.png` | `admin-playground-answered.png` | `511, 150, 2369, 480` | The client key, format and model beside an answered response. |
 | `system.png` | `admin-system-default.png` | `511, 880, 2369, 700` | Both provider cards: CLI version, circuit state, last status, models. |
@@ -22,10 +22,17 @@ shipped once, and nothing in it was readable. A crop 1,185 logical px wide rende
 width, so the numbers can actually be read. The page's own check asserts this: no image may render
 below 60% of the UI it depicts.
 
+**How a crop is cut.** There is no image tool in this repo and none is needed: a crop is a clipped
+frame in `admin.pen` sized to the region, holding a copy of the artboard offset by the region's
+origin, exported at the same 2x. The crop is then *derived* from the artboard by construction
+rather than measured off a picture, which is what the paragraph below asks for. The frame is
+temporary and is deleted once the PNG is written.
+
 **A region here is a measurement, not a setting.** It tracks content that moves when the artboard
-above it grows: adding the usage card to API Keys pushed the table down 668 device px and splitting
-the Logs filter bar pushed its panels down 88, and both regions were re-derived from the artboard's
-own bounds rather than nudged until the picture looked right. Recut a crop whenever its source
+above it grows: adding the usage card to API Keys pushed the table down 668 device px, splitting
+the Logs filter bar pushed its panels down 88, and putting the actions back on that filter row
+pulled them up 34 again — every one re-derived from the artboard's own bounds rather than nudged
+until the picture looked right. Recut a crop whenever its source
 artboard changes height, and update the row in the same commit — a stale region silently publishes
 the wrong part of the screen.
 
