@@ -33,6 +33,7 @@ function systemPage() {
     settings: [],
     unseenSettings: [],
     configFile: null,
+    restartCommand: null,
     configError: null,
     configLoaded: false,
 
@@ -131,6 +132,7 @@ function systemPage() {
         const body = await apiRead(`${API_BASE}/config`);
         this.settings = body.settings || [];
         this.configFile = body.config_file || null;
+        this.restartCommand = body.restart_command || null;
         const added = new Set(body.unseen || []);
         this.unseenSettings = this.settings.filter((setting) => added.has(setting.name));
         this.configError = null;

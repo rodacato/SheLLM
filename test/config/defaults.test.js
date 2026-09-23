@@ -100,6 +100,19 @@ describe('config defaults', () => {
     assert.equal(config.get('MAX_CONCURRENT'), 0);
   });
 
+  it('names the restart command the host actually needs', () => {
+    const invocation = process.env.INVOCATION_ID;
+    try {
+      delete process.env.INVOCATION_ID;
+      assert.equal(config.restartCommand(), 'shellm restart');
+      process.env.INVOCATION_ID = 'c0ffee';
+      assert.equal(config.restartCommand(), 'sudo systemctl restart shellm');
+    } finally {
+      if (invocation === undefined) delete process.env.INVOCATION_ID;
+      else process.env.INVOCATION_ID = invocation;
+    }
+  });
+
   it('refuses a name it does not declare', () => {
     assert.throws(() => config.get('SHELLM_NOT_A_SETTING'), /Unknown setting/);
   });

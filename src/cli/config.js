@@ -57,7 +57,8 @@ function newOnly() {
     const example = entry.example ?? (entry.default === null ? '' : entry.default);
     console.log(`    ${name}=${entry.secret ? '' : example}\n`);
   }
-  console.log(`Add what you want to ${CONFIG_FILE}, then restart.`);
+  console.log(`Add what you want to ${CONFIG_FILE}, then apply it:\n`);
+  console.log(`  ${config.restartCommand()}`);
 }
 
 function run(args) {

@@ -261,6 +261,12 @@
                     x-text="settingLine(setting)"></code>
                 </div>
               </template>
+
+              <!-- The file is read once, at startup, so every edit needs this and the command is
+                   not the same on a laptop as under systemd. -->
+              <p class="text-[11px] font-mono text-outline mt-5">Then apply them:</p>
+              <code class="block mt-2 bg-surface-container-lowest border border-outline-variant/40 px-4 py-3 text-[11px] font-mono text-primary-container select-all"
+                x-text="restartCommand"></code>
             </div>
           </template>
 

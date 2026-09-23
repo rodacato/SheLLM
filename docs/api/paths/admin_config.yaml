@@ -24,6 +24,13 @@ get:
               config_file:
                 type: string
                 example: /home/shellmer/.config/shellm/env
+              restart_command:
+                type: string
+                description: |
+                  What applies a config change on this host. The file is read once, at startup, so
+                  every edit needs it — and it is not the same command under systemd as it is on a
+                  laptop.
+                enum: [shellm restart, sudo systemctl restart shellm]
               settings:
                 type: array
                 items:

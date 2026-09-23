@@ -12,6 +12,7 @@ router.get('/config', (_req, res) => {
   res.json({
     running: config.running(),
     config_file: CONFIG_FILE,
+    restart_command: config.restartCommand(),
     settings: config.all(),
     unseen: config.unseen(),
   });

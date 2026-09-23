@@ -85,6 +85,12 @@ function isInConfigFile(name) {
   return Object.prototype.hasOwnProperty.call(fromFile(), name);
 }
 
+// systemd sets INVOCATION_ID for every service it starts, so a host running under the unit is told
+// the command that actually applies there instead of the one that only works on a laptop.
+function restartCommand() {
+  return process.env.INVOCATION_ID ? 'sudo systemctl restart shellm' : 'shellm restart';
+}
+
 function names() {
   return Object.keys(schema);
 }
@@ -134,5 +140,5 @@ function unseen() {
 }
 
 module.exports = {
-  get, sourceOf, isInConfigFile, names, all, reload, schema, unseen, compare, running,
+  get, sourceOf, isInConfigFile, names, all, reload, schema, unseen, compare, running, restartCommand,
 };
