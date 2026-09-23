@@ -56,6 +56,26 @@ process.exit(2);
     assert.match(result.stdout, /All checks passed|✓ API keys: 1 active/);
   });
 
+  // The marker is what separates "a release added this" from "you just installed", so it has to
+  // record the version that created the file and must never appear on one that already existed.
+  it('stamps a config it creates with the release that created it', async () => {
+    await init('fake-oauth-token-for-tests\n');
+    const text = fs.readFileSync(configFile, 'utf8');
+    const version = require('../../package.json').version;
+
+    assert.match(text, new RegExp(`^# shellm-config-version: v${version.replace(/\./g, '\\.')}$`, 'm'));
+    assert.ok(text.startsWith('# shellm-config-version:'), 'the marker is not the first line');
+  });
+
+  it('never stamps a config that already existed', async () => {
+    fs.mkdirSync(path.dirname(configFile), { recursive: true });
+    fs.writeFileSync(configFile, 'PORT=7000\n', { mode: 0o600 });
+
+    await init('\n');
+    const text = fs.readFileSync(configFile, 'utf8');
+    assert.doesNotMatch(text, /shellm-config-version/, 'an existing config was stamped, which would dismiss real warnings');
+  });
+
   it('keeps existing values and keys when run again', async () => {
     await init('fake-oauth-token-for-tests\n');
     const before = fs.readFileSync(configFile, 'utf8');

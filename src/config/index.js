@@ -9,6 +9,13 @@ const { CONFIG_FILE } = require('../cli/paths');
 // "where did this value come from", and so does this.
 let fileCache = null;
 let fileCachePath = null;
+let bornAt = null;
+
+// Written by `shellm init` when it creates the config, and never updated afterwards: it records
+// which release the file was born under, which is what separates "this update added a setting"
+// from "you just installed". A comment rather than a variable — it is metadata about the file,
+// not something the service can be configured with.
+const BORN_AT = /^#\s*shellm-config-version:\s*(v\d+\.\d+\.\d+)\s*$/m;
 
 function fromFile() {
   if (fileCache && fileCachePath === CONFIG_FILE) return fileCache;
@@ -17,17 +24,28 @@ function fromFile() {
   // asks where a value came from works without the dependency resolvable.
   const dotenv = require('dotenv');
   try {
-    fileCache = dotenv.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+    const text = fs.readFileSync(CONFIG_FILE, 'utf8');
+    fileCache = dotenv.parse(text);
+    bornAt = text.match(BORN_AT)?.[1] ?? null;
   } catch {
     fileCache = {};
+    bornAt = null;
   }
   return fileCache;
+}
+
+// A config written before this marker existed reports null, and the caller treats that as "older
+// than every release" — which keeps the behaviour those hosts already had.
+function configBornAt() {
+  fromFile();
+  return bornAt;
 }
 
 // Tests and `shellm init` write the config while the process is running.
 function reload() {
   fileCache = null;
   fileCachePath = null;
+  bornAt = null;
 }
 
 function entryOf(name) {
@@ -132,13 +150,19 @@ function compare(a, b) {
 // A setting the operator has never been shown: absent from the config file and introduced by a
 // release no older than the one running. This is the bounded list — the full set of unset
 // settings is 20-odd lines of noise, and is what `shellm config` prints on request.
+// Introduced by the release this host runs, and after the release that wrote the config. The
+// second half is what stops a fresh install from being greeted by everything the current release
+// added: a config born under v1.10.0 was never without those settings, it just never set them.
 function unseen() {
   const version = running();
+  const born = configBornAt();
   return names()
     .filter((name) => !isInConfigFile(name))
-    .filter((name) => compare(schema[name].since, version) >= 0);
+    .filter((name) => compare(schema[name].since, version) >= 0)
+    .filter((name) => born === null || compare(schema[name].since, born) > 0);
 }
 
 module.exports = {
   get, sourceOf, isInConfigFile, names, all, reload, schema, unseen, compare, running, restartCommand,
+  configBornAt,
 };

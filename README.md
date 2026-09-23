@@ -371,6 +371,12 @@ doctor` says so, and the dashboard's System page shows the same list:
 `shellm init` will not add them — it only writes the handful of keys it knows about, and never
 touches a key you already have.
 
+A config created by `shellm init` carries `# shellm-config-version:` on its first line, which is
+how a fresh install knows it is not missing anything: the settings the release you just installed
+introduced were never withheld from you. Only a release that lands *after* your config was written
+is reported. A config written before that marker existed is told about the current release's
+settings instead, which is what those hosts already saw.
+
 ## How it works
 
 ```mermaid

@@ -4,10 +4,6 @@ const { CONFIG_FILE } = require('./paths');
 const config = require('../config');
 const schema = require('../config/schema');
 
-// The dashboard reports the same bounded list, so the comparison lives with the schema it reads.
-const { unseen, compare } = config;
-const RUNNING = config.running();
-
 function wrap(text, width) {
   const lines = [];
   let current = '';
@@ -44,9 +40,9 @@ function table() {
 }
 
 function newOnly() {
-  const names = unseen();
+  const names = config.unseen();
   if (names.length === 0) {
-    console.log(`No settings introduced in ${RUNNING} or later are missing from your config.`);
+    console.log('Nothing new for this config to set.');
     return;
   }
   console.log(`${names.length} setting${names.length === 1 ? '' : 's'} your config does not set:\n`);
@@ -66,4 +62,4 @@ function run(args) {
   return table();
 }
 
-module.exports = { run, unseen, compare };
+module.exports = { run };

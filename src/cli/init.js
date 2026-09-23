@@ -45,12 +45,19 @@ async function collectMissing(values) {
   return missing;
 }
 
+// Only on a file that did not exist. Stamping an existing config would dismiss the settings a
+// release added before this run, which is the one thing the marker must never do.
+function birthMarker(text) {
+  if (text) return '';
+  return `# shellm-config-version: v${require('../../package.json').version}\n`;
+}
+
 function writeConfig(text, additions) {
   const lines = Object.entries(additions).map(([key, value]) => `${key}=${value}`);
   if (lines.length === 0) return;
   const separator = text && !text.endsWith('\n') ? '\n' : '';
   fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true, mode: 0o700 });
-  fs.writeFileSync(CONFIG_FILE, `${text}${separator}${lines.join('\n')}\n`, { mode: 0o600 });
+  fs.writeFileSync(CONFIG_FILE, `${birthMarker(text)}${text}${separator}${lines.join('\n')}\n`, { mode: 0o600 });
 }
 
 function ensureApiKey() {
