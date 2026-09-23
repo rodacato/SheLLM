@@ -5,9 +5,8 @@ const path = require('node:path');
 
 const ROOT = path.join(__dirname, '..', '..');
 
-// Supplied by the OS or the process manager, never by SheLLM's own config file.
-// NODE_EXTRA_CA_CERTS belongs here and not in .env.example: base.js forwards it to the CLI on
-// purpose, and cli-env-secrets.test.js asserts that nothing .env.example lists ever reaches one.
+// Supplied by the OS, never by SheLLM's config. NODE_EXTRA_CA_CERTS is here because base.js
+// forwards it to the CLI, and cli-env-secrets.test.js bars anything .env.example lists from one.
 const NOT_OURS = new Set([
   'HOME', 'PATH', 'TMPDIR', 'XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'NODE_EXTRA_CA_CERTS',
 ]);
