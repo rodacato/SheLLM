@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-09-23
+
+### Added
+
+- **admin:** say the origins field is a browser mechanism
+- **server:** serve TLS when a certificate is configured
+- **api:** report cost and timings a benchmark can read
+- **queue:** tell the caller it is queued instead of leaving it silent
+- **keys:** scope an API key to the origins allowed to use it
+- **cors:** let a configured browser origin call /v1
+- **admin:** auto-refresh the request logs, held while you are reading them
+- **admin:** let the operator choose how often Overview re-reads itself
+- **admin:** share one poll scheduler and stop polling a hidden tab
+- **admin:** say where a key goes, and let every line be copied
+
+### Fixed
+
+- **repo:** drop the node_modules symlink and close the rule that let it in
+- **admin:** give the control the same press and focus feedback on both pages
+- **site:** stop the landing page from faking its own output
+- **docs:** correct the three remaining false statements
+- **onboarding:** make the documented path reach a working request
+- **docs:** stop naming unrelated projects in public sample data
+- **security:** close the three gaps a stranger can reach
+
+  None of the three is in the service you run, and no instance needs upgrading for them: the
+  issue chooser now routes a vulnerability report to the private advisory form instead of a
+  public issue, the secret guard's pattern can finally match this project's own key format, and
+  a missing `.dockerignore` had been leaving a host token in the dev container's build context
+  that nothing copied. No advisory is owed.
+- **admin:** keep the Logs filter row from being sized by its own data
+
+### Changed
+
+- **admin:** the key row's Edit, Rotate and Delete are icons, which gives the Limits column the
+  width an origin list needs. Every action keeps an `aria-label`; delete keeps its error colour
+- **test:** compress the NOT_OURS note to two lines
+
+### Documentation
+
+- say how to call SheLLM from a browser
+- cut what was duplicated and signpost what is not product documentation
+- **adr:** retire the PWA audit into the decision it produced
+- **architecture:** describe the modules that exist
+- describe the deployment and the numbers that exist
+
+### Testing
+
+- gate the four drift classes this audit found
+
+
 ## [1.9.0] - 2026-09-23
 
 ### Added
@@ -807,7 +858,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.10.0...HEAD
+[1.10.0]: https://github.com/rodacato/SheLLM/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/rodacato/SheLLM/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/rodacato/SheLLM/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/rodacato/SheLLM/compare/v1.6.1...v1.7.0
