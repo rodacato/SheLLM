@@ -1,13 +1,14 @@
 ---
 name: Feature request
 about: Suggest a new capability or improvement
-labels: enhancement
+labels: feat
 ---
 
 ## Problem or motivation
 
 <!-- What problem does this solve? Who is affected and how often?
-     Example: "As a Rails developer using Stockerly, I need to..." -->
+     Example: "My cron job calls /v1/messages nightly and cannot tell a usage
+     limit from a timeout, so it retries into the limit." -->
 
 ## Proposed solution
 
