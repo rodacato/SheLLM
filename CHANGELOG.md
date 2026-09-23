@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-09-23
+
+### Added
+
+- **admin:** tell the operator where to send the key it just created
+- **cli:** write the load knobs into the config init creates
+
+### Changed
+
+- **load:** raise the default concurrency to 4 and the global limit to 60
+
+  **This moves a running install.** `MAX_CONCURRENT` and `MAX_STREAM_CONCURRENT` go from 2 to 4
+  and `SHELLM_GLOBAL_RPM` from 30 to 60 on the next restart, unless your config file already sets
+  them — a value you set by hand is never touched. Four CLI processes cost 150–215 MB each, so
+  budget for roughly 860 MB at the cap instead of 430 MB. Nothing else about the queue changed:
+  requests past the cap still wait, and past `MAX_QUEUE_DEPTH` they still get a 429.
+
+  `shellm init` now writes the three into the config file when they are absent, so running it once
+  after the update turns them into values you can see and edit rather than defaults you have to
+  read the source for.
+
+### Maintenance
+
+- **deps-dev:** bump eslint from 10.10.0 to 10.11.0
+- **deps:** bump dotenv from 18.0.0 to 18.0.1
+
+
 ## [1.8.0] - 2026-09-21
 
 ### Added
@@ -780,5 +807,5 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.8.0...HEAD
-[1.8.0]: https://github.com/rodacato/SheLLM/compare/v1.7.0...v1.8.0
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.9.0...HEAD
+[1.9.0]: https://github.com/rodacato/SheLLM/compare/v1.8.0...v1.9.0
