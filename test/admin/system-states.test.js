@@ -107,8 +107,8 @@ describe('the System page reports a provider toggle that did not apply', () => {
   });
 });
 
-// P12 in docs/PWA-AUDIT.md: iOS fires no install event, so copy is the only route — and copy that
-// shows up where the browser will not offer an install is worse than none.
+// iOS fires no install event, so copy is the only route — and copy that shows up where the
+// browser will not offer an install is worse than none.
 describe('the System page offers the install only where it is possible', () => {
   const inside = (mode, extra = {}) => ({
     isSecureContext: true,

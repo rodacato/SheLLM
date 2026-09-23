@@ -155,7 +155,7 @@ describe('installable dashboard', () => {
     assert.match(worker, /self\.skipWaiting\(\)/, 'without it the reload below is served by the old worker');
     assert.match(worker, /self\.clients\.claim\(\)/, 'and the page that is already open stays uncontrolled');
     assert.match(system, /window\.location\.reload\(\)/,
-      'the reload skipWaiting exists for is gone — reconsider P8 in docs/PWA-AUDIT.md');
+      'the reload skipWaiting exists for is gone — the worker activates for nothing');
   });
 
   it('every icon the manifest promises is actually served', async () => {
