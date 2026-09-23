@@ -54,6 +54,13 @@ source of truth, copy is never invented, and disagreements between design and co
   request flow, provider and error contracts. Update it when you move a module instead of copying
   a tree into another doc.
 
+**Adding a setting:** one entry in [`src/config/schema.js`](src/config/schema.js) — `default`,
+`since` (the release you are adding it in), `reload`, `describe` — then `npm run config:build` and
+commit the regenerated `.env.example`. Read it with `config.get('NAME')`, never
+`process.env.NAME || 'default'`; the default belongs in the schema and CI fails when the generated
+file is stale. Keep the read where it is: a module-level `const` stays `restart`, a read inside a
+function stays `live`. See [ADR-0008](docs/adr/0008-configuration-schema-in-code.md).
+
 **Adding a provider:** `src/providers/<name>.js` following the contract in the architecture guide,
 registered in `src/routing/engines.js`, exporting an `authProbe` that costs no quota, tests
 in `test/providers/`, and the CLI version it was tested against in `VERSIONS.md`. Export a

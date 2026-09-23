@@ -82,6 +82,13 @@ curl -su "admin:$SHELLM_ADMIN_PASSWORD" localhost:6100/health/detailed | jq .que
 That last line reports the values the process is running, which is the only thing that proves the
 restart took — the dashboard's System page reads the same figures.
 
+`sudo -iu shellmer shellm config` prints every setting with the value in effect and where it came
+from (`default`, `config file` or `environment`), which answers "is this host actually running what
+I think it is" without reading source. After an update, `shellm doctor` names any setting the new
+release added that this config does not set, and `shellm config --new` prints each one with a line
+ready to paste — a release can add a knob, and a config file written before it will never mention
+it on its own.
+
 Every limit is read from the environment, so nothing takes effect until the restart. The pair worth
 moving together is `MAX_CONCURRENT` and `SHELLM_GLOBAL_RPM`: at ~3 s per request, 60 req/min
 sustains about 3 concurrent, so raising the process cap alone only absorbs bursts. Overview says
