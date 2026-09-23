@@ -147,6 +147,16 @@ function playgroundPage() {
       this._ticker = null;
       this._abort = null;
       this.running = false;
+      this.revealResponse();
+    },
+
+    // The form is taller than the fold, so stacked the answer lands below it and pressing Send
+    // looked like nothing happened. Guarded because the page's own tests run without a DOM.
+    revealResponse() {
+      const panel = typeof document !== 'undefined' && document.getElementById
+        ? document.getElementById('playground-response')
+        : null;
+      if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
     },
 
     stopWaiting() {
