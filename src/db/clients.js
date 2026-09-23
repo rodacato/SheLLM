@@ -47,55 +47,58 @@ function generateKey() {
 
 // --- Client CRUD ---
 
-function createClient({ name, rpm = 10, models = null, expires_at = null, description = null }) {
+const CLIENT_COLUMNS = 'id, name, key_prefix, rpm, models, origins, active, expires_at, description, created_at';
+
+// models and origins are both JSON arrays or NULL; a row is only usable once both are decoded.
+function decodeClient(row) {
+  if (!row) return null;
+  return {
+    ...row,
+    models: row.models ? JSON.parse(row.models) : null,
+    origins: row.origins ? JSON.parse(row.origins) : null,
+  };
+}
+
+function encodeList(list) {
+  return list ? JSON.stringify(list) : null;
+}
+
+function createClient({ name, rpm = 10, models = null, origins = null, expires_at = null, description = null }) {
   const { getDb } = require('./index');
   const db = getDb();
   const rawKey = generateKey();
   const secret = getHmacSecret();
   const key_hash = hashKey(rawKey, secret);
   const key_prefix = rawKey.slice(0, KEY_PREFIX_LEN);
-  const modelsJson = models ? JSON.stringify(models) : null;
 
   const stmt = db.prepare(`
-    INSERT INTO clients (name, key_hash, key_prefix, rpm, models, expires_at, description)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO clients (name, key_hash, key_prefix, rpm, models, origins, expires_at, description)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  const info = stmt.run(name, key_hash, key_prefix, rpm, modelsJson, expires_at, description);
+  const info = stmt.run(name, key_hash, key_prefix, rpm, encodeList(models), encodeList(origins), expires_at, description);
 
-  const row = db.prepare('SELECT id, name, key_prefix, rpm, models, active, expires_at, description, created_at FROM clients WHERE id = ?').get(info.lastInsertRowid);
-  return {
-    ...row,
-    models: row.models ? JSON.parse(row.models) : null,
-    rawKey,
-  };
+  const row = db.prepare(`SELECT ${CLIENT_COLUMNS} FROM clients WHERE id = ?`).get(info.lastInsertRowid);
+  return { ...decodeClient(row), rawKey };
 }
 
 function listClients() {
   const { getDb } = require('./index');
   const db = getDb();
-  const rows = db.prepare('SELECT id, name, key_prefix, rpm, models, active, expires_at, description, created_at FROM clients ORDER BY id').all();
-  return rows.map((r) => ({
-    ...r,
-    models: r.models ? JSON.parse(r.models) : null,
-  }));
+  const rows = db.prepare(`SELECT ${CLIENT_COLUMNS} FROM clients ORDER BY id`).all();
+  return rows.map(decodeClient);
 }
 
 function updateClient(id, fields) {
   const { getDb } = require('./index');
   const db = getDb();
-  const allowed = ['rpm', 'models', 'active', 'expires_at', 'description'];
+  const allowed = ['rpm', 'models', 'origins', 'active', 'expires_at', 'description'];
   const sets = [];
   const values = [];
 
   for (const key of allowed) {
     if (fields[key] !== undefined) {
-      if (key === 'models') {
-        sets.push('models = ?');
-        values.push(fields.models ? JSON.stringify(fields.models) : null);
-      } else {
-        sets.push(`${key} = ?`);
-        values.push(fields[key]);
-      }
+      sets.push(`${key} = ?`);
+      values.push(key === 'models' || key === 'origins' ? encodeList(fields[key]) : fields[key]);
     }
   }
 
@@ -104,9 +107,7 @@ function updateClient(id, fields) {
   values.push(id);
   db.prepare(`UPDATE clients SET ${sets.join(', ')} WHERE id = ?`).run(...values);
 
-  const row = db.prepare('SELECT id, name, key_prefix, rpm, models, active, expires_at, description, created_at FROM clients WHERE id = ?').get(id);
-  if (!row) return null;
-  return { ...row, models: row.models ? JSON.parse(row.models) : null };
+  return decodeClient(db.prepare(`SELECT ${CLIENT_COLUMNS} FROM clients WHERE id = ?`).get(id));
 }
 
 function deleteClient(id) {
@@ -137,12 +138,13 @@ function findClientByKey(rawKey) {
   const db = getDb();
   const secret = getHmacSecret();
   const hmacHash = hashKey(rawKey, secret);
-  let row = db.prepare('SELECT id, name, rpm, models, active, expires_at FROM clients WHERE key_hash = ?').get(hmacHash);
+  const lookup = 'SELECT id, name, rpm, models, origins, active, expires_at FROM clients WHERE key_hash = ?';
+  let row = db.prepare(lookup).get(hmacHash);
 
   if (!row) {
     // Legacy fallback: try plain SHA-256 and auto-upgrade
     const legacyHash = hashKeyLegacy(rawKey);
-    row = db.prepare('SELECT id, name, rpm, models, active, expires_at FROM clients WHERE key_hash = ?').get(legacyHash);
+    row = db.prepare(lookup).get(legacyHash);
     if (row) {
       // Upgrade to HMAC hash on successful match
       db.prepare('UPDATE clients SET key_hash = ? WHERE id = ?').run(hmacHash, row.id);
@@ -154,7 +156,7 @@ function findClientByKey(rawKey) {
   if (row.expires_at && new Date(row.expires_at + 'Z') < new Date()) {
     return null;
   }
-  return { ...row, models: row.models ? JSON.parse(row.models) : null };
+  return decodeClient(row);
 }
 
 module.exports = {

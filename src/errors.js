@@ -14,6 +14,10 @@ function rateLimited(message, retryAfter) {
   return appError(429, 'rate_limited', message, retryAfter ? { retry_after: retryAfter } : undefined);
 }
 
+function originNotAllowed(origin) {
+  return appError(403, 'origin_not_allowed', `Origin ${origin} is not allowed for this API key`);
+}
+
 function notFound(method, routePath) {
   return appError(404, 'not_found', `No route for ${method} ${routePath}`);
 }
@@ -73,6 +77,7 @@ const CODE_TO_TYPE = {
   invalid_request: 'invalid_request_error',
   auth_required: 'authentication_error',
   rate_limited: 'rate_limit_error',
+  origin_not_allowed: 'invalid_request_error',
   model_not_found: 'invalid_request_error',
   not_found: 'invalid_request_error',
 };
@@ -93,6 +98,7 @@ const CODE_TO_ANTHROPIC_TYPE = {
   invalid_request: 'invalid_request_error',
   auth_required: 'authentication_error',
   rate_limited: 'rate_limit_error',
+  origin_not_allowed: 'permission_error',
   model_not_found: 'not_found_error',
   not_found: 'not_found_error',
 };
@@ -118,6 +124,7 @@ function sendApiError(req, res, err, requestId) {
 
 module.exports = {
   invalidRequest,
+  originNotAllowed,
   authRequired,
   rateLimited,
   modelNotFound,

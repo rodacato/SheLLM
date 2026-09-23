@@ -42,6 +42,21 @@ function isAllowedOrigin(origin) {
   return Boolean(origin) && allowedOrigins().includes(origin);
 }
 
+// An origin is a scheme, a host and an optional port — nothing else. Comparing a stored value
+// that carries a path or a trailing slash against a browser's Origin header never matches, so it
+// is rejected when it is written rather than silently locking the key out.
+function isValidOrigin(value) {
+  if (typeof value !== 'string') return false;
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+  return url.origin === value;
+}
+
 function corsV1(req, res, next) {
   // Set before the decision: a cache that saw a denied response must not hand it to an allowed
   // origin later.
@@ -69,4 +84,4 @@ function corsV1(req, res, next) {
   return res.status(204).end();
 }
 
-module.exports = { corsV1, isAllowedOrigin, allowedOrigins, ALLOWED_HEADERS, EXPOSED_HEADERS };
+module.exports = { corsV1, isAllowedOrigin, isValidOrigin, allowedOrigins, ALLOWED_HEADERS, EXPOSED_HEADERS };

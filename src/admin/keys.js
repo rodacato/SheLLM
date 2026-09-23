@@ -7,8 +7,22 @@ const {
   insertAuditLog, getAuditLogs,
 } = require('../db');
 const stats = require('../db/stats');
+const { isValidOrigin } = require('../middleware/cors');
 
 const router = Router();
+
+// Returns an error to send, or null when the field is acceptable.
+function validateOrigins(origins) {
+  if (origins === undefined || origins === null) return null;
+  if (!Array.isArray(origins)) {
+    return invalidRequest('Field "origins" must be an array of origins, or null for no restriction');
+  }
+  const bad = origins.filter((o) => !isValidOrigin(o));
+  if (bad.length > 0) {
+    return invalidRequest(`Field "origins" must hold scheme://host[:port] values only, got: ${bad.join(', ')}`);
+  }
+  return null;
+}
 
 const USAGE_PERIOD = '7d';
 const USAGE_INTERVAL = '-7 days';
@@ -22,7 +36,7 @@ router.get('/keys', (req, res) => {
 
 // POST /admin/keys
 router.post('/keys', (req, res) => {
-  const { name, rpm, models, expires_at, description } = req.body || {};
+  const { name, rpm, models, origins, expires_at, description } = req.body || {};
 
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
     return sendError(res, invalidRequest('Missing required field: name'), req.requestId);
@@ -42,8 +56,11 @@ router.post('/keys', (req, res) => {
     }
   }
 
+  const originsError = validateOrigins(origins);
+  if (originsError) return sendError(res, originsError, req.requestId);
+
   try {
-    const client = createClient({ name: name.trim(), rpm, models, expires_at, description: description?.trim() || null });
+    const client = createClient({ name: name.trim(), rpm, models, origins, expires_at, description: description?.trim() || null });
     insertAuditLog({ action: 'created', resource: 'key', resource_id: client.id, details: client.name });
     res.status(201).json({
       key: {
@@ -53,6 +70,7 @@ router.post('/keys', (req, res) => {
         key_prefix: client.key_prefix,
         rpm: client.rpm,
         models: client.models,
+        origins: client.origins,
         expires_at: client.expires_at || null,
         description: client.description || null,
         created_at: client.created_at,
@@ -73,7 +91,7 @@ router.patch('/keys/:id', (req, res) => {
     return sendError(res, invalidRequest('Invalid key id'), req.requestId);
   }
 
-  const { rpm, models, active, expires_at, description } = req.body || {};
+  const { rpm, models, origins, active, expires_at, description } = req.body || {};
 
   if (rpm !== undefined && (typeof rpm !== 'number' || !Number.isInteger(rpm) || rpm < 1)) {
     return sendError(res, invalidRequest('Field "rpm" must be a positive integer'), req.requestId);
@@ -93,7 +111,10 @@ router.patch('/keys/:id', (req, res) => {
     }
   }
 
-  const updated = updateClient(id, { rpm, models, active, expires_at, description: description !== undefined ? (description?.trim() || null) : undefined });
+  const originsError = validateOrigins(origins);
+  if (originsError) return sendError(res, originsError, req.requestId);
+
+  const updated = updateClient(id, { rpm, models, origins, active, expires_at, description: description !== undefined ? (description?.trim() || null) : undefined });
   if (!updated) {
     return sendError(res, { status: 404, code: 'not_found', message: `Key id ${id} not found` }, req.requestId);
   }
