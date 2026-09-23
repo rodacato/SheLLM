@@ -11,8 +11,8 @@ anything yet.
 | Crop | Cut from | Region `x, y, w, h` | Shows |
 |---|---|---|---|
 | `overview.png` | `admin-overview-default.png` | `0, 0, 2880, 1440` | The whole top band, sidebar included. Exactly 2:1, which is also why it is the OG card. |
-| `request-logs.png` | `admin-request-logs-default.png` | `511, 300, 2369, 845` | Error rate, tokens and cost, then three rows and one expanded detail row. |
-| `api-keys.png` | `admin-api-keys-default.png` | `511, 270, 2369, 420` | The three keys with limits, usage and expiry. |
+| `request-logs.png` | `admin-request-logs-default.png` | `511, 388, 2369, 845` | Error rate, tokens and cost, then three rows and one expanded detail row. |
+| `api-keys.png` | `admin-api-keys-default.png` | `511, 938, 2369, 420` | The three keys with limits, usage and expiry. |
 | `playground.png` | `admin-playground-answered.png` | `511, 150, 2369, 480` | The client key, format and model beside an answered response. |
 | `system.png` | `admin-system-default.png` | `511, 880, 2369, 700` | Both provider cards: CLI version, circuit state, last status, models. |
 
@@ -21,6 +21,13 @@ in the page's 1,040 px measure it lands at 72%, and in a two-column grid at 17% 
 shipped once, and nothing in it was readable. A crop 1,185 logical px wide renders at 88% full
 width, so the numbers can actually be read. The page's own check asserts this: no image may render
 below 60% of the UI it depicts.
+
+**A region here is a measurement, not a setting.** It tracks content that moves when the artboard
+above it grows: adding the usage card to API Keys pushed the table down 668 device px and splitting
+the Logs filter bar pushed its panels down 88, and both regions were re-derived from the artboard's
+own bounds rather than nudged until the picture looked right. Recut a crop whenever its source
+artboard changes height, and update the row in the same commit — a stale region silently publishes
+the wrong part of the screen.
 
 **The fold marker.** `admin-overview-default.png` carries a burned-in `FOLD · 1440×900` review rule
 at `y ≈ 1780`. The `h = 1440` crop is above it. Anything recut taller has to deal with it.

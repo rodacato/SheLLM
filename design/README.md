@@ -28,7 +28,7 @@ as context for AI agents (`AGENTS.md` points them here).
 
 | File | Screens | Kit | Domain entry point |
 |---|---|---|---|
-| `admin.pen` | 15 of 15 — two bands. Band 1, happy path: Sign in, Overview, Request Logs, API Keys, Playground, System. Band 2, error and alternate paths: nine states | **0.3.0** | `/admin/login` and `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
+| `admin.pen` | 16 of 16 — two bands. Band 1, happy path: Sign in, Overview, Request Logs, API Keys, Playground, System. Band 2, error and alternate paths: ten states, the tenth being API Keys / Key created | **0.3.0** | `/admin/login` and `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
 
 `ui-kit.lib.pen` carries tokens as of **0.3.0** and no components yet: colour, family and radius, plus the type, icon and spacing scales 0.3.0 added. The sidebar and the page
 footer are now known to be shared — they are rebuilt per screen from one function in the flow, and
