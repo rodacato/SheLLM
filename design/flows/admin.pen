@@ -8150,7 +8150,7 @@
           "fill": "$on-surface-variant",
           "textGrowth": "fixed-width",
           "width": "fill_container",
-          "content": "2026-09-23 · The Configuration card described a screen the code never had. It arrived the same day the flow was laid out by route, in a band whose brief said all six screens mirrored dac0bc6 — where system.html carried Build and Concurrency and nothing else. `git log -S` finds no commit that ever put a Configuration section under src/admin/, it was not labelled a proposal, and CODE_CHANGES.md still reads 'No consolidation has been decided yet'. So it was neither a mirror nor a tracked proposal. The legend under it — 'an untagged value is the shipped default · file = ~/.config/shellm/env' — was sourceOf() drawn before any code could compute it. The card was right and the code caught up rather than the drawing being deleted: src/config/schema.js now declares all 33 settings with the section they belong to, and the page groups by it exactly as the two-column grid did. Four things changed on canvas. One column instead of two, because the shipped table is full width. All 33 rows instead of 24, because a secret is masked rather than omitted, and a mask still says whether the password is set and where it came from. Five columns, since the schema made source, since and reload computable. And the card sits below the providers now — settings are read about once a month, and whether claude and codex are answering is what the page gets opened for. D68. The card also closes with the command that applies an edit, because the config file is read once at startup and `reload: live` describes the code re-reading process.env rather than the file reaching it. It is drawn as the systemd form, which is what the host this board depicts would be told. D69 followed within minutes of the merge, and it is D68's own lesson turned on this file: the brief named the commit it mirrored, the repository merges with rebase, and that SHA was rewritten as it landed. Briefs anchor to a date now — see README.md. The convention had been implicit in this prose the whole time, which is why nothing caught it. Later the same day the table lost its RELOAD column and gained a description under every name. The column reported whether the code re-reads a value while running, which is true and unusable: the config file is read once at startup, so every edit needs a restart whatever it said. The restart now appears only where it is actionable, under the settings a release added. The section also became a disclosure that opens itself on a warning or a failed read and stays shut otherwise — and drawing the unreachable board is what caught that a failed read would otherwise be folded away behind a header that looks ordinary.",
+          "content": "2026-09-23 · The Configuration card described a screen the code never had. It arrived the same day the flow was laid out by route, in a band whose brief said all six screens mirrored dac0bc6 — where system.html carried Build and Concurrency and nothing else. `git log -S` finds no commit that ever put a Configuration section under src/admin/, it was not labelled a proposal, and CODE_CHANGES.md still reads 'No consolidation has been decided yet'. So it was neither a mirror nor a tracked proposal. The legend under it — 'an untagged value is the shipped default · file = ~/.config/shellm/env' — was sourceOf() drawn before any code could compute it. The card was right and the code caught up rather than the drawing being deleted: src/config/schema.js now declares all 33 settings with the section they belong to, and the page groups by it exactly as the two-column grid did. Four things changed on canvas. One column instead of two, because the shipped table is full width. All 33 rows instead of 24, because a secret is masked rather than omitted, and a mask still says whether the password is set and where it came from. Five columns, since the schema made source, since and reload computable. And the card sits below the providers now — settings are read about once a month, and whether claude and codex are answering is what the page gets opened for. D68. The card also closes with the command that applies an edit, because the config file is read once at startup and `reload: live` describes the code re-reading process.env rather than the file reaching it. It is drawn as the systemd form, which is what the host this board depicts would be told. D69 followed within minutes of the merge, and it is D68's own lesson turned on this file: the brief named the commit it mirrored, the repository merges with rebase, and that SHA was rewritten as it landed. Briefs anchor to a date now — see README.md. The convention had been implicit in this prose the whole time, which is why nothing caught it. Later the same day the table lost its RELOAD column and gained a description under every name. The column reported whether the code re-reads a value while running, which is true and unusable: the config file is read once at startup, so every edit needs a restart whatever it said. The restart now appears only where it is actionable, under the settings a release added. The section also became a disclosure that opens itself on a warning or a failed read and stays shut otherwise — and drawing the unreachable board is what caught that a failed read would otherwise be folded away behind a header that looks ordinary. The Playground stopped being two columns the same day. A response carries a curl, an answer and its stats, and half a page truncated all three while the form never wanted the width — so it stacks, and the three short controls that used to be stretched share one row across the span the change bought. A ui-review of all of it found seven things, four of them introduced that day and two against rules this codebase had already written down: a truncate that could not fire without min-w-0, and two disclosures with no aria-expanded in a file already carrying eight aria attributes.",
           "lineHeight": 1.6,
           "fontFamily": "$font-mono-render",
           "fontSize": 10,
@@ -10742,8 +10742,9 @@
                 {
                   "type": "frame",
                   "id": "cd7Fj",
-                  "name": "Two columns",
+                  "name": "Request and response",
                   "width": "fill_container",
+                  "layout": "vertical",
                   "gap": 24,
                   "children": [
                     {
@@ -10758,80 +10759,99 @@
                       "children": [
                         {
                           "type": "frame",
-                          "id": "BnkMu",
-                          "name": "Client key",
+                          "id": "gfvEp",
+                          "name": "Controls",
                           "width": "fill_container",
-                          "layout": "vertical",
-                          "gap": 8,
+                          "gap": 16,
                           "children": [
                             {
-                              "type": "text",
-                              "id": "XGZTh",
-                              "name": "Label",
-                              "fill": "$outline",
-                              "content": "CLIENT KEY",
-                              "fontFamily": "$font-headline",
-                              "fontSize": 10,
-                              "fontWeight": "700",
-                              "letterSpacing": 2
-                            },
-                            {
                               "type": "frame",
-                              "id": "APh35",
-                              "name": "Input",
+                              "id": "BnkMu",
+                              "name": "Client key",
                               "width": "fill_container",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                10,
-                                12
-                              ],
+                              "layout": "vertical",
+                              "gap": 8,
                               "children": [
                                 {
                                   "type": "text",
-                                  "id": "Bekf5",
-                                  "name": "Value",
-                                  "fill": "$on-surface",
-                                  "textGrowth": "fixed-width",
-                                  "width": "fill_container",
-                                  "content": "••••••••••••••••••••",
-                                  "lineHeight": 1.5,
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": "$text-sm",
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "M9bYbd",
-                              "name": "Row",
-                              "width": "fill_container",
-                              "justifyContent": "space_between",
-                              "alignItems": "center",
-                              "children": [
+                                  "id": "XGZTh",
+                                  "name": "Label",
+                                  "fill": "$outline",
+                                  "content": "CLIENT KEY",
+                                  "fontFamily": "$font-headline",
+                                  "fontSize": 10,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 2
+                                },
                                 {
                                   "type": "frame",
-                                  "id": "jXQmT",
-                                  "name": "Remember",
-                                  "gap": 8,
+                                  "id": "APh35",
+                                  "name": "Input",
+                                  "width": "fill_container",
+                                  "fill": "$surface-container-lowest",
+                                  "stroke": "$outline-variant",
+                                  "strokeWidth": 1,
+                                  "padding": [
+                                    10,
+                                    12
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "Bekf5",
+                                      "name": "Value",
+                                      "fill": "$on-surface",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "••••••••••••••••••••",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": "$text-sm",
+                                      "fontWeight": "normal"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "M9bYbd",
+                                  "name": "Row",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
                                   "alignItems": "center",
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "HCj8R",
-                                      "name": "Checkbox",
-                                      "width": 12,
-                                      "height": 12,
-                                      "fill": "$primary-container"
+                                      "id": "jXQmT",
+                                      "name": "Remember",
+                                      "gap": 8,
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "frame",
+                                          "id": "HCj8R",
+                                          "name": "Checkbox",
+                                          "width": 12,
+                                          "height": 12,
+                                          "fill": "$primary-container"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "Xs2BH",
+                                          "name": "Label",
+                                          "fill": "$outline",
+                                          "content": "keep it for this tab only",
+                                          "fontFamily": "$font-mono-render",
+                                          "fontSize": 10,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
                                     },
                                     {
                                       "type": "text",
-                                      "id": "Xs2BH",
-                                      "name": "Label",
+                                      "id": "FIX55",
+                                      "name": "forget",
                                       "fill": "$outline",
-                                      "content": "keep it for this tab only",
+                                      "content": "forget",
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 10,
                                       "fontWeight": "normal"
@@ -10840,38 +10860,19 @@
                                 },
                                 {
                                   "type": "text",
-                                  "id": "FIX55",
-                                  "name": "forget",
+                                  "id": "h7jNzt",
+                                  "name": "Hashed note",
                                   "fill": "$outline",
-                                  "content": "forget",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Keys are stored hashed, so an existing one cannot be filled in here. Rotate a key to get a new secret.",
+                                  "lineHeight": 1.5,
                                   "fontFamily": "$font-mono-render",
                                   "fontSize": 10,
                                   "fontWeight": "normal"
                                 }
                               ]
                             },
-                            {
-                              "type": "text",
-                              "id": "h7jNzt",
-                              "name": "Hashed note",
-                              "fill": "$outline",
-                              "textGrowth": "fixed-width",
-                              "width": "fill_container",
-                              "content": "Keys are stored hashed, so an existing one cannot be filled in here. Rotate a key to get a new secret.",
-                              "lineHeight": 1.5,
-                              "fontFamily": "$font-mono-render",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "oOX5P",
-                          "name": "Format and model",
-                          "width": "fill_container",
-                          "gap": 16,
-                          "children": [
                             {
                               "type": "frame",
                               "id": "j2BbBs",
@@ -13135,7 +13136,7 @@
                               "name": "Setting",
                               "fill": "$outline",
                               "textGrowth": "fixed-width",
-                              "width": 380,
+                              "width": 210,
                               "content": "SETTING",
                               "fontFamily": "$font-headline",
                               "fontSize": 10,
@@ -13180,6 +13181,17 @@
                               "fontSize": 10,
                               "fontWeight": "700",
                               "letterSpacing": 1
+                            },
+                            {
+                              "type": "text",
+                              "id": "F91Mh",
+                              "name": "Description",
+                              "fill": "$outline",
+                              "content": "DESCRIPTION",
+                              "fontFamily": "$font-headline",
+                              "fontSize": 10,
+                              "fontWeight": "700",
+                              "letterSpacing": 1
                             }
                           ]
                         },
@@ -13218,37 +13230,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "Bdp23",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "MwyF4",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "PORT",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "p94CSs",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Port the HTTP server listens on",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "tAG2u",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "PORT",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -13285,6 +13276,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "ytBzL",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Port the HTTP server listens on",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -13296,37 +13300,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "Xh9wi",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "Is0tk",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "HOST",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "S87hXp",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Interface to bind. Loopback keeps SheLLM reachable only through a local tunnel or proxy.",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "e7v0R",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "HOST",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -13363,6 +13346,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "b0pTD",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Interface to bind. Loopback keeps SheLLM reachable only through a local tunnel or proxy.",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -13374,37 +13370,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "wgLxo",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "UoKkj",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "LOG_LEVEL",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "OVnjt",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Log level: debug, info, warn, error",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "riXzG",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "LOG_LEVEL",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -13441,6 +13416,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "M0pzKh",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Log level: debug, info, warn, error",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -13452,37 +13440,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "a4jMqu",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "YdTXS",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_TZ",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "gINte",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "IANA timezone the admin dashboard renders every timestamp in — tables, charts and axis labels. Server logs stay UTC. An unknown name falls back to the default instead of failing.",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "MSx0Q",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_TZ",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -13519,6 +13486,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "NGJcu",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "IANA timezone the admin dashboard renders every timestamp in — tables, charts and axis labels. Server logs stay UTC. An unknown name falls back to the default instead of failing.",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -13530,37 +13510,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "D1bTiL",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "aw9lg",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_CORS_ORIGINS",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "AgBiS",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Origins allowed to call /v1 from a browser, comma-separated. Empty disables CORS entirely, which is the default. Exact match — scheme, host and port, no path, no trailing slash, and no wildcard. The admin endpoints are never included.",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "ezpO3",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_CORS_ORIGINS",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -13597,6 +13556,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "sMErW",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Origins allowed to call /v1 from a browser, comma-separated. Empty disables CORS entirely, which is the default. Exact match — scheme, host and port, no path, no trailing slash, and no wildcard. The admin endpoints are never included.",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -13608,37 +13580,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "mswcA",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "iBtiW",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_TLS_CERT",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "dmZik",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Serve HTTPS instead of plain HTTP. Both this and SHELLM_TLS_KEY are needed; either alone is ignored. HTTP/1.1 only — for HTTP/2 put Caddy in front, as the README describes.",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "sHYO3",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_TLS_CERT",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -13675,6 +13626,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "eeFp4",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Serve HTTPS instead of plain HTTP. Both this and SHELLM_TLS_KEY are needed; either alone is ignored. HTTP/1.1 only — for HTTP/2 put Caddy in front, as the README describes.",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -13686,37 +13650,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "UdvM1",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "jYNBF",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_TLS_KEY",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "YyVq3",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Private key for SHELLM_TLS_CERT. Ignored unless both are set.",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "Hz9oz",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_TLS_KEY",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -13753,6 +13696,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "uuaZP",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Private key for SHELLM_TLS_CERT. Ignored unless both are set.",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -13764,37 +13720,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "rSSf5",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "o08i2F",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_TRUST_PROXY",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "DX2Mo",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Trust X-Forwarded-* when something really does sit in front: \"loopback\", a hop count, or the proxy's address. Off by default, because otherwise a caller can forge its own IP and the admin login lockout counts the wrong one.",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "CaWRJ",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_TRUST_PROXY",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -13828,6 +13763,19 @@
                                       "textGrowth": "fixed-width",
                                       "width": 70,
                                       "content": "v1.10.0",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "QYDxs",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Trust X-Forwarded-* when something really does sit in front: \"loopback\", a hop count, or the proxy's address. Off by default, because otherwise a caller can forge its own IP and the admin login lockout counts the wrong one.",
+                                      "lineHeight": 1.5,
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
@@ -13873,37 +13821,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "Wpehh",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "f59Pjh",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "CLAUDE_CODE_OAUTH_TOKEN",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "AGcdA",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Long-lived Claude token from `claude setup-token`. Optional when the CLI is logged in for this user.",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "bfnWN",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "CLAUDE_CODE_OAUTH_TOKEN",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -13940,6 +13867,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "r8JZm",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Long-lived Claude token from `claude setup-token`. Optional when the CLI is logged in for this user.",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -13951,37 +13891,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "O9qVL",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "ZvfHJ",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "TIMEOUT_MS",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "FHlrJ",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Max time (ms) to wait for a CLI process before killing it",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "k5CXY",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "TIMEOUT_MS",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -14018,6 +13937,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "HYJed",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Max time (ms) to wait for a CLI process before killing it",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -14029,37 +13961,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "b1uULz",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "gUW68",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_CLAUDE_SKIP_PERMISSIONS",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "fXLwr",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Claude runs with --dangerously-skip-permissions so it never waits for a prompt. Set to false to remove the flag (a tool request will then hang until the timeout).",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "OaRD8",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_CLAUDE_SKIP_PERMISSIONS",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -14093,6 +14004,19 @@
                                       "textGrowth": "fixed-width",
                                       "width": 70,
                                       "content": "v0.4.0",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "J3qNnr",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Claude runs with --dangerously-skip-permissions so it never waits for a prompt. Set to false to remove the flag (a tool request will then hang until the timeout).",
+                                      "lineHeight": 1.5,
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
@@ -14138,37 +14062,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "acXic",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "Mm9cp",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "MAX_CONCURRENT",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "wuGka",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Max CLI processes running at the same time. Requests beyond this wait in the queue; it limits subprocess spawns, not Express.",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "hvqvX",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "MAX_CONCURRENT",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -14205,6 +14108,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "zB27I",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Max CLI processes running at the same time. Requests beyond this wait in the queue; it limits subprocess spawns, not Express.",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -14216,37 +14132,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "OaUtV",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "BbQa2",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "MAX_QUEUE_DEPTH",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "gV6IP",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Max requests waiting when every slot is busy. Beyond this, requests get HTTP 429.",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "IZSUh",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "MAX_QUEUE_DEPTH",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -14283,6 +14178,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "Ji3D0",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Max requests waiting when every slot is busy. Beyond this, requests get HTTP 429.",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -14294,37 +14202,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "vvwGp",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "xElPT",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "MAX_STREAM_CONCURRENT",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "QdJxy",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Max concurrent streaming responses",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "MRWgh",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "MAX_STREAM_CONCURRENT",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -14361,6 +14248,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "Fbd8A",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Max concurrent streaming responses",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -14372,37 +14272,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "J7r8M",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "xRAD9",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_GLOBAL_RPM",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "YDAiY",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Global rate limit across all API keys, requests per minute",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "EJayD",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_GLOBAL_RPM",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -14436,6 +14315,19 @@
                                       "textGrowth": "fixed-width",
                                       "width": 70,
                                       "content": "v0.1.0",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "XrG9l",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Global rate limit across all API keys, requests per minute",
+                                      "lineHeight": 1.5,
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
@@ -14481,37 +14373,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "QogOD",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "EzrYu",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_ADMIN_PASSWORD",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "XB5b1",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Admin password for /admin/* and the dashboard login (generated by `shellm init`). When unset, every admin endpoint returns 501.",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "B06pRw",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_ADMIN_PASSWORD",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -14548,6 +14419,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "u3zrPo",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Admin password for /admin/* and the dashboard login (generated by `shellm init`). When unset, every admin endpoint returns 501.",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -14559,37 +14443,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "klc0u",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "k0H9b",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_ADMIN_USER",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "lVlal",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Only this username is accepted when set; otherwise any username with the right password works.",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "km9Qr",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_ADMIN_USER",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -14626,6 +14489,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "pbwvq",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Only this username is accepted when set; otherwise any username with the right password works.",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -14637,37 +14513,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "QeZui",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "FDBZC",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_ADMIN_MAX_ATTEMPTS",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "cSMjk",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Failed admin logins per IP before a 5-minute lockout",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "ODJ72",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_ADMIN_MAX_ATTEMPTS",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -14704,6 +14559,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "Pi2ja",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Failed admin logins per IP before a 5-minute lockout",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -14715,37 +14583,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "y5J1zk",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "GkWXn",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_REQUIRE_AUTH",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "nOyEB",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Reject /v1/* requests when no API key exists, instead of running unauthenticated",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "R6kjZ",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_REQUIRE_AUTH",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -14782,6 +14629,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "A7Th2o",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Reject /v1/* requests when no API key exists, instead of running unauthenticated",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -14793,37 +14653,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "A7C6U",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "DfnPm",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_HMAC_SECRET",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "g5UFK",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "HMAC secret for API key hashing. Auto-generated and stored in the database when unset; set it explicitly only to keep keys valid across a restore into a different database.",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "uWhiX",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_HMAC_SECRET",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -14857,6 +14696,19 @@
                                       "textGrowth": "fixed-width",
                                       "width": 70,
                                       "content": "v0.4.0",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "xB1oJ",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "HMAC secret for API key hashing. Auto-generated and stored in the database when unset; set it explicitly only to keep keys valid across a restore into a different database.",
+                                      "lineHeight": 1.5,
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
@@ -14902,37 +14754,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "czhYD",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "Y71T2",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "HEALTH_CACHE_TTL_MS",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "s2uCLp",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "How long (ms) provider health results are cached before re-probing",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "W2JUgI",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "HEALTH_CACHE_TTL_MS",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -14969,6 +14800,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "cwWMc",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "How long (ms) provider health results are cached before re-probing",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -14980,37 +14824,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "vFxlk",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "i72ix",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "HEALTH_POLL_INTERVAL_MS",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "DmPot",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "How often (ms) the background poller runs `--version` checks. Spends no quota.",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "mbgUY",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "HEALTH_POLL_INTERVAL_MS",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -15047,6 +14870,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "yc6F2",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "How often (ms) the background poller runs `--version` checks. Spends no quota.",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -15058,37 +14894,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "zVpSd",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "S5BTB",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_ALERT_WEBHOOK_URL",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "StjUf",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "POST alerts (provider health transitions, auth failure spikes) to Slack, Discord, Uptime Kuma…",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "R6VOHC",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_ALERT_WEBHOOK_URL",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -15125,6 +14940,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "KYurP",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "POST alerts (provider health transitions, auth failure spikes) to Slack, Discord, Uptime Kuma…",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -15136,37 +14964,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "N8uDs",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "yzL2J",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_AUTH_ALERT_THRESHOLD",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "IcLX2",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Auth failures in one minute before the webhook fires",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "x2de5",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_AUTH_ALERT_THRESHOLD",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -15200,6 +15007,19 @@
                                       "textGrowth": "fixed-width",
                                       "width": 70,
                                       "content": "v0.4.0",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "UB5sf",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Auth failures in one minute before the webhook fires",
+                                      "lineHeight": 1.5,
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
@@ -15245,37 +15065,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "engDZ",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "a9Fdk",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_FALLBACK_ENABLED",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "Ba97S",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Retry a failed request on another provider, in priority order. Off unless set to true.",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "IlMoI",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_FALLBACK_ENABLED",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -15312,6 +15111,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "pbiqQ",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Retry a failed request on another provider, in priority order. Off unless set to true.",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -15323,37 +15135,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "VLzTQ",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "TqSrc",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_FALLBACK_ORDER",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "SXeeH",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "The provider priority order fallback walks. Ignored while SHELLM_FALLBACK_ENABLED is off.",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "s0bcmX",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_FALLBACK_ORDER",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -15390,6 +15181,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "NqhA7",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "The provider priority order fallback walks. Ignored while SHELLM_FALLBACK_ENABLED is off.",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -15401,37 +15205,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "IcQng",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "DeYo6",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "CIRCUIT_BREAKER_THRESHOLD",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "d5QAI",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Consecutive failures before a provider's circuit opens",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "m6iUW",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "CIRCUIT_BREAKER_THRESHOLD",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -15468,6 +15251,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "qgTGZ",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Consecutive failures before a provider's circuit opens",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -15479,37 +15275,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "soIwC",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "rQUeK",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "CIRCUIT_BREAKER_RESET_MS",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "jIbCp",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "How long (ms) an open circuit stays open before a provider is tried again",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "T5Uo0r",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "CIRCUIT_BREAKER_RESET_MS",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -15543,6 +15318,19 @@
                                       "textGrowth": "fixed-width",
                                       "width": 70,
                                       "content": "v0.3.0",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "vA5OH",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "How long (ms) an open circuit stays open before a provider is tried again",
+                                      "lineHeight": 1.5,
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
@@ -15588,37 +15376,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "ng1Q3",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "vZ57O",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_MODEL_CATALOG_TTL_MS",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "Ldeox",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "How long (ms) the model list read from the CLIs is cached before asking again (6h)",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "I61ew",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_MODEL_CATALOG_TTL_MS",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -15655,6 +15422,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "PkU34",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "How long (ms) the model list read from the CLIs is cached before asking again (6h)",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -15666,37 +15446,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "DEQWg",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "fwOLY",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_QUOTA_WINDOW_HOURS",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "odAbZ",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "The short window the dashboard reports consumption over, in hours",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "IBj7U",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_QUOTA_WINDOW_HOURS",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -15733,6 +15492,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "tikTZ",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "The short window the dashboard reports consumption over, in hours",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -15744,37 +15516,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "R4B4p",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "KNtCj",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_QUOTA_WEEK_HOURS",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "VeSkg",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "The long window the dashboard reports consumption over, in hours",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "JR8Bs",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_QUOTA_WEEK_HOURS",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -15808,6 +15559,19 @@
                                       "textGrowth": "fixed-width",
                                       "width": 70,
                                       "content": "v1.0.0",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "LdXTW",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "The long window the dashboard reports consumption over, in hours",
+                                      "lineHeight": 1.5,
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
@@ -15853,37 +15617,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "MWCRz",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "nf7g5",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "NODE_ENV",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "QeqlL",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "`production` is what arms the guards: a weak admin password refuses to start and a run with no API keys logs CRITICAL. The systemd unit sets it; `shellm start -d` on a server does not.",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "HkZ2k",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "NODE_ENV",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -15920,6 +15663,19 @@
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "V241R",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "`production` is what arms the guards: a weak admin password refuses to start and a run with no API keys logs CRITICAL. The systemd unit sets it; `shellm start -d` on a server does not.",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     }
                                   ]
                                 },
@@ -15931,37 +15687,16 @@
                                   "gap": 12,
                                   "children": [
                                     {
-                                      "type": "frame",
-                                      "id": "benb2",
-                                      "name": "Setting",
-                                      "width": 380,
-                                      "layout": "vertical",
-                                      "gap": 4,
-                                      "children": [
-                                        {
-                                          "type": "text",
-                                          "id": "boUx7",
-                                          "name": "Name",
-                                          "fill": "$white",
-                                          "content": "SHELLM_REF",
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        },
-                                        {
-                                          "type": "text",
-                                          "id": "VK25K",
-                                          "name": "About",
-                                          "fill": "$outline",
-                                          "textGrowth": "fixed-width",
-                                          "width": "fill_container",
-                                          "content": "Which ref `sudo shellm update` installs. A release tag, and only over SSH — see src/cli/update.js",
-                                          "lineHeight": 1.5,
-                                          "fontFamily": "$font-mono-render",
-                                          "fontSize": 11,
-                                          "fontWeight": "normal"
-                                        }
-                                      ]
+                                      "type": "text",
+                                      "id": "C4Uy1",
+                                      "name": "Name",
+                                      "fill": "$white",
+                                      "textGrowth": "fixed-width",
+                                      "width": 210,
+                                      "content": "SHELLM_REF",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
                                     },
                                     {
                                       "type": "text",
@@ -15995,6 +15730,19 @@
                                       "textGrowth": "fixed-width",
                                       "width": 70,
                                       "content": "v1.1.0",
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": 11,
+                                      "fontWeight": "normal"
+                                    },
+                                    {
+                                      "type": "text",
+                                      "id": "wbukq",
+                                      "name": "About",
+                                      "fill": "$outline",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "Which ref `sudo shellm update` installs. A release tag, and only over SSH — see src/cli/update.js",
+                                      "lineHeight": 1.5,
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 11,
                                       "fontWeight": "normal"
@@ -25825,7 +25573,7 @@
       "type": "frame",
       "id": "AcPJT",
       "x": 7000,
-      "y": 857,
+      "y": 930,
       "name": "Admin / Playground / Waiting",
       "clip": true,
       "width": 1440,
@@ -26345,8 +26093,9 @@
                 {
                   "type": "frame",
                   "id": "VH7Zb",
-                  "name": "Two columns",
+                  "name": "Request and response",
                   "width": "fill_container",
+                  "layout": "vertical",
                   "gap": 24,
                   "children": [
                     {
@@ -26361,80 +26110,99 @@
                       "children": [
                         {
                           "type": "frame",
-                          "id": "LSDiG",
-                          "name": "Client key",
+                          "id": "lblT6",
+                          "name": "Controls",
                           "width": "fill_container",
-                          "layout": "vertical",
-                          "gap": 8,
+                          "gap": 16,
                           "children": [
                             {
-                              "type": "text",
-                              "id": "AVcbw",
-                              "name": "Label",
-                              "fill": "$outline",
-                              "content": "CLIENT KEY",
-                              "fontFamily": "$font-headline",
-                              "fontSize": 10,
-                              "fontWeight": "700",
-                              "letterSpacing": 2
-                            },
-                            {
                               "type": "frame",
-                              "id": "K4u5R",
-                              "name": "Input",
+                              "id": "LSDiG",
+                              "name": "Client key",
                               "width": "fill_container",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                10,
-                                12
-                              ],
+                              "layout": "vertical",
+                              "gap": 8,
                               "children": [
                                 {
                                   "type": "text",
-                                  "id": "AsfS9",
-                                  "name": "Value",
-                                  "fill": "$on-surface",
-                                  "textGrowth": "fixed-width",
-                                  "width": "fill_container",
-                                  "content": "••••••••••••••••••••",
-                                  "lineHeight": 1.5,
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": "$text-sm",
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "tgyOu",
-                              "name": "Row",
-                              "width": "fill_container",
-                              "justifyContent": "space_between",
-                              "alignItems": "center",
-                              "children": [
+                                  "id": "AVcbw",
+                                  "name": "Label",
+                                  "fill": "$outline",
+                                  "content": "CLIENT KEY",
+                                  "fontFamily": "$font-headline",
+                                  "fontSize": 10,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 2
+                                },
                                 {
                                   "type": "frame",
-                                  "id": "FfnKN",
-                                  "name": "Remember",
-                                  "gap": 8,
+                                  "id": "K4u5R",
+                                  "name": "Input",
+                                  "width": "fill_container",
+                                  "fill": "$surface-container-lowest",
+                                  "stroke": "$outline-variant",
+                                  "strokeWidth": 1,
+                                  "padding": [
+                                    10,
+                                    12
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "AsfS9",
+                                      "name": "Value",
+                                      "fill": "$on-surface",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "••••••••••••••••••••",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": "$text-sm",
+                                      "fontWeight": "normal"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "tgyOu",
+                                  "name": "Row",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
                                   "alignItems": "center",
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "w9QIw",
-                                      "name": "Checkbox",
-                                      "width": 12,
-                                      "height": 12,
-                                      "fill": "$primary-container"
+                                      "id": "FfnKN",
+                                      "name": "Remember",
+                                      "gap": 8,
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "frame",
+                                          "id": "w9QIw",
+                                          "name": "Checkbox",
+                                          "width": 12,
+                                          "height": 12,
+                                          "fill": "$primary-container"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "xxcbF",
+                                          "name": "Label",
+                                          "fill": "$outline",
+                                          "content": "keep it for this tab only",
+                                          "fontFamily": "$font-mono-render",
+                                          "fontSize": 10,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
                                     },
                                     {
                                       "type": "text",
-                                      "id": "xxcbF",
-                                      "name": "Label",
+                                      "id": "Ol0bp",
+                                      "name": "forget",
                                       "fill": "$outline",
-                                      "content": "keep it for this tab only",
+                                      "content": "forget",
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 10,
                                       "fontWeight": "normal"
@@ -26443,38 +26211,19 @@
                                 },
                                 {
                                   "type": "text",
-                                  "id": "Ol0bp",
-                                  "name": "forget",
+                                  "id": "za303",
+                                  "name": "Hashed note",
                                   "fill": "$outline",
-                                  "content": "forget",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Keys are stored hashed, so an existing one cannot be filled in here. Rotate a key to get a new secret.",
+                                  "lineHeight": 1.5,
                                   "fontFamily": "$font-mono-render",
                                   "fontSize": 10,
                                   "fontWeight": "normal"
                                 }
                               ]
                             },
-                            {
-                              "type": "text",
-                              "id": "za303",
-                              "name": "Hashed note",
-                              "fill": "$outline",
-                              "textGrowth": "fixed-width",
-                              "width": "fill_container",
-                              "content": "Keys are stored hashed, so an existing one cannot be filled in here. Rotate a key to get a new secret.",
-                              "lineHeight": 1.5,
-                              "fontFamily": "$font-mono-render",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "LtDJn",
-                          "name": "Format and model",
-                          "width": "fill_container",
-                          "gap": 16,
-                          "children": [
                             {
                               "type": "frame",
                               "id": "zQ62K",
@@ -26842,7 +26591,7 @@
       "type": "frame",
       "id": "WOYo9",
       "x": 7000,
-      "y": 1818,
+      "y": 1891,
       "name": "Admin / Playground / No provider",
       "clip": true,
       "width": 1440,
@@ -27296,8 +27045,9 @@
                 {
                   "type": "frame",
                   "id": "LsZlc",
-                  "name": "Two columns",
+                  "name": "Request and response",
                   "width": "fill_container",
+                  "layout": "vertical",
                   "gap": 24,
                   "children": [
                     {
@@ -27312,80 +27062,99 @@
                       "children": [
                         {
                           "type": "frame",
-                          "id": "NthSk",
-                          "name": "Client key",
+                          "id": "rDxlF",
+                          "name": "Controls",
                           "width": "fill_container",
-                          "layout": "vertical",
-                          "gap": 8,
+                          "gap": 16,
                           "children": [
                             {
-                              "type": "text",
-                              "id": "Hk6gJ",
-                              "name": "Label",
-                              "fill": "$outline",
-                              "content": "CLIENT KEY",
-                              "fontFamily": "$font-headline",
-                              "fontSize": 10,
-                              "fontWeight": "700",
-                              "letterSpacing": 2
-                            },
-                            {
                               "type": "frame",
-                              "id": "Af295",
-                              "name": "Input",
+                              "id": "NthSk",
+                              "name": "Client key",
                               "width": "fill_container",
-                              "fill": "$surface-container-lowest",
-                              "stroke": "$outline-variant",
-                              "strokeWidth": 1,
-                              "padding": [
-                                10,
-                                12
-                              ],
+                              "layout": "vertical",
+                              "gap": 8,
                               "children": [
                                 {
                                   "type": "text",
-                                  "id": "XBwZa",
-                                  "name": "Value",
-                                  "fill": "$on-surface",
-                                  "textGrowth": "fixed-width",
-                                  "width": "fill_container",
-                                  "content": "••••••••••••••••••••",
-                                  "lineHeight": 1.5,
-                                  "fontFamily": "$font-mono-render",
-                                  "fontSize": "$text-sm",
-                                  "fontWeight": "normal"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "f7GVD",
-                              "name": "Row",
-                              "width": "fill_container",
-                              "justifyContent": "space_between",
-                              "alignItems": "center",
-                              "children": [
+                                  "id": "Hk6gJ",
+                                  "name": "Label",
+                                  "fill": "$outline",
+                                  "content": "CLIENT KEY",
+                                  "fontFamily": "$font-headline",
+                                  "fontSize": 10,
+                                  "fontWeight": "700",
+                                  "letterSpacing": 2
+                                },
                                 {
                                   "type": "frame",
-                                  "id": "zPQ2o",
-                                  "name": "Remember",
-                                  "gap": 8,
+                                  "id": "Af295",
+                                  "name": "Input",
+                                  "width": "fill_container",
+                                  "fill": "$surface-container-lowest",
+                                  "stroke": "$outline-variant",
+                                  "strokeWidth": 1,
+                                  "padding": [
+                                    10,
+                                    12
+                                  ],
+                                  "children": [
+                                    {
+                                      "type": "text",
+                                      "id": "XBwZa",
+                                      "name": "Value",
+                                      "fill": "$on-surface",
+                                      "textGrowth": "fixed-width",
+                                      "width": "fill_container",
+                                      "content": "••••••••••••••••••••",
+                                      "lineHeight": 1.5,
+                                      "fontFamily": "$font-mono-render",
+                                      "fontSize": "$text-sm",
+                                      "fontWeight": "normal"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "frame",
+                                  "id": "f7GVD",
+                                  "name": "Row",
+                                  "width": "fill_container",
+                                  "justifyContent": "space_between",
                                   "alignItems": "center",
                                   "children": [
                                     {
                                       "type": "frame",
-                                      "id": "O88shi",
-                                      "name": "Checkbox",
-                                      "width": 12,
-                                      "height": 12,
-                                      "fill": "$primary-container"
+                                      "id": "zPQ2o",
+                                      "name": "Remember",
+                                      "gap": 8,
+                                      "alignItems": "center",
+                                      "children": [
+                                        {
+                                          "type": "frame",
+                                          "id": "O88shi",
+                                          "name": "Checkbox",
+                                          "width": 12,
+                                          "height": 12,
+                                          "fill": "$primary-container"
+                                        },
+                                        {
+                                          "type": "text",
+                                          "id": "Q1RGM",
+                                          "name": "Label",
+                                          "fill": "$outline",
+                                          "content": "keep it for this tab only",
+                                          "fontFamily": "$font-mono-render",
+                                          "fontSize": 10,
+                                          "fontWeight": "normal"
+                                        }
+                                      ]
                                     },
                                     {
                                       "type": "text",
-                                      "id": "Q1RGM",
-                                      "name": "Label",
+                                      "id": "FXQRz",
+                                      "name": "forget",
                                       "fill": "$outline",
-                                      "content": "keep it for this tab only",
+                                      "content": "forget",
                                       "fontFamily": "$font-mono-render",
                                       "fontSize": 10,
                                       "fontWeight": "normal"
@@ -27394,38 +27163,19 @@
                                 },
                                 {
                                   "type": "text",
-                                  "id": "FXQRz",
-                                  "name": "forget",
+                                  "id": "rfHrM",
+                                  "name": "Hashed note",
                                   "fill": "$outline",
-                                  "content": "forget",
+                                  "textGrowth": "fixed-width",
+                                  "width": "fill_container",
+                                  "content": "Keys are stored hashed, so an existing one cannot be filled in here. Rotate a key to get a new secret.",
+                                  "lineHeight": 1.5,
                                   "fontFamily": "$font-mono-render",
                                   "fontSize": 10,
                                   "fontWeight": "normal"
                                 }
                               ]
                             },
-                            {
-                              "type": "text",
-                              "id": "rfHrM",
-                              "name": "Hashed note",
-                              "fill": "$outline",
-                              "textGrowth": "fixed-width",
-                              "width": "fill_container",
-                              "content": "Keys are stored hashed, so an existing one cannot be filled in here. Rotate a key to get a new secret.",
-                              "lineHeight": 1.5,
-                              "fontFamily": "$font-mono-render",
-                              "fontSize": 10,
-                              "fontWeight": "normal"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "TnnWA",
-                          "name": "Format and model",
-                          "width": "fill_container",
-                          "gap": 16,
-                          "children": [
                             {
                               "type": "frame",
                               "id": "QwlGY",
@@ -27753,7 +27503,7 @@
       "type": "frame",
       "id": "aUHJn",
       "x": 8560,
-      "y": 3965,
+      "y": 3117,
       "name": "Admin / System / Unreachable",
       "clip": true,
       "width": 1440,
