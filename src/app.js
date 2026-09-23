@@ -6,6 +6,7 @@ const { modelsHandler } = require('./api/v1/models');
 const { requestLogger } = require('./middleware/logging');
 const { requestId } = require('./middleware/request-id');
 const { createAuthMiddleware } = require('./middleware/auth');
+const { corsV1 } = require('./middleware/cors');
 const { createAdminAuth } = require('./middleware/admin-auth');
 const adminLoginRouter = require('./admin/login');
 const adminKeysRouter = require('./admin/keys');
@@ -31,6 +32,9 @@ const ADMIN_PUBLIC = path.join(__dirname, 'admin/public');
 app.use(express.json({ limit: '256kb' }));
 app.use(requestId);
 app.use(requestLogger);
+
+// Before the auth routes: a browser sends no Authorization header on a preflight.
+app.use('/v1', corsV1);
 
 // Validate Content-Type on POST/PATCH requests with body. The login form posts urlencoded.
 app.use((req, res, next) => {
