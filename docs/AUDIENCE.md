@@ -2,6 +2,9 @@
 
 > For something to qualify as a feature, someone on this list must actually need it.
 > If nobody here needs it, it doesn't get built.
+>
+> One of three files here that configure the maintainer's AI assistant rather than document the
+> product — see [`README.md`](./README.md). This is the one worth reading anyway.
 > Last updated: **2026-09-21** — the latency note now reflects ADR-0006.
 
 ## Primary user — the maintainer, integrating his own work
