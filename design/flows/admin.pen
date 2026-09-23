@@ -7993,6 +7993,19 @@
         },
         {
           "type": "text",
+          "id": "bKZ8G",
+          "name": "2026-09-23f",
+          "fill": "$on-surface-variant",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "2026-09-23 · The control shipped, and building it corrected the drawing in one place: the pause glyph was drawn at 14px, copied from the chevron on the pagination's SHOW select. That chevron is not an element at all — a native select's arrow is drawn by the browser — while the pause glyph is real markup and has to sit on the icon scale, which is 16/18/20. type-scale.test.js caught it the moment the code existed, which is the cheapest possible place for the canvas to be wrong. The glyph is 16 here now and the held control is 133 wide against 109 running. The band stays until the Default artboards are re-drawn to what actually shipped; nothing in this entry does that.",
+          "lineHeight": 1.6,
+          "fontFamily": "$font-mono-render",
+          "fontSize": 10,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "text",
           "id": "UnS6R",
           "name": "2026-09-23e",
           "fill": "$on-surface-variant",
@@ -36230,8 +36243,8 @@
                                       "type": "icon",
                                       "id": "B550S",
                                       "name": "Paused",
-                                      "width": 14,
-                                      "height": 14,
+                                      "width": 16,
+                                      "height": 16,
                                       "icon": "pause",
                                       "library": "lucide",
                                       "fill": "$outline"

@@ -1,5 +1,11 @@
 /* global Alpine */
 
+const LOGS_REFRESH_KEY = 'shellm.refresh.logs';
+
+// A local read finishes in tens of milliseconds. A spinner that runs only that long is a twitch
+// rather than feedback, so a manual press holds it for at least this.
+const SPINNER_FLOOR_MS = 400;
+
 function logsPage() {
   return {
     logs: [],
@@ -13,7 +19,11 @@ function logsPage() {
     filterErrorCode: '',
     expandedId: null,
     loading: true,
+    manualLoading: false,
     loadError: null,
+    refreshMs: storedInterval(LOGS_REFRESH_KEY, 0),
+    ladder: REFRESH_LADDER,
+    _poller: null,
     stats: null,
     statsError: null,
 
@@ -35,8 +45,10 @@ function logsPage() {
       this.expandedId = this.expandedId === id ? null : id;
     },
 
-    async fetchLogs() {
+    async fetchLogs({ manual = true } = {}) {
+      const startedAt = Date.now();
       this.loading = true;
+      if (manual) this.manualLoading = true;
       const params = new URLSearchParams();
       params.set('limit', this.limit);
       params.set('offset', this.offset);
@@ -53,6 +65,55 @@ function logsPage() {
         this.loadError = err.message;
       }
       this.loading = false;
+      if (manual) this.settleSpinner(startedAt);
+    },
+
+    settleSpinner(startedAt) {
+      const remaining = SPINNER_FLOOR_MS - (Date.now() - startedAt);
+      if (remaining <= 0) {
+        this.manualLoading = false;
+        return;
+      }
+      setTimeout(() => { this.manualLoading = false; }, remaining);
+    },
+
+    refreshNow() {
+      this.fetchLogs();
+      this.fetchStats();
+    },
+
+    startAutoRefresh() {
+      if (!this._poller) {
+        this._poller = poller(() => {
+          if (this.autoRefreshHeld) return;
+          this.fetchLogs({ manual: false });
+          this.fetchStats();
+        });
+      }
+      this._poller.every(this.refreshMs);
+    },
+
+    stopAutoRefresh() {
+      if (this._poller) this._poller.stop();
+    },
+
+    setRefresh(value) {
+      this.refreshMs = Number(value);
+      storeInterval(LOGS_REFRESH_KEY, this.refreshMs);
+      this.startAutoRefresh();
+    },
+
+    // Replacing the rows under someone who is reading one of them, or who has paged away from the
+    // top, is the cost this loop is not allowed to charge.
+    get autoRefreshHeld() {
+      return this.refreshMs > 0 && (this.offset > 0 || this.expandedId !== null);
+    },
+
+    get intervalTitle() {
+      if (this.refreshMs === 0) return 'Auto-refresh is off';
+      if (this.expandedId !== null) return 'Paused while a row is open';
+      if (this.offset > 0) return 'Paused while you are past page 1';
+      return 'How often the table re-reads itself';
     },
 
     appendFilters(params) {
