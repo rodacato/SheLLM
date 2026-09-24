@@ -10,9 +10,11 @@ describe('/v1/chat/completions', () => {
   before(() => {
     mock.module(path.resolve(__dirname, '../../../src/providers/base.js'), {
       namedExports: {
-        execute: mock.fn(async (cmd) => ({
+        execute: mock.fn(async (cmd, args) => ({
           stdout: cmd === 'claude'
-            ? JSON.stringify({ result: 'test reply', cost_usd: 0.001 })
+            ? JSON.stringify(args.includes('--json-schema')
+              ? { result: '{"ok":true}', structured_output: { ok: true } }
+              : { result: 'test reply', cost_usd: 0.001 })
             : 'test reply',
           stderr: '',
           duration_ms: 10,
@@ -245,6 +247,51 @@ describe('/v1/chat/completions', () => {
     });
     assert.strictEqual(res.status, 400);
     assert.match(res.body.error.message, /content/);
+  });
+
+  // --- response_format ---
+
+  describe('response_format', () => {
+    const schema = { type: 'object', properties: { ok: { type: 'boolean' } }, required: ['ok'], additionalProperties: false };
+    const withFormat = (response_format) => post({
+      model: 'claude',
+      messages: [{ role: 'user', content: 'hello' }],
+      response_format,
+    });
+
+    it('answers a json_schema request with the structured output as the message content', async () => {
+      const res = await withFormat({ type: 'json_schema', json_schema: { name: 'check', strict: true, schema } });
+      assert.strictEqual(res.status, 200);
+      assert.deepStrictEqual(JSON.parse(res.body.choices[0].message.content), { ok: true });
+    });
+
+    it('still accepts json_object and text', async () => {
+      assert.strictEqual((await withFormat({ type: 'json_object' })).status, 200);
+      assert.strictEqual((await withFormat({ type: 'text' })).status, 200);
+    });
+
+    // Knotty falls back to json_object when a 400 names the field, so every refusal must.
+    for (const [label, format] of [
+      ['an unknown type', { type: 'xml' }],
+      ['json_schema without its object', { type: 'json_schema' }],
+      ['a name with spaces', { type: 'json_schema', json_schema: { name: 'my schema', schema } }],
+      ['a missing name', { type: 'json_schema', json_schema: { schema } }],
+      ['a schema that is not an object', { type: 'json_schema', json_schema: { name: 'x', schema: [] } }],
+      ['a non-boolean strict', { type: 'json_schema', json_schema: { name: 'x', schema, strict: 'yes' } }],
+    ]) {
+      it(`rejects ${label} with a message naming response_format`, async () => {
+        const res = await withFormat(format);
+        assert.strictEqual(res.status, 400);
+        assert.match(res.body.error.message, /response_format/);
+      });
+    }
+
+    it('rejects a schema too large to pass to the CLI as one argument', async () => {
+      const big = { type: 'object', description: 'x'.repeat(110 * 1024) };
+      const res = await withFormat({ type: 'json_schema', json_schema: { name: 'big', schema: big } });
+      assert.strictEqual(res.status, 400);
+      assert.match(res.body.error.message, /response_format.*exceeds/);
+    });
   });
 
   // --- Extra fields passthrough (Postel's principle) ---

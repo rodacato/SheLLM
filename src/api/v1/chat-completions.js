@@ -56,6 +56,40 @@ function extractMessages(messages) {
   return { prompt, system };
 }
 
+// Claude takes the schema as one argv string, and Linux caps a single argument at 128 KiB.
+const MAX_SCHEMA_BYTES = 100 * 1024;
+const SCHEMA_NAME = /^[a-zA-Z0-9_-]{1,64}$/;
+
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function validateResponseFormat(format) {
+  if (!isPlainObject(format) || !['json_object', 'json_schema', 'text'].includes(format.type)) {
+    return invalidRequest('Field "response_format" must be an object with type "json_schema", "json_object" or "text"');
+  }
+  if (format.type !== 'json_schema') return null;
+
+  const spec = format.json_schema;
+  if (!isPlainObject(spec)) {
+    return invalidRequest('Field "response_format.json_schema" must be an object with "name" and "schema"');
+  }
+  if (typeof spec.name !== 'string' || !SCHEMA_NAME.test(spec.name)) {
+    return invalidRequest('Field "response_format.json_schema.name" must be 1-64 letters, digits, underscores or dashes');
+  }
+  if (!isPlainObject(spec.schema)) {
+    return invalidRequest('Field "response_format.json_schema.schema" must be a JSON Schema object');
+  }
+  if (spec.strict !== undefined && spec.strict !== null && typeof spec.strict !== 'boolean') {
+    return invalidRequest('Field "response_format.json_schema.strict" must be a boolean');
+  }
+  const size = Buffer.byteLength(JSON.stringify(spec.schema));
+  if (size > MAX_SCHEMA_BYTES) {
+    return invalidRequest(`Field "response_format.json_schema.schema" exceeds ${MAX_SCHEMA_BYTES} bytes (got ${size})`);
+  }
+  return null;
+}
+
 /**
  * Validate OpenAI chat completions request body.
  * Returns null if valid, or an error object if invalid.
@@ -111,9 +145,8 @@ function validate(body) {
   }
 
   if (body.response_format !== undefined) {
-    if (!body.response_format || typeof body.response_format !== 'object' || !['json_object', 'text'].includes(body.response_format.type)) {
-      return invalidRequest('Field "response_format" must be an object with type "json_object" or "text"');
-    }
+    const formatError = validateResponseFormat(body.response_format);
+    if (formatError) return formatError;
   }
 
   if (body.stream_options !== undefined && body.stream_options !== null) {

@@ -1,5 +1,5 @@
 const { execute, executeStream, stripNonPrintable } = require('./base');
-const { modelNotFound } = require('../errors');
+const { modelNotFound, cliFailed } = require('../errors');
 const config = require('../config');
 
 const MODEL_ALIASES = { 'claude-haiku': 'haiku', 'claude-sonnet': 'sonnet', 'claude-opus': 'opus' };
@@ -39,6 +39,10 @@ const ISOLATION_ARGS = [
   '--permission-mode', 'dontAsk',
 ];
 
+function wantsSchema(response_format) {
+  return response_format?.type === 'json_schema';
+}
+
 // The claude CLI has no temperature flag, so temperature is ignored.
 function buildBaseArgs({ prompt, system, response_format, model }) {
   const args = ['--print', ...ISOLATION_ARGS];
@@ -46,6 +50,8 @@ function buildBaseArgs({ prompt, system, response_format, model }) {
   if (cliModel(model)) args.push('--model', cliModel(model));
   const systemPrompt = systemPromptFor({ system, response_format });
   if (systemPrompt) args.push('--system-prompt', systemPrompt);
+  // The flag takes the schema inline only; a path is refused as invalid JSON.
+  if (wantsSchema(response_format)) args.push('--json-schema', JSON.stringify(response_format.json_schema.schema));
   args.push('--', prompt);
   return args;
 }
@@ -103,7 +109,9 @@ function parseOutput(stdout, stderr) {
 
   try {
     const data = JSON.parse(stdout || stderr);
-    content = data.result || data.content || stdout;
+    content = data.structured_output !== undefined
+      ? JSON.stringify(data.structured_output)
+      : data.result || data.content || stdout;
     cost_usd = data.total_cost_usd || data.cost_usd || null;
     usage = usageFrom(data);
     metrics = metricsFrom(data);
@@ -114,8 +122,15 @@ function parseOutput(stdout, stderr) {
   return { content: stripNonPrintable(content), cost_usd, usage, metrics };
 }
 
+// Under --json-schema the answer is the input of a StructuredOutput tool call, so it arrives as
+// input_json_delta. Any prose around it would corrupt the JSON the caller asked for.
+function deltaText(delta, structured) {
+  if (structured) return delta?.type === 'input_json_delta' ? delta.partial_json : null;
+  return delta?.text;
+}
+
 // One NDJSON line of `--output-format stream-json`; anything else is progress noise.
-function parseStreamLine(line) {
+function parseStreamLine(line, { structured = false } = {}) {
   if (!line.trim()) return null;
   let event;
   try {
@@ -125,11 +140,17 @@ function parseStreamLine(line) {
   }
 
   if (event.type === 'stream_event' && event.event?.type === 'content_block_delta') {
-    const text = event.event.delta?.text;
+    const text = deltaText(event.event.delta, structured);
     return text ? { type: 'delta', content: stripNonPrintable(text) } : null;
   }
   if (event.type === 'result') {
-    return { type: 'usage', usage: usageFrom(event), cost_usd: event.total_cost_usd ?? null, metrics: metricsFrom(event) };
+    return {
+      type: 'usage',
+      usage: usageFrom(event),
+      cost_usd: event.total_cost_usd ?? null,
+      metrics: metricsFrom(event),
+      structured_output: event.structured_output,
+    };
   }
   return null;
 }
@@ -167,29 +188,54 @@ function toProviderError(err, model) {
   return err;
 }
 
+// A prose answer where JSON was promised is a failure, not a success with the wrong content.
+function noStructuredOutput() {
+  return cliFailed('claude', 'response_format json_schema: the CLI returned no structured output');
+}
+
+function hasStructuredOutput(stdout) {
+  try {
+    return JSON.parse(stdout).structured_output !== undefined;
+  } catch {
+    return false;
+  }
+}
+
 async function chat({ prompt, system, response_format, model }) {
   const args = buildArgs({ prompt, system, response_format, model });
   const result = await execute('claude', args, { env: CLAUDE_ENV }).catch((err) => { throw toProviderError(err, model); });
+  if (wantsSchema(response_format) && !hasStructuredOutput(result.stdout)) throw noStructuredOutput();
   return parseOutput(result.stdout, result.stderr);
 }
 
 async function* chatStream({ prompt, system, response_format, model, signal }) {
   const args = buildStreamArgs({ prompt, system, response_format, model });
+  const structured = wantsSchema(response_format);
   let pending = '';
+  let streamed = false;
+
+  function* emit(line) {
+    const parsed = parseStreamLine(line, { structured });
+    if (!parsed) return;
+    if (parsed.type === 'delta') streamed = true;
+    if (parsed.type === 'usage' && structured && !streamed) {
+      if (parsed.structured_output === undefined) throw noStructuredOutput();
+      streamed = true;
+      yield { type: 'delta', content: JSON.stringify(parsed.structured_output) };
+    }
+    const { structured_output: _, ...event } = parsed;
+    yield event;
+  }
 
   for await (const event of executeStream('claude', args, { env: CLAUDE_ENV, signal })) {
     if (event.type !== 'chunk') continue;
     pending += event.data;
     const lines = pending.split('\n');
     pending = lines.pop();
-    for (const line of lines) {
-      const parsed = parseStreamLine(line);
-      if (parsed) yield parsed;
-    }
+    for (const line of lines) yield* emit(line);
   }
 
-  const last = parseStreamLine(pending);
-  if (last) yield last;
+  yield* emit(pending);
   yield { type: 'done' };
 }
 

@@ -174,7 +174,7 @@ A model the CLI rejects comes back as `404 model_not_found`.
 
 | Endpoint | Notes |
 |---|---|
-| `POST /v1/chat/completions` | OpenAI format. `model` and `messages` required, `max_tokens` optional (1–128000) |
+| `POST /v1/chat/completions` | OpenAI format. `model` and `messages` required, `max_tokens` optional (1–128000). `response_format` takes `json_schema` for structured output |
 | `POST /v1/messages` | Anthropic format. `model`, `max_tokens` and `messages` required, top-level `system` optional |
 | `GET /v1/models` | OpenAI model list of the names that map to a real CLI model |
 | `GET /health` | `{ "status": "ok" }`, unauthenticated |
