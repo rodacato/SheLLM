@@ -67,6 +67,8 @@ module.exports = [
         localStorage: 'readonly',
         performance: 'readonly',
         getComputedStyle: 'readonly',
+        FileReader: 'readonly',
+        createImageBitmap: 'readonly',
         // Shared app globals (loaded via separate <script> tags)
         API_BASE: 'readonly',
         HEALTH_URL: 'readonly',

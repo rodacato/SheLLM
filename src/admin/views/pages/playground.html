@@ -66,6 +66,37 @@
               <textarea x-model="prompt" rows="6" class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"></textarea>
             </div>
 
+            <div class="mb-4">
+              <div class="flex items-baseline gap-3 mb-2">
+                <span class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Images</span>
+                <label x-show="imagesSupported"
+                  class="text-[10px] font-mono text-primary-container hover:text-on-surface cursor-pointer">
+                  add
+                  <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple class="sr-only"
+                    @change="addImages($event.target.files); $event.target.value = ''">
+                </label>
+              </div>
+              <p x-show="!imagesSupported" class="text-[10px] font-mono text-outline"
+                x-text="images.length > 0
+                  ? 'The Anthropic format takes text only, so the ' + images.length + ' attached will not be sent. Switch to OpenAI to send them.'
+                  : 'Images go through the OpenAI format only; /v1/messages takes text.'"></p>
+              <p x-show="imagesSupported && images.length === 0" class="text-[10px] font-mono text-outline">
+                None attached. A photo past 1568 px or 1 MB is resized to JPEG in this tab before it is sent.
+              </p>
+              <ul x-show="images.length > 0" class="flex flex-col gap-2" :class="imagesSupported ? '' : 'opacity-40'">
+                <template x-for="(image, index) in images" :key="image.id">
+                  <li class="flex items-center gap-3 bg-surface-container-lowest px-3 py-2">
+                    <img :src="image.dataUrl" alt="" class="w-10 h-10 object-cover shrink-0">
+                    <span class="text-[11px] font-mono text-on-surface truncate min-w-0" x-text="image.name"></span>
+                    <span class="text-[10px] font-mono text-outline shrink-0"
+                      x-text="image.width + '×' + image.height + ' · ' + (image.resized ? formatBytes(image.originalBytes) + ' → ' : '') + formatBytes(image.bytes)"></span>
+                    <button @click="removeImage(index)" class="ml-auto text-[10px] font-mono text-outline hover:text-status-fail shrink-0">remove</button>
+                  </li>
+                </template>
+              </ul>
+              <p x-show="imageError" x-cloak class="text-[10px] font-mono text-status-warn mt-2" x-text="imageError"></p>
+            </div>
+
             <button @click="send()" :disabled="running"
               class="btn-brand px-5 py-2.5 text-xs font-headline font-bold uppercase disabled:opacity-40"
               x-text="running ? 'Sending…' : 'Send'"></button>

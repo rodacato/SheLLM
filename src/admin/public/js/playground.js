@@ -3,6 +3,50 @@
 // without passing the key system.
 const PLAYGROUND_KEY_STORAGE = 'shellm_playground_key';
 
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+// Claude scales anything past this long edge down anyway, so sending more only costs upload time.
+const IMAGE_LONG_EDGE = 1568;
+const IMAGE_KEEP_BYTES = 1024 * 1024;
+
+// A photo that already fits is sent untouched, keeping its type; anything larger is re-encoded.
+function imagePlan(width, height, bytes) {
+  const scale = Math.min(1, IMAGE_LONG_EDGE / Math.max(width, height));
+  if (scale === 1 && bytes <= IMAGE_KEEP_BYTES) return { reencode: false, width, height };
+  return { reencode: true, width: Math.round(width * scale), height: Math.round(height * scale) };
+}
+
+function readAsDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function prepareImage(file) {
+  const bitmap = await createImageBitmap(file);
+  const plan = imagePlan(bitmap.width, bitmap.height, file.size);
+  let blob = file;
+  if (plan.reencode) {
+    const canvas = document.createElement('canvas');
+    canvas.width = plan.width;
+    canvas.height = plan.height;
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, plan.width, plan.height);
+    blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+  }
+  bitmap.close();
+  return {
+    name: file.name,
+    originalBytes: file.size,
+    bytes: blob.size,
+    width: plan.width,
+    height: plan.height,
+    resized: plan.reencode,
+    dataUrl: await readAsDataUrl(blob),
+  };
+}
+
 function playgroundPage() {
   return {
     apiKey: '',
@@ -10,6 +54,9 @@ function playgroundPage() {
     format: 'openai',
     model: 'claude',
     prompt: 'Reply with one short sentence.',
+    images: [],
+    imageError: null,
+    _imageSeq: 0,
     models: [],
     catalogs: [],
     running: false,
@@ -72,8 +119,40 @@ function playgroundPage() {
       return this.format === 'anthropic' ? '/v1/messages' : '/v1/chat/completions';
     },
 
+    // Only /v1/chat/completions takes images; /v1/messages is text-only.
+    get imagesSupported() {
+      return this.format === 'openai';
+    },
+
+    async addImages(files) {
+      this.imageError = null;
+      for (const file of Array.from(files || [])) {
+        if (!IMAGE_TYPES.includes(file.type)) {
+          this.imageError = `${file.name} is not JPEG, PNG, WebP or GIF.`;
+          continue;
+        }
+        try {
+          this.images.push({ ...(await prepareImage(file)), id: ++this._imageSeq });
+        } catch {
+          this.imageError = `${file.name} could not be read as an image.`;
+        }
+      }
+    },
+
+    removeImage(index) {
+      this.images.splice(index, 1);
+    },
+
+    userContent() {
+      if (!this.imagesSupported || this.images.length === 0) return this.prompt;
+      return [
+        { type: 'text', text: this.prompt },
+        ...this.images.map((image) => ({ type: 'image_url', image_url: { url: image.dataUrl } })),
+      ];
+    },
+
     requestBody() {
-      const messages = [{ role: 'user', content: this.prompt }];
+      const messages = [{ role: 'user', content: this.userContent() }];
       return this.format === 'anthropic'
         ? { model: this.model, max_tokens: 1024, messages }
         : { model: this.model, messages };
@@ -182,5 +261,9 @@ function playgroundPage() {
     },
 
     formatDuration,
+    formatBytes(bytes) {
+      if (bytes < 1024) return `${bytes} B`;
+      return bytes < 1024 * 1024 ? `${Math.round(bytes / 1024)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    },
   };
 }
