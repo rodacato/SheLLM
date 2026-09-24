@@ -1,8 +1,9 @@
 # Landing page images
 
-What `.github/workflows/pages.yml` copies into `site/img/`. They are **crops of the committed
-admin captures in [`design/exports/`](../../design/exports/)**, not separate screenshots — so when
-a capture is retaken, the crop is recut from it rather than captured again.
+What `.github/workflows/pages.yml` copies into `site/img/`. The admin images are **crops of the
+committed admin captures in [`design/exports/`](../../design/exports/)**, not separate screenshots —
+so when a capture is retaken, the crop is recut from it rather than captured again. The two
+`example-*.jpg` are the exception, below.
 
 Every export is a 2× capture of a 1440 px-wide UI. The crops below drop the admin sidebar at
 `x = 511`, because it repeats in each one and says nothing to someone who has not installed
@@ -19,8 +20,8 @@ anything yet.
 **Why crops and not the whole capture.** A full admin capture is 1,440 logical px wide. Rendered
 in the page's 1,040 px measure it lands at 72%, and in a two-column grid at 17% — which is what
 shipped once, and nothing in it was readable. A crop 1,185 logical px wide renders at 88% full
-width, so the numbers can actually be read. The page's own check asserts this: no image may render
-below 60% of the UI it depicts.
+width, so the numbers can actually be read. Keep every admin image above 60% of the UI it depicts;
+nothing checks it, so it holds only as long as a recut respects it.
 
 **How a crop is cut.** There is no image tool in this repo and none is needed: a crop is a clipped
 frame in `admin.pen` sized to the region, holding a copy of the artboard offset by the region's
@@ -38,3 +39,15 @@ the wrong part of the screen.
 
 **The fold marker.** `admin-overview-default.png` carries a burned-in `FOLD · 1440×900` review rule
 at `y ≈ 1780`. The `h = 1440` crop is above it. Anything recut taller has to deal with it.
+
+## The examples
+
+`example-knotty.jpg` and `example-ai-town.jpg` are **live captures of the published apps**, not
+crops: those apps have no artboards here. Both are 1280×800 viewports at 2×, JPEG quality 82,
+taken with headless Chromium — Knotty after opening its *Librero* example, so the picture shows a
+design and the chat rather than its landing hero; AI Town as it loads. They sit two across and
+render near 40% of the UI, which is the point: they show what an app looks like, and nobody has to
+read a number in them.
+
+Retake one when its app changes enough that the picture lies about it. AI Town is light, so the
+page's scanline overlay (`.crt-lines`) shows on it and on nothing else.

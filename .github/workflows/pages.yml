@@ -43,6 +43,8 @@ jobs:
           cp assets/site/api-keys.png site/img/api-keys.png
           cp assets/site/playground.png site/img/playground.png
           cp assets/site/system.png site/img/system.png
+          cp assets/site/example-knotty.jpg site/img/example-knotty.jpg
+          cp assets/site/example-ai-town.jpg site/img/example-ai-town.jpg
 
       - name: Build the API reference
         run: |
