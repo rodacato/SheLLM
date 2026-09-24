@@ -14,7 +14,7 @@ anything yet.
 | `overview.png` | `admin-overview-default.png` | `0, 0, 2880, 1440` | The whole top band, sidebar included. Exactly 2:1, which is also why it is the OG card. |
 | `request-logs.png` | `admin-request-logs-default.png` | `511, 354, 2369, 845` | Error rate, tokens and cost, then three rows and one expanded detail row. |
 | `api-keys.png` | `admin-api-keys-default.png` | `511, 236, 2369, 904` | The connection row with the base URL, then the three keys with limits, usage and expiry — and the browser origin the middle one is scoped to. |
-| `playground.png` | `admin-playground-answered.png` | `511, 140, 2369, 1280` | The whole exchange: key, format and model across one row, the prompt, and the answer below it with its status, round trip, tokens and request id. |
+| `playground.png` | `admin-playground-answered.png` | `511, 140, 2369, 1384` | The whole exchange: key, format and model across one row, the prompt and its IMAGES line, and the answer below it with its status, round trip, tokens and request id. |
 | `system.png` | `admin-system-default.png` | `511, 900, 2369, 660` | Both provider cards: CLI version, circuit state, last status, models. |
 
 **Why crops and not the whole capture.** A full admin capture is 1,440 logical px wide. Rendered
@@ -32,7 +32,7 @@ temporary and is deleted once the PNG is written.
 **A region here is a measurement, not a setting.** It tracks content that moves when the artboard
 above it grows: adding the usage card to API Keys pushed the table down 668 device px, splitting
 the Logs filter bar pushed its panels down 88, and putting the actions back on that filter row
-pulled them up 34 again — every one re-derived from the artboard's own bounds rather than nudged
+pulled them up 34 again, and the Playground's IMAGES block grew its region by 104 — every one re-derived from the artboard's own bounds rather than nudged
 until the picture looked right. Recut a crop whenever its source
 artboard changes height, and update the row in the same commit — a stale region silently publishes
 the wrong part of the screen.
