@@ -43,6 +43,13 @@ const BEFORE = {
   TIMEOUT_MS: 120000,
 };
 
+// Settings born after the migration, with the default they were introduced with.
+const ADDED = {
+  SHELLM_MAX_CHAT_BODY_BYTES: 20971520,
+  SHELLM_MAX_IMAGES: 8,
+  SHELLM_MAX_IMAGE_BYTES: 5242880,
+};
+
 const saved = {};
 
 describe('config defaults', () => {
@@ -63,11 +70,11 @@ describe('config defaults', () => {
   });
 
   it('covers every setting the schema declares, and no others', () => {
-    assert.deepStrictEqual(config.names().sort(), Object.keys(BEFORE).sort());
+    assert.deepStrictEqual(config.names().sort(), Object.keys({ ...BEFORE, ...ADDED }).sort());
   });
 
   it('resolves each setting to the value the call sites produced before the migration', () => {
-    for (const [name, expected] of Object.entries(BEFORE)) {
+    for (const [name, expected] of Object.entries({ ...BEFORE, ...ADDED })) {
       assert.deepStrictEqual(config.get(name), expected, `${name} changed default`);
     }
   });

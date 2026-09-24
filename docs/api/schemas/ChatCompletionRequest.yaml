@@ -9,7 +9,7 @@ properties:
     type: array
     minItems: 1
     items:
-      $ref: "./ChatMessage.yaml"
+      $ref: "./ChatRequestMessage.yaml"
     description: |
       Must contain at least one `user` message. The first `system` message becomes the system
       prompt; the rest are flattened into one prompt, since the CLI takes a prompt, not a thread.

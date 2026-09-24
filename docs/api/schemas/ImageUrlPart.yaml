@@ -1,0 +1,17 @@
+type: object
+required: [type, image_url]
+properties:
+  type:
+    type: string
+    enum: [image_url]
+  image_url:
+    type: object
+    required: [url]
+    properties:
+      url:
+        type: string
+        pattern: "^data:image/(jpeg|png|webp|gif);base64,"
+        example: "data:image/png;base64,iVBORw0KGgo..."
+      detail:
+        type: string
+        description: Accepted and ignored.

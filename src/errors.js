@@ -6,6 +6,10 @@ function invalidRequest(message) {
   return appError(400, 'invalid_request', message);
 }
 
+function payloadTooLarge(message) {
+  return appError(413, 'invalid_request', message);
+}
+
 function authRequired() {
   return appError(401, 'auth_required', 'Missing or invalid Authorization header');
 }
@@ -124,6 +128,7 @@ function sendApiError(req, res, err, requestId) {
 
 module.exports = {
   invalidRequest,
+  payloadTooLarge,
   originNotAllowed,
   authRequired,
   rateLimited,

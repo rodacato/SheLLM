@@ -8,7 +8,7 @@ const config = require('../config');
 
 const FALLBACK_ORDER_ENV = config.get('SHELLM_FALLBACK_ORDER');
 
-async function routeWithFallback({ model, prompt, system, max_tokens, temperature, top_p, response_format, request_id }) {
+async function routeWithFallback({ model, prompt, parts, system, max_tokens, temperature, top_p, response_format, request_id }) {
   const primary = resolveProvider(model);
   if (!primary) {
     throw invalidRequest(`Unknown provider: ${model}`);
@@ -44,7 +44,7 @@ async function routeWithFallback({ model, prompt, system, max_tokens, temperatur
     const startTime = Date.now();
     try {
       const result = await queue.enqueue(({ queued_ms, position }) => {
-        return candidate.chat({ prompt, system, max_tokens, temperature, top_p, response_format, model })
+        return candidate.chat({ prompt, parts, system, max_tokens, temperature, top_p, response_format, model })
           .then((r) => ({ ...r, queued_ms, queue_position: position }));
       }, `${candidate.name} · ${model || candidate.name}`);
       recordSuccess(candidate.name);

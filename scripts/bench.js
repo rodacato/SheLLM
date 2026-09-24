@@ -150,6 +150,9 @@ async function postStream(path, body) {
   }
 }
 
+// A 64x64 solid red square.
+const RED_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAb0lEQVR4nO3PAQkAAAyEwO9feoshgnABdLep8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3I8QUNyPEFDcjxBQ3IPanc8OLDQitxAAAAAElFTkSuQmCC';
+
 function openaiBody(model, content, extra = {}) {
   return { model, messages: [{ role: 'user', content }], ...extra };
 }
@@ -385,22 +388,33 @@ async function capabilitySuite(model) {
     { status: tools.status },
   );
 
-  const image = await post('/v1/chat/completions', {
+  const imageMessage = (url) => ({
     model,
     messages: [{
       role: 'user',
       content: [
-        { type: 'text', text: 'What is in this image?' },
-        { type: 'image_url', image_url: { url: 'https://example.com/cat.png' } },
+        { type: 'text', text: 'What colour is this image? Answer with one word.' },
+        { type: 'image_url', image_url: { url } },
       ],
     }],
   });
+  const image = await post('/v1/chat/completions', imageMessage(`data:image/png;base64,${RED_PNG}`));
+  const colour = openaiText(image.json).trim();
   probe(
     'images',
-    'Image content blocks',
-    image.status >= 400 && image.status < 500 ? 'rejected' : image.ok ? 'works' : 'broken',
-    `HTTP ${image.status} ${image.json?.error?.code || image.json?.error?.type || ''}`,
-    { status: image.status },
+    'A data: URL image reaches the model',
+    image.ok && /red/i.test(colour) ? 'works' : image.ok ? 'partial' : 'broken',
+    image.ok ? `answered "${colour.slice(0, 40)}"` : `HTTP ${image.status} ${image.json?.error?.message || ''}`.slice(0, 120),
+    { status: image.status, ms: Math.round(image.ms) },
+  );
+
+  const remoteImage = await post('/v1/chat/completions', imageMessage('https://example.com/cat.png'));
+  probe(
+    'remote-image',
+    'An image by URL, which SheLLM would have to fetch',
+    remoteImage.status === 400 ? 'rejected' : remoteImage.ok ? 'works' : 'broken',
+    `HTTP ${remoteImage.status} ${remoteImage.json?.error?.code || remoteImage.json?.error?.type || ''}`,
+    { status: remoteImage.status },
   );
 
   const unknown = await post('/v1/chat/completions', openaiBody('gpt-4o', PROMPTS.tiny));
@@ -460,12 +474,12 @@ async function capabilitySuite(model) {
     { status: noAuthOpenai.status },
   );
 
-  const oversized = await post('/v1/chat/completions', null, {
-    raw: JSON.stringify(openaiBody(model, promptOfTokens(80000))),
+  const oversized = await post('/v1/messages', null, {
+    raw: JSON.stringify(anthropicBody(model, promptOfTokens(80000))),
   });
   probe(
     'payload-limit',
-    'A payload over the 256 kB body limit',
+    'A payload over the 256 kB body limit (/v1/messages)',
     oversized.status >= 400 ? 'rejected' : 'works',
     `HTTP ${oversized.status}`,
     { status: oversized.status },

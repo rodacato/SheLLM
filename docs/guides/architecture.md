@@ -168,7 +168,8 @@ Every provider implements this interface:
 ```javascript
 {
   name: 'provider-name',
-  chat: async ({ prompt, system, max_tokens, temperature, top_p, response_format, model }) => {
+  // parts: null, or the prompt as text and image parts in order, when the request has images
+  chat: async ({ prompt, parts, system, max_tokens, temperature, top_p, response_format, model }) => {
     return { content, cost_usd, usage };
   },
   chatStream: async function* ({ ... }, { signal }) { ... },  // optional

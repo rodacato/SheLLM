@@ -27,6 +27,7 @@ describe('server hardening (Phase 7)', () => {
     });
 
     process.env.SHELLM_GLOBAL_RPM = '200';
+    process.env.SHELLM_MAX_CHAT_BODY_BYTES = String(1024 * 1024);
 
     for (const key of Object.keys(require.cache)) {
       if (key.includes('/src/') || key.includes('dotenv')) {
@@ -45,6 +46,7 @@ describe('server hardening (Phase 7)', () => {
   });
 
   after(() => {
+    delete process.env.SHELLM_MAX_CHAT_BODY_BYTES;
     const { closeDb } = require('../src/db');
     try { closeDb(); } catch { /* ignore */ }
   });
@@ -63,11 +65,59 @@ describe('server hardening (Phase 7)', () => {
 
   it('rejects body exceeding 256kb limit', async () => {
     const res = await request(app)
-      .post('/v1/chat/completions')
+      .post('/v1/messages')
       .set('Authorization', `Bearer ${testKey}`)
-      .send({ model: 'claude', messages: [{ role: 'user', content: 'x'.repeat(300000) }] });
+      .send({ model: 'claude', max_tokens: 16, messages: [{ role: 'user', content: 'x'.repeat(300000) }] });
 
     assert.strictEqual(res.status, 413);
+  });
+
+  describe('the chat body limit, which images need', () => {
+    const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC';
+    const bodyOf = (bytes) => ({
+      model: 'claude',
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: 'hello' },
+          { type: 'image_url', image_url: { url: `data:image/png;base64,${PNG}` } },
+        ],
+      }],
+      padding: 'x'.repeat(bytes),
+    });
+
+    it('accepts a chat body over 256kb', async () => {
+      const res = await request(app)
+        .post('/v1/chat/completions')
+        .set('Authorization', `Bearer ${testKey}`)
+        .send(bodyOf(300 * 1024));
+      assert.strictEqual(res.status, 200);
+    });
+
+    it('answers a chat body over SHELLM_MAX_CHAT_BODY_BYTES with an OpenAI 413 naming images', async () => {
+      const res = await request(app)
+        .post('/v1/chat/completions')
+        .set('Authorization', `Bearer ${testKey}`)
+        .send(bodyOf(1100 * 1024));
+      assert.strictEqual(res.status, 413);
+      assert.strictEqual(res.body.error.type, 'invalid_request_error');
+      assert.match(res.body.error.message, /exceeds 1048576 bytes; send fewer or smaller images/);
+    });
+
+    it('checks the key before reading a large chat body', async () => {
+      const res = await request(app)
+        .post('/v1/chat/completions')
+        .send(bodyOf(1100 * 1024));
+      assert.strictEqual(res.status, 401, 'a 413 here means the body was parsed before the key was checked');
+    });
+
+    it('keeps the small limit for any other spelling of the path', async () => {
+      const res = await request(app)
+        .post('/v1/chat/completions/')
+        .set('Authorization', `Bearer ${testKey}`)
+        .send(bodyOf(300 * 1024));
+      assert.strictEqual(res.status, 413);
+    });
   });
 
   it('successful completion includes X-Queue-Depth and X-Queue-Active headers', async () => {
