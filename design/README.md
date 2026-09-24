@@ -34,7 +34,7 @@ ahead of the last tag for most of a cycle.
 
 | File | Screens | Kit | Domain entry point |
 |---|---|---|---|
-| `admin.pen` | 18 of 18 — **six route columns, one per URL**, each stacked in flow order rather than alphabetically. `/admin/login` carries Sign in and its two failures; `#overview`, `#logs`, `#keys`, `#playground` and `#system` each carry their page and every state it can show. The briefs and the Log are the documentation column at x=0. | **0.3.0** | `/admin/login` and `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
+| `admin.pen` | 19 of 19 — **six route columns, one per URL**, each stacked in flow order rather than alphabetically. `/admin/login` carries Sign in and its two failures; `#overview`, `#logs`, `#keys`, `#playground` and `#system` each carry their page and every state it can show. The briefs and the Log are the documentation column at x=0. | **0.3.0** | `/admin/login` and `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
 
 **A proposal column is allowed here, and it is expected to be temporary.** The auto-refresh control
 was drawn before it was built, in a column of its own whose brief said in its first line that it was not a
