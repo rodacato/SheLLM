@@ -120,13 +120,28 @@
   /* One screenshot per row: an admin capture is 1,185 logical px wide and stops being
      readable below about two thirds of that. */
   .panels { display:grid; gap:2.5rem; }
-  .panel { transition:border-color .2s var(--ease); }
+  /* A panel is also a .reveal: a bare border-color transition here replaced its fade, and the
+     cards popped in while the heading above them faded. */
+  .panel { transition:border-color .2s var(--ease),
+                      opacity .65s var(--ease) var(--d,0ms), transform .65s var(--ease) var(--d,0ms); }
   .panel:hover { border-color:color-mix(in srgb, var(--accent) 40%, transparent); }
   .panel figcaption { display:flex; align-items:baseline; gap:1rem 1.5rem; flex-wrap:wrap;
                       padding:1.1rem 1.35rem;
                       border-bottom:1px solid color-mix(in srgb, var(--line) 45%, transparent); }
   .panel h3 { font-size:1rem; margin:0; color:#fff; }
   .panel figcaption p { margin:0; color:var(--muted); font-size:.875rem; }
+
+  /* Two across: these show what an app looks like, not numbers anyone has to read. */
+  .examples { display:grid; gap:2.5rem; }
+  @media (min-width: 56rem) { .examples { grid-template-columns:1fr 1fr; } }
+  /* The title is the one link, stretched over the card so the screenshot opens it too. */
+  .examples .panel { position:relative; display:flex; flex-direction:column; }
+  .examples h3 a::after { content:''; position:absolute; inset:0; }
+  .examples figcaption { flex:1; flex-direction:column; align-items:flex-start; gap:.5rem;
+                         border-bottom:0; border-top:1px solid color-mix(in srgb, var(--line) 45%, transparent); }
+  .examples h3 a { color:#fff; }
+  .examples .panel:hover h3 a { color:var(--accent); text-decoration:none; }
+  .examples .uses { font-family:ui-monospace, Menlo, monospace; font-size:.72rem; color:var(--muted); }
 
   .term { max-width:46rem; }
   .term + .term { margin-top:1.5rem; }
@@ -241,7 +256,7 @@
           <h3>API keys</h3>
           <p>A key per app, with its own rate limit, models and spend.</p>
         </figcaption>
-        <img src="img/api-keys.png" width="2369" height="456" alt="The API Keys table: three keys with their prefix, requests per minute, allowed models, the browser origin one of them is scoped to, seven-day usage and cost, last use, active state and expiry." loading="lazy">
+        <img src="img/api-keys.png" width="2369" height="904" alt="The API Keys table: three keys with their prefix, requests per minute, allowed models, the browser origin one of them is scoped to, seven-day usage and cost, last use, active state and expiry." loading="lazy">
       </figure>
 
       <figure class="frame panel reveal">
@@ -249,7 +264,7 @@
           <h3>Playground</h3>
           <p>Send a real request down the path your app takes.</p>
         </figcaption>
-        <img src="img/playground.png" width="2369" height="480" alt="The Playground: a client key, the Anthropic /v1/messages format and the claude-fable model on the left, and an answered response on the right showing status 200, a 4.5 second round trip, tokens in and out, and the request id." loading="lazy">
+        <img src="img/playground.png" width="2369" height="1280" alt="The Playground: a client key, the Anthropic /v1/messages format and the claude-fable model across one row, the prompt below them, and underneath an answered response showing status 200, a 4.5 second round trip, tokens in and out, and the request id." loading="lazy">
       </figure>
 
       <figure class="frame panel reveal">
@@ -257,7 +272,34 @@
           <h3>Provider health</h3>
           <p>CLI versions, circuit state and what is queued right now.</p>
         </figcaption>
-        <img src="img/system.png" width="2369" height="700" alt="The System page's provider cards: claude and codex, each with its CLI version, circuit state, last status, last use and the models it serves." loading="lazy">
+        <img src="img/system.png" width="2369" height="660" alt="The System page's provider cards: claude and codex, each with its CLI version, circuit state, last status, last use and the models it serves." loading="lazy">
+      </figure>
+
+    </div>
+  </div>
+</section>
+
+<section id="examples">
+  <div class="wrap">
+    <h2 class="reveal">Built on it</h2>
+    <div class="examples">
+
+      <figure class="frame panel reveal">
+        <img src="img/example-knotty.jpg" width="2560" height="1600" alt="Knotty: a plywood bookcase in 3D with its height, width and depth marked, beside a chat where the carpenter offers changes such as making it 90 cm wide." loading="lazy">
+        <figcaption>
+          <h3><a href="https://rodacato.github.io/knotty/">Knotty</a></h3>
+          <p>Photos of a piece of furniture in, a plywood design out — then adjust it by talking to a carpenter.</p>
+          <span class="uses">images · json_schema · from the browser</span>
+        </figcaption>
+      </figure>
+
+      <figure class="frame panel reveal">
+        <img src="img/example-ai-town.jpg" width="2560" height="1600" alt="AI Town: an isometric snowy village of twenty residents, a panel to write a proclamation and mark it true or false, and a row of resident portraits waiting to react." loading="lazy">
+        <figcaption>
+          <h3><a href="https://rodacato.github.io/ai-town/">AI Town</a></h3>
+          <p>Twenty villagers hear a proclamation and each decides what to do. Same prompts, any model: compare the decisions, latency, tokens and cost.</p>
+          <span class="uses">either format · many small calls</span>
+        </figcaption>
       </figure>
 
     </div>

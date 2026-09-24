@@ -97,6 +97,13 @@ if you ask. [Knotty](https://github.com/rodacato/knotty) does this from a static
 piece of furniture in, a parametric plywood design out. Resize in the client first; Claude scales
 anything past about 1568 px down anyway, so a bigger photo only costs upload time.
 
+## Built on it
+
+| [Knotty](https://rodacato.github.io/knotty/) | [AI Town](https://rodacato.github.io/ai-town/) |
+|---|---|
+| [<img src="assets/site/example-knotty.jpg" alt="Knotty: a plywood bookcase in 3D with its dimensions marked, beside the chat with the carpenter">](https://rodacato.github.io/knotty/) | [<img src="assets/site/example-ai-town.jpg" alt="AI Town: an isometric village, the proclamation panel, and the residents waiting to react">](https://rodacato.github.io/ai-town/) |
+| Photos of a piece of furniture in, a plywood design out, then adjusted by talking to a carpenter. Images and a JSON Schema answer, straight from the browser. | Twenty villagers hear a proclamation and each decides what to do: the same prompts through any model, to compare decisions, latency, tokens and cost. Either format, many small calls. |
+
 ## Getting started
 
 Requires Node.js 24 and a logged-in `claude` (or `codex`) on the same machine.
