@@ -129,7 +129,8 @@
             x-text="healthRead === 'failed' ? 'UNREACHABLE' : (health.uptime ? 'UP ' + formatUptime(health.uptime).toUpperCase() : 'CONNECTING...')"></span>
         </div>
         <div class="flex items-center gap-3">
-          <a href="/docs/" target="_blank" class="text-outline hover:text-primary-container transition-colors duration-fast" title="API Docs">
+          <!-- The server answers /docs/openapi.json and nothing else under /docs; the guides live on the published site. -->
+          <a href="https://rodacato.github.io/SheLLM/" target="_blank" rel="noopener" class="text-outline hover:text-primary-container transition-colors duration-fast" title="Documentation">
             <span class="material-symbols-outlined text-[18px]">help</span>
           </a>
           <form method="post" action="/admin/logout" class="flex">
