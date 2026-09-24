@@ -53,7 +53,8 @@ Running your own subscription through your own software still carries risk, and 
 | **Gemini** | Not supported. Gemini CLI stopped serving personal plans on 2026-06-18, and Antigravity's terms forbid "using the Service in connection with products not provided by us". |
 
 Keep it human-scale. SheLLM never retries a request on its own, caps concurrent CLI processes
-(`MAX_CONCURRENT`, default 4) and probes provider health with `--version`, which spends no quota.
+(`MAX_CONCURRENT`, default 4) and probes provider health with `claude auth status` and
+`codex login status`, which spend no quota.
 Cross-provider fallback is off unless you turn it on. What is left to you: one login per provider,
 and not pointing a batch job at it. If you need machine-scale volume, buy API access — that is
 what it is for.
@@ -65,13 +66,14 @@ CLI reports what that request *would* have cost on the API, attributed to the ke
 Build the feature, run it for a week, and you know the bill before you decide to pay one. Codex
 reports no cost, so its requests read `not priced`.
 
-Three shapes, one integration — an official SDK with the base URL and the key swapped:
+Four shapes, one integration — an official SDK with the base URL and the key swapped:
 
 ```mermaid
 graph LR
     A[Chat handler] -->|SDK| S
     B[Nightly job] -->|SDK| S
     C[Script or Playground] -->|SDK| S
+    E[Photo to data] -->|SDK| S
     S[SheLLM] --> CLI[claude / codex]
     S -.->|per key: requests, tokens, cost| D[(Dashboard)]
 ```
@@ -88,6 +90,12 @@ above.
 **Trying a prompt or a model before it becomes a feature.** The playground sends a real request
 down the same path your app takes, and the same key then works from a shell script. Give each
 experiment its own key and the dashboard answers which of them is worth paying for.
+
+**Turning photos into structured data.** Send the photos as `data:` URL images with a
+`response_format` JSON Schema, and the answer is JSON that matches it — streamed as it is written,
+if you ask. [Knotty](https://github.com/rodacato/knotty) does this from a static page: photos of a
+piece of furniture in, a parametric plywood design out. Resize in the client first; Claude scales
+anything past about 1568 px down anyway, so a bigger photo only costs upload time.
 
 ## Getting started
 
@@ -385,7 +393,7 @@ graph LR
     Queue --> Router
     Router --> Claude[claude CLI]
     Router --> Codex[codex CLI]
-    Router -.->|--version| Health[Health poller]
+    Router -.->|auth status| Health[Health poller]
     Auth -.->|request log| SQLite[(SQLite)]
 ```
 
