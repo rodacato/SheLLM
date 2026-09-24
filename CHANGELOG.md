@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-09-24
+
+### Added
+
+- **admin:** stack the Playground, and move the setting description to its own column
+- **admin:** collapse the connection card on the Keys page
+- **admin:** say what each setting does, and drop the reload column
+- **admin:** collapse the settings unless there is something to act on
+
+### Fixed
+
+- **admin:** a long base URL no longer pushes the disclosure control out of its row, both
+  collapsible sections announce whether they are open, and the Playground scrolls to the answer
+  instead of leaving it below the fold
+
+### Documentation
+
+- recut the landing crops, and say what to do when it does not work
+
+
 ## [1.11.0] - 2026-09-23
 
 ### Added
@@ -884,7 +904,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.11.0...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.12.0...HEAD
+[1.12.0]: https://github.com/rodacato/SheLLM/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/rodacato/SheLLM/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/rodacato/SheLLM/compare/v1.9.0...v1.10.0
 [1.9.0]: https://github.com/rodacato/SheLLM/compare/v1.8.0...v1.9.0
