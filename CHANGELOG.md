@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.14.0] - 2026-09-24
+
+### Added
+
+- **admin:** attach images in the Playground
+
+### Fixed
+
+- **admin:** send the sidebar's help link to the published docs
+
+### Documentation
+
+- **site:** recut the Playground crop to include its IMAGES block
+- **site:** show what is built on SheLLM, and let the panels fade in
+- say what health probes run, and show the photo-to-data shape
+
+
 ## [1.13.0] - 2026-09-24
 
 ### Added
@@ -912,7 +929,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.13.0...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.14.0...HEAD
+[1.14.0]: https://github.com/rodacato/SheLLM/compare/v1.13.0...v1.14.0
 [1.13.0]: https://github.com/rodacato/SheLLM/compare/v1.12.0...v1.13.0
 [1.12.0]: https://github.com/rodacato/SheLLM/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/rodacato/SheLLM/compare/v1.10.0...v1.11.0
