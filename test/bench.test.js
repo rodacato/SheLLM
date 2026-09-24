@@ -77,7 +77,9 @@ function startFakeShellm() {
       return apiError(res, url.pathname, 400, 'invalid_request', 'text blocks only');
     }
 
-    const answer = 'pong';
+    const answer = body.response_format?.type === 'json_schema'
+      ? JSON.stringify({ city: 'Colima', country: 'Mexico' })
+      : 'pong';
     if (url.pathname === '/v1/chat/completions') {
       if (body.stream) {
         return sse(res, [
@@ -141,6 +143,7 @@ test('measures latency and probes capabilities against a real server', async (t)
   assert.equal(verdict('embeddings'), 'rejected');
   assert.equal(verdict('unknown-model'), 'rejected');
   assert.equal(verdict('unknown-claude-model'), 'rejected');
+  assert.equal(verdict('json-schema'), 'works');
   assert.equal(verdict('images'), 'rejected');
   assert.equal(verdict('auth'), 'rejected');
   assert.equal(verdict('payload-limit'), 'rejected');

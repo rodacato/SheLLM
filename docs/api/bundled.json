@@ -1573,13 +1573,40 @@
           },
           "response_format": {
             "type": "object",
+            "required": [
+              "type"
+            ],
+            "description": "`json_schema` constrains the answer to a JSON Schema and returns it as a string in\n`choices[0].message.content`. Codex applies OpenAI's strict-mode rules whatever `strict`\nsays. Every refusal of this field is a 400 whose message names `response_format`.\n",
             "properties": {
               "type": {
                 "type": "string",
                 "enum": [
+                  "json_schema",
                   "json_object",
                   "text"
                 ]
+              },
+              "json_schema": {
+                "type": "object",
+                "description": "Required when `type` is `json_schema`.",
+                "required": [
+                  "name",
+                  "schema"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "pattern": "^[a-zA-Z0-9_-]{1,64}$"
+                  },
+                  "schema": {
+                    "type": "object",
+                    "description": "A JSON Schema, at most 100 KiB serialized.",
+                    "additionalProperties": true
+                  },
+                  "strict": {
+                    "type": "boolean"
+                  }
+                }
               }
             }
           },

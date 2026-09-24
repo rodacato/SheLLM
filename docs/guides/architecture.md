@@ -34,7 +34,7 @@ src/
 │   └── models.json        # Fallback list when the CLIs cannot be asked
 │
 ├── providers/             # LLM provider adapters
-│   ├── base.js            # Subprocess execution (spawn, timeout, output capture, env isolation)
+│   ├── base.js            # Subprocess execution (spawn, timeout, output capture, env isolation, per-request temp dir and stdin)
 │   ├── claude.js          # Claude Code CLI adapter
 │   ├── codex.js           # Codex CLI adapter
 │   └── model-list.js      # Shared model enumeration across adapters

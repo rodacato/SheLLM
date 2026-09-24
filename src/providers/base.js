@@ -32,24 +32,46 @@ function buildSafeEnv(providerEnv) {
   return { ...BASE_ENV, ...providerEnv };
 }
 
-// A CLI started inside the SheLLM checkout loads its CLAUDE.md and settings and can read .env.
-function spawnInWorkdir(command, args, env) {
+// Request files (a schema, images) live only in the request's own directory, readable by this
+// user alone, and go with it.
+function createWorkdir(files = {}) {
   const workdir = fs.mkdtempSync(path.join(os.tmpdir(), 'shellm-'));
+  try {
+    for (const [name, data] of Object.entries(files)) {
+      fs.writeFileSync(path.join(workdir, name), data, { mode: 0o600 });
+    }
+  } catch (err) {
+    fs.rmSync(workdir, { recursive: true, force: true });
+    throw err;
+  }
+  return workdir;
+}
+
+// A CLI started inside the SheLLM checkout loads its CLAUDE.md and settings and can read .env.
+// Node emits 'close' after 'error' too, so a CLI that never started still loses its directory.
+function spawnInWorkdir(command, args, env, { files, input } = {}) {
+  const workdir = createWorkdir(files);
   const proc = spawn(command, args, {
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: [input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
     cwd: workdir,
     env: buildSafeEnv(env),
     detached: true,
   });
   proc.on('close', () => fs.rm(workdir, { recursive: true, force: true }, () => {}));
+  if (input !== undefined) {
+    // A CLI that exits before reading all of it closes the pipe; its exit code says why.
+    proc.stdin.on('error', () => {});
+    proc.stdin.end(input);
+  }
   return proc;
 }
 
 /**
  * Execute a CLI command as a subprocess with timeout.
- * Stdin is ignored to prevent hanging on interactive prompts.
+ * Stdin is ignored to prevent hanging on interactive prompts, unless `input` is given: then it
+ * is written in full and closed.
  */
-function execute(command, args, { timeout = getTimeoutMs(), env } = {}) {
+function execute(command, args, { timeout = getTimeoutMs(), env, files, input } = {}) {
   return new Promise((resolve, reject) => {
     let settled = false;
     const startTime = Date.now();
@@ -58,7 +80,7 @@ function execute(command, args, { timeout = getTimeoutMs(), env } = {}) {
     let _stdoutTruncated = false;
     let _stderrTruncated = false;
 
-    const proc = spawnInWorkdir(command, args, env);
+    const proc = spawnInWorkdir(command, args, env, { files, input });
 
     // Helper: kill entire process group (handles grandchild processes)
     function killGroup(signal) {
@@ -129,8 +151,8 @@ function execute(command, args, { timeout = getTimeoutMs(), env } = {}) {
  * Execute a CLI command and yield stdout chunks as they arrive.
  * Accepts an AbortSignal for client disconnect cleanup.
  */
-async function* executeStream(command, args, { timeout = getTimeoutMs(), env, signal } = {}) {
-  const proc = spawnInWorkdir(command, args, env);
+async function* executeStream(command, args, { timeout = getTimeoutMs(), env, signal, files, input } = {}) {
+  const proc = spawnInWorkdir(command, args, env, { files, input });
 
   function killGroup(sig) {
     try { process.kill(-proc.pid, sig); } catch { /* already exited */ }

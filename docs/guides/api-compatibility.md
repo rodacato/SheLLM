@@ -64,7 +64,7 @@ message = client.messages.create(
 | `temperature` | **Accepted** | Number 0-2 |
 | `top_p` | **Accepted** | Number 0-1 |
 | `stream` | **Supported** | `true` enables SSE streaming |
-| `response_format` | **Accepted** | `{ type: "json_object" }` or `{ type: "text" }` |
+| `response_format` | **Supported** | `{ type: "json_schema", json_schema: { name, schema, strict? } }`, `{ type: "json_object" }` or `{ type: "text" }`. `name` is 1–64 letters, digits, `_` or `-`; the schema is at most 100 KiB, because Claude takes it as one command-line argument. The answer is the JSON as a string in `choices[0].message.content`; streamed, it arrives as `delta.content` like any other answer |
 | `stop` | **Validated** | String or array of up to 4 strings. Validated but not passed to providers |
 | `n` | **Ignored** | Always returns 1 choice |
 | `seed` | **Ignored** | |
@@ -203,7 +203,8 @@ Not all SheLLM providers support all parameters equally:
 | Temperature | Ignored — no CLI flag | Ignored — no CLI flag |
 | Top P | Ignored — no CLI flag | Ignored — no CLI flag |
 | Max tokens | Ignored — no CLI flag | Ignored — no CLI flag |
-| JSON mode | Appends an instruction | Appends an instruction |
+| JSON mode (`json_object`) | Appends an instruction | Appends an instruction |
+| JSON Schema (`json_schema`) | `--json-schema`, the answer is the CLI's `structured_output`. Streams as the JSON is written. A turn that ends without it is a 502 | `--output-schema` with the schema in a `0600` file in the request's directory. OpenAI's strict mode applies whatever `strict` says: a schema without `additionalProperties: false` and every property in `required` is a 400 naming `response_format` |
 | Streaming | Token deltas (`--output-format stream-json`) | Whole messages — it yields on `item.completed`, not per token |
 
 Codex runs `codex exec --ephemeral --skip-git-repo-check -s read-only --json`, one process at a time: concurrent processes race on its OAuth refresh (openai/codex#17340). A failed turn is read from the events, never from the exit code, which can be 0 on a failure (openai/codex#1018).

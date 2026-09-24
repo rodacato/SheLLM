@@ -1,5 +1,5 @@
 const { execute, executeStream, stripNonPrintable } = require('./base');
-const { modelNotFound, rateLimited, cliFailed } = require('../errors');
+const { modelNotFound, rateLimited, cliFailed, invalidRequest } = require('../errors');
 const { createMutex } = require('../infra/provider-lock');
 
 // Codex CLI needs config/data paths for auth tokens
@@ -66,11 +66,24 @@ function buildPrompt({ prompt, system, response_format }) {
   return systemText ? `${systemText}\n\n---\n\n${prompt}` : prompt;
 }
 
+// Relative to the request's working directory, which is where base.js writes request files.
+const SCHEMA_FILE = 'output-schema.json';
+
+function wantsSchema(response_format) {
+  return response_format?.type === 'json_schema';
+}
+
 function buildArgs({ prompt, system, response_format, model }) {
   const args = ['exec', '--ephemeral', '--skip-git-repo-check', '-s', 'read-only', '--json'];
   if (cliModel(model)) args.push('-m', cliModel(model));
+  if (wantsSchema(response_format)) args.push('--output-schema', SCHEMA_FILE);
   args.push(buildPrompt({ prompt, system, response_format }));
   return args;
+}
+
+function buildFiles({ response_format }) {
+  if (!wantsSchema(response_format)) return undefined;
+  return { [SCHEMA_FILE]: JSON.stringify(response_format.json_schema.schema) };
 }
 
 // A JSONL line is a codex event only if it carries an event type; anything else is output
@@ -94,13 +107,17 @@ function failureFrom(event, model) {
   if (!raw) return null;
 
   let status = null;
+  let code = null;
   let message = raw;
   try {
     const payload = JSON.parse(raw);
     status = payload.status ?? null;
+    code = payload.error?.code ?? null;
     message = payload.error?.message || raw;
   } catch { /* the message is plain text */ }
 
+  // OpenAI's strict mode refuses the schema before the model runs; the caller has to fix it.
+  if (code === 'invalid_json_schema') return invalidRequest(`codex: ${message}`);
   if (status === 429 || /usage limit|rate limit|quota/i.test(message)) {
     return rateLimited(`codex: ${message}`);
   }
@@ -156,8 +173,9 @@ function toProviderError(err, model) {
 
 async function chat({ prompt, system, response_format, model }) {
   const args = buildArgs({ prompt, system, response_format, model });
+  const files = buildFiles({ response_format });
   return withLock(async () => {
-    const result = await execute('codex', args, { env: CODEX_ENV })
+    const result = await execute('codex', args, { env: CODEX_ENV, files })
       .catch((err) => { throw toProviderError(err, model); });
     const { failure, ...parsed } = parseOutput(result.stdout, model);
     if (failure) throw failure;
@@ -167,12 +185,13 @@ async function chat({ prompt, system, response_format, model }) {
 
 async function* chatStream({ prompt, system, response_format, model, signal }) {
   const args = buildArgs({ prompt, system, response_format, model });
+  const files = buildFiles({ response_format });
   const release = await lock();
   let failure = null;
   try {
     let pending = '';
     try {
-      for await (const chunk of executeStream('codex', args, { env: CODEX_ENV, signal })) {
+      for await (const chunk of executeStream('codex', args, { env: CODEX_ENV, signal, files })) {
         if (chunk.type !== 'chunk') continue;
         pending += chunk.data;
         const lines = pending.split('\n');
@@ -207,6 +226,7 @@ module.exports = {
   chat,
   chatStream,
   buildArgs,
+  buildFiles,
   parseOutput,
   failureFrom,
   authProbe,

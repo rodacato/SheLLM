@@ -42,4 +42,52 @@ describe('CLI working directory', () => {
     assert.ok(!workdir.startsWith(REPO_ROOT));
     assert.ok(await waitUntilGone(workdir));
   });
+
+  describe('request files and stdin', () => {
+    const READ_FILE = ['-e', `
+      const fs = require('fs');
+      const st = fs.statSync('req.bin');
+      process.stdout.write(JSON.stringify({ cwd: process.cwd(), mode: st.mode & 0o777, bytes: fs.readFileSync('req.bin').length }));
+    `];
+
+    it('writes each file into the request directory, readable only by this user', async () => {
+      const { stdout } = await execute('node', READ_FILE, { files: { 'req.bin': Buffer.alloc(1024, 7) } });
+      const seen = JSON.parse(stdout);
+      assert.equal(seen.mode, 0o600);
+      assert.equal(seen.bytes, 1024);
+      assert.ok(await waitUntilGone(seen.cwd));
+    });
+
+    it('removes the files when the CLI fails', async () => {
+      const script = 'process.stdout.write(process.cwd()); process.exit(2)';
+      const err = await execute('node', ['-e', script], { files: { 'req.bin': 'x' } }).catch((e) => e);
+      assert.equal(err.code, 2);
+      assert.ok(await waitUntilGone(err.stdout));
+    });
+
+    it('removes the files when a stream is cancelled mid-run', async () => {
+      const ac = new AbortController();
+      const script = 'process.stdout.write(process.cwd() + "\\n"); setInterval(() => {}, 1000)';
+      let workdir = '';
+      for await (const event of executeStream('node', ['-e', script], { files: { 'req.bin': 'x' }, signal: ac.signal })) {
+        if (event.type !== 'chunk') continue;
+        workdir += event.data;
+        assert.ok(fs.existsSync(path.join(workdir.trim(), 'req.bin')));
+        ac.abort();
+      }
+      assert.ok(await waitUntilGone(workdir.trim()));
+    });
+
+    it('writes the input to stdin and closes it', async () => {
+      const echo = ['-e', 'let s = ""; process.stdin.on("data", (d) => { s += d; }).on("end", () => process.stdout.write(s))'];
+      const { stdout } = await execute('node', echo, { input: '{"type":"user"}\n' });
+      assert.equal(stdout, '{"type":"user"}');
+    });
+
+    it('keeps stdin closed when no input is given', async () => {
+      const probe = ['-e', 'process.stdout.write(String(require("fs").fstatSync(0).isFIFO()))'];
+      const { stdout } = await execute('node', probe);
+      assert.equal(stdout, 'false');
+    });
+  });
 });

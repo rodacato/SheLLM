@@ -27,6 +27,14 @@ const request = {
   response_format: { type: 'json_object' },
 };
 
+const schemaRequest = {
+  ...request,
+  response_format: {
+    type: 'json_schema',
+    json_schema: { name: 'word', schema: { type: 'object', properties: { word: { type: 'string' } }, required: ['word'], additionalProperties: false } },
+  },
+};
+
 let home;
 
 before(() => { home = fs.mkdtempSync(path.join(os.tmpdir(), 'shellm-cli-contract-')); });
@@ -68,10 +76,12 @@ async function assertRejected(command, args) {
 describe('claude CLI contract', () => {
   it('accepts the chat arguments', () => assertAccepted('claude', claude.buildArgs(request)));
   it('accepts the stream arguments', () => assertAccepted('claude', claude.buildStreamArgs(request)));
+  it('accepts the json_schema arguments', () => assertAccepted('claude', claude.buildArgs(schemaRequest)));
   it('rejects an unknown flag', () => assertRejected('claude', ['--print', '--shellm-bogus-flag', '--', 'ping']));
 });
 
 describe('codex CLI contract', () => {
   it('accepts the chat arguments', () => assertAccepted('codex', codex.buildArgs(request)));
+  it('accepts the json_schema arguments', () => assertAccepted('codex', codex.buildArgs(schemaRequest)));
   it('rejects an unknown flag', () => assertRejected('codex', ['exec', '--shellm-bogus-flag', 'ping']));
 });

@@ -275,6 +275,39 @@ async function capabilitySuite(model) {
     { status: json.status, ms: Math.round(json.ms) },
   );
 
+  const schemaReply = await post('/v1/chat/completions', openaiBody(
+    model,
+    'Give the city and country for Colima, Mexico.',
+    {
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'place',
+          strict: true,
+          schema: {
+            type: 'object',
+            properties: { city: { type: 'string' }, country: { type: 'string' } },
+            required: ['city', 'country'],
+            additionalProperties: false,
+          },
+        },
+      },
+    },
+  ));
+  let place = null;
+  try {
+    place = JSON.parse(openaiText(schemaReply.json));
+  } catch { /* the point of the probe */ }
+  const conforms = place && typeof place.city === 'string' && typeof place.country === 'string'
+    && Object.keys(place).length === 2;
+  probe(
+    'json-schema',
+    'response_format json_schema returns conforming JSON',
+    schemaReply.ok && conforms ? 'works' : schemaReply.ok ? 'partial' : 'broken',
+    schemaReply.ok ? (conforms ? `city=${place.city}, country=${place.country}` : 'did not match the schema') : `HTTP ${schemaReply.status}`,
+    { status: schemaReply.status, ms: Math.round(schemaReply.ms) },
+  );
+
   const sseOpenai = await postStream('/v1/chat/completions', openaiBody(model, OUTPUTS.paragraph, { stream: true }));
   probe(
     'stream-openai',
