@@ -53,4 +53,13 @@ describe('dashboard CSP covers what the page fetches', () => {
       );
     }
   });
+
+  it('lets the Playground preview the data: URL images it is about to send', async () => {
+    const html = fs.readFileSync(path.join(__dirname, '../../src/admin/views/pages/playground.html'), 'utf8');
+    assert.match(html, /<img :src="image\.dataUrl"/, 'the preview is gone — if so, drop data: from img-src');
+
+    const res = await request(app).get('/admin/dashboard/js/playground.js').expect(200);
+    const imgSrc = res.headers['content-security-policy'].split(';').map((d) => d.trim()).find((d) => d.startsWith('img-src'));
+    assert.match(imgSrc, /\bdata:/, `img-src is "${imgSrc}", so every preview renders as a broken image`);
+  });
 });
