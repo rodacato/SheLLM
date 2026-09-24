@@ -29,7 +29,7 @@
           "id": "tYURy",
           "name": "Kit pin",
           "fill": "$outline",
-          "content": "kit-version-source 0.3.0 · happy path · 6 of 18 · route columns, not bands",
+          "content": "kit-version-source 0.3.0 · happy path · 6 of 19 · route columns, not bands",
           "fontFamily": "$font-mono-render",
           "fontSize": 10,
           "fontWeight": "normal"
@@ -125,7 +125,7 @@
               "fill": "$on-surface-variant",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "Six screens, all drawn against master on 2026-09-23: Sign in / Default, Overview / Default, Request Logs / Default, API Keys / Default, Playground / Answered, System / Default. Two carry an expanded sub-state rather than a screen of their own — Logs shows its third row expanded (where request_id, upstream status and the cache counters live) and API Keys shows its third key in edit (where the 'rotate replaces the secret' rule is stated). Playground is drawn answered rather than idle, because the idle state is one sentence ('Nothing sent yet.') and the answered state is the layout. System carries its Settings section last, after the providers, and drawn on a host that has just moved to v1.10.0 — four settings the release added and the config file does not set. Overview alone carries the 1440×900 fold marker (grid-fold-y): it is the only screen whose content runs past the declared frame, so it is the only one where the fold falls inside something.",
+              "content": "Six screens, drawn against master on 2026-09-23, with the Playground's IMAGES block added on 2026-09-24: Sign in / Default, Overview / Default, Request Logs / Default, API Keys / Default, Playground / Answered, System / Default. Two carry an expanded sub-state rather than a screen of their own — Logs shows its third row expanded (where request_id, upstream status and the cache counters live) and API Keys shows its third key in edit (where the 'rotate replaces the secret' rule is stated). Playground is drawn answered rather than idle, because the idle state is one sentence ('Nothing sent yet.') and the answered state is the layout. System carries its Settings section last, after the providers, and drawn on a host that has just moved to v1.10.0 — four settings the release added and the config file does not set. Overview alone carries the 1440×900 fold marker (grid-fold-y): it is the only screen whose content runs past the declared frame, so it is the only one where the fold falls inside something.",
               "lineHeight": 1.6,
               "fontFamily": "$font-mono-render",
               "fontSize": 10,
@@ -8142,6 +8142,19 @@
           "fontSize": 11,
           "fontWeight": "700",
           "letterSpacing": 2
+        },
+        {
+          "type": "text",
+          "id": "bh6tT",
+          "name": "2026-09-24",
+          "fill": "$on-surface-variant",
+          "textGrowth": "fixed-width",
+          "width": "fill_container",
+          "content": "2026-09-24 · Mirrored the Playground's image attachments. Every Playground board gained the IMAGES block between the prompt and Send; the three existing ones are in the Anthropic format, so they draw its one line rather than a list, and each grew by that block and moved down to keep the column's 160 gap. Playground / Images attached is new, at y 2850. The brief that lists band 2 said 'Eleven, at 9273084' while its pin said twelve: the count was stale and the anchor was a SHA, which D69 retired. It now says thirteen and a date. API Keys / Create is still the one board in that band the paragraph never describes.",
+          "lineHeight": 1.6,
+          "fontFamily": "$font-mono-render",
+          "fontSize": 10,
+          "fontWeight": "normal"
         },
         {
           "type": "text",
@@ -28603,7 +28616,7 @@
       "type": "frame",
       "id": "c7mt9",
       "x": 0,
-      "y": 1690,
+      "y": 2010,
       "name": "Admin / Brief / Error and alternate paths",
       "clip": true,
       "width": 640,
@@ -28627,7 +28640,7 @@
           "id": "NI30P",
           "name": "Kit pin",
           "fill": "$outline",
-          "content": "kit-version-source 0.3.0 · error and alternate paths · 12 of 18 · route columns",
+          "content": "kit-version-source 0.3.0 · error and alternate paths · 13 of 19 · route columns",
           "fontFamily": "$font-mono-render",
           "fontSize": 10,
           "fontWeight": "normal"
@@ -28723,7 +28736,7 @@
               "fill": "$on-surface-variant",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "Eleven, at 9273084. Sign in / Invalid credentials and Sign in / Rate limited are the 401 and 429 panels D43 deliberately left for this band; both fields come back empty, because the server re-renders the form without value attributes. Overview / Not updating — nothing answered, so the page collapses to its header, the NOW row and one line. Overview / Usage limit — every read worked and the quota did not; it is the only screen here at full height and the only one that keeps the fold marker. Request Logs / Unreachable — the stats strip, both panels at '-' and the table's error row, with pagination still at Page 1 of 1 and a toolbar down to Refresh alone, since Export CSV and Clear All are both x-show total > 0. API Keys / Empty is the one screen in the band where nothing went wrong: a read that worked and found no keys. Its activity log is drawn expanded, one click from the default — showAudit is false (public/js/keys.js:16) — because that panel's empty line is copy that renders nowhere else. Playground / Waiting and / No provider carry between them the three catalog states D16 closed, plus the waiting clock; their MODEL and FORMAT values are the operator's, not the app's, which opens on claude and OpenAI · /v1/chat/completions. System / Unreachable — the build card unread and the providers line. API Keys / Key created is the tenth, added 2026-09-23: the banner that shows a raw key, which no artboard drew until then even though it is the only place a key is ever legible. It sits above the usage card, because it is the transient one — the card is still there after it is dismissed.\nRequest Logs / Auto-refresh held — the eleventh, and the only one here that is not a failure at all. The table re-reads itself on a timer, and the loop is held while a row is open or the table is past page 1, because replacing rows under an open detail is the cost it may not charge. The control shows a pause glyph and its title says which of the two reasons is in force; off and held are different states and only held draws the glyph.",
+              "content": "Thirteen as of 2026-09-24. Sign in / Invalid credentials and Sign in / Rate limited are the 401 and 429 panels D43 deliberately left for this band; both fields come back empty, because the server re-renders the form without value attributes. Overview / Not updating — nothing answered, so the page collapses to its header, the NOW row and one line. Overview / Usage limit — every read worked and the quota did not; it is the only screen here at full height and the only one that keeps the fold marker. Request Logs / Unreachable — the stats strip, both panels at '-' and the table's error row, with pagination still at Page 1 of 1 and a toolbar down to Refresh alone, since Export CSV and Clear All are both x-show total > 0. API Keys / Empty is the one screen in the band where nothing went wrong: a read that worked and found no keys. Its activity log is drawn expanded, one click from the default — showAudit is false (public/js/keys.js:16) — because that panel's empty line is copy that renders nowhere else. Playground / Waiting and / No provider carry between them the three catalog states D16 closed, plus the waiting clock; their MODEL and FORMAT values are the operator's, not the app's, which opens on claude and OpenAI · /v1/chat/completions. System / Unreachable — the build card unread and the providers line. API Keys / Key created is the tenth, added 2026-09-23: the banner that shows a raw key, which no artboard drew until then even though it is the only place a key is ever legible. It sits above the usage card, because it is the transient one — the card is still there after it is dismissed.\nRequest Logs / Auto-refresh held — the eleventh, and the only one here that is not a failure at all. The table re-reads itself on a timer, and the loop is held while a row is open or the table is past page 1, because replacing rows under an open detail is the cost it may not charge. The control shows a pause glyph and its title says which of the two reasons is in force; off and held are different states and only held draws the glyph.\nPlayground / Images attached — the thirteenth, added 2026-09-24, and the only Playground board in the OpenAI format, because that is the one format that takes images: the IMAGES label gains its add link, and each attachment is a row with its preview, its name, what will be sent and remove. The first row was resized in the tab, so it shows the size before and after; the second already fitted and kept its type. The other three Playground boards are in the Anthropic format and draw the line the code shows there instead. Response is at 'Nothing sent yet.', since attaching sends nothing.",
               "lineHeight": 1.6,
               "fontFamily": "$font-mono-render",
               "fontSize": 10,
@@ -28789,7 +28802,7 @@
               "fill": "$on-surface-variant",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "Every string here exists in the code and was copied from it. src/admin/login.js:135 and :141 for the two panels, and that file's own .error rule for the panel itself — a 3px left border in error over --error-bg, which is the same value as surface-container-lowest, at .8rem. views/index.html:148-154 for the banner, :123 for UNREACHABLE. overview.html:77-81 (USAGE LIMIT HIT), :194-197 (providers), :334-336 (stats). logs.html:70 and :125. keys.html:47 and :146. playground.html:56-58 and :81-83. system.html:234-239, plus public/js/system.js:254 for the refused toggle. The banner's two sentences are app.js:193-194. Numbers are illustrative; sentences never are. Verified against the running app on 2026-09-20, which is how four of these screens were corrected instead of shipped wrong: System drew a release line the code cannot reach on that screen (fetchLatestRelease returns early when the build is unknown, system.js:99-101), Logs drew two toolbar buttons the real page hides, three read timestamps could not coexist with a body that never got a read, and the sign-in password field was drawn filled. The catalog failure is drawn as a 500 rather than a 503 for the same reason: /admin/providers answers 200 or, on a throw, Express's 500 — it has no path that produces a 503, which belongs to /v1.",
+              "content": "Every string here exists in the code and was copied from it. src/admin/login.js:135 and :141 for the two panels, and that file's own .error rule for the panel itself — a 3px left border in error over --error-bg, which is the same value as surface-container-lowest, at .8rem. views/index.html:148-154 for the banner, :123 for UNREACHABLE. overview.html:77-81 (USAGE LIMIT HIT), :194-197 (providers), :334-336 (stats). logs.html:70 and :125. keys.html:47 and :146. playground.html:56-58 and :81-83, and the IMAGES block after the prompt, with its row format in public/js/playground.js (formatBytes, and imagePlan for what a resized row reports). system.html:234-239, plus public/js/system.js:254 for the refused toggle. The banner's two sentences are app.js:193-194. Numbers are illustrative; sentences never are. Verified against the running app on 2026-09-20, which is how four of these screens were corrected instead of shipped wrong: System drew a release line the code cannot reach on that screen (fetchLatestRelease returns early when the build is unknown, system.js:99-101), Logs drew two toolbar buttons the real page hides, three read timestamps could not coexist with a body that never got a read, and the sign-in password field was drawn filled. The catalog failure is drawn as a 500 rather than a 503 for the same reason: /admin/providers answers 200 or, on a throw, Express's 500 — it has no path that produces a 503, which belongs to /v1.",
               "lineHeight": 1.6,
               "fontFamily": "$font-mono-render",
               "fontSize": 10,
@@ -28855,7 +28868,7 @@
               "fill": "$on-surface-variant",
               "textGrowth": "fixed-width",
               "width": "fill_container",
-              "content": "D20 and D18 remain, and both are visible here: the two sign-in states are drawn from that page's own nine aliases, and every mono measurement is Roboto Mono standing in for a system stack. D46 was this band's own and is already closed — drawing System / Unreachable is what found it, because the canvas put the Concurrency card and the sidebar side by side and the contradiction was the picture: four zeros for a health read that never happened, beside a sidebar saying UNREACHABLE. The code now guards Running, Waiting and Streams on healthRead === 'ok', and Open circuits on the providers read instead, since openCircuits filters providers and not health. So this artboard draws four em dashes and documents the fix rather than the defect — it is the one screen in the band that was re-drawn after the code moved. D45 is closed too: band 1 and this band went to $text-sm and $text-lg in one pass, Logs' 25 fixed-width cells were checked first and again after, and no cell wrapped and no artboard moved.",
+              "content": "D20 and D18 remain, and both are visible here: the two sign-in states are drawn from that page's own nine aliases, and every mono measurement is Roboto Mono standing in for a system stack. D46 was this band's own and is already closed — drawing System / Unreachable is what found it, because the canvas put the Concurrency card and the sidebar side by side and the contradiction was the picture: four zeros for a health read that never happened, beside a sidebar saying UNREACHABLE. The code now guards Running, Waiting and Streams on healthRead === 'ok', and Open circuits on the providers read instead, since openCircuits filters providers and not health. So this artboard draws four em dashes and documents the fix rather than the defect — it is the one screen in the band that was re-drawn after the code moved. D45 is closed too: band 1 and this band went to $text-sm and $text-lg in one pass, Logs' 25 fixed-width cells were checked first and again after, and no cell wrapped and no artboard moved.\nThe Playground's image states are string swaps into slots Images attached already draws. With the OpenAI format and nothing attached, the list is replaced by 'None attached. A photo past 1568 px or 1 MB is resized to JPEG in this tab before it is sent.' With images attached and the format switched to Anthropic, the rows dim to 40% and the line reads 'The Anthropic format takes text only, so the 2 attached will not be sent. Switch to OpenAI to send them.' A refused file adds '<name> is not JPEG, PNG, WebP or GIF.' in status-warn below the list, and one the browser cannot decode '<name> could not be read as an image.'",
               "lineHeight": 1.6,
               "fontFamily": "$font-mono-render",
               "fontSize": 10,
@@ -35708,7 +35721,7 @@
           "id": "Jnqfu",
           "name": "Sidebar",
           "width": 256,
-          "height": 822,
+          "height": 826,
           "fill": "$surface-shell",
           "layout": "vertical",
           "children": [
@@ -36145,16 +36158,6 @@
                           "fontWeight": "700"
                         }
                       ]
-                    },
-                    {
-                      "type": "text",
-                      "id": "D6Nem",
-                      "name": "add",
-                      "fill": "$primary-container",
-                      "content": "add",
-                      "fontFamily": "$font-mono-render",
-                      "fontSize": 10,
-                      "fontWeight": "normal"
                     }
                   ]
                 },
@@ -36499,6 +36502,16 @@
                                   "fontSize": 10,
                                   "fontWeight": "700",
                                   "letterSpacing": 2
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "D6Nem",
+                                  "name": "add",
+                                  "fill": "$primary-container",
+                                  "content": "add",
+                                  "fontFamily": "$font-mono-render",
+                                  "fontSize": 10,
+                                  "fontWeight": "normal"
                                 }
                               ]
                             },
