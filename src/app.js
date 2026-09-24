@@ -159,7 +159,8 @@ function adminSecurityHeaders(req, res, next) {
       "script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self'",
+      // The Playground previews the images it is about to send, which are data: URLs.
+      "img-src 'self' data:",
       // The System page asks GitHub for the newest release from the browser, so the service
       // needs no outbound network to report what it is running.
       "connect-src 'self' https://api.github.com",
