@@ -44,7 +44,7 @@ function wantsSchema(response_format) {
 }
 
 // The claude CLI has no temperature flag, so temperature is ignored.
-function buildBaseArgs({ prompt, system, response_format, model }) {
+function buildBaseArgs({ system, response_format, model }) {
   const args = ['--print', ...ISOLATION_ARGS];
   if (shouldSkipPermissions()) args.push('--dangerously-skip-permissions');
   if (cliModel(model)) args.push('--model', cliModel(model));
@@ -52,27 +52,41 @@ function buildBaseArgs({ prompt, system, response_format, model }) {
   if (systemPrompt) args.push('--system-prompt', systemPrompt);
   // The flag takes the schema inline only; a path is refused as invalid JSON.
   if (wantsSchema(response_format)) args.push('--json-schema', JSON.stringify(response_format.json_schema.schema));
-  args.push('--', prompt);
   return args;
 }
 
-function withOutputFormat(args, format) {
-  const formatted = [...args];
-  formatted.splice(formatted.indexOf('--'), 0, ...format);
-  return formatted;
+// --verbose is not optional: under --print the CLI refuses stream-json without it.
+const NDJSON_OUTPUT = ['--output-format', 'stream-json', '--verbose'];
+const STREAM_OUTPUT = [...NDJSON_OUTPUT, '--include-partial-messages'];
+
+// An image cannot go on the command line, so a message with images is written to stdin as one
+// stream-json user message. The CLI accepts that input only with stream-json output.
+function hasImages(params) {
+  return Array.isArray(params.parts);
+}
+
+function withPrompt(args, params) {
+  return hasImages(params) ? [...args, '--input-format', 'stream-json'] : [...args, '--', params.prompt];
 }
 
 function buildArgs(params) {
-  return withOutputFormat(buildBaseArgs(params), ['--output-format', 'json']);
+  const output = hasImages(params) ? NDJSON_OUTPUT : ['--output-format', 'json'];
+  return withPrompt([...buildBaseArgs(params), ...output], params);
 }
 
-// --verbose is not optional: under --print the CLI refuses stream-json without it.
 function buildStreamArgs(params) {
-  return withOutputFormat(buildBaseArgs(params), [
-    '--output-format', 'stream-json',
-    '--verbose',
-    '--include-partial-messages',
-  ]);
+  return withPrompt([...buildBaseArgs(params), ...STREAM_OUTPUT], params);
+}
+
+function contentBlock(part) {
+  if (part.type === 'text') return { type: 'text', text: part.text };
+  return { type: 'image', source: { type: 'base64', media_type: part.media_type, data: part.data } };
+}
+
+function buildInput(params) {
+  if (!hasImages(params)) return undefined;
+  const message = { role: 'user', content: params.parts.map(contentBlock) };
+  return `${JSON.stringify({ type: 'user', message })}\n`;
 }
 
 function usageFrom(data) {
@@ -101,25 +115,38 @@ function metricsFrom(data) {
   };
 }
 
-function parseOutput(stdout, stderr) {
-  let content = stdout;
-  let cost_usd = null;
-  let usage = null;
-  let metrics = null;
-
+// `--output-format json` prints one object; stream-json prints NDJSON ending in the same object
+// as its `result` event.
+function resultOf(output) {
   try {
-    const data = JSON.parse(stdout || stderr);
-    content = data.structured_output !== undefined
-      ? JSON.stringify(data.structured_output)
-      : data.result || data.content || stdout;
-    cost_usd = data.total_cost_usd || data.cost_usd || null;
-    usage = usageFrom(data);
-    metrics = metricsFrom(data);
+    return JSON.parse(output);
   } catch {
-    // Not JSON — use raw stdout as content
+    const lines = (output || '').trim().split('\n');
+    for (let i = lines.length - 1; i >= 0; i--) {
+      try {
+        const event = JSON.parse(lines[i]);
+        if (event.type === 'result') return event;
+      } catch { /* a truncated or foreign line */ }
+    }
+    return null;
+  }
+}
+
+function parseOutput(stdout, stderr) {
+  const data = resultOf(stdout || stderr);
+  if (!data || typeof data !== 'object') {
+    return { content: stripNonPrintable(stdout), cost_usd: null, usage: null, metrics: null };
   }
 
-  return { content: stripNonPrintable(content), cost_usd, usage, metrics };
+  const content = data.structured_output !== undefined
+    ? JSON.stringify(data.structured_output)
+    : data.result || data.content || stdout;
+  return {
+    content: stripNonPrintable(content),
+    cost_usd: data.total_cost_usd || data.cost_usd || null,
+    usage: usageFrom(data),
+    metrics: metricsFrom(data),
+  };
 }
 
 // Under --json-schema the answer is the input of a StructuredOutput tool call, so it arrives as
@@ -182,9 +209,7 @@ const authProbe = {
 };
 
 function toProviderError(err, model) {
-  try {
-    if (JSON.parse(err.stdout).api_error_status === 404) return modelNotFound(model);
-  } catch { /* not a JSON result */ }
+  if (resultOf(err.stdout)?.api_error_status === 404) return modelNotFound(model);
   return err;
 }
 
@@ -194,22 +219,20 @@ function noStructuredOutput() {
 }
 
 function hasStructuredOutput(stdout) {
-  try {
-    return JSON.parse(stdout).structured_output !== undefined;
-  } catch {
-    return false;
-  }
+  return resultOf(stdout)?.structured_output !== undefined;
 }
 
-async function chat({ prompt, system, response_format, model }) {
-  const args = buildArgs({ prompt, system, response_format, model });
-  const result = await execute('claude', args, { env: CLAUDE_ENV }).catch((err) => { throw toProviderError(err, model); });
+async function chat({ prompt, parts, system, response_format, model }) {
+  const params = { prompt, parts, system, response_format, model };
+  const result = await execute('claude', buildArgs(params), { env: CLAUDE_ENV, input: buildInput(params) })
+    .catch((err) => { throw toProviderError(err, model); });
   if (wantsSchema(response_format) && !hasStructuredOutput(result.stdout)) throw noStructuredOutput();
   return parseOutput(result.stdout, result.stderr);
 }
 
-async function* chatStream({ prompt, system, response_format, model, signal }) {
-  const args = buildStreamArgs({ prompt, system, response_format, model });
+async function* chatStream({ prompt, parts, system, response_format, model, signal }) {
+  const params = { prompt, parts, system, response_format, model };
+  const args = buildStreamArgs(params);
   const structured = wantsSchema(response_format);
   let pending = '';
   let streamed = false;
@@ -227,7 +250,7 @@ async function* chatStream({ prompt, system, response_format, model, signal }) {
     yield event;
   }
 
-  for await (const event of executeStream('claude', args, { env: CLAUDE_ENV, signal })) {
+  for await (const event of executeStream('claude', args, { env: CLAUDE_ENV, signal, input: buildInput(params) })) {
     if (event.type !== 'chunk') continue;
     pending += event.data;
     const lines = pending.split('\n');
@@ -248,6 +271,7 @@ module.exports = {
   chatStream,
   buildArgs,
   buildStreamArgs,
+  buildInput,
   ISOLATION_ARGS,
   authProbe,
   parseOutput,

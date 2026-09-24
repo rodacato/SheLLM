@@ -1,0 +1,20 @@
+type: object
+required: [role, content]
+properties:
+  role:
+    type: string
+    enum: [system, user, assistant]
+  content:
+    description: |
+      A string, or an array of parts. `image_url` parts are accepted in `user` messages only and
+      only as base64 `data:` URLs of JPEG, PNG, WebP or GIF — a remote URL is a 400, because
+      SheLLM does not fetch on a caller's behalf. `SHELLM_MAX_IMAGES` caps the count per request
+      and `SHELLM_MAX_IMAGE_BYTES` the decoded size of each; every image refusal is a 400 whose
+      message names the image.
+    oneOf:
+      - type: string
+      - type: array
+        items:
+          oneOf:
+            - $ref: "./ContentBlock.yaml"
+            - $ref: "./ImageUrlPart.yaml"

@@ -58,7 +58,7 @@ message = client.messages.create(
 | Parameter | Status | Notes |
 |---|---|---|
 | `model` | **Required** | Must be a SheLLM model name (see `/v1/models`) |
-| `messages` | **Required** | Array of `{ role, content }`. Content can be a string or array of `{ type: "text", text: "..." }` objects |
+| `messages` | **Required** | Array of `{ role, content }`. Content can be a string or an array of `text` and `image_url` parts (§6) |
 | `messages[].role` | **Supported** | `system`, `user`, `assistant` |
 | `max_tokens` | **Accepted** | Integer 1-128000. Validated, then ignored — no CLI has a token-cap flag, so it does not shorten the answer |
 | `temperature` | **Accepted** | Number 0-2 |
@@ -138,7 +138,34 @@ Both endpoints accept content as a string or as an array of content parts:
 { "role": "user", "content": [{ "type": "text", "text": "Hello" }] }
 ```
 
-Only `text` type blocks are supported. Image, audio, and tool_use blocks are rejected with a 400 error.
+On `/v1/chat/completions` a `user` message may also carry images, as OpenAI's `image_url` parts:
+
+```json
+{ "role": "user", "content": [
+  { "type": "text", "text": "Photo 1: front" },
+  { "type": "image_url", "image_url": { "url": "data:image/jpeg;base64,/9j/4AAQ…", "detail": "high" } }
+] }
+```
+
+- **Only `data:` URLs** of `image/jpeg`, `image/png`, `image/webp` or `image/gif`. A remote URL
+  is a 400: fetching whatever address a caller names, from the server, is an SSRF.
+- **Limits:** `SHELLM_MAX_IMAGES` per request (default 8, counted across every message; `0` turns
+  images off) and `SHELLM_MAX_IMAGE_BYTES` per image, decoded (default 5 MiB). The body of this
+  endpoint may be up to `SHELLM_MAX_CHAT_BODY_BYTES` (default 20 MiB, a 413 beyond it); every other
+  endpoint stays at 256 kB.
+- **The bytes must match the declared type.** A PNG labelled `image/jpeg` is a 400 here instead of
+  a 502 from the provider.
+- **Every refusal is a 400 whose message names the image**, so a client can drop them and retry
+  as text.
+- `detail` is accepted and ignored. Resize before sending: Claude scales anything over about
+  1568 px on its long edge down anyway, so a larger photo only costs upload time.
+
+The prompt stays one flattened string (§1), and each image keeps its place in it as an
+`[image N]` marker. Claude receives the real interleaving; Codex receives the images as
+attachments and the markers tell them apart.
+
+Audio and tool_use blocks are rejected with a 400, and `/v1/messages` still accepts text blocks
+only.
 
 ### 7. Streaming Format
 
@@ -185,7 +212,7 @@ These features are not implemented and will be silently ignored or rejected:
 | Feature | Status | Both APIs |
 |---|---|---|
 | **Function calling / Tools** | Ignored | `tools`, `tool_choice` are accepted but have no effect |
-| **Vision / Images** | Rejected (400) | Image content blocks return an error |
+| **Images by URL** | Rejected (400) | Only inline `data:` URLs on `/v1/chat/completions` (§6); `/v1/messages` takes text only |
 | **Embeddings** | Not available | No `/v1/embeddings` endpoint |
 | **File uploads** | Not available | No file API |
 | **Batch API** | Not available | No batch endpoint |
@@ -205,6 +232,7 @@ Not all SheLLM providers support all parameters equally:
 | Max tokens | Ignored — no CLI flag | Ignored — no CLI flag |
 | JSON mode (`json_object`) | Appends an instruction | Appends an instruction |
 | JSON Schema (`json_schema`) | `--json-schema`, the answer is the CLI's `structured_output`. Streams as the JSON is written. A turn that ends without it is a 502 | `--output-schema` with the schema in a `0600` file in the request's directory. OpenAI's strict mode applies whatever `strict` says: a schema without `additionalProperties: false` and every property in `required` is a 400 naming `response_format` |
+| Images | One stream-json user message on stdin (`--input-format stream-json`), images as base64 blocks in place; never written to disk | `-i image-N.<ext>` per image, each a `0600` file in the request's directory, removed with it on success, failure or disconnect |
 | Streaming | Token deltas (`--output-format stream-json`) | Whole messages — it yields on `item.completed`, not per token |
 
 Codex runs `codex exec --ephemeral --skip-git-repo-check -s read-only --json`, one process at a time: concurrent processes race on its OAuth refresh (openai/codex#17340). A failed turn is read from the events, never from the exit code, which can be 0 on a failure (openai/codex#1018).

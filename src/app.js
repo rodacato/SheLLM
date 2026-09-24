@@ -18,7 +18,7 @@ const adminUpdateRouter = require('./admin/update');
 const adminConfigRouter = require('./admin/config');
 const { dashboardHtml } = require('./admin/views');
 const { wantsHtml } = require('./middleware/admin-session');
-const { sendApiError, invalidRequest, notFound } = require('./errors');
+const { sendApiError, invalidRequest, notFound, payloadTooLarge } = require('./errors');
 const path = require('node:path');
 
 const app = express();
@@ -38,8 +38,25 @@ const auth = createAuthMiddleware();
 // checkout happens to live.
 const ADMIN_PUBLIC = path.join(__dirname, 'admin/public');
 
+const CHAT_PATH = '/v1/chat/completions';
+const smallJson = express.json({ limit: '256kb' });
+const chatBodyLimit = config.get('SHELLM_MAX_CHAT_BODY_BYTES');
+const chatJson = express.json({ limit: chatBodyLimit });
+
+// Images make chat bodies large, so that one route parses after the key is checked: a caller
+// without a key never gets more than a header read. Any other spelling of the path falls back to
+// the small limit, which fails safe.
+function parseChatBody(req, res, next) {
+  chatJson(req, res, (err) => {
+    if (err?.type !== 'entity.too.large') return next(err);
+    sendApiError(req, res, payloadTooLarge(
+      `Request body exceeds ${chatBodyLimit} bytes; send fewer or smaller images`,
+    ), req.requestId);
+  });
+}
+
 // --- Global middleware (order matters) ---
-app.use(express.json({ limit: '256kb' }));
+app.use((req, res, next) => (req.path === CHAT_PATH ? next() : smallJson(req, res, next)));
 app.use(requestId);
 app.use(requestLogger);
 
@@ -91,7 +108,7 @@ app.get('/health/detailed', adminAuth, async (req, res) => {
 app.get('/v1/models', auth, modelsHandler);
 
 // --- POST /v1/chat/completions (authenticated) ---
-app.post('/v1/chat/completions', auth, chatCompletionsHandler);
+app.post(CHAT_PATH, auth, parseChatBody, chatCompletionsHandler);
 
 // --- POST /v1/messages (authenticated — Anthropic Messages API format) ---
 app.post('/v1/messages', auth, messagesHandler);

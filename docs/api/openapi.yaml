@@ -140,6 +140,10 @@ components:
       $ref: "./schemas/ChatCompletionRequest.yaml"
     ChatMessage:
       $ref: "./schemas/ChatMessage.yaml"
+    ChatRequestMessage:
+      $ref: "./schemas/ChatRequestMessage.yaml"
+    ImageUrlPart:
+      $ref: "./schemas/ImageUrlPart.yaml"
     ChatCompletionResponse:
       $ref: "./schemas/ChatCompletionResponse.yaml"
     Usage:

@@ -84,6 +84,20 @@ module.exports = {
     section: 'Load', type: 'int', default: 60, since: 'v0.1.0', reload: 'live',
     describe: 'Global rate limit across all API keys, requests per minute',
   },
+  SHELLM_MAX_CHAT_BODY_BYTES: {
+    section: 'Load', type: 'int', default: 20971520, since: 'v1.13.0', reload: 'restart',
+    describe: `Largest request body /v1/chat/completions accepts, in bytes, where images arrive as
+      base64. It is read only after the key is checked; every other endpoint stays at 256 kB.`,
+  },
+  SHELLM_MAX_IMAGES: {
+    section: 'Load', type: 'int', default: 8, since: 'v1.13.0', reload: 'live',
+    describe: 'Most images one /v1/chat/completions request may carry. 0 turns images off.',
+  },
+  SHELLM_MAX_IMAGE_BYTES: {
+    section: 'Load', type: 'int', default: 5242880, since: 'v1.13.0', reload: 'live',
+    describe: `Largest image accepted, in decoded bytes. Claude downsizes anything over about 1568 px
+      on its long edge, so resizing before sending costs nothing and saves the upload.`,
+  },
 
   // --- Auth ---
   SHELLM_ADMIN_PASSWORD: {

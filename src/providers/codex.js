@@ -73,17 +73,34 @@ function wantsSchema(response_format) {
   return response_format?.type === 'json_schema';
 }
 
-function buildArgs({ prompt, system, response_format, model }) {
+const EXTENSIONS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+
+function imagesOf(parts) {
+  return (parts || []).filter((part) => part.type === 'image');
+}
+
+// The prompt names each image "[image N]"; the files follow the same numbering.
+function imageFile(image) {
+  return `image-${image.number}.${EXTENSIONS[image.media_type]}`;
+}
+
+function buildArgs({ prompt, parts, system, response_format, model }) {
   const args = ['exec', '--ephemeral', '--skip-git-repo-check', '-s', 'read-only', '--json'];
   if (cliModel(model)) args.push('-m', cliModel(model));
   if (wantsSchema(response_format)) args.push('--output-schema', SCHEMA_FILE);
+  const images = imagesOf(parts);
+  for (const image of images) args.push('-i', imageFile(image));
+  // -i takes several values, so without the separator the prompt would be read as one more image.
+  if (images.length > 0) args.push('--');
   args.push(buildPrompt({ prompt, system, response_format }));
   return args;
 }
 
-function buildFiles({ response_format }) {
-  if (!wantsSchema(response_format)) return undefined;
-  return { [SCHEMA_FILE]: JSON.stringify(response_format.json_schema.schema) };
+function buildFiles({ parts, response_format }) {
+  const files = {};
+  if (wantsSchema(response_format)) files[SCHEMA_FILE] = JSON.stringify(response_format.json_schema.schema);
+  for (const image of imagesOf(parts)) files[imageFile(image)] = Buffer.from(image.data, 'base64');
+  return Object.keys(files).length > 0 ? files : undefined;
 }
 
 // A JSONL line is a codex event only if it carries an event type; anything else is output
@@ -171,9 +188,9 @@ function toProviderError(err, model) {
   return failure || err;
 }
 
-async function chat({ prompt, system, response_format, model }) {
-  const args = buildArgs({ prompt, system, response_format, model });
-  const files = buildFiles({ response_format });
+async function chat({ prompt, parts, system, response_format, model }) {
+  const args = buildArgs({ prompt, parts, system, response_format, model });
+  const files = buildFiles({ parts, response_format });
   return withLock(async () => {
     const result = await execute('codex', args, { env: CODEX_ENV, files })
       .catch((err) => { throw toProviderError(err, model); });
@@ -183,9 +200,9 @@ async function chat({ prompt, system, response_format, model }) {
   });
 }
 
-async function* chatStream({ prompt, system, response_format, model, signal }) {
-  const args = buildArgs({ prompt, system, response_format, model });
-  const files = buildFiles({ response_format });
+async function* chatStream({ prompt, parts, system, response_format, model, signal }) {
+  const args = buildArgs({ prompt, parts, system, response_format, model });
+  const files = buildFiles({ parts, response_format });
   const release = await lock();
   let failure = null;
   try {

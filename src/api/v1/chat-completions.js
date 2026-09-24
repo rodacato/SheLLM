@@ -3,29 +3,69 @@ const { sanitize } = require('../../middleware/sanitize');
 const { invalidRequest, fromCatchable, sendOpenAIError } = require('../../errors');
 const { initSSE, announceQueued, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../lib/sse');
 const { shellmMeta } = require('../../lib/shellm-meta');
+const { imagePart, renderParts, maxImages } = require('./image-parts');
 
 const MAX_PROMPT_LENGTH = 50000;
 
+const text = (value) => ({ type: 'text', text: value });
+
 /**
  * Normalize message content to a plain string.
- * Accepts a string (returned as-is) or an array of content parts
- * (OpenAI format: [{ type: "text", text: "..." }]).
- * Returns null if the content is invalid.
+ * Accepts a string (returned as-is) or an array of OpenAI content parts: `text`, and
+ * `image_url` in a user message. An image stands in the string as an "[image N]" marker, N
+ * counted across the whole request, and `parts` keeps where each one sat among the text.
+ * Returns { error } if the content is invalid.
  */
-function normalizeContent(content) {
-  if (typeof content === 'string') return content;
+function normalizeContent(content, { index, role, imagesSoFar }) {
+  if (typeof content === 'string') return { content };
 
-  if (!Array.isArray(content)) return null;
+  const shapeError = { error: invalidRequest(`messages[${index}].content must be a string or an array of text and image_url parts`) };
+  if (!Array.isArray(content)) return shapeError;
 
   const parts = [];
+  let images = imagesSoFar;
   for (let i = 0; i < content.length; i++) {
     const block = content[i];
-    if (!block || typeof block !== 'object') return null;
-    if (block.type !== 'text') return null;
-    if (typeof block.text !== 'string') return null;
-    parts.push(block.text);
+    if (!block || typeof block !== 'object') return shapeError;
+    if (i > 0) parts.push(text('\n'));
+
+    if (block.type === 'text' && typeof block.text === 'string') {
+      parts.push(text(block.text));
+    } else if (block.type === 'image_url') {
+      const where = `messages[${index}].content[${i}]`;
+      if (role !== 'user') return { error: invalidRequest(`${where}: an image is only accepted in a user message`) };
+      if (++images > maxImages()) return { error: invalidRequest(`Too many images: the limit is ${maxImages()} per request`) };
+      const image = imagePart(block.image_url, where, images);
+      if (image.error) return image;
+      parts.push(image.part);
+    } else {
+      return shapeError;
+    }
   }
-  return parts.join('\n');
+
+  const withImages = images > imagesSoFar;
+  return { content: renderParts(parts), parts: withImages ? parts : undefined, images };
+}
+
+function mergeText(parts) {
+  const merged = [];
+  for (const part of parts) {
+    const last = merged.at(-1);
+    if (part.type === 'text' && last?.type === 'text') last.text += part.text;
+    else merged.push(part.type === 'text' ? text(part.text) : part);
+  }
+  return merged;
+}
+
+// The same flattening as the prompt string, keeping each image in its place.
+function conversationParts(conversation, single) {
+  if (!conversation.some((m) => m.parts)) return null;
+  if (single) return mergeText(conversation[0].parts);
+  return mergeText(conversation.flatMap((m, i) => [
+    ...(i > 0 ? [text('\n')] : []),
+    text(`${m.role}: `),
+    ...(m.parts || [text(m.content)]),
+  ]));
 }
 
 /**
@@ -46,14 +86,12 @@ function extractMessages(messages) {
     }
   }
 
-  let prompt;
-  if (conversation.length === 1 && conversation[0].role === 'user') {
-    prompt = conversation[0].content;
-  } else {
-    prompt = conversation.map((m) => `${m.role}: ${m.content}`).join('\n');
-  }
+  const single = conversation.length === 1 && conversation[0].role === 'user';
+  const prompt = single
+    ? conversation[0].content
+    : conversation.map((m) => `${m.role}: ${m.content}`).join('\n');
 
-  return { prompt, system };
+  return { prompt, system, parts: conversationParts(conversation, single) };
 }
 
 // Claude takes the schema as one argv string, and Linux caps a single argument at 128 KiB.
@@ -105,16 +143,19 @@ function validate(body) {
     return invalidRequest('Missing required field: messages (must be a non-empty array)');
   }
 
+  let imagesSoFar = 0;
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i];
     if (!msg || typeof msg.role !== 'string') {
       return invalidRequest(`messages[${i}] must have a string "role" field`);
     }
-    const normalized = normalizeContent(msg.content);
-    if (normalized === null) {
-      return invalidRequest(`messages[${i}].content must be a string or array of text objects`);
+    const normalized = normalizeContent(msg.content, { index: i, role: msg.role, imagesSoFar });
+    if (normalized.error) return normalized.error;
+    msg.content = normalized.content;
+    if (normalized.parts) {
+      msg.parts = normalized.parts;
+      imagesSoFar = normalized.images;
     }
-    msg.content = normalized;
   }
 
   const hasUser = messages.some((m) => m.role === 'user');
@@ -201,9 +242,10 @@ function preflight(req, res) {
     }
   }
 
-  let { prompt, system } = extractMessages(req.body.messages);
+  let { prompt, system, parts } = extractMessages(req.body.messages);
   prompt = sanitize(prompt);
   if (system) system = sanitize(system);
+  if (parts) parts = parts.map((part) => (part.type === 'text' ? { ...part, text: sanitize(part.text) } : part));
 
 
   if (prompt.length > MAX_PROMPT_LENGTH) {
@@ -213,7 +255,7 @@ function preflight(req, res) {
     return null;
   }
 
-  return { model, max_tokens, temperature, top_p, response_format, prompt, system };
+  return { model, max_tokens, temperature, top_p, response_format, prompt, parts, system };
 }
 
 /**
@@ -227,14 +269,14 @@ async function chatCompletionsHandler(req, res) {
     return handleStream(req, res, params);
   }
 
-  const { model, max_tokens, temperature, top_p, response_format, prompt, system } = params;
+  const { model, max_tokens, temperature, top_p, response_format, prompt, parts, system } = params;
   const startTime = Date.now();
   res.locals.provider = null;
   res.locals.model = model;
 
   try {
     const allowFallback = req.headers['x-shellm-allow-fallback'] === 'true' || undefined;
-    const result = await route({ model, prompt, system, max_tokens, temperature, top_p, response_format, request_id: req.requestId, allowFallback });
+    const result = await route({ model, prompt, parts, system, max_tokens, temperature, top_p, response_format, request_id: req.requestId, allowFallback });
     res.locals.provider = result.provider;
     res.locals.queued_ms = result.queued_ms ?? null;
     res.locals.cost_usd = result.cost_usd ?? null;
@@ -284,7 +326,7 @@ async function chatCompletionsHandler(req, res) {
  * Handle streaming response (stream: true).
  * Holds a queue slot for the full stream duration.
  */
-async function handleStream(req, res, { model, max_tokens, temperature, top_p, response_format, prompt, system }) {
+async function handleStream(req, res, { model, max_tokens, temperature, top_p, response_format, prompt, parts, system }) {
   const logger = require('../../lib/logger');
   let provider;
   try {
@@ -352,7 +394,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
         logger.debug({ event: 'stream_calling_provider', provider: provider.name, hasChatStream: true });
         // Native streaming
         let chunkCount = 0;
-        for await (const event of streamFn({ prompt, system, max_tokens, temperature, top_p, response_format, model, signal: ac.signal })) {
+        for await (const event of streamFn({ prompt, parts, system, max_tokens, temperature, top_p, response_format, model, signal: ac.signal })) {
           if (ac.signal.aborted) { logger.debug({ event: 'stream_aborted', chunkCount }); break; }
           if (event.type === 'delta') {
             chunkCount++;
@@ -376,7 +418,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
         logger.debug({ event: 'stream_generator_done', chunkCount, request_id: req.requestId });
       } else {
         logger.debug({ event: 'stream_fallback', provider: provider.name });
-        const result = await provider.chat({ prompt, system, max_tokens, temperature, top_p, response_format, model });
+        const result = await provider.chat({ prompt, parts, system, max_tokens, temperature, top_p, response_format, model });
         sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model: responseModel, choices: [{ index: 0, delta: { role: 'assistant' }, finish_reason: null }] });
         sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model: responseModel, choices: [{ index: 0, delta: { content: result.content }, finish_reason: null }] });
       }

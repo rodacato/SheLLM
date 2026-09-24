@@ -249,6 +249,16 @@
           "403": {
             "$ref": "#/components/responses/OriginNotAllowedOpenAI"
           },
+          "413": {
+            "description": "The body is larger than `SHELLM_MAX_CHAT_BODY_BYTES` (20 MiB by default). Checked after the\nkey, so an unauthenticated caller gets a 401 instead.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIError"
+                }
+              }
+            }
+          },
           "429": {
             "$ref": "#/components/responses/RateLimitedOpenAI"
           },
@@ -1537,7 +1547,7 @@
             "type": "array",
             "minItems": 1,
             "items": {
-              "$ref": "#/components/schemas/ChatMessage"
+              "$ref": "#/components/schemas/ChatRequestMessage"
             },
             "description": "Must contain at least one `user` message. The first `system` message becomes the system\nprompt; the rest are flattened into one prompt, since the CLI takes a prompt, not a thread.\n"
           },
@@ -1644,6 +1654,76 @@
           },
           "content": {
             "type": "string"
+          }
+        }
+      },
+      "ChatRequestMessage": {
+        "type": "object",
+        "required": [
+          "role",
+          "content"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "system",
+              "user",
+              "assistant"
+            ]
+          },
+          "content": {
+            "description": "A string, or an array of parts. `image_url` parts are accepted in `user` messages only and\nonly as base64 `data:` URLs of JPEG, PNG, WebP or GIF — a remote URL is a 400, because\nSheLLM does not fetch on a caller's behalf. `SHELLM_MAX_IMAGES` caps the count per request\nand `SHELLM_MAX_IMAGE_BYTES` the decoded size of each; every image refusal is a 400 whose\nmessage names the image.\n",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ContentBlock"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ImageUrlPart"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      "ImageUrlPart": {
+        "type": "object",
+        "required": [
+          "type",
+          "image_url"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "image_url"
+            ]
+          },
+          "image_url": {
+            "type": "object",
+            "required": [
+              "url"
+            ],
+            "properties": {
+              "url": {
+                "type": "string",
+                "pattern": "^data:image/(jpeg|png|webp|gif);base64,",
+                "example": "data:image/png;base64,iVBORw0KGgo..."
+              },
+              "detail": {
+                "type": "string",
+                "description": "Accepted and ignored."
+              }
+            }
           }
         }
       },

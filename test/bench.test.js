@@ -38,9 +38,9 @@ function apiError(res, pathname, status, code, message) {
     : json(res, status, { error: { message, type: code, code, param: null } });
 }
 
-function hasImageBlock(body) {
-  return (body.messages || []).some(
-    (m) => Array.isArray(m.content) && m.content.some((part) => part.type !== 'text'),
+function imageUrls(body) {
+  return (body.messages || []).flatMap(
+    (m) => (Array.isArray(m.content) ? m.content.filter((p) => p.type === 'image_url').map((p) => p.image_url.url) : []),
   );
 }
 
@@ -73,13 +73,14 @@ function startFakeShellm() {
         ? apiError(res, url.pathname, 404, 'model_not_found', 'unknown model')
         : apiError(res, url.pathname, 400, 'invalid_request', 'no provider owns it');
     }
-    if (hasImageBlock(body)) {
-      return apiError(res, url.pathname, 400, 'invalid_request', 'text blocks only');
+    const images = imageUrls(body);
+    if (images.some((u) => !u.startsWith('data:'))) {
+      return apiError(res, url.pathname, 400, 'invalid_request', 'image_url must be a data: URL');
     }
 
     const answer = body.response_format?.type === 'json_schema'
       ? JSON.stringify({ city: 'Colima', country: 'Mexico' })
-      : 'pong';
+      : images.length > 0 ? 'Red' : 'pong';
     if (url.pathname === '/v1/chat/completions') {
       if (body.stream) {
         return sse(res, [
@@ -144,7 +145,8 @@ test('measures latency and probes capabilities against a real server', async (t)
   assert.equal(verdict('unknown-model'), 'rejected');
   assert.equal(verdict('unknown-claude-model'), 'rejected');
   assert.equal(verdict('json-schema'), 'works');
-  assert.equal(verdict('images'), 'rejected');
+  assert.equal(verdict('images'), 'works');
+  assert.equal(verdict('remote-image'), 'rejected');
   assert.equal(verdict('auth'), 'rejected');
   assert.equal(verdict('payload-limit'), 'rejected');
   assert.equal(verdict('stream-openai'), 'works');

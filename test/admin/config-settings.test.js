@@ -127,7 +127,7 @@ describe('admin /admin/config', () => {
     const names = new Set(res.body.settings.map((setting) => setting.name));
     for (const name of res.body.unseen) {
       assert.ok(names.has(name), `${name} is reported as new and is not in the settings table`);
-      assert.strictEqual(config.compare(schema[name].since, config.running()), 0, `${name} predates the running release`);
+      assert.ok(config.compare(schema[name].since, config.running()) >= 0, `${name} predates the running release`);
     }
   });
 

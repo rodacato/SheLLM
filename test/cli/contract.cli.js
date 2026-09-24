@@ -35,6 +35,15 @@ const schemaRequest = {
   },
 };
 
+const imageRequest = {
+  ...request,
+  prompt: 'Colour of [image 1]?',
+  parts: [
+    { type: 'text', text: 'Colour of ' },
+    { type: 'image', number: 1, media_type: 'image/png', data: 'iVBORw0KGgo=' },
+  ],
+};
+
 let home;
 
 before(() => { home = fs.mkdtempSync(path.join(os.tmpdir(), 'shellm-cli-contract-')); });
@@ -77,11 +86,14 @@ describe('claude CLI contract', () => {
   it('accepts the chat arguments', () => assertAccepted('claude', claude.buildArgs(request)));
   it('accepts the stream arguments', () => assertAccepted('claude', claude.buildStreamArgs(request)));
   it('accepts the json_schema arguments', () => assertAccepted('claude', claude.buildArgs(schemaRequest)));
+  it('accepts the image arguments', () => assertAccepted('claude', claude.buildArgs(imageRequest)));
+  it('accepts the image stream arguments', () => assertAccepted('claude', claude.buildStreamArgs(imageRequest)));
   it('rejects an unknown flag', () => assertRejected('claude', ['--print', '--shellm-bogus-flag', '--', 'ping']));
 });
 
 describe('codex CLI contract', () => {
   it('accepts the chat arguments', () => assertAccepted('codex', codex.buildArgs(request)));
   it('accepts the json_schema arguments', () => assertAccepted('codex', codex.buildArgs(schemaRequest)));
+  it('accepts the image arguments', () => assertAccepted('codex', codex.buildArgs(imageRequest)));
   it('rejects an unknown flag', () => assertRejected('codex', ['exec', '--shellm-bogus-flag', 'ping']));
 });

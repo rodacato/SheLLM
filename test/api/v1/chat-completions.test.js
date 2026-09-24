@@ -294,6 +294,108 @@ describe('/v1/chat/completions', () => {
     });
   });
 
+  // --- Images ---
+
+  describe('image_url parts', () => {
+    const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC';
+    const png = `data:image/png;base64,${PNG}`;
+    const image = (url) => ({ type: 'image_url', image_url: { url, detail: 'high' } });
+    const withImages = (...blocks) => post({
+      model: 'claude',
+      messages: [{ role: 'user', content: [{ type: 'text', text: 'Front:' }, ...blocks] }],
+    });
+
+    function lastCall() {
+      const { mock: calls } = require('../../../src/providers/base.js').execute;
+      return calls.calls.at(-1).arguments;
+    }
+
+    function withEnv(name, value, fn) {
+      process.env[name] = value;
+      return fn().finally(() => { delete process.env[name]; });
+    }
+
+    it('sends a data: URL image to the CLI in its place among the text', async () => {
+      const res = await withImages(image(png), { type: 'text', text: 'Inside:' }, image(png));
+      assert.strictEqual(res.status, 200);
+
+      const [, args, options] = lastCall();
+      assert.ok(args.includes('--input-format'));
+      const content = JSON.parse(options.input).message.content;
+      assert.deepStrictEqual(content.map((b) => b.type), ['text', 'image', 'text', 'image']);
+      assert.strictEqual(content[1].source.data, PNG);
+      assert.strictEqual(content[1].source.media_type, 'image/png');
+    });
+
+    // Knotty drops its images and retries as text when a 400 names them, so every refusal must.
+    for (const [label, url, why] of [
+      ['a remote URL, which SheLLM would have to fetch', 'https://example.com/img.png', /data: URL/],
+      ['an unsupported media type', 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=', /image\/jpeg/],
+      ['base64 that is not base64', 'data:image/png;base64,not*base64', /base64/],
+      ['a media type that does not match the bytes', `data:image/jpeg;base64,${PNG}`, /not image\/jpeg/],
+    ]) {
+      it(`rejects ${label}`, async () => {
+        const res = await withImages(image(url));
+        assert.strictEqual(res.status, 400);
+        assert.match(res.body.error.message, /image/);
+        assert.match(res.body.error.message, why);
+      });
+    }
+
+    it('rejects an image_url part without a url', async () => {
+      const res = await withImages({ type: 'image_url', image_url: {} });
+      assert.strictEqual(res.status, 400);
+      assert.match(res.body.error.message, /image_url/);
+    });
+
+    it('counts images across the whole request against SHELLM_MAX_IMAGES', () => withEnv('SHELLM_MAX_IMAGES', '2', async () => {
+      const res = await post({
+        model: 'claude',
+        messages: [
+          { role: 'user', content: [image(png), image(png)] },
+          { role: 'assistant', content: 'Seen.' },
+          { role: 'user', content: [image(png)] },
+        ],
+      });
+      assert.strictEqual(res.status, 400);
+      assert.match(res.body.error.message, /Too many images: the limit is 2/);
+    }));
+
+    it('turns images off with SHELLM_MAX_IMAGES=0', () => withEnv('SHELLM_MAX_IMAGES', '0', async () => {
+      const res = await withImages(image(png));
+      assert.strictEqual(res.status, 400);
+      assert.match(res.body.error.message, /image/);
+    }));
+
+    it('rejects an image larger than SHELLM_MAX_IMAGE_BYTES, in decoded bytes', () => withEnv('SHELLM_MAX_IMAGE_BYTES', '60', async () => {
+      const res = await withImages(image(png));
+      assert.strictEqual(res.status, 400);
+      assert.match(res.body.error.message, /image is 69 bytes, the limit is 60/);
+    }));
+
+    it('accepts an image only in a user message', async () => {
+      const res = await post({
+        model: 'claude',
+        messages: [
+          { role: 'system', content: [image(png)] },
+          { role: 'user', content: 'hello' },
+        ],
+      });
+      assert.strictEqual(res.status, 400);
+      assert.match(res.body.error.message, /image is only accepted in a user message/);
+    });
+
+    it('streams a request with images', async () => {
+      const res = await post({
+        model: 'claude',
+        stream: true,
+        messages: [{ role: 'user', content: [{ type: 'text', text: 'Colour?' }, image(png)] }],
+      });
+      assert.strictEqual(res.status, 200);
+      assert.match(res.headers['content-type'], /text\/event-stream/);
+    });
+  });
+
   // --- Extra fields passthrough (Postel's principle) ---
 
   it('ignores n field', async () => {
@@ -418,6 +520,25 @@ describe('extractMessages', () => {
     ]);
     assert.strictEqual(system, null);
     assert.strictEqual(prompt, 'Hello');
+  });
+
+  it('keeps each image in its place when a multi-turn history is flattened', () => {
+    const image = { type: 'image', number: 1, media_type: 'image/png', data: 'x' };
+    const { prompt, parts } = extractMessages([
+      { role: 'user', content: 'Front: [image 1]', parts: [{ type: 'text', text: 'Front: ' }, image] },
+      { role: 'assistant', content: 'A shelf.' },
+      { role: 'user', content: 'Make it taller.' },
+    ]);
+    assert.strictEqual(prompt, 'user: Front: [image 1]\nassistant: A shelf.\nuser: Make it taller.');
+    assert.deepStrictEqual(parts, [
+      { type: 'text', text: 'user: Front: ' },
+      image,
+      { type: 'text', text: '\nassistant: A shelf.\nuser: Make it taller.' },
+    ]);
+  });
+
+  it('returns no parts for a text-only conversation', () => {
+    assert.strictEqual(extractMessages([{ role: 'user', content: 'hello' }]).parts, null);
   });
 
   it('concatenates multi-turn messages', () => {

@@ -164,17 +164,19 @@ Each row is a probe that ran against a live instance, not a reading of the code.
 | Hold a conversation (`multi-turn`) | works | the whole `messages` history reaches the model |
 | Steer with a system prompt (`system`) | works | top-level `system` on `/v1/messages`, or a `system` role message on `/v1/chat/completions` |
 | Get JSON back (`json-mode`) | works | `response_format: {"type": "json_object"}` returns parseable JSON |
+| Get JSON that matches a schema (`json-schema`) | works | `response_format: {"type": "json_schema", …}` returns exactly the schema's keys |
 | Stream tokens, OpenAI style (`stream-openai`) | works | SSE `data:` chunks, `[DONE]` terminator |
 | Stream tokens, Anthropic style (`stream-anthropic`) | works | named events, first one arrives early (§9) |
 | Send a long prompt (`long-context`) | works | ~4k tokens accepted, and it barely costs latency |
 | Send the fields your SDK adds anyway (`sdk-extras`) | works | `temperature`, `top_p`, `stop`, `seed`, `n`, `user` are accepted |
 | Cap the answer length (`max-tokens`) | ignored | the claude CLI has no such flag: `max_tokens: 16` still returned 3 000 characters. Bound the length in the prompt |
 | Call functions / use tools (`tools`) | ignored | `tools` is accepted and has no effect — no `tool_calls` ever come back |
-| Send an image (`images`) | rejected | 400, text blocks only |
+| Send an image (`images`) | works | a `data:` URL `image_url` part on `/v1/chat/completions`; a red square came back "Red" |
+| Send an image by URL (`remote-image`) | rejected | 400: SheLLM does not fetch remote images |
 | Use a model no provider owns (`unknown-model`) | rejected | 400 `invalid_request` — e.g. `gpt-4o` |
 | Use a `claude-*` name the CLI rejects (`unknown-claude-model`) | rejected | 404 `model_not_found` |
 | Call without a key (`auth`) | rejected | 401 in your endpoint's own error shape |
-| POST more than 256 kB (`payload-limit`) | rejected | 413 |
+| POST more than 256 kB (`payload-limit`) | rejected | 413 on `/v1/messages`; `/v1/chat/completions` takes up to `SHELLM_MAX_CHAT_BODY_BYTES` (20 MiB) for images |
 | Get embeddings (`embeddings`) | rejected | 404, there is no embeddings endpoint |
 
 Two error-shape probes are part of the same suite, because an SDK reads the error body, not just
@@ -211,10 +213,10 @@ something is wrong. You can also set it yourself to correlate with your own logs
 
 | Status | Code | What it means | What to do |
 |---|---|---|---|
-| 400 | `invalid_request` | bad field, unknown model name, or an image block | fix the request; the message names the field |
+| 400 | `invalid_request` | bad field, unknown model name, or an image SheLLM does not accept | fix the request; the message names the field |
 | 401 | `auth_required` | missing, unknown or deactivated key | check the key |
 | 404 | `model_not_found` | the CLI does not know that `claude-*` model | use one from `GET /v1/models` |
-| 413 | — | body over 256 kB | send less; a 4k-token prompt is nowhere near this |
+| 413 | — | body over 256 kB, or over `SHELLM_MAX_CHAT_BODY_BYTES` on `/v1/chat/completions` | send less; resize images before sending |
 | 429 | `rate_limited` | per-key or global rate limit, or the queue is full | honor `Retry-After`; do not hammer |
 | 502 | `cli_failed` | the CLI exited with an error | check the admin dashboard logs |
 | 503 | `provider_unavailable` | provider disabled, not logged in, or its circuit is open | the CLI login probably expired |
@@ -233,7 +235,9 @@ never on 429 before `Retry-After`.
 | Global rate limit | 60 req/min | shared by every key |
 | Per-key rate limit | set when the key is created | 429 with `Retry-After` |
 | `TIMEOUT_MS` | 120 000 | the CLI process is killed and you get a 504 |
-| Request body | 256 kB | 413 |
+| Request body | 256 kB; 20 MiB on `/v1/chat/completions` (`SHELLM_MAX_CHAT_BODY_BYTES`) | 413 |
+| `SHELLM_MAX_IMAGES` | 8 per request | 400 naming the image |
+| `SHELLM_MAX_IMAGE_BYTES` | 5 MiB per image, decoded | 400 naming the image |
 
 This is a personal subscription behind a CLI: it is sized for a person's work, not for a job
 queue. Set your client timeout above 120 s, keep concurrency at or below 4, and do not point a
