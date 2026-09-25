@@ -191,6 +191,10 @@ function validate(body) {
     if (formatError) return formatError;
   }
 
+  if (body.reasoning_effort !== undefined && !Object.hasOwn(REASONING_EFFORT, body.reasoning_effort)) {
+    return invalidRequest(`Field "reasoning_effort" must be one of: ${Object.keys(REASONING_EFFORT).join(', ')}`);
+  }
+
   if (body.stream_options !== undefined && body.stream_options !== null) {
     if (body.stream !== true) {
       return invalidRequest('Field "stream_options" can only be used when "stream" is true');
@@ -221,6 +225,9 @@ function validate(body) {
 
   return null;
 }
+
+// OpenAI's values, onto the claude CLI's --effort. The CLI has no level below low.
+const REASONING_EFFORT = { minimal: 'low', low: 'low', medium: 'medium', high: 'high' };
 
 /**
  * Common pre-flight: validate, enforce model restrictions, sanitize.
@@ -256,7 +263,8 @@ function preflight(req, res) {
     return null;
   }
 
-  return { model, max_tokens, temperature, top_p, response_format, prompt, parts, system };
+  const effort = REASONING_EFFORT[req.body.reasoning_effort];
+  return { model, max_tokens, temperature, top_p, response_format, effort, prompt, parts, system };
 }
 
 /**
@@ -270,14 +278,14 @@ async function chatCompletionsHandler(req, res) {
     return handleStream(req, res, params);
   }
 
-  const { model, max_tokens, temperature, top_p, response_format, prompt, parts, system } = params;
+  const { model, max_tokens, temperature, top_p, response_format, effort, prompt, parts, system } = params;
   const startTime = Date.now();
   res.locals.provider = null;
   res.locals.model = model;
 
   try {
     const allowFallback = req.headers['x-shellm-allow-fallback'] === 'true' || undefined;
-    const result = await route({ model, prompt, parts, system, max_tokens, temperature, top_p, response_format, request_id: req.requestId, allowFallback, job: jobFor(req) });
+    const result = await route({ model, prompt, parts, system, max_tokens, temperature, top_p, response_format, effort, request_id: req.requestId, allowFallback, job: jobFor(req) });
     res.locals.provider = result.provider;
     res.locals.queued_ms = result.queued_ms ?? null;
     res.locals.cost_usd = result.cost_usd ?? null;
@@ -327,7 +335,7 @@ async function chatCompletionsHandler(req, res) {
  * Handle streaming response (stream: true).
  * Holds a queue slot for the full stream duration.
  */
-async function handleStream(req, res, { model, max_tokens, temperature, top_p, response_format, prompt, parts, system }) {
+async function handleStream(req, res, { model, max_tokens, temperature, top_p, response_format, effort, prompt, parts, system }) {
   const logger = require('../../lib/logger');
   let provider;
   try {
@@ -396,7 +404,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
         logger.debug({ event: 'stream_calling_provider', provider: provider.name, hasChatStream: true });
         // Native streaming
         let chunkCount = 0;
-        for await (const event of streamFn({ prompt, parts, system, max_tokens, temperature, top_p, response_format, model, signal: ac.signal })) {
+        for await (const event of streamFn({ prompt, parts, system, max_tokens, temperature, top_p, response_format, effort, model, signal: ac.signal })) {
           if (ac.signal.aborted) { logger.debug({ event: 'stream_aborted', chunkCount }); break; }
           if (event.type === 'delta') {
             chunkCount++;
@@ -420,7 +428,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
         logger.debug({ event: 'stream_generator_done', chunkCount, request_id: req.requestId });
       } else {
         logger.debug({ event: 'stream_fallback', provider: provider.name });
-        const result = await provider.chat({ prompt, parts, system, max_tokens, temperature, top_p, response_format, model });
+        const result = await provider.chat({ prompt, parts, system, max_tokens, temperature, top_p, response_format, effort, model });
         sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model: responseModel, choices: [{ index: 0, delta: { role: 'assistant' }, finish_reason: null }] });
         sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model: responseModel, choices: [{ index: 0, delta: { content: result.content }, finish_reason: null }] });
       }

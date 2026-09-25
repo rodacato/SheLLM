@@ -38,3 +38,30 @@ describe('claude isolation flags', () => {
     assert.equal(flagValue(args, '--system-prompt'), request.system);
   });
 });
+
+describe('claude reasoning effort', () => {
+  const withSetting = (value, fn) => {
+    const previous = process.env.SHELLM_CLAUDE_EFFORT;
+    if (value === undefined) delete process.env.SHELLM_CLAUDE_EFFORT;
+    else process.env.SHELLM_CLAUDE_EFFORT = value;
+    try { fn(); } finally {
+      if (previous === undefined) delete process.env.SHELLM_CLAUDE_EFFORT;
+      else process.env.SHELLM_CLAUDE_EFFORT = previous;
+    }
+  };
+
+  it('runs at medium when neither the request nor the operator says otherwise', () => withSetting(undefined, () => {
+    for (const args of [claude.buildArgs(request), claude.buildStreamArgs(request)]) {
+      assert.equal(flagValue(args, '--effort'), 'medium');
+    }
+  }));
+
+  it('lets a request override the server default', () => withSetting('high', () => {
+    assert.equal(flagValue(claude.buildArgs({ ...request, effort: 'low' }), '--effort'), 'low');
+    assert.equal(flagValue(claude.buildArgs(request), '--effort'), 'high');
+  }));
+
+  it('passes no flag for a level the CLI does not know, rather than one it would ignore with a warning', () => withSetting('extreme', () => {
+    assert.ok(!claude.buildArgs(request).includes('--effort'));
+  }));
+});

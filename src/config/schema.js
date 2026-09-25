@@ -61,6 +61,11 @@ module.exports = {
     describe: `Max time (ms) to wait for a CLI process before killing it. A proxy in front with a
       shorter read timeout cuts a non-streaming request first; stream long answers.`,
   },
+  SHELLM_CLAUDE_EFFORT: {
+    section: 'Providers', type: 'string', default: 'medium', since: 'v1.16.0', reload: 'live',
+    describe: `Reasoning effort for Claude when a request names none: low, medium, high, xhigh or max.
+      Thinking is billed as output and nothing streams while it runs. Any other value leaves it to the CLI.`,
+  },
   SHELLM_CLAUDE_SKIP_PERMISSIONS: {
     section: 'Providers', type: 'bool', default: true, since: 'v0.4.0', reload: 'live',
     describe: `Claude runs with --dangerously-skip-permissions so it never waits for a prompt. Set to
