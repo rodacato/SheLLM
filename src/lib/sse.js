@@ -28,6 +28,19 @@ function announceQueued(res, position, intervalMs = 3000) {
   return () => clearInterval(timer);
 }
 
+// Once a request leaves the queue nothing is written until the first token, and a model that
+// thinks first can stay silent past 100 s — where Cloudflare's edge drops the connection.
+const KEEPALIVE_MS = 15000;
+
+function keepAlive(res, intervalMs = KEEPALIVE_MS) {
+  const timer = setInterval(() => {
+    if (!res.writableEnded) sendSSEComment(res, 'keepalive');
+  }, intervalMs);
+  const stop = () => clearInterval(timer);
+  if (typeof res.on === 'function') res.on('close', stop);
+  return stop;
+}
+
 function sendSSEChunk(res, data) {
   return res.write(`data: ${JSON.stringify(data)}\n\n`);
 }
@@ -49,4 +62,4 @@ function sendSSEError(res, error) {
   sendSSEDone(res);
 }
 
-module.exports = { initSSE, sendSSEComment, announceQueued, sendSSEChunk, sendSSEDone, sendSSEError };
+module.exports = { initSSE, sendSSEComment, announceQueued, keepAlive, KEEPALIVE_MS, sendSSEChunk, sendSSEDone, sendSSEError };

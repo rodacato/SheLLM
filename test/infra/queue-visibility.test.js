@@ -4,7 +4,7 @@ const { describe, it, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 
 const { RequestQueue } = require('../../src/infra/queue');
-const { announceQueued, sendSSEComment } = require('../../src/lib/sse');
+const { announceQueued, keepAlive, sendSSEComment } = require('../../src/lib/sse');
 
 function deferred() {
   let resolve;
@@ -127,5 +127,41 @@ describe('the SSE lines a waiting stream writes', () => {
 
     assert.equal(res.written[0], ': queued position=1\n\n');
     assert.doesNotMatch(res.written[0], /^data:/);
+  });
+});
+
+describe('the keepalive a running stream writes', () => {
+  it('writes a comment on every tick until stopped, so a silent model does not look like a dead connection', async () => {
+    const res = fakeRes();
+    const stop = keepAlive(res, 5);
+
+    await new Promise((r) => setTimeout(r, 40));
+    stop();
+    const afterStop = res.written.length;
+    assert.ok(afterStop > 1, `expected repeated keepalives, got ${afterStop}`);
+    for (const line of res.written) assert.equal(line, ': keepalive\n\n');
+
+    await new Promise((r) => setTimeout(r, 30));
+    assert.equal(res.written.length, afterStop);
+  });
+
+  it('writes nothing once the response has ended', async () => {
+    const res = { ...fakeRes(), writableEnded: true };
+    const stop = keepAlive(res, 5);
+    await new Promise((r) => setTimeout(r, 30));
+    stop();
+    assert.deepEqual(res.written, []);
+  });
+
+  it('stops by itself when the connection closes', async () => {
+    const res = fakeRes();
+    let onClose;
+    res.on = (event, fn) => { if (event === 'close') onClose = fn; };
+    keepAlive(res, 5);
+
+    onClose();
+    const atClose = res.written.length;
+    await new Promise((r) => setTimeout(r, 30));
+    assert.equal(res.written.length, atClose);
   });
 });

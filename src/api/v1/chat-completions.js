@@ -2,7 +2,7 @@ const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releas
 const { jobFor } = require('../../infra/queue');
 const { sanitize } = require('../../middleware/sanitize');
 const { invalidRequest, fromCatchable, sendOpenAIError } = require('../../errors');
-const { initSSE, announceQueued, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../lib/sse');
+const { initSSE, announceQueued, keepAlive, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../lib/sse');
 const { shellmMeta } = require('../../lib/shellm-meta');
 const { imagePart, renderParts, maxImages } = require('./image-parts');
 
@@ -351,6 +351,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
   // queue cannot move between this line and enqueue below.
   res.set('x-shellm-queue-position', String(queue.nextPosition));
   initSSE(res);
+  const stopKeepAlive = keepAlive(res);
 
   // Detect client disconnect: poll socket state instead of relying on close events
   // (Express close events fire prematurely after flushHeaders in some environments)
@@ -465,6 +466,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
       sendSSEError(res, err);
     }
   } finally {
+    stopKeepAlive();
     if (stopQueueNotices) stopQueueNotices();
     if (slotAcquired) releaseStreamSlot();
   }
