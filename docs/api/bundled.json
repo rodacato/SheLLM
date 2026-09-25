@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "SheLLM API",
-    "version": "1.16.0",
+    "version": "1.16.1",
     "description": "SheLLM exposes the owner's own LLM CLI subscriptions (Claude Code, Codex)\nas one REST API that answers in both the OpenAI and the Anthropic formats.\nIt spawns the official CLI binary per request; see the repository README for\nthe fair-use position on provider terms.\n\n## Authentication\n\n**Client endpoints** (`/v1/*`) take an API key as `Authorization: Bearer <key>`\nor `x-api-key`. Keys are created by `shellm init` and managed through the Admin API.\n\n**Admin endpoints** (`/admin/*`) use HTTP Basic authentication.\nThe password is set via the `SHELLM_ADMIN_PASSWORD` environment variable.\n\n## Rate Limiting\n\nWhen rate-limited, responses include a `Retry-After` header (seconds).\n- **Global limit**: configurable via `SHELLM_GLOBAL_RPM` (default 60 RPM)\n- **Per-client limit**: configurable per API key (default 10 RPM)\n- **Admin brute-force**: 5 failed attempts per IP triggers a 5-minute lockout\n",
     "x-logo": {
       "url": "logo.svg",
