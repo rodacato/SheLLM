@@ -12,7 +12,7 @@ function keysPage() {
     newKeyResult: null,
     createForm: { name: '', rpm: 10, models: '', origins: '', expires_at: '', description: '' },
     editing: null,
-    editForm: { rpm: 10, models: '', origins: '', expires_at: '', description: '' },
+    editForm: { name: '', rpm: 10, models: '', origins: '', expires_at: '', description: '' },
     usagePeriod: '7d',
     auditLogs: [],
     auditError: null,
@@ -141,6 +141,7 @@ function keysPage() {
     startEdit(key) {
       this.editing = key.id;
       this.editForm = {
+        name: key.name,
         rpm: key.rpm,
         models: (key.models || []).join(', '),
         origins: (key.origins || []).join(', '),
@@ -156,6 +157,7 @@ function keysPage() {
 
     async saveEdit(key) {
       const body = {
+        name: this.editForm.name.trim() || key.name,
         rpm: parseInt(this.editForm.rpm, 10) || key.rpm,
         models: this.editForm.models.trim() ? this.splitList(this.editForm.models) : null,
         origins: this.editForm.origins.trim() ? this.splitList(this.editForm.origins) : null,

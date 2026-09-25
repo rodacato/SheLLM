@@ -93,7 +93,7 @@ function listClients() {
 function updateClient(id, fields) {
   const { getDb } = require('./index');
   const db = getDb();
-  const allowed = ['rpm', 'models', 'origins', 'active', 'expires_at', 'description'];
+  const allowed = ['name', 'rpm', 'models', 'origins', 'active', 'expires_at', 'description'];
   const sets = [];
   const values = [];
 
@@ -107,7 +107,13 @@ function updateClient(id, fields) {
   if (sets.length === 0) return null;
 
   values.push(id);
-  db.prepare(`UPDATE clients SET ${sets.join(', ')} WHERE id = ?`).run(...values);
+  // The logs filter by name, so a rename carries the key's history with it.
+  db.transaction(() => {
+    db.prepare(`UPDATE clients SET ${sets.join(', ')} WHERE id = ?`).run(...values);
+    if (fields.name !== undefined) {
+      db.prepare('UPDATE request_logs SET client_name = ? WHERE client_id = ?').run(fields.name, id);
+    }
+  })();
 
   return decodeClient(db.prepare(`SELECT ${CLIENT_COLUMNS} FROM clients WHERE id = ?`).get(id));
 }

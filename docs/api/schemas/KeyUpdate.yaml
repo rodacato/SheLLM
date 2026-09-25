@@ -1,5 +1,11 @@
 type: object
 properties:
+  name:
+    type: string
+    minLength: 1
+    description: >
+      Renames the key. Must be unique. The key's request logs are relabelled with it, so its
+      history follows the key.
   rpm:
     type: integer
     minimum: 1

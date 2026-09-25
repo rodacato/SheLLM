@@ -91,7 +91,11 @@ router.patch('/keys/:id', (req, res) => {
     return sendError(res, invalidRequest('Invalid key id'), req.requestId);
   }
 
-  const { rpm, models, origins, active, expires_at, description } = req.body || {};
+  const { name, rpm, models, origins, active, expires_at, description } = req.body || {};
+
+  if (name !== undefined && (typeof name !== 'string' || name.trim().length === 0)) {
+    return sendError(res, invalidRequest('Field "name" must be a non-empty string'), req.requestId);
+  }
 
   if (rpm !== undefined && (typeof rpm !== 'number' || !Number.isInteger(rpm) || rpm < 1)) {
     return sendError(res, invalidRequest('Field "rpm" must be a positive integer'), req.requestId);
@@ -114,7 +118,23 @@ router.patch('/keys/:id', (req, res) => {
   const originsError = validateOrigins(origins);
   if (originsError) return sendError(res, originsError, req.requestId);
 
-  const updated = updateClient(id, { rpm, models, origins, active, expires_at, description: description !== undefined ? (description?.trim() || null) : undefined });
+  let updated;
+  try {
+    updated = updateClient(id, {
+      name: name?.trim(),
+      rpm,
+      models,
+      origins,
+      active,
+      expires_at,
+      description: description !== undefined ? (description?.trim() || null) : undefined,
+    });
+  } catch (err) {
+    if (err.message && err.message.includes('UNIQUE')) {
+      return sendError(res, invalidRequest(`Client name "${name.trim()}" already exists`), req.requestId);
+    }
+    throw err;
+  }
   if (!updated) {
     return sendError(res, { status: 404, code: 'not_found', message: `Key id ${id} not found` }, req.requestId);
   }

@@ -226,6 +226,69 @@ describe('admin /admin/keys', () => {
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.body.object, 'list');
   });
+  describe('renaming a key', () => {
+    const createKey = async (name) => {
+      const res = await request(app)
+        .post('/admin/keys')
+        .set('Authorization', `Basic ${adminCreds}`)
+        .send({ name })
+        .expect(201);
+      return res.body.key.id;
+    };
+
+    const rename = (id, name) => request(app)
+      .patch(`/admin/keys/${id}`)
+      .set('Authorization', `Basic ${adminCreds}`)
+      .send({ name });
+
+    it('renames the key and keeps its other fields', async () => {
+      const id = await createKey('before-rename');
+
+      const res = await rename(id, '  after-rename  ');
+
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(res.body.key.name, 'after-rename');
+      assert.strictEqual(res.body.key.rpm, 10);
+    });
+
+    it('relabels the key\'s logs so filtering by the new name finds its history', async () => {
+      const id = await createKey('history-old');
+      const otherId = await createKey('history-bystander');
+      const { insertRequestLog } = require('../../src/db');
+      insertRequestLog({ client_id: id, client_name: 'history-old', status: 200 });
+      insertRequestLog({ client_id: otherId, client_name: 'history-bystander', status: 200 });
+
+      await rename(id, 'history-new').expect(200);
+
+      const renamed = await request(app).get('/admin/logs?client=history-new').set('Authorization', `Basic ${adminCreds}`);
+      const stale = await request(app).get('/admin/logs?client=history-old').set('Authorization', `Basic ${adminCreds}`);
+      const bystander = await request(app).get('/admin/logs?client=history-bystander').set('Authorization', `Basic ${adminCreds}`);
+      assert.strictEqual(renamed.body.total, 1);
+      assert.strictEqual(stale.body.total, 0);
+      assert.strictEqual(bystander.body.total, 1, 'another key\'s logs are untouched');
+    });
+
+    it('rejects a name another key already has, and leaves the key as it was', async () => {
+      await createKey('taken-name');
+      const id = await createKey('wants-taken-name');
+
+      const res = await rename(id, 'taken-name');
+
+      assert.strictEqual(res.status, 400);
+      assert.match(res.body.message, /already exists/);
+      const list = await request(app).get('/admin/keys').set('Authorization', `Basic ${adminCreds}`);
+      assert.strictEqual(list.body.keys.find((k) => k.id === id).name, 'wants-taken-name');
+    });
+
+    it('rejects a blank name', async () => {
+      const id = await createKey('not-blankable');
+
+      const res = await rename(id, '   ');
+
+      assert.strictEqual(res.status, 400);
+    });
+  });
+
   describe('usage per key', () => {
     it('reports requests, spend and last use for a key', async () => {
       const created = await request(app)
