@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.16.0] - 2026-09-25
+
+### Added
+
+- **providers:** send prompts on stdin and drop the 50,000-character cap
+- **codex:** honour reasoning_effort, and run minimal as low on both
+- **claude:** run at medium reasoning effort, and let a request set it
+
+### Fixed
+
+- **usage:** count cached input in prompt_tokens, and report reasoning apart
+- **stream:** write an SSE keepalive while the model is silent
+
+### Testing
+
+- **queue:** pin the clock where a test asserts zero queued time
+
+
 ## [1.15.0] - 2026-09-25
 
 ### Added
@@ -942,7 +960,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.15.0...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.16.0...HEAD
+[1.16.0]: https://github.com/rodacato/SheLLM/compare/v1.15.0...v1.16.0
 [1.15.0]: https://github.com/rodacato/SheLLM/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/rodacato/SheLLM/compare/v1.13.0...v1.14.0
 [1.13.0]: https://github.com/rodacato/SheLLM/compare/v1.12.0...v1.13.0
