@@ -31,7 +31,8 @@ describe('what the queue tells a caller about its wait', () => {
   });
 
   it('reports position 0 for a request that never waits', async () => {
-    const queue = new RequestQueue();
+    // A fixed clock: on a slow runner the real one can cross a millisecond inside enqueue.
+    const queue = new RequestQueue(() => 1_000_000);
     const seen = await queue.enqueue(({ position, queued_ms }) => ({ position, queued_ms }));
 
     assert.equal(seen.position, 0);
