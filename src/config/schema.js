@@ -57,8 +57,9 @@ module.exports = {
     describe: 'Long-lived Claude token from `claude setup-token`. Optional when the CLI is logged in for this user.',
   },
   TIMEOUT_MS: {
-    section: 'Providers', type: 'int', default: 120000, since: 'v0.1.0', reload: 'live', prominent: true,
-    describe: 'Max time (ms) to wait for a CLI process before killing it',
+    section: 'Providers', type: 'int', default: 300000, since: 'v0.1.0', reload: 'live', prominent: true,
+    describe: `Max time (ms) to wait for a CLI process before killing it. A proxy in front with a
+      shorter read timeout cuts a non-streaming request first; stream long answers.`,
   },
   SHELLM_CLAUDE_SKIP_PERMISSIONS: {
     section: 'Providers', type: 'bool', default: true, since: 'v0.4.0', reload: 'live',

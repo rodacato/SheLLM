@@ -40,7 +40,7 @@ const BEFORE = {
   SHELLM_TLS_KEY: null,
   SHELLM_TRUST_PROXY: null,
   SHELLM_TZ: null,
-  TIMEOUT_MS: 120000,
+  TIMEOUT_MS: 300000,
 };
 
 // Settings born after the migration, with the default they were introduced with.

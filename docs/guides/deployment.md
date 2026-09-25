@@ -112,6 +112,9 @@ SheLLM listens on loopback only. Put it behind something that terminates TLS and
 
 - **Cloudflare Tunnel** — `cloudflared` on the same host, with `service: http://127.0.0.1:6100`.
   No inbound ports, TLS at the edge, and Cloudflare Access in front of `/admin/*` if you expose it.
+  Cloudflare returns 524 when the first byte takes more than 100 s, and only Enterprise can raise
+  that, so a client whose answers take longer must send `stream: true`. Any other proxy's read
+  timeout should be at least `TIMEOUT_MS`, or it cuts the request while the CLI keeps spending quota.
 - **A reverse proxy** you already run (Caddy, nginx) on the same machine.
 - **A private network** (Tailscale, WireGuard) when only your own devices call it.
 
@@ -363,7 +366,7 @@ ssh root@your-server 'bash -s -- --purge' < scripts/setup/vps-uninstall.sh # rem
 | `doctor` says the config is readable by other users | `chmod 600 /home/shellmer/.config/shellm/env` |
 | `Claude login: not logged in` | The token expired or was never set. Repeat step 2 and put it in `CLAUDE_CODE_OAUTH_TOKEN` |
 | `503 provider_unavailable` | The provider is disabled, unauthenticated, or its circuit is open after repeated failures. `shellm doctor --live` says which |
-| `504 timeout` | The CLI outlived `TIMEOUT_MS` (default 120 s). Cold starts are 2–4 s, so a timeout usually means the provider is degraded |
+| `504 timeout` | The CLI outlived `TIMEOUT_MS` (default 300 s). Cold starts are 2–4 s, so a timeout usually means the provider is degraded |
 | `429 rate_limited` | Your own limit (`SHELLM_GLOBAL_RPM`, or the key's `rpm`), not the provider's |
 | The service starts and exits immediately | `journalctl -u shellm -n 50`. A missing config file is the common cause: run `shellm init` as `shellmer` |
 | `Failed to set up mount namespacing` and the service will not start | A path the unit grants does not exist. The unit tolerates `/run/shellm` being absent; a hand-edited `ReadWritePaths` naming something else does not |
