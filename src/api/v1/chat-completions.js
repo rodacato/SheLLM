@@ -1,4 +1,5 @@
 const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../../routing');
+const { jobFor } = require('../../infra/queue');
 const { sanitize } = require('../../middleware/sanitize');
 const { invalidRequest, fromCatchable, sendOpenAIError } = require('../../errors');
 const { initSSE, announceQueued, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../lib/sse');
@@ -276,7 +277,7 @@ async function chatCompletionsHandler(req, res) {
 
   try {
     const allowFallback = req.headers['x-shellm-allow-fallback'] === 'true' || undefined;
-    const result = await route({ model, prompt, parts, system, max_tokens, temperature, top_p, response_format, request_id: req.requestId, allowFallback });
+    const result = await route({ model, prompt, parts, system, max_tokens, temperature, top_p, response_format, request_id: req.requestId, allowFallback, job: jobFor(req) });
     res.locals.provider = result.provider;
     res.locals.queued_ms = result.queued_ms ?? null;
     res.locals.cost_usd = result.cost_usd ?? null;
@@ -457,7 +458,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
         sendSSEDone(res);
         logger.debug({ event: 'stream_complete', ttft_ms: ttftMs, request_id: req.requestId });
       }
-    }, `${provider.name} · ${model}`, { onQueued: (position) => { stopQueueNotices = announceQueued(res, position); } });
+    }, { ...jobFor(req, { stream: true }), provider: provider.name, model }, { onQueued: (position) => { stopQueueNotices = announceQueued(res, position); } });
   } catch (err) {
     logger.debug({ event: 'stream_error', error: err.message, request_id: req.requestId });
     if (!ac.signal.aborted && !res.writableEnded) {

@@ -1,4 +1,5 @@
 const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../../routing');
+const { jobFor } = require('../../infra/queue');
 const { sanitize } = require('../../middleware/sanitize');
 const { invalidRequest, fromCatchable, sendAnthropicError } = require('../../errors');
 const { initSSE, announceQueued } = require('../../lib/sse');
@@ -213,7 +214,7 @@ async function messagesHandler(req, res) {
 
   try {
     const allowFallback = req.headers['x-shellm-allow-fallback'] === 'true' || undefined;
-    const result = await route({ model, prompt, system, max_tokens, temperature, top_p, request_id: req.requestId, allowFallback });
+    const result = await route({ model, prompt, system, max_tokens, temperature, top_p, request_id: req.requestId, allowFallback, job: jobFor(req) });
     res.locals.provider = result.provider;
     res.locals.queued_ms = result.queued_ms ?? null;
     res.locals.cost_usd = result.cost_usd ?? null;
@@ -368,7 +369,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
         sendMessageStop(res);
         logger.debug({ event: 'stream_complete', format: 'anthropic', ttft_ms: ttftMs, request_id: req.requestId });
       }
-    }, `${provider.name} · ${model}`, { onQueued: (position) => { stopQueueNotices = announceQueued(res, position); } });
+    }, { ...jobFor(req, { stream: true }), provider: provider.name, model }, { onQueued: (position) => { stopQueueNotices = announceQueued(res, position); } });
   } catch (err) {
     recordFailure(provider.name);
     logger.debug({ event: 'stream_error', format: 'anthropic', error: err.message, request_id: req.requestId });

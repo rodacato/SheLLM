@@ -140,6 +140,42 @@
                   <th class="px-6 py-4 text-left text-[11px] font-headline font-bold uppercase tracking-[0.08em] text-outline">Cost</th>
                 </tr>
               </thead>
+              <!-- Live from the queue, not from the log: a request writes its row only when it
+                   finishes, so a long one is otherwise invisible here. No filter applies to it. -->
+              <tbody x-show="offset === 0 && healthRead === 'ok' && inFlight.length > 0" x-cloak
+                class="bg-surface-container-low border-b border-outline-variant/30">
+                <tr>
+                  <td colspan="9" class="px-6 py-2.5">
+                    <span class="text-[11px] font-headline font-bold uppercase tracking-[0.08em] text-primary-container"
+                      x-text="'In flight · ' + inFlight.length"></span>
+                    <span class="ml-2 text-[10px] font-mono text-outline">live from the queue — not filtered, gone on restart</span>
+                  </td>
+                </tr>
+                <template x-for="job in inFlight" :key="job.request_id + job.state">
+                  <tr class="border-t border-outline-variant/20">
+                    <td class="px-6 py-4 text-on-surface font-mono text-sm whitespace-nowrap" x-text="formatTime(jobStartedAt(job))"></td>
+                    <td class="px-6 py-4">
+                      <span class="inline-block border px-1.5 py-0.5 text-[10px] font-bold font-mono uppercase whitespace-nowrap"
+                        :class="job.state === 'queued' ? 'border-status-warn text-status-warn' : 'border-primary-container text-primary-container'"
+                        x-text="inFlightState(job)"></span>
+                    </td>
+                    <td class="px-6 py-4 font-mono text-[11px] whitespace-nowrap">
+                      <span class="text-outline">POST</span>
+                      <span class="text-on-surface-variant ml-1" x-text="job.path"></span>
+                    </td>
+                    <td class="px-6 py-4 text-on-surface text-sm font-medium" x-text="job.client || '-'"></td>
+                    <td class="px-6 py-4 text-outline text-sm" x-text="job.provider"></td>
+                    <td class="px-6 py-4 text-sm font-headline text-primary-container" x-text="job.model"></td>
+                    <td class="px-6 py-4 font-mono text-sm">
+                      <span :class="jobNearTimeout(job) ? 'text-status-fail' : (job.state === 'queued' ? 'text-status-warn' : 'text-primary-container')"
+                        x-text="formatAge(jobAge(job))"></span>
+                      <span x-show="job.stream" class="text-[10px] text-outline block">stream</span>
+                    </td>
+                    <td class="px-6 py-4 text-outline font-mono text-sm">-</td>
+                    <td class="px-6 py-4 text-outline font-mono text-sm">-</td>
+                  </tr>
+                </template>
+              </tbody>
               <tbody>
                 <tr x-show="logs.length === 0">
                   <td colspan="9" class="px-6 py-10 text-center font-mono text-sm"

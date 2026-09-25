@@ -30,34 +30,42 @@ function loadPage(file, factory, extra = {}) {
   return context[factory]();
 }
 
-describe('a wedged request is visible on the Overview queue panel', () => {
-  const page = () => loadPage('overview.js', 'overviewPage', { fetch: async () => {} });
-  const withQueue = (q) => { const p = page(); p.health = { queue: q }; return p; };
+function appGlobals() {
+  const context = vm.createContext({
+    console, Intl, Date, Math, URLSearchParams, Promise,
+    Alpine: { store: () => ({}) },
+    document: { documentElement: {}, addEventListener: () => {} },
+    navigator: { onLine: true }, setInterval: () => 0, clearInterval: () => {},
+    location: { pathname: '/admin/dashboard', hash: '' }, window: { addEventListener: () => {} },
+  });
+  vm.runInContext(fs.readFileSync(path.join(JS_DIR, 'app.js'), 'utf8'), context, { filename: 'app.js' });
+  return context;
+}
 
-  it('says nothing when nothing is running', () => {
-    assert.strictEqual(withQueue({ active: 0, in_flight: [], oldest_age_ms: null }).queueVerdict(), '');
+describe('a request in flight is visible, with whose it is and how long it has run', () => {
+  const g = appGlobals();
+
+  it('ages a job from the last health read, so the list ticks between polls', () => {
+    assert.strictEqual(g.inFlightAge({ age_ms: 60000 }, 1_000_000, 1_012_000), 72000);
+    assert.strictEqual(g.inFlightAge({ age_ms: 60000 }, 1_000_000, 999_000), 60000, 'a clock behind the read never shrinks it');
   });
 
-  it('names the age and what is running it', () => {
-    const p = withQueue({ active: 1, in_flight: [{ age_ms: 540000, label: 'claude · claude-fable' }], oldest_age_ms: 540000 });
-    const v = p.queueVerdict();
-    assert.ok(v.includes('claude · claude-fable'), `expected the label, got ${JSON.stringify(v)}`);
-    assert.ok(/9\.0s|540|9 min|540\.0s/.test(v) || v.includes('540.0s'), `expected the age, got ${JSON.stringify(v)}`);
+  it('reads minutes as minutes', () => {
+    assert.strictEqual(g.formatAge(51900), '51.9s');
+    assert.strictEqual(g.formatAge(192000), '3m 12s');
   });
 
-  it('calls nine minutes what it is, and two seconds what it is', () => {
-    const wedged = withQueue({ in_flight: [{ age_ms: 540000, label: null }], oldest_age_ms: 540000 });
-    const fine = withQueue({ in_flight: [{ age_ms: 2000, label: null }], oldest_age_ms: 2000 });
-
-    assert.ok(wedged.queueVerdict().includes('long past a normal call'));
-    assert.ok(!fine.queueVerdict().includes('long past a normal call'));
-    assert.notStrictEqual(wedged.queueVerdict(), fine.queueVerdict());
+  it('names a queued request by its place in line', () => {
+    assert.strictEqual(g.inFlightState({ state: 'running' }), 'Running');
+    assert.strictEqual(g.inFlightState({ state: 'queued', position: 2 }), 'Queued #2');
   });
 
-  it('flags the stall separately, so the line can be coloured', () => {
-    assert.strictEqual(withQueue({ oldest_age_ms: 540000, in_flight: [{ age_ms: 540000 }] }).queueIsStalling(), true);
-    assert.strictEqual(withQueue({ oldest_age_ms: 2000, in_flight: [{ age_ms: 2000 }] }).queueIsStalling(), false);
-    assert.strictEqual(withQueue({ oldest_age_ms: null, in_flight: [] }).queueIsStalling(), false);
+  it('flags a request close to the timeout that kills it, not one past a fixed two minutes', () => {
+    const running = { state: 'running' };
+    assert.strictEqual(g.isNearTimeout(running, 192000, 300000), false, 'a 3-minute stream under a 5-minute limit is fine');
+    assert.strictEqual(g.isNearTimeout(running, 250000, 300000), true);
+    assert.strictEqual(g.isNearTimeout({ state: 'queued' }, 250000, 300000), false, 'waiting in line is not the CLI hanging');
+    assert.strictEqual(g.isNearTimeout(running, 250000, undefined), false, 'an older server that sends no limit flags nothing');
   });
 });
 

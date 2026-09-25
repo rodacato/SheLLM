@@ -32,7 +32,7 @@ describe('the queue can say how long each in-flight request has been running', (
     const q = new RequestQueue(c.now);
     const job = deferred();
 
-    const running = q.enqueue(() => job.promise, 'claude · claude-fable');
+    const running = q.enqueue(() => job.promise, { provider: 'claude', model: 'claude-fable', client: 'Knotty' });
     await Promise.resolve();
 
     assert.strictEqual(q.stats.in_flight.length, 1);
@@ -40,7 +40,9 @@ describe('the queue can say how long each in-flight request has been running', (
 
     c.advance(9 * 60 * 1000);
     assert.strictEqual(q.stats.oldest_age_ms, 540000, 'nine minutes in, the age says nine minutes');
-    assert.strictEqual(q.stats.in_flight[0].label, 'claude · claude-fable');
+    assert.strictEqual(q.stats.in_flight[0].model, 'claude-fable');
+    assert.strictEqual(q.stats.in_flight[0].client, 'Knotty', 'whose it is, not only what runs it');
+    assert.strictEqual(q.stats.in_flight[0].state, 'running');
 
     job.resolve('done');
     assert.strictEqual(await running, 'done');
@@ -76,16 +78,16 @@ describe('the queue can say how long each in-flight request has been running', (
 
     const first = deferred();
     const second = deferred();
-    const a = q.enqueue(() => first.promise, 'old one');
+    const a = q.enqueue(() => first.promise, { request_id: 'old one' });
     await Promise.resolve();
     c.advance(300000);
-    const b = q.enqueue(() => second.promise, 'new one');
+    const b = q.enqueue(() => second.promise, { request_id: 'new one' });
     await Promise.resolve();
     c.advance(1000);
 
     const flight = q.stats.in_flight;
     assert.strictEqual(flight.length, 2);
-    assert.strictEqual(flight[0].label, 'old one');
+    assert.strictEqual(flight[0].request_id, 'old one');
     assert.strictEqual(flight[0].age_ms, 301000);
     assert.strictEqual(flight[1].age_ms, 1000);
     assert.strictEqual(q.stats.oldest_age_ms, 301000);
@@ -107,5 +109,28 @@ describe('the queue can say how long each in-flight request has been running', (
 
     job.resolve(null);
     await running;
+  });
+
+  it('lists a request waiting for a slot after the running ones, with its place in line', async () => {
+    const c = clock();
+    const q = new RequestQueue(c.now);
+    process.env.MAX_CONCURRENT = '1';
+    const blocker = deferred();
+
+    const running = q.enqueue(() => blocker.promise, { request_id: 'running', client: 'Knotty', stream: true });
+    await Promise.resolve();
+    const waiting = q.enqueue(() => null, { request_id: 'waiting', client: 'Benchmark' });
+    c.advance(8000);
+
+    const [first, second] = q.stats.in_flight;
+    assert.deepStrictEqual([first.request_id, first.state], ['running', 'running']);
+    assert.deepStrictEqual([second.request_id, second.state, second.position, second.age_ms], ['waiting', 'queued', 1, 8000]);
+    assert.strictEqual(second.client, 'Benchmark');
+    assert.strictEqual(q.stats.oldest_age_ms, 8000, 'a queued request is not the one that has been running');
+
+    blocker.resolve(null);
+    await Promise.all([running, waiting]);
+    assert.deepStrictEqual(q.stats.in_flight, [], 'neither outlives its request');
+    delete process.env.MAX_CONCURRENT;
   });
 });

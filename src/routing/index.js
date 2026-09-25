@@ -9,10 +9,10 @@ const config = require('../config');
 
 const FALLBACK_ENABLED = config.get('SHELLM_FALLBACK_ENABLED');
 
-async function route({ model, prompt, parts, system, max_tokens, temperature, top_p, response_format, request_id, allowFallback }) {
+async function route({ model, prompt, parts, system, max_tokens, temperature, top_p, response_format, request_id, allowFallback, job }) {
   const useFallback = allowFallback ?? FALLBACK_ENABLED;
   if (useFallback) {
-    return routeWithFallback({ model, prompt, parts, system, max_tokens, temperature, top_p, response_format, request_id });
+    return routeWithFallback({ model, prompt, parts, system, max_tokens, temperature, top_p, response_format, request_id, job });
   }
 
   const provider = selectProvider(model);
@@ -23,7 +23,7 @@ async function route({ model, prompt, parts, system, max_tokens, temperature, to
     result = await queue.enqueue(({ queued_ms, position }) => {
       return provider.chat({ prompt, parts, system, max_tokens, temperature, top_p, response_format, model })
         .then((r) => ({ ...r, queued_ms, queue_position: position }));
-    }, `${provider.name} · ${model || provider.name}`);
+    }, { ...job, provider: provider.name, model: model || provider.name });
     recordSuccess(provider.name);
   } catch (err) {
     if (!isClientError(err)) recordFailure(provider.name);
