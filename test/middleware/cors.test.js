@@ -95,6 +95,16 @@ describe('CORS on /v1', () => {
     assert.match(res.headers.vary, /Origin/);
   });
 
+  it('puts the headers on a body the parser rejects, so the browser can read the error', async () => {
+    const malformed = await request(app).post('/v1/messages').set('Origin', ALLOWED)
+      .set('Content-Type', 'application/json').send('{bad').expect(400);
+    const oversized = await request(app).post('/v1/messages').set('Origin', ALLOWED)
+      .set('Content-Type', 'application/json').send(JSON.stringify({ pad: 'a'.repeat(300_000) })).expect(413);
+
+    assert.equal(malformed.headers['access-control-allow-origin'], ALLOWED);
+    assert.equal(oversized.headers['access-control-allow-origin'], ALLOWED);
+  });
+
   it('varies on Origin even when the origin is refused, so a cache cannot cross the two', async () => {
     const res = await request(app).get('/v1/models').set('Origin', OTHER).expect(401);
     assert.equal(res.headers['access-control-allow-origin'], undefined);

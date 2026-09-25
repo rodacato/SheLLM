@@ -56,12 +56,14 @@ function parseChatBody(req, res, next) {
 }
 
 // --- Global middleware (order matters) ---
-app.use((req, res, next) => (req.path === CHAT_PATH ? next() : smallJson(req, res, next)));
-app.use(requestId);
 app.use(requestLogger);
 
-// Before the auth routes: a browser sends no Authorization header on a preflight.
+// Before the body parser, so a 400 or 413 from it still reaches the browser instead of surfacing
+// as "Failed to fetch"; before the auth routes, because a preflight carries no Authorization.
 app.use('/v1', corsV1);
+
+app.use((req, res, next) => (req.path === CHAT_PATH ? next() : smallJson(req, res, next)));
+app.use(requestId);
 
 // Validate Content-Type on POST/PATCH requests with body. The login form posts urlencoded.
 app.use((req, res, next) => {
