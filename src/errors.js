@@ -30,6 +30,10 @@ function modelNotFound(model) {
   return appError(404, 'model_not_found', `The model ${model} does not exist or you do not have access to it`);
 }
 
+function contextLengthExceeded(model, detail) {
+  return appError(400, 'context_length_exceeded', `${model}: ${detail || 'the prompt is longer than the model can take'}`.slice(0, 500));
+}
+
 function cliFailed(provider, stderr) {
   return appError(502, 'cli_failed', `${provider}: ${stderr}`.slice(0, 500));
 }
@@ -83,6 +87,7 @@ const CODE_TO_TYPE = {
   rate_limited: 'rate_limit_error',
   origin_not_allowed: 'invalid_request_error',
   model_not_found: 'invalid_request_error',
+  context_length_exceeded: 'invalid_request_error',
   not_found: 'invalid_request_error',
 };
 
@@ -104,6 +109,7 @@ const CODE_TO_ANTHROPIC_TYPE = {
   rate_limited: 'rate_limit_error',
   origin_not_allowed: 'permission_error',
   model_not_found: 'not_found_error',
+  context_length_exceeded: 'invalid_request_error',
   not_found: 'not_found_error',
 };
 
@@ -133,6 +139,7 @@ module.exports = {
   authRequired,
   rateLimited,
   modelNotFound,
+  contextLengthExceeded,
   notFound,
   cliFailed,
   providerUnavailable,

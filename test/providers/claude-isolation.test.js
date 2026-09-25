@@ -20,22 +20,20 @@ describe('claude isolation flags', () => {
     }
   });
 
-  it('keeps every flag before the -- separator, so none is read as the prompt', () => {
+  it('puts nothing the caller wrote on the command line, where each argument is capped at 128 KiB', () => {
     for (const args of [claude.buildArgs(request), claude.buildStreamArgs(request)]) {
-      const separator = args.indexOf('--');
-      for (const flag of claude.ISOLATION_ARGS) {
-        if (!flag.startsWith('--')) continue;
-        assert.ok(args.indexOf(flag) < separator, `${flag} must precede the separator`);
-      }
-      assert.equal(args.at(-1), request.prompt);
-      assert.equal(args.length - 1, separator + 1, 'the prompt is the only argument after --');
+      assert.ok(!args.includes(request.prompt), 'the prompt goes to stdin');
+      assert.ok(!args.includes(request.system), 'the system prompt goes to a file');
+      assert.ok(!args.includes('--'), 'with no prompt argument there is nothing to separate');
     }
+    assert.equal(claude.buildInput(request), request.prompt);
   });
 
-  it('still carries the model and system prompt alongside them', () => {
+  it('still carries the model, and names the file the system prompt is written to', () => {
     const args = claude.buildArgs(request);
     assert.equal(flagValue(args, '--model'), 'haiku');
-    assert.equal(flagValue(args, '--system-prompt'), request.system);
+    assert.equal(flagValue(args, '--system-prompt-file'), claude.SYSTEM_FILE);
+    assert.deepEqual(claude.buildFiles(request), { [claude.SYSTEM_FILE]: request.system });
   });
 });
 

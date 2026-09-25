@@ -225,13 +225,14 @@ describe('/v1/chat/completions', () => {
     assert.match(res.body.error.message, /max_tokens/);
   });
 
-  it('rejects prompt exceeding 50000 chars', async () => {
-    const res = await post({
-      model: 'claude',
-      messages: [{ role: 'user', content: 'a'.repeat(50001) }],
-    });
-    assert.strictEqual(res.status, 400);
-    assert.match(res.body.error.message, /exceeds maximum length/);
+  it('hands the CLI a prompt past the 128 KiB a single argument can carry, whole, on stdin', async () => {
+    const prompt = 'a'.repeat(200 * 1024);
+    const res = await post({ model: 'claude', messages: [{ role: 'user', content: prompt }] });
+
+    assert.strictEqual(res.status, 200);
+    const [, args, options] = require('../../../src/providers/base.js').execute.mock.calls.at(-1).arguments;
+    assert.strictEqual(options.input, prompt);
+    assert.ok(!args.includes(prompt));
   });
 
   // --- Content as array (OpenAI content parts) ---

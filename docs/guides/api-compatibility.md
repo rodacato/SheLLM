@@ -63,6 +63,7 @@ message = client.messages.create(
 | `max_tokens` | **Accepted** | Integer 1-128000. Validated, then ignored — no CLI has a token-cap flag, so it does not shorten the answer |
 | `temperature` | **Accepted** | Number 0-2 |
 | `top_p` | **Accepted** | Number 0-1 |
+| `reasoning_effort` | **Supported** | `minimal`, `low`, `medium` or `high`; `minimal` runs as `low`, the floor both CLIs accept. Omitted, Claude uses `SHELLM_CLAUDE_EFFORT` (`medium`) and Codex its own configuration. Any other value is a 400 |
 | `stream` | **Supported** | `true` enables SSE streaming |
 | `response_format` | **Supported** | `{ type: "json_schema", json_schema: { name, schema, strict? } }`, `{ type: "json_object" }` or `{ type: "text" }`. `name` is 1–64 letters, digits, `_` or `-`; the schema is at most 100 KiB, because Claude takes it as one command-line argument. The answer is the JSON as a string in `choices[0].message.content`; streamed, it arrives as `delta.content` like any other answer |
 | `stop` | **Validated** | String or array of up to 4 strings. Validated but not passed to providers |
@@ -123,7 +124,7 @@ The claude and codex CLIs have no temperature flag, so SheLLM validates the valu
 
 ### 5. Token Usage
 
-- **Non-streaming**: Both endpoints return the token counts the CLI reports. Values may be `null` if the provider doesn't report them.
+- **Non-streaming**: Both endpoints return the token counts the CLI reports. `completion_tokens` includes the model's reasoning, which is billed as output. Values may be `null` if the provider doesn't report them.
 - **Streaming (Anthropic)**: `message_start` carries an *estimated* `input_tokens` (~4 chars per token) because the real count is not known when the stream opens. `message_delta` carries the CLI's own `output_tokens`, and falls back to the same estimate only if the provider reports none.
 
 ### 6. Content Format
@@ -188,6 +189,10 @@ Each endpoint returns errors in its respective API's format:
 }
 ```
 
+A prompt past the model's context window is a 400 `context_length_exceeded` carrying the CLI's own
+count, for example `limit 200000`. There is no separate character cap: the body limit and the
+model's window are the bounds.
+
 **Anthropic errors** (`/v1/messages`):
 ```json
 {
@@ -226,7 +231,9 @@ Not all SheLLM providers support all parameters equally:
 
 | Capability | Claude | Codex |
 |---|---|---|
-| System prompt | Native (`--system-prompt`) | Prepended to the prompt |
+| Prompt | stdin: plain text, or one stream-json message when it carries images. Never an argument, which Linux caps at 128 KiB | stdin (`-`), with the system prompt prepended |
+| System prompt | `--system-prompt-file`, the text in a `0600` file in the request's directory | Prepended to the prompt |
+| Reasoning effort | `--effort` | `-c model_reasoning_effort="<level>"` |
 | Temperature | Ignored — no CLI flag | Ignored — no CLI flag |
 | Top P | Ignored — no CLI flag | Ignored — no CLI flag |
 | Max tokens | Ignored — no CLI flag | Ignored — no CLI flag |

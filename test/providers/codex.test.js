@@ -15,6 +15,10 @@ describe('codex provider', () => {
     return JSON.parse(fs.readFileSync(path.join(fakeBin, 'codex.args.json'), 'utf8'));
   }
 
+  function stdinOf() {
+    return fs.readFileSync(path.join(fakeBin, 'codex.stdin'), 'utf8');
+  }
+
   before(() => {
     assert.ok(!require.cache[require.resolve('../../src/providers/base')], 'base.js already captured the real PATH');
     fakeBin = fs.mkdtempSync(path.join(os.tmpdir(), 'shellm-fakebin-'));
@@ -24,6 +28,7 @@ describe('codex provider', () => {
 const fs = require('fs');
 const args = process.argv.slice(2);
 fs.writeFileSync(${JSON.stringify(path.join(fakeBin, 'codex.args.json'))}, JSON.stringify(args));
+fs.writeFileSync(${JSON.stringify(path.join(fakeBin, 'codex.stdin'))}, args.at(-1) === '-' ? fs.readFileSync(0, 'utf8') : '');
 const model = args[args.indexOf('-m') + 1];
 const file = model === 'over-quota' ? 'exec-json-usage-limit.constructed.jsonl'
   : model === 'no-such-model' ? 'exec-json-unknown-model.jsonl'
@@ -50,7 +55,8 @@ process.exit(file === 'exec-json-unknown-model.jsonl' ? 1 : 0);
     assert.equal(args[args.indexOf('-s') + 1], 'read-only');
     assert.ok(args.includes('--ephemeral'), 'no session files survive the request');
     assert.ok(args.includes('--skip-git-repo-check'));
-    assert.equal(args.at(-1), 'ping', 'the prompt is the last argument');
+    assert.equal(args.at(-1), '-', 'the CLI reads the prompt from stdin');
+    assert.equal(stdinOf(), 'ping');
   });
 
   // Leaving the CLI to pick used to look like the respectful default. It is not: with no -m the
@@ -67,7 +73,7 @@ process.exit(file === 'exec-json-unknown-model.jsonl' ? 1 : 0);
 
   it('prepends the system prompt and the JSON-mode instruction the CLI has no flag for', async () => {
     await codex.chat({ prompt: 'ping', system: 'Be terse.', response_format: { type: 'json_object' }, model: 'codex' });
-    const sent = argsOf().at(-1);
+    const sent = stdinOf();
     assert.match(sent, /^Be terse\.\n\nRespond with valid JSON only\.\n\n---\n\nping$/);
   });
 

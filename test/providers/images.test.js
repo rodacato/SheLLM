@@ -68,7 +68,8 @@ const files = images.map((name) => ({
   mode: fs.statSync(name).mode & 0o777,
   base64: fs.readFileSync(name).toString('base64'),
 }));
-fs.writeFileSync(${JSON.stringify(fakeBin)} + '/codex.run.json', JSON.stringify({ args, cwd: process.cwd(), files }));
+const stdin = args.at(-1) === '-' ? fs.readFileSync(0, 'utf8') : '';
+fs.writeFileSync(${JSON.stringify(fakeBin)} + '/codex.run.json', JSON.stringify({ args, cwd: process.cwd(), files, stdin }));
 const model = args[args.indexOf('-m') + 1];
 const file = model === 'fails' ? 'exec-json-unknown-model.jsonl' : 'exec-json-image.jsonl';
 process.stdout.write(fs.readFileSync(${JSON.stringify(CODEX_FIXTURES)} + '/' + file, 'utf8'));
@@ -121,10 +122,11 @@ else process.exit(model === 'fails' ? 1 : 0);
       assert.equal(JSON.parse(stdin).message.content.length, 4);
     });
 
-    it('leaves a request without images exactly as before: prompt argument, stdin closed', () => {
+    it('sends a request without images as plain text on stdin, with plain json output', () => {
       const args = claude.buildArgs({ prompt: 'hello' });
-      assert.deepEqual(args.slice(-4), ['--output-format', 'json', '--', 'hello']);
-      assert.equal(claude.buildInput({ prompt: 'hello' }), undefined);
+      assert.deepEqual(args.slice(-2), ['--output-format', 'json']);
+      assert.ok(!args.includes('--input-format'));
+      assert.equal(claude.buildInput({ prompt: 'hello' }), 'hello');
     });
   });
 
@@ -137,7 +139,8 @@ else process.exit(model === 'fails' ? 1 : 0);
       assert.deepEqual(run.files.map((f) => f.name), ['image-1.png', 'image-2.jpg']);
       assert.deepEqual(run.files.map((f) => f.base64), [PNG, JPEG], 'the file holds the decoded bytes');
       assert.ok(run.files.every((f) => f.mode === 0o600));
-      assert.deepEqual(run.args.slice(-2), ['--', prompt], 'the prompt is not swallowed by the last -i');
+      assert.deepEqual(run.args.slice(-2), ['--', '-'], 'the stdin marker is not swallowed by the last -i');
+      assert.equal(run.stdin, prompt);
       assert.ok(await waitUntilGone(run.cwd));
     });
 

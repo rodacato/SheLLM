@@ -205,6 +205,7 @@ format of the endpoint you called:
 | Status | Code | Meaning |
 |---|---|---|
 | 400 | `invalid_request` | Bad input |
+| 400 | `context_length_exceeded` | The prompt is past the model's context window |
 | 401 | `auth_required` | Missing or invalid key |
 | 403 | `origin_not_allowed` | The key is scoped to other browser origins |
 | 404 | `model_not_found` | The CLI does not know that model |

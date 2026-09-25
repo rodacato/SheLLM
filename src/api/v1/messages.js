@@ -9,8 +9,6 @@ const {
   sendContentBlockStop, sendMessageDelta, sendMessageStop, sendStreamError,
 } = require('../../lib/sse-anthropic');
 
-const MAX_PROMPT_LENGTH = 50000;
-
 /**
  * Normalize Anthropic content to a plain string.
  * Content can be a string or an array of content blocks.
@@ -187,14 +185,6 @@ function preflight(req, res) {
   let { prompt, system } = extracted;
   prompt = sanitize(prompt);
   if (system) system = sanitize(system);
-
-
-  if (prompt.length > MAX_PROMPT_LENGTH) {
-    sendAnthropicError(res, invalidRequest(
-      `Prompt exceeds maximum length of ${MAX_PROMPT_LENGTH} characters (got ${prompt.length})`
-    ));
-    return null;
-  }
 
   return { model, max_tokens, temperature, top_p, prompt, system };
 }

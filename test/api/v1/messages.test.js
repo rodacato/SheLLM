@@ -263,18 +263,14 @@ describe('/v1/messages', () => {
     assert.match(res.body.error.message, /text/);
   });
 
-  it('rejects prompt exceeding 50000 chars', async () => {
-    const res = await request(app)
+  it('bounds a prompt by the body limit, not by a character count', async () => {
+    const send = (content) => request(app)
       .post('/v1/messages')
       .set('Authorization', `Bearer ${testKey}`)
-      .send({
-        model: 'claude',
-        max_tokens: 1024,
-        messages: [{ role: 'user', content: 'a'.repeat(50001) }],
-      });
+      .send({ model: 'claude', max_tokens: 1024, messages: [{ role: 'user', content }] });
 
-    assert.strictEqual(res.status, 400);
-    assert.match(res.body.error.message, /exceeds maximum length/);
+    assert.strictEqual((await send('a'.repeat(100_000))).status, 200, 'twice the old 50,000-character cap');
+    assert.strictEqual((await send('a'.repeat(300_000))).status, 413, 'past the 256 kB body limit');
   });
 
   // --- Temperature / top_p validation ---

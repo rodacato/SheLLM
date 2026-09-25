@@ -36,7 +36,7 @@ setTimeout(() => process.stdout.write(out.slice(cut)), 20);
   it('asks the CLI for stream-json, which is the only mode that emits incrementally', () => {
     const args = claude.buildStreamArgs({ prompt: 'hi', model: 'claude' });
     assert.deepEqual(
-      args.slice(args.indexOf('--output-format'), args.indexOf('--')),
+      args.slice(args.indexOf('--output-format')),
       ['--output-format', 'stream-json', '--verbose', '--include-partial-messages'],
     );
     assert.ok(!claude.buildArgs({ prompt: 'hi', model: 'claude' }).includes('stream-json'));

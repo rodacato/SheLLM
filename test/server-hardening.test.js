@@ -135,16 +135,6 @@ describe('server hardening (Phase 7)', () => {
     assert.strictEqual(typeof app.gracefulShutdown, 'function');
   });
 
-  it('rejects prompt exceeding 50000 chars', async () => {
-    const res = await request(app)
-      .post('/v1/chat/completions')
-      .set('Authorization', `Bearer ${testKey}`)
-      .send({ model: 'claude', messages: [{ role: 'user', content: 'a'.repeat(50001) }] });
-
-    assert.strictEqual(res.status, 400);
-    assert.match(res.body.error.message, /exceeds maximum length/);
-  });
-
   it('rejects invalid max_tokens', async () => {
     const res = await request(app)
       .post('/v1/chat/completions')

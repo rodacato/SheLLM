@@ -10,7 +10,7 @@ describe('reasoning effort reaches each CLI in its own terms', () => {
     for (const effort of ['low', 'medium', 'high']) {
       const args = codex.buildArgs({ prompt: 'ping', model: 'codex', effort });
       assert.equal(configValue(args, 'model_reasoning_effort'), `model_reasoning_effort="${effort}"`);
-      assert.equal(args.at(-1), 'ping', 'the prompt stays last');
+      assert.equal(args.at(-1), '-', 'the stdin marker stays last');
     }
   });
 
