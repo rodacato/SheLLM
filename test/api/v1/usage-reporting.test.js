@@ -4,6 +4,16 @@ const { describe, it, mock, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 
+// What the claude CLI reports for a cached prompt: input_tokens is only the uncached remainder,
+// and output_tokens already includes the thinking.
+const CLI_USAGE = {
+  input_tokens: 11,
+  cache_creation_input_tokens: 100,
+  cache_read_input_tokens: 900,
+  output_tokens: 7,
+  output_tokens_details: { thinking_tokens: 5 },
+};
+
 function claudeStreamLines(...texts) {
   const deltas = texts.map((text) => JSON.stringify({
     type: 'stream_event',
@@ -12,7 +22,7 @@ function claudeStreamLines(...texts) {
   const result = JSON.stringify({
     type: 'result',
     total_cost_usd: 0.0042,
-    usage: { input_tokens: 11, output_tokens: 7 },
+    usage: CLI_USAGE,
   });
   return [...deltas, result].map((line) => `${line}\n`);
 }
@@ -45,7 +55,7 @@ describe('what a benchmark can read back', () => {
           stdout: JSON.stringify({
             result: 'measured reply',
             total_cost_usd: 0.0042,
-            usage: { input_tokens: 11, output_tokens: 7 },
+            usage: CLI_USAGE,
           }),
           stderr: '',
           duration_ms: 10,
@@ -102,6 +112,29 @@ describe('what a benchmark can read back', () => {
     assert.ok(res.body.x_shellm.cli_ms >= 0);
   });
 
+  it('counts every input token in prompt_tokens, as OpenAI does, with the cached ones and the reasoning broken out', async () => {
+    const res = await chat({ model: 'claude', messages: [{ role: 'user', content: 'hi' }] }).expect(200);
+
+    assert.deepEqual(res.body.usage, {
+      prompt_tokens: 1011,
+      completion_tokens: 7,
+      total_tokens: 1018,
+      prompt_tokens_details: { cached_tokens: 900 },
+      completion_tokens_details: { reasoning_tokens: 5 },
+    });
+  });
+
+  it('keeps Anthropic\'s own split on /v1/messages, where input_tokens excludes the cache', async () => {
+    const res = await messages({ model: 'claude', max_tokens: 32, messages: [{ role: 'user', content: 'hi' }] }).expect(200);
+
+    assert.deepEqual(res.body.usage, {
+      input_tokens: 11,
+      cache_creation_input_tokens: 100,
+      cache_read_input_tokens: 900,
+      output_tokens: 7,
+    });
+  });
+
   it('puts the same block on a buffered Anthropic response', async () => {
     const res = await messages({ model: 'claude', max_tokens: 32, messages: [{ role: 'user', content: 'hi' }] }).expect(200);
 
@@ -132,9 +165,13 @@ describe('what a benchmark can read back', () => {
     const usageChunk = chunks[chunks.length - 1];
 
     assert.deepEqual(usageChunk.choices, []);
-    assert.equal(usageChunk.usage.prompt_tokens, 11);
-    assert.equal(usageChunk.usage.completion_tokens, 7);
-    assert.equal(usageChunk.usage.total_tokens, 18);
+    assert.deepEqual(usageChunk.usage, {
+      prompt_tokens: 1011,
+      completion_tokens: 7,
+      total_tokens: 1018,
+      prompt_tokens_details: { cached_tokens: 900 },
+      completion_tokens_details: { reasoning_tokens: 5 },
+    });
     assert.equal(usageChunk.x_shellm.cost_usd, 0.0042);
     assert.equal(typeof usageChunk.x_shellm.ttft_ms, 'number');
 
@@ -178,6 +215,8 @@ describe('what a benchmark can read back', () => {
 
     assert.equal(delta.usage.output_tokens, 7);
     assert.equal(delta.usage.input_tokens, 11, 'the real input count should replace the estimate');
+    assert.equal(delta.usage.cache_creation_input_tokens, 100);
+    assert.equal(delta.usage.cache_read_input_tokens, 900);
     assert.deepEqual(Object.keys(delta.x_shellm).sort(), [...META_KEYS].sort());
     assert.equal(delta.x_shellm.cost_usd, 0.0042);
   });

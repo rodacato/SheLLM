@@ -25,6 +25,11 @@ properties:
     properties:
       input_tokens:
         type: integer
+        description: Input tokens not served from or written to the cache, as the Anthropic API counts them.
+      cache_creation_input_tokens:
+        type: integer
+      cache_read_input_tokens:
+        type: integer
       output_tokens:
         type: integer
   x_shellm:
