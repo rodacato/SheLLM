@@ -46,5 +46,39 @@ properties:
         type: integer
       max_concurrent:
         type: integer
+      timeout_ms:
+        type: integer
+        description: TIMEOUT_MS, the age at which a running CLI process is killed.
+      in_flight:
+        type: array
+        description: >
+          Every request running or waiting for a slot, running first (oldest first), then the line
+          in order. Held in memory only: a restart clears it.
+        items:
+          type: object
+          properties:
+            state:
+              type: string
+              enum: [running, queued]
+            age_ms:
+              type: integer
+            position:
+              type: integer
+              description: Place in line; only on a queued request.
+            request_id:
+              type: [string, "null"]
+            client:
+              type: [string, "null"]
+            path:
+              type: string
+            stream:
+              type: boolean
+            provider:
+              type: string
+            model:
+              type: string
+      oldest_age_ms:
+        type: [integer, "null"]
+        description: Age of the longest-running request; null when none is running.
   uptime_seconds:
     type: integer

@@ -189,9 +189,37 @@
             </div>
             <p class="text-[10px] font-mono text-outline mt-2"
               x-text="healthRead === 'ok' ? queueSaturation() + '% of concurrency in use' : 'not read yet'"></p>
-            <p x-show="healthRead === 'ok' && queueVerdict()" class="text-[10px] font-mono mt-1"
-              :class="queueIsStalling() ? 'text-status-fail' : 'text-outline'"
-              x-text="queueVerdict()"></p>
+            <!-- The count says three are running; it cannot say one has been wedged for nine
+                 minutes, nor whose it is. -->
+            <table x-show="healthRead === 'ok' && inFlight.length > 0" x-cloak
+              class="w-full mt-3 border-t border-outline-variant/30 text-[11px] font-mono">
+              <thead>
+                <tr class="text-left text-[10px] font-headline font-bold uppercase tracking-[0.08em] text-outline">
+                  <th class="pt-2 pb-1 pr-3 font-bold">Age</th>
+                  <th class="pt-2 pb-1 pr-3 font-bold">State</th>
+                  <th class="pt-2 pb-1 pr-3 font-bold">Client</th>
+                  <th class="pt-2 pb-1 pr-3 font-bold">Provider · model</th>
+                  <th class="pt-2 pb-1 font-bold">Request</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="job in inFlight" :key="job.request_id + job.state">
+                  <tr>
+                    <td class="py-1 pr-3 whitespace-nowrap" :class="jobNearTimeout(job) ? 'text-status-fail' : 'text-on-surface'"
+                      :title="jobNearTimeout(job) ? 'Close to TIMEOUT_MS: the CLI is killed when it gets there' : ''"
+                      x-text="formatAge(jobAge(job))"></td>
+                    <td class="py-1 pr-3 whitespace-nowrap">
+                      <span class="inline-block border px-1.5 text-[10px] font-bold uppercase"
+                        :class="job.state === 'queued' ? 'border-status-warn text-status-warn' : 'border-primary-container text-primary-container'"
+                        x-text="inFlightState(job)"></span>
+                    </td>
+                    <td class="py-1 pr-3 text-on-surface font-body text-xs" x-text="job.client || '(unauthenticated)'"></td>
+                    <td class="py-1 pr-3 text-primary-container whitespace-nowrap" x-text="job.provider + ' · ' + job.model"></td>
+                    <td class="py-1 text-on-surface-variant" x-text="job.path + (job.stream ? ' · stream' : '')"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
           </div>
 
           <div class="bg-surface-container p-5">

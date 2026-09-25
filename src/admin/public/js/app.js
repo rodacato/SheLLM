@@ -153,6 +153,27 @@ function formatDuration(ms) {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
+function formatAge(ms) {
+  if (ms == null || ms < 60000) return formatDuration(ms);
+  return `${Math.floor(ms / 60000)}m ${Math.floor((ms % 60000) / 1000)}s`;
+}
+
+// Health is polled and the page ticks every second, so an age is the server's reading plus the
+// time since it was taken.
+function inFlightAge(job, readAt, now) {
+  return job.age_ms + Math.max(0, now - readAt);
+}
+
+function inFlightState(job) {
+  return job.state === 'queued' ? `Queued #${job.position}` : 'Running';
+}
+
+// Relative to the limit that kills it: a fixed threshold called every long stream a failure once
+// TIMEOUT_MS was raised past it.
+function isNearTimeout(job, ageMs, timeoutMs) {
+  return job.state === 'running' && timeoutMs > 0 && ageMs >= timeoutMs * 0.8;
+}
+
 function formatCost(usd) {
   if (usd == null || usd === 0) return '-';
   return `$${usd.toFixed(4)}`;
@@ -270,8 +291,9 @@ function app() {
   return {
     page: VALID_PAGES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview',
     sidebarOpen: false,
-    health: { uptime: null, providers: {}, queue: {} },
+    health: { uptime: null, providers: {}, queue: {}, readAt: 0 },
     healthRead: 'pending',
+    now: Date.now(),
     nav: [
       { id: 'overview', label: 'Overview', icon: 'dashboard' },
       { id: 'logs', label: 'Request Logs', icon: 'database' },
@@ -296,15 +318,21 @@ function app() {
     },
     formatUptime,
     formatClock,
+    formatAge,
+    inFlightState,
+    get inFlight() { return this.health.queue?.in_flight || []; },
+    jobAge(job) { return inFlightAge(job, this.health.readAt, this.now); },
+    jobStartedAt(job) { return new Date(this.health.readAt - job.age_ms); },
+    jobNearTimeout(job) { return isNearTimeout(job, this.jobAge(job), this.health.queue?.timeout_ms); },
     get lastReadAt() { return formatClock(Alpine.store('connection').lastReadAt); },
     async init() {
       window.addEventListener('hashchange', () => {
         const id = location.hash.slice(1);
         if (VALID_PAGES.includes(id)) this.show(id);
       });
-      await this.fetchHealth();
+      poller(() => { this.now = Date.now(); }).every(1000);
       this._health = poller(() => this.fetchHealth());
-      this._health.every(30000);
+      await this.fetchHealth();
     },
     // Keeping the last good reading and saying nothing is how the one element whose job is to
     // report the server is alive went on saying so after it died.
@@ -318,10 +346,15 @@ function app() {
           queue: data.queue || {},
           status: data.status,
           build: data.build || null,
+          readAt: Date.now(),
         };
         this.healthRead = 'ok';
+        // A request in flight finishes within seconds of the last read; waiting out 30 of them
+        // would leave it on screen as running long after its log row exists.
+        this._health?.every(this.inFlight.length > 0 ? 5000 : 30000);
       } catch {
         this.healthRead = 'failed';
+        this._health?.every(30000);
       }
     },
   };

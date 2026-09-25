@@ -102,23 +102,6 @@ function overviewPage() {
       if (this._poller) this._poller.stop();
     },
 
-    // The count says three are running; it cannot say one has been wedged for nine minutes —
-    // this product's characteristic failure, and the only one the queue panel could not draw.
-    queueVerdict() {
-      const q = this.health?.queue;
-      if (!q || !q.in_flight || q.in_flight.length === 0) return '';
-
-      const oldest = q.oldest_age_ms;
-      const where = q.in_flight[0].label ? ` (${q.in_flight[0].label})` : '';
-      if (oldest >= 120000) return `oldest has been running ${formatDuration(oldest)}${where} — that is long past a normal call`;
-      if (oldest >= 30000) return `oldest has been running ${formatDuration(oldest)}${where}`;
-      return `oldest started ${formatDuration(oldest)} ago`;
-    },
-
-    queueIsStalling() {
-      return (this.health?.queue?.oldest_age_ms || 0) >= 120000;
-    },
-
     queueSaturation() {
       const q = this.health?.queue;
       if (!q || !q.max_concurrent) return 0;
