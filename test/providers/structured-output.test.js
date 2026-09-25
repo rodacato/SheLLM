@@ -87,13 +87,13 @@ process.exit(refused ? 1 : 0);
 
       const { args } = lastRun('claude');
       assert.deepEqual(JSON.parse(args[args.indexOf('--json-schema') + 1]), schema);
-      assert.ok(args.indexOf('--json-schema') < args.indexOf('--'), 'the schema is a flag, not part of the prompt');
+      assert.ok(!args.includes('A red square'), 'the schema is a flag; the prompt is not an argument at all');
     });
 
     it('keeps json_object as it was: a system instruction, no schema flag', () => {
-      const args = claude.buildArgs({ prompt: 'hi', response_format: { type: 'json_object' } });
-      assert.ok(!args.includes('--json-schema'));
-      assert.match(args[args.indexOf('--system-prompt') + 1], /valid JSON only/);
+      const params = { prompt: 'hi', response_format: { type: 'json_object' } };
+      assert.ok(!claude.buildArgs(params).includes('--json-schema'));
+      assert.match(claude.buildFiles(params)[claude.SYSTEM_FILE], /valid JSON only/);
     });
 
     it('fails instead of returning prose when the CLI produced no structured output', async () => {

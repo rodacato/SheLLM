@@ -1,5 +1,5 @@
 const { execute, executeStream, stripNonPrintable } = require('./base');
-const { modelNotFound, cliFailed } = require('../errors');
+const { modelNotFound, cliFailed, contextLengthExceeded } = require('../errors');
 const config = require('../config');
 
 const MODEL_ALIASES = { 'claude-haiku': 'haiku', 'claude-sonnet': 'sonnet', 'claude-opus': 'opus' };
@@ -57,8 +57,7 @@ function buildBaseArgs({ system, response_format, model, effort }) {
   if (shouldSkipPermissions()) args.push('--dangerously-skip-permissions');
   if (cliModel(model)) args.push('--model', cliModel(model));
   if (effortFor(effort)) args.push('--effort', effortFor(effort));
-  const systemPrompt = systemPromptFor({ system, response_format });
-  if (systemPrompt) args.push('--system-prompt', systemPrompt);
+  if (systemPromptFor({ system, response_format })) args.push('--system-prompt-file', SYSTEM_FILE);
   // The flag takes the schema inline only; a path is refused as invalid JSON.
   if (wantsSchema(response_format)) args.push('--json-schema', JSON.stringify(response_format.json_schema.schema));
   return args;
@@ -68,14 +67,17 @@ function buildBaseArgs({ system, response_format, model, effort }) {
 const NDJSON_OUTPUT = ['--output-format', 'stream-json', '--verbose'];
 const STREAM_OUTPUT = [...NDJSON_OUTPUT, '--include-partial-messages'];
 
-// An image cannot go on the command line, so a message with images is written to stdin as one
-// stream-json user message. The CLI accepts that input only with stream-json output.
+// Nothing the caller wrote goes on the command line, where Linux caps each argument at 128 KiB:
+// the prompt goes to stdin and the system prompt to a file in the request's directory. A message
+// with images goes as one stream-json user message, which the CLI takes only with stream-json output.
+const SYSTEM_FILE = 'system-prompt.txt';
+
 function hasImages(params) {
   return Array.isArray(params.parts);
 }
 
 function withPrompt(args, params) {
-  return hasImages(params) ? [...args, '--input-format', 'stream-json'] : [...args, '--', params.prompt];
+  return hasImages(params) ? [...args, '--input-format', 'stream-json'] : args;
 }
 
 function buildArgs(params) {
@@ -92,8 +94,13 @@ function contentBlock(part) {
   return { type: 'image', source: { type: 'base64', media_type: part.media_type, data: part.data } };
 }
 
+function buildFiles(params) {
+  const systemPrompt = systemPromptFor(params);
+  return systemPrompt ? { [SYSTEM_FILE]: systemPrompt } : undefined;
+}
+
 function buildInput(params) {
-  if (!hasImages(params)) return undefined;
+  if (!hasImages(params)) return params.prompt;
   const message = { role: 'user', content: params.parts.map(contentBlock) };
   return `${JSON.stringify({ type: 'user', message })}\n`;
 }
@@ -217,8 +224,16 @@ const authProbe = {
   },
 };
 
+// The CLI refuses an over-long prompt before the API call, at no cost, and exits 1 with no
+// message: without this the caller got a 502 "Unknown error".
+function isPromptTooLong(result) {
+  return result?.terminal_reason === 'prompt_too_long';
+}
+
 function toProviderError(err, model) {
-  if (resultOf(err.stdout)?.api_error_status === 404) return modelNotFound(model);
+  const result = resultOf(err.stdout);
+  if (result?.api_error_status === 404) return modelNotFound(model);
+  if (isPromptTooLong(result)) return contextLengthExceeded(model, result.result);
   return err;
 }
 
@@ -233,7 +248,7 @@ function hasStructuredOutput(stdout) {
 
 async function chat({ prompt, parts, system, response_format, model, effort }) {
   const params = { prompt, parts, system, response_format, model, effort };
-  const result = await execute('claude', buildArgs(params), { env: CLAUDE_ENV, input: buildInput(params) })
+  const result = await execute('claude', buildArgs(params), { env: CLAUDE_ENV, input: buildInput(params), files: buildFiles(params) })
     .catch((err) => { throw toProviderError(err, model); });
   if (wantsSchema(response_format) && !hasStructuredOutput(result.stdout)) throw noStructuredOutput();
   return parseOutput(result.stdout, result.stderr);
@@ -247,6 +262,8 @@ async function* chatStream({ prompt, parts, system, response_format, model, effo
   let streamed = false;
 
   function* emit(line) {
+    const result = resultOf(line);
+    if (isPromptTooLong(result)) throw contextLengthExceeded(model, result.result);
     const parsed = parseStreamLine(line, { structured });
     if (!parsed) return;
     if (parsed.type === 'delta') streamed = true;
@@ -259,7 +276,7 @@ async function* chatStream({ prompt, parts, system, response_format, model, effo
     yield event;
   }
 
-  for await (const event of executeStream('claude', args, { env: CLAUDE_ENV, signal, input: buildInput(params) })) {
+  for await (const event of executeStream('claude', args, { env: CLAUDE_ENV, signal, input: buildInput(params), files: buildFiles(params) })) {
     if (event.type !== 'chunk') continue;
     pending += event.data;
     const lines = pending.split('\n');
@@ -281,6 +298,8 @@ module.exports = {
   buildArgs,
   buildStreamArgs,
   buildInput,
+  buildFiles,
+  SYSTEM_FILE,
   ISOLATION_ARGS,
   authProbe,
   parseOutput,

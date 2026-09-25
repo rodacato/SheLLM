@@ -12,16 +12,13 @@ describe('claude provider', () => {
     assert.ok(args.includes('--print'));
     assert.ok(args.includes('--output-format'));
     assert.ok(args.includes('json'));
-    assert.ok(args.includes('--system-prompt'));
-    assert.ok(args.includes('be nice'));
+    assert.ok(args.includes('--system-prompt-file'));
+    assert.ok(!args.includes('be nice'), 'the system prompt is written to a file, not passed');
     assert.ok(!args.includes('--max-tokens'), 'claude CLI does not support --max-tokens');
-    assert.ok(args.includes('--'));
-    assert.strictEqual(args[args.length - 1], 'hello');
+    assert.ok(!args.includes('hello'), 'the prompt is written to stdin, not passed');
 
-    // Without system
     const args2 = buildArgs({ prompt: 'just prompt' });
-    assert.ok(!args2.includes('--system-prompt'));
-    assert.strictEqual(args2[args2.length - 1], 'just prompt');
+    assert.ok(!args2.includes('--system-prompt-file'), 'no system prompt, no file');
   });
 
   it('buildArgs includes --dangerously-skip-permissions by default', () => {

@@ -220,6 +220,7 @@ something is wrong. You can also set it yourself to correlate with your own logs
 | Status | Code | What it means | What to do |
 |---|---|---|---|
 | 400 | `invalid_request` | bad field, unknown model name, or an image SheLLM does not accept | fix the request; the message names the field |
+| 400 | `context_length_exceeded` | the prompt is past the model's context window; the message carries the CLI's count | send less, or split the work |
 | 401 | `auth_required` | missing, unknown or deactivated key | check the key |
 | 404 | `model_not_found` | the CLI does not know that `claude-*` model | use one from `GET /v1/models` |
 | 413 | — | body over 256 kB, or over `SHELLM_MAX_CHAT_BODY_BYTES` on `/v1/chat/completions` | send less; resize images before sending |
@@ -243,6 +244,7 @@ never on 429 before `Retry-After`.
 | `TIMEOUT_MS` | 300 000 | the CLI process is killed and you get a 504 |
 | A proxy in front | Cloudflare: 100 s to the first byte | a non-streaming answer slower than that gets the proxy's 524, with no CORS headers — a browser sees only "Failed to fetch". Send `stream: true`: headers go out at once and the proxy stops waiting |
 | Request body | 256 kB; 20 MiB on `/v1/chat/completions` (`SHELLM_MAX_CHAT_BODY_BYTES`) | 413 |
+| Prompt length | the model's context window; no character cap of SheLLM's own | 400 `context_length_exceeded`, at no cost: the CLI refuses it before calling the model |
 | `SHELLM_MAX_IMAGES` | 8 per request | 400 naming the image |
 | `SHELLM_MAX_IMAGE_BYTES` | 5 MiB per image, decoded | 400 naming the image |
 

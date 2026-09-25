@@ -6,8 +6,6 @@ const { initSSE, announceQueued, keepAlive, sendSSEChunk, sendSSEDone, sendSSEEr
 const { shellmMeta } = require('../../lib/shellm-meta');
 const { imagePart, renderParts, maxImages } = require('./image-parts');
 
-const MAX_PROMPT_LENGTH = 50000;
-
 const text = (value) => ({ type: 'text', text: value });
 
 /**
@@ -254,14 +252,6 @@ function preflight(req, res) {
   prompt = sanitize(prompt);
   if (system) system = sanitize(system);
   if (parts) parts = parts.map((part) => (part.type === 'text' ? { ...part, text: sanitize(part.text) } : part));
-
-
-  if (prompt.length > MAX_PROMPT_LENGTH) {
-    sendOpenAIError(res, invalidRequest(
-      `Prompt exceeds maximum length of ${MAX_PROMPT_LENGTH} characters (got ${prompt.length})`
-    ));
-    return null;
-  }
 
   // Neither CLI takes minimal: low is claude's floor, and codex's default model refuses it.
   const effort = req.body.reasoning_effort === 'minimal' ? 'low' : req.body.reasoning_effort;
