@@ -2,7 +2,7 @@ const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releas
 const { jobFor } = require('../../infra/queue');
 const { sanitize } = require('../../middleware/sanitize');
 const { invalidRequest, fromCatchable, sendAnthropicError } = require('../../errors');
-const { initSSE, announceQueued } = require('../../lib/sse');
+const { initSSE, announceQueued, keepAlive } = require('../../lib/sse');
 const { shellmMeta } = require('../../lib/shellm-meta');
 const {
   sendMessageStart, sendContentBlockStart, sendContentBlockDelta,
@@ -284,6 +284,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
   // queue cannot move between this line and enqueue below.
   res.set('x-shellm-queue-position', String(queue.nextPosition));
   initSSE(res);
+  const stopKeepAlive = keepAlive(res);
 
   // Client disconnect detection
   const disconnectCheck = setInterval(() => {
@@ -377,6 +378,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
       sendStreamError(res, err);
     }
   } finally {
+    stopKeepAlive();
     if (stopQueueNotices) stopQueueNotices();
     if (slotAcquired) releaseStreamSlot();
   }
