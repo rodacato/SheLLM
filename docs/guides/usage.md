@@ -220,7 +220,7 @@ something is wrong. You can also set it yourself to correlate with your own logs
 | 429 | `rate_limited` | per-key or global rate limit, or the queue is full | honor `Retry-After`; do not hammer |
 | 502 | `cli_failed` | the CLI exited with an error | check the admin dashboard logs |
 | 503 | `provider_unavailable` | provider disabled, not logged in, or its circuit is open | the CLI login probably expired |
-| 504 | `timeout` | killed after `TIMEOUT_MS` (120 s by default) | shorten the work or raise the limit |
+| 504 | `timeout` | killed after `TIMEOUT_MS` (300 s by default) | shorten the work or raise the limit |
 
 SheLLM never retries for you, by design. If you retry, do it on 502/503/504 with a backoff, and
 never on 429 before `Retry-After`.
@@ -234,7 +234,8 @@ never on 429 before `Retry-After`.
 | `MAX_STREAM_CONCURRENT` | 4 | streaming slots are counted separately |
 | Global rate limit | 60 req/min | shared by every key |
 | Per-key rate limit | set when the key is created | 429 with `Retry-After` |
-| `TIMEOUT_MS` | 120 000 | the CLI process is killed and you get a 504 |
+| `TIMEOUT_MS` | 300 000 | the CLI process is killed and you get a 504 |
+| A proxy in front | Cloudflare: 100 s to the first byte | a non-streaming answer slower than that gets the proxy's 524, with no CORS headers — a browser sees only "Failed to fetch". Send `stream: true`: headers go out at once and the proxy stops waiting |
 | Request body | 256 kB; 20 MiB on `/v1/chat/completions` (`SHELLM_MAX_CHAT_BODY_BYTES`) | 413 |
 | `SHELLM_MAX_IMAGES` | 8 per request | 400 naming the image |
 | `SHELLM_MAX_IMAGE_BYTES` | 5 MiB per image, decoded | 400 naming the image |
