@@ -116,8 +116,11 @@
                   :class="loadError && !loading ? 'text-error' : 'text-outline'"
                   x-text="loading ? 'Loading...' : (loadError ? 'Could not read the keys — ' + loadError : 'No keys created yet')"></td>
               </tr>
-              <template x-for="key in keys" :key="key.id">
-                <tr class="border-t border-outline-variant/20 hover:bg-surface-container-high transition-colors duration-fast">
+            </tbody>
+            <template x-for="key in keys" :key="key.id">
+              <tbody>
+                <tr class="border-t border-outline-variant/20 hover:bg-surface-container-high transition-colors duration-fast"
+                  :class="editing === key.id ? 'bg-surface-container-high' : ''">
                   <td class="px-4 py-3">
                     <span class="font-headline font-bold text-white text-sm block" x-text="key.name"></span>
                     <span x-show="key.description" class="text-outline text-xs block mt-0.5" x-text="key.description"></span>
@@ -174,14 +177,16 @@
                     </div>
                   </td>
                 </tr>
-              </template>
-              <template x-for="key in keys" :key="'edit-' + key.id">
                 <tr x-show="editing === key.id" class="border-t border-outline-variant/20 bg-surface-container-lowest">
                   <td colspan="8" class="px-4 py-4">
                     <p class="text-[10px] font-mono text-outline mb-3">
                       The secret itself cannot be changed here — rotate replaces it.
                     </p>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div>
+                        <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Name</label>
+                        <input type="text" x-model="editForm.name" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                      </div>
                       <div>
                         <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">RPM</label>
                         <input type="number" min="1" x-model="editForm.rpm" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
@@ -194,7 +199,7 @@
                         <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Expires (UTC, blank = never)</label>
                         <input type="datetime-local" x-model="editForm.expires_at" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
                       </div>
-                      <div>
+                      <div class="md:col-span-2">
                         <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Description</label>
                         <input type="text" x-model="editForm.description" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
                       </div>
@@ -211,8 +216,8 @@
                     </div>
                   </td>
                 </tr>
-              </template>
-            </tbody>
+              </tbody>
+            </template>
           </table>
         </div>
 
