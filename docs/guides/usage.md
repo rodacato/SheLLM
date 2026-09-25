@@ -187,11 +187,11 @@ the status:
 | Validation errors keep each endpoint's shape (`error-format-4xx`) | works | OpenAI errors on `/v1/chat/completions`, Anthropic errors on `/v1/messages` |
 | A 401 keeps each endpoint's shape (`error-format-401`) | works | it did not until 2026-09-19: both endpoints used to answer `{"error": "auth_required", …}`, SheLLM's own shape, so `error.message` read through an SDK came back empty |
 
-**Reasoning effort.** Claude thinks before it answers, that thinking is billed in
+**Reasoning effort.** Both models reason before they answer, that reasoning is billed in
 `completion_tokens`, and nothing streams while it runs. `reasoning_effort` on
-`/v1/chat/completions` (`minimal`, `low`, `medium`, `high`) sets how much; without it the server's
-`SHELLM_CLAUDE_EFFORT` applies, `medium` by default. Filling a JSON schema rarely needs more than
-`low`.
+`/v1/chat/completions` (`minimal`, `low`, `medium`, `high`) sets how much, for Claude and Codex
+alike; `minimal` runs as `low`, the floor both accept. Without it Claude uses the server's `SHELLM_CLAUDE_EFFORT`, `medium` by default, and Codex
+its own configuration. Filling a JSON schema rarely needs more than `low`.
 
 ## 6. Streaming
 

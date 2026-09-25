@@ -191,8 +191,8 @@ function validate(body) {
     if (formatError) return formatError;
   }
 
-  if (body.reasoning_effort !== undefined && !Object.hasOwn(REASONING_EFFORT, body.reasoning_effort)) {
-    return invalidRequest(`Field "reasoning_effort" must be one of: ${Object.keys(REASONING_EFFORT).join(', ')}`);
+  if (body.reasoning_effort !== undefined && !REASONING_EFFORTS.includes(body.reasoning_effort)) {
+    return invalidRequest(`Field "reasoning_effort" must be one of: ${REASONING_EFFORTS.join(', ')}`);
   }
 
   if (body.stream_options !== undefined && body.stream_options !== null) {
@@ -226,8 +226,8 @@ function validate(body) {
   return null;
 }
 
-// OpenAI's values, onto the claude CLI's --effort. The CLI has no level below low.
-const REASONING_EFFORT = { minimal: 'low', low: 'low', medium: 'medium', high: 'high' };
+// OpenAI's values.
+const REASONING_EFFORTS = ['minimal', 'low', 'medium', 'high'];
 
 /**
  * Common pre-flight: validate, enforce model restrictions, sanitize.
@@ -263,7 +263,8 @@ function preflight(req, res) {
     return null;
   }
 
-  const effort = REASONING_EFFORT[req.body.reasoning_effort];
+  // Neither CLI takes minimal: low is claude's floor, and codex's default model refuses it.
+  const effort = req.body.reasoning_effort === 'minimal' ? 'low' : req.body.reasoning_effort;
   return { model, max_tokens, temperature, top_p, response_format, effort, prompt, parts, system };
 }
 
