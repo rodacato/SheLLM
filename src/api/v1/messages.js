@@ -2,7 +2,7 @@ const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releas
 const { jobFor } = require('../../infra/queue');
 const { anthropicCacheUsage } = require('./usage');
 const { sanitize } = require('../../middleware/sanitize');
-const { invalidRequest, fromCatchable, sendAnthropicError } = require('../../errors');
+const { invalidRequest, fromCatchable, recordErrorCode, sendAnthropicError } = require('../../errors');
 const { initSSE, announceQueued, keepAlive } = require('../../lib/sse');
 const { shellmMeta } = require('../../lib/shellm-meta');
 const {
@@ -368,7 +368,9 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
     recordFailure(provider.name);
     logger.debug({ event: 'stream_error', format: 'anthropic', error: err.message, request_id: req.requestId });
     if (!ac.signal.aborted && !res.writableEnded) {
-      sendStreamError(res, err);
+      const failure = fromCatchable(err, provider.name);
+      recordErrorCode(res, failure);
+      sendStreamError(res, failure);
     }
   } finally {
     stopKeepAlive();

@@ -91,3 +91,30 @@ describe('CLI working directory', () => {
     });
   });
 });
+
+describe('a stream that did not finish on its own', () => {
+  const HANG = ['-e', 'process.stdout.write("partial"); setInterval(() => {}, 1000)'];
+
+  it('fails with a timeout instead of ending as if it had finished', async () => {
+    const seen = [];
+    await assert.rejects(async () => {
+      for await (const event of executeStream('node', HANG, { timeout: 300 })) seen.push(event.type);
+    }, (err) => err.timeout === true && /killed after 300ms/.test(err.stderr));
+    assert.ok(seen.includes('chunk'), 'what arrived before the kill still arrives');
+    assert.ok(!seen.includes('done'), 'a killed stream must never report done');
+  });
+
+  it('fails when the process dies to a signal nobody sent on purpose', async () => {
+    const script = ['-e', 'process.stdout.write("partial"); setTimeout(() => process.kill(process.pid, "SIGKILL"), 50)'];
+    await assert.rejects(async () => {
+      for await (const _event of executeStream('node', script)) { /* drain */ }
+    }, /killed by SIGKILL/);
+  });
+
+  it('ends quietly when the caller aborted, since nobody is left to tell', async () => {
+    const ac = new AbortController();
+    for await (const event of executeStream('node', HANG, { signal: ac.signal })) {
+      if (event.type === 'chunk') ac.abort();
+    }
+  });
+});
