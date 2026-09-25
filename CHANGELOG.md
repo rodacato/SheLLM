@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.16.1] - 2026-09-25
+
+### Fixed
+
+- **claude:** stream a json_schema answer whole, from the validated output
+- **providers:** decode CLI output as a UTF-8 stream
+- **stream:** report a killed stream as an error instead of a finished answer
+
+
 ## [1.16.0] - 2026-09-25
 
 ### Added
@@ -960,7 +969,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.16.0...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.16.1...HEAD
+[1.16.1]: https://github.com/rodacato/SheLLM/compare/v1.16.0...v1.16.1
 [1.16.0]: https://github.com/rodacato/SheLLM/compare/v1.15.0...v1.16.0
 [1.15.0]: https://github.com/rodacato/SheLLM/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/rodacato/SheLLM/compare/v1.13.0...v1.14.0
