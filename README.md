@@ -92,8 +92,8 @@ down the same path your app takes, and the same key then works from a shell scri
 experiment its own key and the dashboard answers which of them is worth paying for.
 
 **Turning photos into structured data.** Send the photos as `data:` URL images with a
-`response_format` JSON Schema, and the answer is JSON that matches it — streamed as it is written,
-if you ask. [Knotty](https://github.com/rodacato/knotty) does this from a static page: photos of a
+`response_format` JSON Schema, and the answer is JSON that matches it — streamed if you ask, in one
+piece once the CLI has validated it. [Knotty](https://github.com/rodacato/knotty) does this from a static page: photos of a
 piece of furniture in, a parametric plywood design out. Resize in the client first; Claude scales
 anything past about 1568 px down anyway, so a bigger photo only costs upload time.
 
