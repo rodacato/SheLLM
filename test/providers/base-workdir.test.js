@@ -118,3 +118,18 @@ describe('a stream that did not finish on its own', () => {
     }
   });
 });
+
+describe('CLI output decoding', () => {
+  // A pipe read can end mid-character; Spanish output is full of two-byte characters.
+  const SPLIT = ['-e', 'const b = Buffer.from("diseño"); process.stdout.write(b.subarray(0, 5)); setTimeout(() => process.stdout.write(b.subarray(5)), 50);'];
+
+  it('keeps a character split across two reads whole on a stream', async () => {
+    let out = '';
+    for await (const event of executeStream('node', SPLIT)) if (event.type === 'chunk') out += event.data;
+    assert.equal(out, 'diseño');
+  });
+
+  it('keeps it whole on a buffered call too', async () => {
+    assert.equal((await execute('node', SPLIT)).stdout, 'diseño');
+  });
+});

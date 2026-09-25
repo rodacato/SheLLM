@@ -57,6 +57,10 @@ function spawnInWorkdir(command, args, env, { files, input } = {}) {
     env: buildSafeEnv(env),
     detached: true,
   });
+  // Decoding each pipe read on its own turned a multi-byte character split across two reads into
+  // two U+FFFD; a streaming decoder holds the partial bytes until the rest arrives.
+  proc.stdout.setEncoding('utf8');
+  proc.stderr.setEncoding('utf8');
   proc.on('close', () => fs.rm(workdir, { recursive: true, force: true }, () => {}));
   if (input !== undefined) {
     // A CLI that exits before reading all of it closes the pipe; its exit code says why.
@@ -186,7 +190,7 @@ async function* executeStream(command, args, { timeout = getTimeoutMs(), env, si
   let exitSignal = null;
 
   proc.stdout.on('data', (chunk) => {
-    chunks.push(chunk.toString());
+    chunks.push(chunk);
     if (resolve) { resolve(); resolve = null; }
   });
 
