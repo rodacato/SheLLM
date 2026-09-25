@@ -157,6 +157,18 @@ describe('/v1/chat/completions', () => {
     assert.strictEqual(args[args.indexOf('--effort') + 1], 'low');
   });
 
+  it('runs minimal as low on codex too, whose default model refuses minimal', async () => {
+    const res = await post({
+      model: 'codex',
+      messages: [{ role: 'user', content: 'hello' }],
+      reasoning_effort: 'minimal',
+    });
+
+    assert.strictEqual(res.status, 200);
+    const args = require('../../../src/providers/base.js').execute.mock.calls.at(-1).arguments[1];
+    assert.ok(args.includes('model_reasoning_effort="low"'), `codex got ${JSON.stringify(args)}`);
+  });
+
   it('rejects a reasoning_effort OpenAI does not define, naming the ones it does', async () => {
     for (const reasoning_effort of ['extreme', 'toString', 3]) {
       const res = await post({ model: 'claude', messages: [{ role: 'user', content: 'hello' }], reasoning_effort });

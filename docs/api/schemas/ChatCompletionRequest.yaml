@@ -38,9 +38,10 @@ properties:
     type: string
     enum: [minimal, low, medium, high]
     description: >
-      How long Claude thinks before answering. Maps onto the CLI's --effort; minimal is low, since
-      the CLI has nothing below it. Omitted, SHELLM_CLAUDE_EFFORT applies (medium). Thinking is
-      billed as completion tokens and nothing streams while it runs. Codex ignores it.
+      How long the model reasons before answering: --effort for Claude, model_reasoning_effort for
+      Codex. minimal runs as low, since Claude has nothing below it and Codex's default model refuses
+      it. Omitted, Claude uses SHELLM_CLAUDE_EFFORT (medium) and Codex its own configuration.
+      Reasoning is billed as completion tokens and nothing streams while it runs.
   temperature:
     type: number
     minimum: 0

@@ -84,9 +84,11 @@ function imageFile(image) {
   return `image-${image.number}.${EXTENSIONS[image.media_type]}`;
 }
 
-function buildArgs({ prompt, parts, system, response_format, model }) {
+function buildArgs({ prompt, parts, system, response_format, model, effort }) {
   const args = ['exec', '--ephemeral', '--skip-git-repo-check', '-s', 'read-only', '--json'];
   if (cliModel(model)) args.push('-m', cliModel(model));
+  // Without a level codex keeps its own configuration's.
+  if (effort) args.push('-c', `model_reasoning_effort="${effort}"`);
   if (wantsSchema(response_format)) args.push('--output-schema', SCHEMA_FILE);
   const images = imagesOf(parts);
   for (const image of images) args.push('-i', imageFile(image));
@@ -188,8 +190,8 @@ function toProviderError(err, model) {
   return failure || err;
 }
 
-async function chat({ prompt, parts, system, response_format, model }) {
-  const args = buildArgs({ prompt, parts, system, response_format, model });
+async function chat({ prompt, parts, system, response_format, model, effort }) {
+  const args = buildArgs({ prompt, parts, system, response_format, model, effort });
   const files = buildFiles({ parts, response_format });
   return withLock(async () => {
     const result = await execute('codex', args, { env: CODEX_ENV, files })
@@ -200,8 +202,8 @@ async function chat({ prompt, parts, system, response_format, model }) {
   });
 }
 
-async function* chatStream({ prompt, parts, system, response_format, model, signal }) {
-  const args = buildArgs({ prompt, parts, system, response_format, model });
+async function* chatStream({ prompt, parts, system, response_format, model, effort, signal }) {
+  const args = buildArgs({ prompt, parts, system, response_format, model, effort });
   const files = buildFiles({ parts, response_format });
   const release = await lock();
   let failure = null;
