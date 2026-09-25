@@ -39,15 +39,24 @@ const ISOLATION_ARGS = [
   '--permission-mode', 'dontAsk',
 ];
 
+const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
+
+// Checked here because the CLI only warns on an unknown level and carries on at its own default.
+function effortFor(requested) {
+  const effort = requested || config.get('SHELLM_CLAUDE_EFFORT');
+  return EFFORTS.includes(effort) ? effort : null;
+}
+
 function wantsSchema(response_format) {
   return response_format?.type === 'json_schema';
 }
 
 // The claude CLI has no temperature flag, so temperature is ignored.
-function buildBaseArgs({ system, response_format, model }) {
+function buildBaseArgs({ system, response_format, model, effort }) {
   const args = ['--print', ...ISOLATION_ARGS];
   if (shouldSkipPermissions()) args.push('--dangerously-skip-permissions');
   if (cliModel(model)) args.push('--model', cliModel(model));
+  if (effortFor(effort)) args.push('--effort', effortFor(effort));
   const systemPrompt = systemPromptFor({ system, response_format });
   if (systemPrompt) args.push('--system-prompt', systemPrompt);
   // The flag takes the schema inline only; a path is refused as invalid JSON.
@@ -222,16 +231,16 @@ function hasStructuredOutput(stdout) {
   return resultOf(stdout)?.structured_output !== undefined;
 }
 
-async function chat({ prompt, parts, system, response_format, model }) {
-  const params = { prompt, parts, system, response_format, model };
+async function chat({ prompt, parts, system, response_format, model, effort }) {
+  const params = { prompt, parts, system, response_format, model, effort };
   const result = await execute('claude', buildArgs(params), { env: CLAUDE_ENV, input: buildInput(params) })
     .catch((err) => { throw toProviderError(err, model); });
   if (wantsSchema(response_format) && !hasStructuredOutput(result.stdout)) throw noStructuredOutput();
   return parseOutput(result.stdout, result.stderr);
 }
 
-async function* chatStream({ prompt, parts, system, response_format, model, signal }) {
-  const params = { prompt, parts, system, response_format, model };
+async function* chatStream({ prompt, parts, system, response_format, model, effort, signal }) {
+  const params = { prompt, parts, system, response_format, model, effort };
   const args = buildStreamArgs(params);
   const structured = wantsSchema(response_format);
   let pending = '';

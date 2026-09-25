@@ -1629,6 +1629,16 @@
               }
             }
           },
+          "reasoning_effort": {
+            "type": "string",
+            "enum": [
+              "minimal",
+              "low",
+              "medium",
+              "high"
+            ],
+            "description": "How long Claude thinks before answering. Maps onto the CLI's --effort; minimal is low, since the CLI has nothing below it. Omitted, SHELLM_CLAUDE_EFFORT applies (medium). Thinking is billed as completion tokens and nothing streams while it runs. Codex ignores it.\n"
+          },
           "temperature": {
             "type": "number",
             "minimum": 0,

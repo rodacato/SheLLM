@@ -145,6 +145,26 @@ describe('/v1/chat/completions', () => {
     assert.match(res.body.error.message, /temperature/);
   });
 
+  it('hands reasoning_effort to the CLI, with minimal as its lowest level', async () => {
+    const res = await post({
+      model: 'claude',
+      messages: [{ role: 'user', content: 'hello' }],
+      reasoning_effort: 'minimal',
+    });
+
+    assert.strictEqual(res.status, 200);
+    const args = require('../../../src/providers/base.js').execute.mock.calls.at(-1).arguments[1];
+    assert.strictEqual(args[args.indexOf('--effort') + 1], 'low');
+  });
+
+  it('rejects a reasoning_effort OpenAI does not define, naming the ones it does', async () => {
+    for (const reasoning_effort of ['extreme', 'toString', 3]) {
+      const res = await post({ model: 'claude', messages: [{ role: 'user', content: 'hello' }], reasoning_effort });
+      assert.strictEqual(res.status, 400, `accepted ${JSON.stringify(reasoning_effort)}`);
+      assert.match(res.body.error.message, /reasoning_effort.*minimal, low, medium, high/);
+    }
+  });
+
   // --- Error cases ---
 
   it('rejects missing model', async () => {
