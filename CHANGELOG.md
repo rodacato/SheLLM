@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-09-25
+
+### Added
+
+- **admin:** show requests in flight, with whose they are, on Overview and Logs
+- **config:** raise the default TIMEOUT_MS to 5 minutes and document proxy timeouts
+
+### Fixed
+
+- **cors:** answer a rejected /v1 body with CORS headers
+- **admin:** edit a key in place, under its own row, and allow renaming it
+
+
 ## [1.14.0] - 2026-09-24
 
 ### Added
@@ -929,7 +942,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.14.0...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.15.0...HEAD
+[1.15.0]: https://github.com/rodacato/SheLLM/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/rodacato/SheLLM/compare/v1.13.0...v1.14.0
 [1.13.0]: https://github.com/rodacato/SheLLM/compare/v1.12.0...v1.13.0
 [1.12.0]: https://github.com/rodacato/SheLLM/compare/v1.11.0...v1.12.0
