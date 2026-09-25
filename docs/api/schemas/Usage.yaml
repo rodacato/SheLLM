@@ -2,7 +2,22 @@ type: object
 properties:
   prompt_tokens:
     type: [integer, 'null']
+    description: Every input token, the cached ones included.
   completion_tokens:
     type: [integer, 'null']
+    description: Every output token, the model's reasoning included.
   total_tokens:
     type: [integer, 'null']
+  prompt_tokens_details:
+    type: object
+    properties:
+      cached_tokens:
+        type: integer
+        description: Input tokens read from the provider's prompt cache.
+  completion_tokens_details:
+    type: object
+    description: Present when the CLI reports its reasoning apart.
+    properties:
+      reasoning_tokens:
+        type: integer
+        description: The part of completion_tokens spent reasoning, which the answer does not show.

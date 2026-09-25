@@ -1,5 +1,6 @@
 const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../../routing');
 const { jobFor } = require('../../infra/queue');
+const { anthropicCacheUsage } = require('./usage');
 const { sanitize } = require('../../middleware/sanitize');
 const { invalidRequest, fromCatchable, sendAnthropicError } = require('../../errors');
 const { initSSE, announceQueued, keepAlive } = require('../../lib/sse');
@@ -230,6 +231,7 @@ async function messagesHandler(req, res) {
       stop_sequence: null,
       usage: {
         input_tokens: result.usage?.input_tokens ?? 0,
+        ...anthropicCacheUsage(result.usage),
         output_tokens: result.usage?.output_tokens ?? 0,
       },
       x_shellm: shellmMeta({
@@ -350,6 +352,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
         sendMessageDelta(res, 'end_turn', outputTokens, {
           ttft_ms: ttftMs,
           input_tokens: reportedUsage?.input_tokens ?? null,
+          cache: anthropicCacheUsage(reportedUsage),
           meta: shellmMeta({
             cost_usd: res.locals.cost_usd ?? null,
             queue_ms: queuedMs,

@@ -107,12 +107,15 @@ function buildInput(params) {
 
 function usageFrom(data) {
   if (!data.usage) return null;
-  return {
+  const usage = {
     input_tokens: data.usage.input_tokens || 0,
     output_tokens: data.usage.output_tokens || 0,
     cache_creation_input_tokens: data.usage.cache_creation_input_tokens || 0,
     cache_read_input_tokens: data.usage.cache_read_input_tokens || 0,
   };
+  const thinking = data.usage.output_tokens_details?.thinking_tokens;
+  if (typeof thinking === 'number') usage.reasoning_tokens = thinking;
+  return usage;
 }
 
 // modelUsage lists every model a turn touched; the costliest one did the work.

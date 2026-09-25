@@ -1,5 +1,6 @@
 const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../../routing');
 const { jobFor } = require('../../infra/queue');
+const { openAIUsage } = require('./usage');
 const { sanitize } = require('../../middleware/sanitize');
 const { invalidRequest, fromCatchable, sendOpenAIError } = require('../../errors');
 const { initSSE, announceQueued, keepAlive, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../lib/sse');
@@ -302,13 +303,7 @@ async function chatCompletionsHandler(req, res) {
         message: { role: 'assistant', content: result.content },
         finish_reason: 'stop',
       }],
-      usage: {
-        prompt_tokens: result.usage?.input_tokens ?? null,
-        completion_tokens: result.usage?.output_tokens ?? null,
-        total_tokens: result.usage
-          ? (result.usage.input_tokens + result.usage.output_tokens)
-          : null,
-      },
+      usage: openAIUsage(result.usage),
       x_shellm: shellmMeta({
         cost_usd: result.cost_usd ?? null,
         queue_ms: result.queued_ms ?? null,
@@ -446,11 +441,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
             created,
             model: responseModel,
             choices: [],
-            usage: {
-              prompt_tokens: usage?.input_tokens ?? null,
-              completion_tokens: usage?.output_tokens ?? null,
-              total_tokens: usage ? (usage.input_tokens + usage.output_tokens) : null,
-            },
+            usage: openAIUsage(usage),
             x_shellm: meta,
           });
         }

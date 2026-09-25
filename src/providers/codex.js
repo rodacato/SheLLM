@@ -163,6 +163,8 @@ function usageFrom(event) {
   };
   if (cacheRead !== null) usage.cache_read_input_tokens = cacheRead;
   if (cacheWrite !== null) usage.cache_creation_input_tokens = cacheWrite;
+  const reasoning = reported(event.usage.reasoning_output_tokens);
+  if (reasoning !== null) usage.reasoning_tokens = reasoning;
   return usage;
 }
 

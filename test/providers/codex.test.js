@@ -86,6 +86,7 @@ process.exit(file === 'exec-json-unknown-model.jsonl' ? 1 : 0);
       output_tokens: 5,
       cache_read_input_tokens: 10624,
       cache_creation_input_tokens: 0,
+      reasoning_tokens: 0,
     });
     assert.equal(result.cost_usd, null);
   });
@@ -113,6 +114,7 @@ process.exit(file === 'exec-json-unknown-model.jsonl' ? 1 : 0);
       output_tokens: 5,
       cache_read_input_tokens: 10624,
       cache_creation_input_tokens: 0,
+      reasoning_tokens: 0,
     });
     assert.equal(events.at(-1).type, 'done');
   });

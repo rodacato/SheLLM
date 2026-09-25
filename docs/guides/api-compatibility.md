@@ -124,8 +124,8 @@ The claude and codex CLIs have no temperature flag, so SheLLM validates the valu
 
 ### 5. Token Usage
 
-- **Non-streaming**: Both endpoints return the token counts the CLI reports. `completion_tokens` includes the model's reasoning, which is billed as output. Values may be `null` if the provider doesn't report them.
-- **Streaming (Anthropic)**: `message_start` carries an *estimated* `input_tokens` (~4 chars per token) because the real count is not known when the stream opens. `message_delta` carries the CLI's own `output_tokens`, and falls back to the same estimate only if the provider reports none.
+- **Non-streaming**: Both endpoints return the token counts the CLI reports, each in its API's own terms. On `/v1/chat/completions`, `prompt_tokens` counts every input token and `prompt_tokens_details.cached_tokens` says how many came from the cache; `completion_tokens` includes the reasoning, broken out in `completion_tokens_details.reasoning_tokens`. On `/v1/messages`, `input_tokens` is only the uncached part, with `cache_creation_input_tokens` and `cache_read_input_tokens` beside it, as Anthropic reports them. Values may be `null` if the provider doesn't report them.
+- **Streaming (Anthropic)**: `message_start` carries an *estimated* `input_tokens` (~4 chars per token) because the real count is not known when the stream opens. `message_delta` carries the CLI's own `output_tokens`, `input_tokens` and cache counts, and falls back to the same estimate only if the provider reports none.
 
 ### 6. Content Format
 
