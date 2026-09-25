@@ -269,6 +269,9 @@ async function* chatStream({ prompt, parts, system, response_format, model, effo
     if (isPromptTooLong(result)) throw contextLengthExceeded(model, result.result);
     const parsed = parseStreamLine(line, { structured });
     if (!parsed) return;
+    // A schema answer is sent whole, once validated: when the model's first attempt fails the
+    // schema the CLI asks again, and deltas already sent from the bad attempt cannot be taken back.
+    if (parsed.type === 'delta' && structured) return;
     if (parsed.type === 'delta') streamed = true;
     if (parsed.type === 'usage' && structured && !streamed) {
       if (parsed.structured_output === undefined) throw noStructuredOutput();

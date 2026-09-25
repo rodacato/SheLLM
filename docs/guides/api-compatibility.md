@@ -238,7 +238,7 @@ Not all SheLLM providers support all parameters equally:
 | Top P | Ignored — no CLI flag | Ignored — no CLI flag |
 | Max tokens | Ignored — no CLI flag | Ignored — no CLI flag |
 | JSON mode (`json_object`) | Appends an instruction | Appends an instruction |
-| JSON Schema (`json_schema`) | `--json-schema`, the answer is the CLI's `structured_output`. Streams as the JSON is written. A turn that ends without it is a 502 | `--output-schema` with the schema in a `0600` file in the request's directory. OpenAI's strict mode applies whatever `strict` says: a schema without `additionalProperties: false` and every property in `required` is a 400 naming `response_format` |
+| JSON Schema (`json_schema`) | `--json-schema`, the answer is the CLI's `structured_output`. Streamed, it arrives whole in one chunk once the CLI has validated it, never piece by piece: when the model's first attempt fails the schema the CLI asks again, and pieces of the failed attempt could not be taken back. Keepalive comments hold the connection meanwhile. A turn that ends without it is a 502 | `--output-schema` with the schema in a `0600` file in the request's directory. OpenAI's strict mode applies whatever `strict` says: a schema without `additionalProperties: false` and every property in `required` is a 400 naming `response_format` |
 | Images | One stream-json user message on stdin (`--input-format stream-json`), images as base64 blocks in place; never written to disk | `-i image-N.<ext>` per image, each a `0600` file in the request's directory, removed with it on success, failure or disconnect |
 | Streaming | Token deltas (`--output-format stream-json`) | Whole messages — it yields on `item.completed`, not per token |
 

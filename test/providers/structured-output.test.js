@@ -103,11 +103,11 @@ process.exit(refused ? 1 : 0);
       );
     });
 
-    it('streams the JSON as it is generated', async () => {
+    it('streams the JSON whole, once the CLI has validated it', async () => {
       const events = await drain(claude.chatStream({ prompt: 'A red square', response_format, model: 'claude-haiku' }));
       const deltas = events.filter((e) => e.type === 'delta').map((e) => e.content);
-      assert.ok(deltas.length > 1, 'the JSON arrives in pieces, not as one chunk at the end');
-      assert.deepEqual(JSON.parse(deltas.join('')), { color: 'red', shape: 'square' });
+      assert.equal(deltas.length, 1, 'a delta sent from an attempt the CLI later rejects cannot be taken back');
+      assert.deepEqual(JSON.parse(deltas[0]), { color: 'red', shape: 'square' });
       assert.ok(events.find((e) => e.type === 'usage').usage.output_tokens > 0);
       assert.ok(!('structured_output' in events.find((e) => e.type === 'usage')));
     });
