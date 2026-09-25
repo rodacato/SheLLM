@@ -145,6 +145,7 @@ module.exports = {
   providerUnavailable,
   timeout,
   fromCatchable,
+  recordErrorCode,
   isClientError,
   sendError,
   sendApiError,

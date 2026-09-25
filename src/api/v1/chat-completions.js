@@ -2,7 +2,7 @@ const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releas
 const { jobFor } = require('../../infra/queue');
 const { openAIUsage } = require('./usage');
 const { sanitize } = require('../../middleware/sanitize');
-const { invalidRequest, fromCatchable, sendOpenAIError } = require('../../errors');
+const { invalidRequest, fromCatchable, recordErrorCode, sendOpenAIError } = require('../../errors');
 const { initSSE, announceQueued, keepAlive, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../lib/sse');
 const { shellmMeta } = require('../../lib/shellm-meta');
 const { imagePart, renderParts, maxImages } = require('./image-parts');
@@ -453,7 +453,10 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
   } catch (err) {
     logger.debug({ event: 'stream_error', error: err.message, request_id: req.requestId });
     if (!ac.signal.aborted && !res.writableEnded) {
-      sendSSEError(res, err);
+      // The headers went out as 200, so the log learns what failed from error_code alone.
+      const failure = fromCatchable(err, provider.name);
+      recordErrorCode(res, failure);
+      sendSSEError(res, failure);
     }
   } finally {
     stopKeepAlive();

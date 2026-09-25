@@ -171,7 +171,9 @@ async function* executeStream(command, args, { timeout = getTimeoutMs(), env, si
   }
 
   // Timeout safety net
+  let timedOut = false;
   const timer = setTimeout(() => {
+    timedOut = true;
     killGroup('SIGTERM');
     setTimeout(() => { killGroup('SIGKILL'); }, 5000).unref();
   }, timeout);
@@ -181,15 +183,17 @@ async function* executeStream(command, args, { timeout = getTimeoutMs(), env, si
   let resolve = null;
   let done = false;
   let exitCode = null;
+  let exitSignal = null;
 
   proc.stdout.on('data', (chunk) => {
     chunks.push(chunk.toString());
     if (resolve) { resolve(); resolve = null; }
   });
 
-  proc.on('close', (code) => {
+  proc.on('close', (code, sig) => {
     clearTimeout(timer);
     exitCode = code;
+    exitSignal = sig;
     done = true;
     if (resolve) { resolve(); resolve = null; }
   });
@@ -215,8 +219,13 @@ async function* executeStream(command, args, { timeout = getTimeoutMs(), env, si
     yield { type: 'chunk', data: chunks.shift() };
   }
 
-  if (exitCode !== 0 && exitCode !== null) {
-    const err = new Error(`Process exited with code ${exitCode}`);
+  // A process killed by a signal closes with a null code. Reading that as success ended a
+  // timed-out stream with finish_reason "stop", cut mid-word and logged as a 200.
+  if (timedOut) {
+    throw { code: null, stderr: `Process killed after ${timeout}ms`, timeout: true };
+  }
+  if (exitCode !== 0 && !signal?.aborted) {
+    const err = new Error(exitSignal ? `Process killed by ${exitSignal}` : `Process exited with code ${exitCode}`);
     err.code = exitCode;
     err.stderr = stderr.trim();
     throw err;
