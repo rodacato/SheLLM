@@ -84,9 +84,21 @@ describe('the model catalog on /v1', () => {
       assert.equal(modelArg(), 'sonnet[1m]');
     });
 
-    it('leaves the model as it was without the header', async () => {
+    it('runs the 1M variant by default, without the header', async () => {
       await chat('claude-fable');
-      assert.equal(modelArg(), 'fable');
+      assert.equal(modelArg(), 'fable[1m]');
+    });
+
+    it('needs the header again once the operator turns the default off', async () => {
+      process.env.SHELLM_CLAUDE_LONG_CONTEXT = 'false';
+      try {
+        await chat('claude-fable');
+        assert.equal(modelArg(), 'fable', 'no header, no default: the model as it was');
+        await chat('claude-fable', 'context-1m-2025-08-07');
+        assert.equal(modelArg(), 'fable[1m]');
+      } finally {
+        delete process.env.SHELLM_CLAUDE_LONG_CONTEXT;
+      }
     });
 
     it('is ignored by a model with no 1M variant, as the API ignores it', async () => {

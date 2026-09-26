@@ -52,11 +52,11 @@ function wantsSchema(response_format) {
 }
 
 // The claude CLI has no temperature flag, so temperature is ignored.
-// The CLI's `<alias>[1m]` is the 1M-context variant; asked for only where the catalog says the
-// account has one, so a model without it runs as it would have (ADR-0009).
+// The CLI's `<alias>[1m]` is the 1M-context variant, used by default or when the caller sends the
+// context-1m beta, and only where the catalog says the account has one (ADR-0009).
 function modelArg(model, longContext) {
   const alias = cliModel(model);
-  if (!alias || !longContext) return alias;
+  if (!alias || !(longContext || config.get('SHELLM_CLAUDE_LONG_CONTEXT'))) return alias;
   const { peekCatalog } = require('../infra/model-catalog');
   const entry = peekCatalog('claude').models.find((m) => m.id === `${PREFIX}${alias}`);
   return entry?.longContext ? `${alias}[1m]` : alias;
