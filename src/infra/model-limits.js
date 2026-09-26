@@ -1,15 +1,28 @@
 'use strict';
 
+const fs = require('node:fs');
+const path = require('node:path');
+const YAML = require('yaml');
+
 // Per field, the CLI wins, then the hand-kept manifest, then the default (ADR-0009). Every value
 // carries its source, so a caller can tell a reported figure from an assumption.
 
 const ONE_MILLION = 1_000_000;
 
+const MANIFEST = path.join(__dirname, '../../config/model-limits.yaml');
+const FALLBACK = { default: { context_window: 200_000 }, models: {} };
+
+let cached = { mtimeMs: null, data: FALLBACK };
+
+// Re-read only when the file changes, so an edit on the host needs no restart. A missing or
+// broken file falls back to the default rather than breaking /v1/models.
 function manifest() {
   try {
-    return require('../catalog/limits.json');
+    const { mtimeMs } = fs.statSync(MANIFEST);
+    if (mtimeMs !== cached.mtimeMs) cached = { mtimeMs, data: YAML.parse(fs.readFileSync(MANIFEST, 'utf8')) || FALLBACK };
+    return cached.data;
   } catch {
-    return { default: { context_window: 200_000 }, models: {} };
+    return FALLBACK;
   }
 }
 
@@ -24,8 +37,8 @@ function fromCli(entry) {
 }
 
 function limitsFor(id, entry) {
-  const { default: fallback = {}, models = {} } = manifest();
-  const layers = [['cli', fromCli(entry)], ['manifest', models[id] || {}], ['default', fallback]];
+  const { default: fallback = {}, models } = manifest();
+  const layers = [['cli', fromCli(entry)], ['manifest', models?.[id] || {}], ['default', fallback]];
   const limits = {};
   const sources = {};
   for (const [source, values] of layers) {
