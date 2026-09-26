@@ -1594,7 +1594,7 @@
           },
           "context_window_1m": {
             "type": "integer",
-            "description": "The window of the model's 1M-context variant, present only when the CLI lists one for this account. Ask for it with the header `anthropic-beta: context-1m-<date>` on either endpoint, as the Anthropic API does; the model id stays the same.\n",
+            "description": "The window of the model's 1M-context variant, present only when the CLI lists one for this account. Used by default; with SHELLM_CLAUDE_LONG_CONTEXT=false, ask for it with the header `anthropic-beta: context-1m-<date>` on either endpoint, as the Anthropic API does. The model id stays the same.\n",
             "example": 1000000
           },
           "max_output_tokens": {

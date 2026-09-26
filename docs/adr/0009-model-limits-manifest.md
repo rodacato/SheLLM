@@ -52,10 +52,16 @@ is exact. A wrong manifest entry misinforms a caller; it cannot break one.
 **`GET /v1/models` reads the catalog** of the enabled providers, keeps every id it listed before,
 and adds the limits to each entry in its OpenAI shape.
 
-**1M context is requested the way the Anthropic API requests it**: the same model id plus
-`anthropic-beta: context-1m-<date>`, on either endpoint (an extension on the OpenAI one). SheLLM
-then runs the CLI's `<alias>[1m]`. A model without a 1M variant ignores the header, as the API
-does. No new model ids.
+**1M context is the default where the account has it.** A named model the CLI lists with a `[1m]`
+variant runs as `<alias>[1m]` without the caller asking, as T3 Code does for Fable and Opus. The
+operator turns that off with `SHELLM_CLAUDE_LONG_CONTEXT=false`; then a request asks for it the
+way the Anthropic API does, with the same model id plus `anthropic-beta: context-1m-<date>` on
+either endpoint (an extension on the OpenAI one). The header is honoured either way. A model
+without a 1M variant ignores both, as the API does. No new model ids.
+
+This departs from the Anthropic API, where 1M is always asked for. It was chosen so that every
+client gets the larger window without a change, and it is a setting rather than a rule because
+whether the 1M variant costs more of a subscription has not been measured.
 
 ## Consequences
 

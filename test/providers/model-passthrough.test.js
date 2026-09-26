@@ -39,7 +39,7 @@ process.exit(unknown ? 1 : 0);
   it('passes the requested model to the CLI as --model', async () => {
     const cases = {
       'claude-haiku': 'haiku',
-      'claude-opus': 'opus',
+      'claude-opus': 'opus[1m]',
       'claude-sonnet-4-5-20250929': 'claude-sonnet-4-5-20250929',
     };
     for (const [requested, passed] of Object.entries(cases)) {

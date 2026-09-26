@@ -66,6 +66,12 @@ module.exports = {
     describe: `Reasoning effort for Claude when a request names none: low, medium, high, xhigh or max.
       Thinking is billed as output and nothing streams while it runs. Any other value leaves it to the CLI.`,
   },
+  SHELLM_CLAUDE_LONG_CONTEXT: {
+    section: 'Providers', type: 'bool', default: true, since: 'v1.17.0', reload: 'live',
+    describe: `Run a Claude model on its 1M-context variant (the CLI's <alias>[1m]) wherever the CLI lists
+      one, without the caller asking. Set to false to use it only when a request sends
+      anthropic-beta: context-1m-<date>.`,
+  },
   SHELLM_CLAUDE_SKIP_PERMISSIONS: {
     section: 'Providers', type: 'bool', default: true, since: 'v0.4.0', reload: 'live',
     describe: `Claude runs with --dangerously-skip-permissions so it never waits for a prompt. Set to

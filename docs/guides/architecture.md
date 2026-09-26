@@ -46,7 +46,7 @@ src/
 │   ├── models.js          # GET /v1/models — the catalog, with each model's limits (ADR-0009)
 │   ├── image-parts.js     # Image content parts: data: URLs, type and size checks
 │   ├── usage.js           # Token usage in each format's own terms (cache, reasoning)
-│   └── betas.js           # anthropic-beta: context-1m-* → the CLI's <alias>[1m]
+│   └── betas.js           # anthropic-beta: context-1m-* (1M is also the default; see ADR-0009)
 │
 ├── config/                # The configuration surface (ADR-0008)
 │   ├── schema.js          # Every setting: default, since, reload, describe — the only defaults
@@ -178,7 +178,8 @@ Every provider implements this interface:
 {
   name: 'provider-name',
   // parts: null, or the prompt as text and image parts in order, when the request has images.
-  // effort: low|medium|high, or undefined. longContext: the caller sent the context-1m beta.
+  // effort: low|medium|high, or undefined. longContext: the caller sent the context-1m beta
+  // (claude also uses 1M by default, per SHELLM_CLAUDE_LONG_CONTEXT).
   // max_tokens, temperature and top_p are passed and ignored: neither CLI has a flag for them.
   chat: async ({ prompt, parts, system, response_format, model, effort, longContext }) => {
     return { content, cost_usd, usage };
