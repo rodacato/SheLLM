@@ -26,6 +26,7 @@ src/
 │   ├── stream-slots.js    # Streaming concurrency slots (acquireStreamSlot/releaseStreamSlot)
 │   ├── health.js          # Provider health checks, caching, background polling, alerts
 │   ├── model-catalog.js   # Live model list from the CLIs, cached (ADR-0005)
+│   ├── model-limits.js    # Per-model limits: CLI > config/model-limits.yaml > 200k default (ADR-0009)
 │   ├── build-info.js      # Version and commit the running process reports
 │   ├── provider-lock.js   # Serializes operations that must not overlap per provider
 │   └── updater.js         # `shellm update` orchestration behind /admin/update
@@ -42,7 +43,10 @@ src/
 ├── api/v1/                # API endpoint handlers (versioned)
 │   ├── chat-completions.js # POST /v1/chat/completions (OpenAI format)
 │   ├── messages.js        # POST /v1/messages (Anthropic format)
-│   └── models.js          # GET /v1/models
+│   ├── models.js          # GET /v1/models — the catalog, with each model's limits (ADR-0009)
+│   ├── image-parts.js     # Image content parts: data: URLs, type and size checks
+│   ├── usage.js           # Token usage in each format's own terms (cache, reasoning)
+│   └── betas.js           # anthropic-beta: context-1m-* → the CLI's <alias>[1m]
 │
 ├── config/                # The configuration surface (ADR-0008)
 │   ├── schema.js          # Every setting: default, since, reload, describe — the only defaults
@@ -79,6 +83,7 @@ src/
 │   ├── logs.js            # Request log query routes
 │   ├── stats.js           # Analytics routes
 │   ├── providers.js       # Provider management routes
+│   ├── config.js          # Settings read-out for the System page
 │   ├── login.js           # Sign-in page and session routes
 │   ├── update.js          # Update check and trigger routes
 │   ├── views.js           # Server-side page composition
@@ -96,11 +101,13 @@ HTTP Request
   ▼
 ┌─────────────────────────────────────────────┐
 │  Express Middleware Chain                     │
-│  1. express.json()          parse body       │
-│  2. requestId               generate/extract │
-│  3. requestLogger           log completion   │
-│  4. Content-Type check      POST/PATCH only  │
-│  5. auth (Bearer token)     validate + rate  │
+│  1. requestLogger           log completion   │
+│  2. corsV1 (/v1 only)       before the parser│
+│  3. express.json()          256kb; not chat  │
+│  4. requestId               generate/extract │
+│  5. Content-Type check      POST/PATCH only  │
+│  6. auth (Bearer token)     validate + rate  │
+│  7. chat body parser        chat only, 20MiB │
 └──────────────┬──────────────────────────────┘
                │
                ▼
@@ -120,15 +127,17 @@ HTTP Request
 │     └─ checkAvailability()  enabled? auth?    │
 │                              circuit ok?      │
 │  2. queue.enqueue()         concurrency gate  │
-│  3. provider.chat()         subprocess/HTTP   │
+│  3. provider.chat()         spawn the CLI     │
 │  4. recordSuccess/Failure   circuit breaker   │
 └──────────┬───────────────────────────────────┘
            │
            ▼
 ┌──────────────────────────────────────────────┐
 │  Provider (providers/)                        │
-│  subprocess: spawn CLI, capture stdout/stderr │
-│  http: fetch to upstream OpenAI-compat API    │
+│  spawn the CLI; prompt on stdin, system in a  │
+│  0600 file; stdout decoded as UTF-8           │
+│  streams: headers at once, `: keepalive` each │
+│  15 s, an error event if the CLI is killed    │
 └──────────┬───────────────────────────────────┘
            │
            ▼
@@ -168,11 +177,13 @@ Every provider implements this interface:
 ```javascript
 {
   name: 'provider-name',
-  // parts: null, or the prompt as text and image parts in order, when the request has images
-  chat: async ({ prompt, parts, system, max_tokens, temperature, top_p, response_format, model }) => {
+  // parts: null, or the prompt as text and image parts in order, when the request has images.
+  // effort: low|medium|high, or undefined. longContext: the caller sent the context-1m beta.
+  // max_tokens, temperature and top_p are passed and ignored: neither CLI has a flag for them.
+  chat: async ({ prompt, parts, system, response_format, model, effort, longContext }) => {
     return { content, cost_usd, usage };
   },
-  chatStream: async function* ({ ... }, { signal }) { ... },  // optional
+  chatStream: async function* ({ ...same, signal }) { ... },  // optional; signal aborts on disconnect
   models: ['model-a', 'model-b'],
   authProbe: async () => ({ ok, reason }),
   env: { /* the only variables the subprocess receives */ },
@@ -191,7 +202,8 @@ stored as `0`.
 
 1. Create `src/providers/<name>.js` implementing the interface above
 2. Register it in `src/routing/engines.js`: `const name = require('../providers/<name>'); engines[name] = ...`
-3. Add a migration to seed the provider and its models in the DB
+3. Add a migration to seed the provider in the DB. Its model names live in the adapter's `models`
+   and the catalog; limits the CLI does not report go in `config/model-limits.yaml`
 4. Export an `authProbe` (a free command plus a parser) from the provider module
 
 ### db/ — Persistence
@@ -210,11 +222,14 @@ unrecorded, so it is retried on the next start.
 
 Middleware runs in order — changing the order changes behavior:
 
-1. `express.json()` — Parse JSON body (256kb limit)
-2. `requestId` — Extract `x-request-id` header or generate UUID
-3. `requestLogger` — Log request completion with timing, status, provider, origin
-4. `corsV1` — Mounted on `/v1` only, and before `auth`: a browser sends no credentials on a
-   preflight, so the preflight has to be answered without one
+1. `requestLogger` — Log request completion with timing, status, provider, origin
+2. `corsV1` — Mounted on `/v1` only, before the body parser and before `auth`: a 400 or 413 from
+   the parser still reaches the browser, and a preflight, which carries no credentials, is
+   answered without one
+3. `express.json()` — Parse JSON body (256kb limit); `/v1/chat/completions` is skipped here and
+   parsed after `auth`, up to `SHELLM_MAX_CHAT_BODY_BYTES`, so a caller without a key never gets
+   more than a header read
+4. `requestId` — Extract `x-request-id` header or `request_id` from the body, or generate a UUID
 5. Content-Type check — Reject non-JSON POST/PATCH
 6. `auth` — Validate Bearer token, check rate limits (global + per-client), enforce the key's
    own origin list
@@ -264,7 +279,7 @@ db/
 - **SQLite, not Postgres** — Single-file database. No connection pool, no migration tooling. `better-sqlite3` is synchronous, which simplifies the code.
 - **No ORM** — Raw SQL in prepared statements. The schema is small enough that an ORM adds complexity without value.
 - **Subprocess providers** — CLI tools are invoked via `spawn()`, not SDK imports. This keeps auth isolated to the host (CLI subscriptions, not API keys).
-- **No TypeScript** — The codebase is about 6,200 lines of server JavaScript (7,700 with the dashboard's browser assets). TypeScript would add a build step for a project that fits in your head.
+- **No TypeScript** — The codebase is about 7,500 lines of server JavaScript (9,400 with the dashboard's browser assets). TypeScript would add a build step for a project that fits in your head.
 - **Debuggability > simplicity > elegance** — When in doubt, choose the option that's easiest to debug at 2 AM.
 - **The service does not deploy itself** — It reports what it is running and can request an
   update; a privileged component outside the process performs one, checking out a published tag.

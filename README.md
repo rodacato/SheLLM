@@ -181,7 +181,7 @@ works everywhere.
 | Provider | Models |
 |---|---|
 | Claude | `claude` (the CLI's default), `claude-haiku`, `claude-sonnet`, `claude-opus`, and any other `claude-*` id the CLI accepts, passed through as `--model` |
-| Codex | `codex` (the CLI's configured default) and any `codex-<model>` id, passed through as `-m <model>` — for example `codex-gpt-5.6-sol`. The CLI runs `--ephemeral` and `-s read-only`, one process at a time |
+| Codex | `codex` (the default model of the baked catalog) and any `codex-<model>` id, passed through as `-m <model>` — for example `codex-gpt-5.6-sol`. The CLI runs `--ephemeral` and `-s read-only`, one process at a time |
 
 A model the CLI rejects comes back as `404 model_not_found`.
 
@@ -191,7 +191,7 @@ A model the CLI rejects comes back as `404 model_not_found`.
 |---|---|
 | `POST /v1/chat/completions` | OpenAI format. `model` and `messages` required, `max_tokens` optional (1–128000). `response_format` takes `json_schema` for structured output, and user messages take `data:` URL images |
 | `POST /v1/messages` | Anthropic format. `model`, `max_tokens` and `messages` required, top-level `system` optional |
-| `GET /v1/models` | OpenAI model list of the names that map to a real CLI model |
+| `GET /v1/models` | OpenAI model list: the declared names plus the models the CLIs report, each with `context_window`, `context_window_1m` and `reasoning_efforts`, and where each figure came from ([ADR-0009](docs/adr/0009-model-limits-manifest.md)) |
 | `GET /health` | `{ "status": "ok" }`, unauthenticated |
 | `/admin/*` | Keys, request logs and provider status — see [The dashboard](#the-dashboard) |
 
@@ -307,6 +307,10 @@ comment lines every few seconds:
 ```
 : queued position=3 waiting_ms=6012
 ```
+
+Once the request is running, the stream writes `: keepalive` every 15 s until it ends, so a model
+that thinks for minutes before its first token does not look like a dead connection to a proxy
+such as Cloudflare, which drops one after 100 s of silence.
 
 Every SSE parser ignores a comment line, so this needs no client change — it is there so you can
 tell a queued request from a wedged one, and so intermediaries see traffic.

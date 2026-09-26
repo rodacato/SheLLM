@@ -64,7 +64,8 @@ function stays `live`. See [ADR-0008](docs/adr/0008-configuration-schema-in-code
 **Adding a provider:** `src/providers/<name>.js` following the contract in the architecture guide,
 registered in `src/routing/engines.js`, exporting an `authProbe` that costs no quota, tests
 in `test/providers/`, and the CLI version it was tested against in `VERSIONS.md`. Export a
-`models` array of the names that map to a real CLI model — `/v1/models` lists exactly that.
+`models` array of the names that map to a real CLI model — `/v1/models` lists those plus the
+models the CLI reports; limits the CLI does not report go in `config/model-limits.yaml` (ADR-0009).
 
 **Tests:** `npm test` (Node's runner). Prefer the real thing: temp directories, real function
 calls, and a fake CLI written to disk and put on `PATH` over mocking `execute()`. `base.js`

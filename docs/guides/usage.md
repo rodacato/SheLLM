@@ -69,8 +69,11 @@ other alias the catalog reports — `fable`, `best`, `opusplan`, `default` — i
 prefix only because the catalog says the CLI answers to it; a name the catalog does not know is
 passed through untouched, which is what keeps full model ids working.
 
-`GET /v1/models` is not the catalog and does not list what was discovered. It returns the names
-each enabled provider declares — four for claude, one for codex — and that is deliberate.
+`GET /v1/models` lists the names each enabled provider declares plus every model the catalog
+knows, once each, with its limits: `context_window`, `context_window_1m`, `reasoning_efforts`,
+and in `x_shellm.sources` whether each figure came from the CLI, from the hand-kept
+`config/model-limits.yaml`, or from the 200,000-token default ([ADR-0009](../adr/0009-model-limits-manifest.md)).
+The limits inform; they never reject a request.
 
 ### Where the names come from
 
@@ -80,7 +83,7 @@ account can use, including descriptions and retirement dates, and `claude -p '/m
 by the CLI itself rather than by the API, which is also why the claude entries carry an alias and
 nothing else.
 
-The catalog feeds the admin dashboard's playground — a suggestion list and a retirement warning,
+The catalog feeds `GET /v1/models` and the admin dashboard's playground — a suggestion list and a retirement warning,
 not a restriction on what the field accepts. It has three sources and always reports which one it
 used, in the dashboard and in `catalog.source` on `GET /admin/providers`:
 
@@ -151,7 +154,7 @@ answer = JSON.parse(response.body).dig('choices', 0, 'message', 'content')
 ```
 
 The `ruby-openai` gem works the same way with `uri_base: ENV['SHELLM_BASE']` — it appends `/v1`
-itself, so do not include it twice. Set a read timeout of at least 120 s in any client: see §8.
+itself, so do not include it twice. Set a read timeout of at least `TIMEOUT_MS` (300 s by default) in any client, or stream: see §8.
 
 ## 5. What works today with Claude
 
@@ -160,7 +163,7 @@ Each row is a probe that ran against a live instance, not a reading of the code.
 
 | What you want to do | Verdict | What actually happens |
 |---|---|---|
-| List the usable models (`models`) | works | `GET /v1/models` returns the four Claude ids |
+| List the usable models (`models`) | works | `GET /v1/models` returned the four Claude ids then; since ADR-0009 it also lists the catalog, with limits |
 | Hold a conversation (`multi-turn`) | works | the whole `messages` history reaches the model |
 | Steer with a system prompt (`system`) | works | top-level `system` on `/v1/messages`, or a `system` role message on `/v1/chat/completions` |
 | Get JSON back (`json-mode`) | works | `response_format: {"type": "json_object"}` returns parseable JSON |
@@ -249,7 +252,7 @@ never on 429 before `Retry-After`.
 | `SHELLM_MAX_IMAGE_BYTES` | 5 MiB per image, decoded | 400 naming the image |
 
 This is a personal subscription behind a CLI: it is sized for a person's work, not for a job
-queue. Set your client timeout above 120 s, keep concurrency at or below 4, and do not point a
+queue. Set your client timeout above `TIMEOUT_MS` (300 s by default), or stream, keep concurrency at or below 4, and do not point a
 batch process at it.
 
 ## 9. What it costs in time
