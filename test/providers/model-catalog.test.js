@@ -23,8 +23,12 @@ describe('reading a model catalog out of a CLI', () => {
   });
 
   // [1m] entries are a context-window variant of a model already in the list, not a model.
-  it('drops the [1m] variants rather than listing a model twice', () => {
-    assert.ok(!parseClaudeModels(CLAUDE_OUTPUT).some((m) => m.id.includes('[1m]')));
+  it('marks the models with a [1m] variant rather than listing any model twice', () => {
+    const models = parseClaudeModels(CLAUDE_OUTPUT);
+    assert.ok(!models.some((m) => m.id.includes('[1m]')));
+    const long = models.filter((m) => m.longContext).map((m) => m.id).sort();
+    assert.deepStrictEqual(long, ['claude-fable', 'claude-opus', 'claude-sonnet']);
+    assert.strictEqual(models.find((m) => m.id === 'claude-haiku').longContext, false);
   });
 
   it('answers null rather than an empty catalog when the line is not there', () => {

@@ -62,25 +62,37 @@ async function readCatalog(provider) {
   if (hit && Date.now() - hit.readAt < TTL_MS) return hit.value;
 
   const live = await probe(provider);
-  const file = baked();
   const value = live
     ? { models: live, source: 'cli', readAt: new Date().toISOString(), generatedAt: null, cli: null }
-    : file.providers?.[provider]?.models?.length
-      ? {
-        models: file.providers[provider].models,
-        source: 'baked',
-        readAt: null,
-        generatedAt: file.generated_at,
-        cli: file.cli?.[provider] ?? null,
-      }
-      : { models: declared(provider), source: 'declared', readAt: null, generatedAt: null, cli: null };
+    : offline(provider);
 
   cache.set(provider, { readAt: Date.now(), value });
   return value;
+}
+
+function offline(provider) {
+  const file = baked();
+  return file.providers?.[provider]?.models?.length
+    ? {
+      models: file.providers[provider].models,
+      source: 'baked',
+      readAt: null,
+      generatedAt: file.generated_at,
+      cli: file.cli?.[provider] ?? null,
+    }
+    : { models: declared(provider), source: 'declared', readAt: null, generatedAt: null, cli: null };
+}
+
+// For the request path, which must never wait on a spawn: the cached read while it is fresh,
+// otherwise the baked file. Whatever refreshes the cache (the dashboard, the warm-up at start)
+// is what makes this live.
+function peekCatalog(provider) {
+  const hit = cache.get(provider);
+  return hit && Date.now() - hit.readAt < TTL_MS ? hit.value : offline(provider);
 }
 
 function resetCatalogCache() {
   cache.clear();
 }
 
-module.exports = { readCatalog, bakedDefault, bakedAliases, resetCatalogCache, declared };
+module.exports = { readCatalog, peekCatalog, bakedDefault, bakedAliases, resetCatalogCache, declared };

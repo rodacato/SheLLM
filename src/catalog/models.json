@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-20",
+  "generated_at": "2026-09-26",
   "cli": {
     "codex": "0.154.0",
     "claude": "2.1.273"
@@ -10,42 +10,104 @@
         {
           "id": "codex-gpt-6-astra",
           "label": "GPT-6-Astra",
-          "description": "Our most capable model for complex, demanding work.",
+          "description": "Frontier intelligence for the most demanding work.",
           "isDefault": true,
           "retiresAt": null,
-          "upgradeTo": null
+          "upgradeTo": null,
+          "reasoningEfforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max",
+            "ultra"
+          ],
+          "defaultReasoningEffort": "low",
+          "inputModalities": [
+            "text",
+            "image"
+          ]
         },
         {
           "id": "codex-gpt-5.6-sol",
           "label": "GPT-5.6-Sol",
-          "description": "Reliable agentic workhorse for everyday tasks.",
+          "description": "Older coding model for complex work.",
           "isDefault": false,
           "retiresAt": null,
-          "upgradeTo": null
+          "upgradeTo": null,
+          "reasoningEfforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max",
+            "ultra"
+          ],
+          "defaultReasoningEffort": "low",
+          "inputModalities": [
+            "text",
+            "image"
+          ]
         },
         {
           "id": "codex-gpt-5.6-terra",
           "label": "GPT-5.6-Terra",
-          "description": "Balanced agentic coding model for everyday work.",
+          "description": "Older balanced model for straightforward work.",
           "isDefault": false,
           "retiresAt": null,
-          "upgradeTo": null
+          "upgradeTo": null,
+          "reasoningEfforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max",
+            "ultra"
+          ],
+          "defaultReasoningEffort": "medium",
+          "inputModalities": [
+            "text",
+            "image"
+          ]
         },
         {
           "id": "codex-gpt-5.6-luna",
           "label": "GPT-5.6-Luna",
-          "description": "Fast and affordable agentic coding model.",
+          "description": "Older fast and efficient model.",
           "isDefault": false,
           "retiresAt": null,
-          "upgradeTo": null
+          "upgradeTo": null,
+          "reasoningEfforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "defaultReasoningEffort": "medium",
+          "inputModalities": [
+            "text",
+            "image"
+          ]
         },
         {
           "id": "codex-gpt-5.5",
           "label": "GPT-5.5",
-          "description": "Proven previous-generation model for coding and general work.",
+          "description": "Legacy coding model.",
           "isDefault": false,
           "retiresAt": "2026-10-14",
-          "upgradeTo": "codex-gpt-5.6-sol"
+          "upgradeTo": "codex-gpt-5.6-sol",
+          "reasoningEfforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh"
+          ],
+          "defaultReasoningEffort": "medium",
+          "inputModalities": [
+            "text",
+            "image"
+          ]
         }
       ]
     },
@@ -57,7 +119,8 @@
           "description": null,
           "isDefault": false,
           "retiresAt": null,
-          "upgradeTo": null
+          "upgradeTo": null,
+          "longContext": true
         },
         {
           "id": "claude-opus",
@@ -65,7 +128,8 @@
           "description": null,
           "isDefault": false,
           "retiresAt": null,
-          "upgradeTo": null
+          "upgradeTo": null,
+          "longContext": true
         },
         {
           "id": "claude-haiku",
@@ -73,7 +137,8 @@
           "description": null,
           "isDefault": false,
           "retiresAt": null,
-          "upgradeTo": null
+          "upgradeTo": null,
+          "longContext": false
         },
         {
           "id": "claude-fable",
@@ -81,7 +146,8 @@
           "description": null,
           "isDefault": false,
           "retiresAt": null,
-          "upgradeTo": null
+          "upgradeTo": null,
+          "longContext": true
         },
         {
           "id": "claude-best",
@@ -89,7 +155,8 @@
           "description": null,
           "isDefault": false,
           "retiresAt": null,
-          "upgradeTo": null
+          "upgradeTo": null,
+          "longContext": false
         },
         {
           "id": "claude-opusplan",
@@ -97,7 +164,8 @@
           "description": null,
           "isDefault": false,
           "retiresAt": null,
-          "upgradeTo": null
+          "upgradeTo": null,
+          "longContext": false
         },
         {
           "id": "claude-default",
@@ -105,7 +173,8 @@
           "description": null,
           "isDefault": false,
           "retiresAt": null,
-          "upgradeTo": null
+          "upgradeTo": null,
+          "longContext": false
         }
       ]
     }

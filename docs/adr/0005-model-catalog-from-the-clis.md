@@ -2,6 +2,8 @@
 
 - **Status:** accepted
 - **Date:** 2026-09-20
+- **Amended by:** [ADR-0009](0009-model-limits-manifest.md), which adds a hand-kept limits
+  manifest and makes `GET /v1/models` read this catalog.
 - **Amends:** ADR-0001's provider behaviour. It does not touch the credential rules in
   [`IDENTITY.md`](../IDENTITY.md) decision 1, which are what closed the obvious alternative.
 

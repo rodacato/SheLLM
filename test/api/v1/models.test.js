@@ -59,7 +59,10 @@ describe('/v1/models', () => {
       .set('Authorization', `Bearer ${testKey}`);
     const ids = res.body.data.map((m) => m.id);
 
-    assert.deepStrictEqual(ids, ['claude', 'claude-haiku', 'claude-sonnet', 'claude-opus', 'codex']);
+    const declared = ['claude', 'claude-haiku', 'claude-sonnet', 'claude-opus', 'codex'];
+    assert.deepStrictEqual(ids.filter((id) => declared.includes(id)), declared, 'every name that routed before still does');
+    assert.ok(ids.includes('claude-fable') && ids.includes('codex-gpt-6-astra'), 'and the catalog adds the rest');
+    assert.equal(new Set(ids).size, ids.length, 'each model once');
   });
 
   it('omits models of a disabled provider', async () => {
@@ -68,7 +71,9 @@ describe('/v1/models', () => {
     try {
       const res = await request(app).get('/v1/models')
         .set('Authorization', `Bearer ${testKey}`);
-      assert.deepStrictEqual(res.body.data.map((m) => m.id), ['codex']);
+      const ids = res.body.data.map((m) => m.id);
+      assert.ok(ids.includes('codex'));
+      assert.ok(!ids.some((id) => id.startsWith('claude')), `a disabled provider listed ${ids}`);
     } finally {
       updateProvider('claude', { enabled: 1 });
     }

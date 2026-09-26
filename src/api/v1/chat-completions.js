@@ -1,6 +1,7 @@
 const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../../routing');
 const { jobFor } = require('../../infra/queue');
 const { openAIUsage } = require('./usage');
+const { wantsLongContext } = require('./betas');
 const { sanitize } = require('../../middleware/sanitize');
 const { invalidRequest, fromCatchable, recordErrorCode, sendOpenAIError } = require('../../errors');
 const { initSSE, announceQueued, keepAlive, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../lib/sse');
@@ -256,7 +257,7 @@ function preflight(req, res) {
 
   // Neither CLI takes minimal: low is claude's floor, and codex's default model refuses it.
   const effort = req.body.reasoning_effort === 'minimal' ? 'low' : req.body.reasoning_effort;
-  return { model, max_tokens, temperature, top_p, response_format, effort, prompt, parts, system };
+  return { model, max_tokens, temperature, top_p, response_format, effort, longContext: wantsLongContext(req), prompt, parts, system };
 }
 
 /**
@@ -270,14 +271,14 @@ async function chatCompletionsHandler(req, res) {
     return handleStream(req, res, params);
   }
 
-  const { model, max_tokens, temperature, top_p, response_format, effort, prompt, parts, system } = params;
+  const { model, max_tokens, temperature, top_p, response_format, effort, longContext, prompt, parts, system } = params;
   const startTime = Date.now();
   res.locals.provider = null;
   res.locals.model = model;
 
   try {
     const allowFallback = req.headers['x-shellm-allow-fallback'] === 'true' || undefined;
-    const result = await route({ model, prompt, parts, system, max_tokens, temperature, top_p, response_format, effort, request_id: req.requestId, allowFallback, job: jobFor(req) });
+    const result = await route({ model, prompt, parts, system, max_tokens, temperature, top_p, response_format, effort, longContext, request_id: req.requestId, allowFallback, job: jobFor(req) });
     res.locals.provider = result.provider;
     res.locals.queued_ms = result.queued_ms ?? null;
     res.locals.cost_usd = result.cost_usd ?? null;
@@ -321,7 +322,7 @@ async function chatCompletionsHandler(req, res) {
  * Handle streaming response (stream: true).
  * Holds a queue slot for the full stream duration.
  */
-async function handleStream(req, res, { model, max_tokens, temperature, top_p, response_format, effort, prompt, parts, system }) {
+async function handleStream(req, res, { model, max_tokens, temperature, top_p, response_format, effort, longContext, prompt, parts, system }) {
   const logger = require('../../lib/logger');
   let provider;
   try {
@@ -390,7 +391,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
         logger.debug({ event: 'stream_calling_provider', provider: provider.name, hasChatStream: true });
         // Native streaming
         let chunkCount = 0;
-        for await (const event of streamFn({ prompt, parts, system, max_tokens, temperature, top_p, response_format, effort, model, signal: ac.signal })) {
+        for await (const event of streamFn({ prompt, parts, system, max_tokens, temperature, top_p, response_format, effort, longContext, model, signal: ac.signal })) {
           if (ac.signal.aborted) { logger.debug({ event: 'stream_aborted', chunkCount }); break; }
           if (event.type === 'delta') {
             chunkCount++;
@@ -414,7 +415,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
         logger.debug({ event: 'stream_generator_done', chunkCount, request_id: req.requestId });
       } else {
         logger.debug({ event: 'stream_fallback', provider: provider.name });
-        const result = await provider.chat({ prompt, parts, system, max_tokens, temperature, top_p, response_format, effort, model });
+        const result = await provider.chat({ prompt, parts, system, max_tokens, temperature, top_p, response_format, effort, longContext, model });
         sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model: responseModel, choices: [{ index: 0, delta: { role: 'assistant' }, finish_reason: null }] });
         sendSSEChunk(res, { id, object: 'chat.completion.chunk', created, model: responseModel, choices: [{ index: 0, delta: { content: result.content }, finish_reason: null }] });
       }

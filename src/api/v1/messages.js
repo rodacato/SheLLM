@@ -1,6 +1,7 @@
 const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../../routing');
 const { jobFor } = require('../../infra/queue');
 const { anthropicCacheUsage } = require('./usage');
+const { wantsLongContext } = require('./betas');
 const { sanitize } = require('../../middleware/sanitize');
 const { invalidRequest, fromCatchable, recordErrorCode, sendAnthropicError } = require('../../errors');
 const { initSSE, announceQueued, keepAlive } = require('../../lib/sse');
@@ -187,7 +188,7 @@ function preflight(req, res) {
   prompt = sanitize(prompt);
   if (system) system = sanitize(system);
 
-  return { model, max_tokens, temperature, top_p, prompt, system };
+  return { model, max_tokens, temperature, top_p, longContext: wantsLongContext(req), prompt, system };
 }
 
 async function messagesHandler(req, res) {
@@ -198,14 +199,14 @@ async function messagesHandler(req, res) {
     return handleAnthropicStream(req, res, params);
   }
 
-  const { model, max_tokens, temperature, top_p, prompt, system } = params;
+  const { model, max_tokens, temperature, top_p, longContext, prompt, system } = params;
   const startTime = Date.now();
   res.locals.provider = null;
   res.locals.model = model;
 
   try {
     const allowFallback = req.headers['x-shellm-allow-fallback'] === 'true' || undefined;
-    const result = await route({ model, prompt, system, max_tokens, temperature, top_p, request_id: req.requestId, allowFallback, job: jobFor(req) });
+    const result = await route({ model, prompt, system, max_tokens, temperature, top_p, longContext, request_id: req.requestId, allowFallback, job: jobFor(req) });
     res.locals.provider = result.provider;
     res.locals.queued_ms = result.queued_ms ?? null;
     res.locals.cost_usd = result.cost_usd ?? null;
@@ -250,7 +251,7 @@ async function messagesHandler(req, res) {
 /**
  * Handle streaming response for /v1/messages (Anthropic SSE format).
  */
-async function handleAnthropicStream(req, res, { model, max_tokens, temperature, top_p, prompt, system }) {
+async function handleAnthropicStream(req, res, { model, max_tokens, temperature, top_p, longContext, prompt, system }) {
   const logger = require('../../lib/logger');
   const { recordSuccess, recordFailure } = require('../../infra/circuit-breaker');
 
@@ -319,7 +320,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
 
       if (streamFn) {
         logger.debug({ event: 'stream_calling_provider', format: 'anthropic', provider: provider.name, hasChatStream: true });
-        for await (const event of streamFn({ prompt, system, max_tokens, temperature, top_p, model, signal: ac.signal })) {
+        for await (const event of streamFn({ prompt, system, max_tokens, temperature, top_p, longContext, model, signal: ac.signal })) {
           if (ac.signal.aborted) { logger.debug({ event: 'stream_aborted', chunkCount }); break; }
           if (event.type === 'usage') {
             reportedUsage = event.usage;
@@ -340,7 +341,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
         recordSuccess(provider.name);
       } else {
         logger.debug({ event: 'stream_fallback', format: 'anthropic', provider: provider.name });
-        const result = await provider.chat({ prompt, system, max_tokens, temperature, top_p, model });
+        const result = await provider.chat({ prompt, system, max_tokens, temperature, top_p, longContext, model });
         totalChars += result.content.length;
         sendContentBlockDelta(res, 0, result.content);
         recordSuccess(provider.name);

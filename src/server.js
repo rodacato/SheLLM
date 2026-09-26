@@ -51,6 +51,15 @@ function gracefulShutdown(server, signal) {
 }
 
 // Only start listening when run directly (not when required for testing)
+// /v1/models never waits on a CLI (ADR-0009), so the catalog is read here, off the request path,
+// and again each time the cache would expire.
+function warmModelCatalog() {
+  const { readCatalog } = require('./infra/model-catalog');
+  const warm = () => Promise.all(['claude', 'codex'].map((p) => readCatalog(p).catch(() => null)));
+  warm();
+  setInterval(warm, config.get('SHELLM_MODEL_CATALOG_TTL_MS')).unref();
+}
+
 if (require.main === module) {
   const { getHealthStatus, startHealthPoller } = require('./infra/health');
 
@@ -63,6 +72,7 @@ if (require.main === module) {
     }
 
     const server = startServer({}, startHealthPoller);
+    warmModelCatalog();
 
     process.on('SIGTERM', () => gracefulShutdown(server, 'SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown(server, 'SIGINT'));
