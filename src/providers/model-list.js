@@ -57,6 +57,9 @@ function codexEntry(model) {
       ? new Date(model.upgradeInfo.retirementAt * 1000).toISOString().slice(0, 10)
       : null,
     upgradeTo: model.upgrade ? `codex-${model.upgrade}` : null,
+    reasoningEfforts: (model.supportedReasoningEfforts || []).map((e) => e.reasoningEffort).filter(Boolean),
+    defaultReasoningEffort: model.defaultReasoningEffort || null,
+    inputModalities: model.inputModalities || null,
   };
 }
 
@@ -68,14 +71,16 @@ async function listCodexModels({ env } = {}) {
 }
 
 // `/model` is answered by the CLI itself rather than by the API, so this costs no tokens. Its one
-// line carries the aliases; the `[1m]` entries are context-window variants of a model already
-// listed, not models of their own.
+// line carries the aliases; a `[1m]` entry is the 1M-context variant of a model already listed,
+// so it marks that model rather than listing one of its own.
 const AVAILABLE = /Available:\s*([^.]+?)(?:,\s*or a full model ID)?\s*\./;
 
 function parseClaudeModels(stdout) {
   const match = AVAILABLE.exec(String(stdout));
   if (!match) return null;
-  const aliases = match[1].split(',').map((s) => s.trim()).filter((s) => s && !s.endsWith('[1m]'));
+  const all = match[1].split(',').map((s) => s.trim()).filter(Boolean);
+  const longContext = new Set(all.filter((s) => s.endsWith('[1m]')).map((s) => s.slice(0, -'[1m]'.length)));
+  const aliases = all.filter((s) => !s.endsWith('[1m]'));
   if (aliases.length === 0) return null;
   return aliases.map((alias) => ({
     id: `claude-${alias}`,
@@ -84,6 +89,7 @@ function parseClaudeModels(stdout) {
     isDefault: false,
     retiresAt: null,
     upgradeTo: null,
+    longContext: longContext.has(alias),
   }));
 }
 

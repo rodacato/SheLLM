@@ -52,10 +52,21 @@ function wantsSchema(response_format) {
 }
 
 // The claude CLI has no temperature flag, so temperature is ignored.
-function buildBaseArgs({ system, response_format, model, effort }) {
+// The CLI's `<alias>[1m]` is the 1M-context variant; asked for only where the catalog says the
+// account has one, so a model without it runs as it would have (ADR-0009).
+function modelArg(model, longContext) {
+  const alias = cliModel(model);
+  if (!alias || !longContext) return alias;
+  const { peekCatalog } = require('../infra/model-catalog');
+  const entry = peekCatalog('claude').models.find((m) => m.id === `${PREFIX}${alias}`);
+  return entry?.longContext ? `${alias}[1m]` : alias;
+}
+
+function buildBaseArgs({ system, response_format, model, effort, longContext }) {
   const args = ['--print', ...ISOLATION_ARGS];
   if (shouldSkipPermissions()) args.push('--dangerously-skip-permissions');
-  if (cliModel(model)) args.push('--model', cliModel(model));
+  const modelName = modelArg(model, longContext);
+  if (modelName) args.push('--model', modelName);
   if (effortFor(effort)) args.push('--effort', effortFor(effort));
   if (systemPromptFor({ system, response_format })) args.push('--system-prompt-file', SYSTEM_FILE);
   // The flag takes the schema inline only; a path is refused as invalid JSON.
@@ -249,16 +260,16 @@ function hasStructuredOutput(stdout) {
   return resultOf(stdout)?.structured_output !== undefined;
 }
 
-async function chat({ prompt, parts, system, response_format, model, effort }) {
-  const params = { prompt, parts, system, response_format, model, effort };
+async function chat({ prompt, parts, system, response_format, model, effort, longContext }) {
+  const params = { prompt, parts, system, response_format, model, effort, longContext };
   const result = await execute('claude', buildArgs(params), { env: CLAUDE_ENV, input: buildInput(params), files: buildFiles(params) })
     .catch((err) => { throw toProviderError(err, model); });
   if (wantsSchema(response_format) && !hasStructuredOutput(result.stdout)) throw noStructuredOutput();
   return parseOutput(result.stdout, result.stderr);
 }
 
-async function* chatStream({ prompt, parts, system, response_format, model, effort, signal }) {
-  const params = { prompt, parts, system, response_format, model, effort };
+async function* chatStream({ prompt, parts, system, response_format, model, effort, longContext, signal }) {
+  const params = { prompt, parts, system, response_format, model, effort, longContext };
   const args = buildStreamArgs(params);
   const structured = wantsSchema(response_format);
   let pending = '';

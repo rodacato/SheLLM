@@ -1586,6 +1586,53 @@
           "owned_by": {
             "type": "string",
             "example": "shellm"
+          },
+          "context_window": {
+            "type": "integer",
+            "description": "Input tokens the model takes. 200000 when nothing more specific is known.",
+            "example": 200000
+          },
+          "context_window_1m": {
+            "type": "integer",
+            "description": "The window of the model's 1M-context variant, present only when the CLI lists one for this account. Ask for it with the header `anthropic-beta: context-1m-<date>` on either endpoint, as the Anthropic API does; the model id stays the same.\n",
+            "example": 1000000
+          },
+          "max_output_tokens": {
+            "type": "integer",
+            "description": "The output cap, when the manifest records one."
+          },
+          "reasoning_efforts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The reasoning efforts the model accepts."
+          },
+          "default_reasoning_effort": {
+            "type": "string"
+          },
+          "input_modalities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "x_shellm": {
+            "type": "object",
+            "properties": {
+              "sources": {
+                "type": "object",
+                "description": "Where each limit above came from: `cli` (the CLI reported it), `manifest` (the hand-kept src/catalog/limits.json) or `default`. Best effort and informational; the CLI still validates every request.\n",
+                "additionalProperties": {
+                  "type": "string",
+                  "enum": [
+                    "cli",
+                    "manifest",
+                    "default"
+                  ]
+                }
+              }
+            }
           }
         }
       },
