@@ -1622,7 +1622,7 @@
             "properties": {
               "sources": {
                 "type": "object",
-                "description": "Where each limit above came from: `cli` (the CLI reported it), `manifest` (the hand-kept src/catalog/limits.json) or `default`. Best effort and informational; the CLI still validates every request.\n",
+                "description": "Where each limit above came from: `cli` (the CLI reported it), `manifest` (the hand-kept config/model-limits.yaml) or `default`. Best effort and informational; the CLI still validates every request.\n",
                 "additionalProperties": {
                   "type": "string",
                   "enum": [

@@ -1,0 +1,42 @@
+# Model limits SheLLM cannot read from the CLIs, kept by hand. See docs/adr/0009-model-limits-manifest.md.
+#
+# What this is for: GET /v1/models reports, per model, how much a client can send and which
+# reasoning efforts it accepts. The CLIs report part of that themselves (codex's efforts, claude's
+# 1M variants); this file fills in the rest.
+#
+# What it is not: a validator. Nothing here rejects or changes a request. The CLI still decides
+# what fits, and answers an over-long prompt with its own 400 context_length_exceeded.
+#
+# Precedence, per field: what the CLI reports > this file > the default below. /v1/models says
+# which of the three each value came from (x_shellm.sources), so a wrong entry here shows up as
+# "manifest", never as fact.
+#
+# Rule of thumb: write down only what is documented. A model or field not listed gets the default.
+
+default:
+  context_window: 200000
+
+models:
+  # Reasoning efforts and the 200k base windows below come from T3 Code's model-manifest.json
+  # (pingdotgg/t3code), read 2026-09-26. The 1M windows are not written here: the CLI reports them.
+  #
+  # Observed, not documented: on one account (2026-09-26, claude 2.1.273) claude-sonnet and
+  # claude-fable took ~350k prompt tokens without asking for 1M. The documented 200k stays.
+  claude-haiku:
+    context_window: 200000
+    reasoning_efforts: []
+
+  claude-sonnet:
+    context_window: 200000
+    reasoning_efforts: [low, medium, high, xhigh, max]
+    default_reasoning_effort: high
+
+  claude-opus:
+    context_window: 200000
+    reasoning_efforts: [low, medium, high, xhigh, max]
+    default_reasoning_effort: medium
+
+  claude-fable:
+    context_window: 200000
+    reasoning_efforts: [low, medium, high, xhigh, max]
+    default_reasoning_effort: medium

@@ -31,9 +31,15 @@ identifier and maps its `[1m]` aliases onto it.
 
 ## Decision
 
-**`src/catalog/limits.json` is a manifest kept by hand**, per SheLLM model id: context window,
+**`config/model-limits.yaml` is a manifest kept by hand**, per SheLLM model id: context window,
 the 1M window where one exists, output cap, reasoning efforts. It is best effort. Nothing in it is
-required, and a model it does not name gets a context window of **200,000** tokens.
+required, and a model it does not name gets a context window of **200,000** tokens. Only what is
+documented goes in; what was merely observed goes in a comment.
+
+It is YAML under `config/`, next to the rest of what an operator edits on the host, because it is
+read and edited by a person and has to say in comments what it is and is not. That costs one
+runtime dependency, `yaml`, which has none of its own. The server re-reads it when it changes, so
+an edit needs no restart; a missing or unparsable file falls back to the default.
 
 **Precedence, per field: `cli` > `manifest` > `default`.** A value the CLI reports wins. Every
 limit `/v1/models` returns says which of the three it came from, so a caller can tell a measured
@@ -55,6 +61,9 @@ does. No new model ids.
 
 - The manifest can be wrong, and says so by design: its entries carry `manifest` as their source.
   It is updated by hand when a model is added, the same way the baked catalog is regenerated.
+  The first measurement already showed it: on one account the base Sonnet and Fable aliases took
+  ~350k prompt tokens without asking for 1M, against a documented 200k. The file keeps the
+  documented figure and records the observation as a comment.
 - `/v1/models` now depends on the catalog probe. The probe is cached for
   `SHELLM_MODEL_CATALOG_TTL_MS` and falls back to the baked file, so a cold read costs one spawn
   and never an empty list.

@@ -100,7 +100,7 @@ message = client.messages.create(
 
 ### 1. Model Names
 
-Model names map to the CLI's own aliases — `claude-haiku` becomes `--model haiku`. `GET /v1/models` lists every name that routes plus the models the CLIs report for this account, each with its limits: `context_window`, `context_window_1m`, `reasoning_efforts` and the rest, and in `x_shellm.sources` whether each came from the CLI, from the hand-kept manifest (`src/catalog/limits.json`) or from the 200,000-token default ([ADR-0009](../adr/0009-model-limits-manifest.md)). The limits inform; they never reject a request. Any other `claude-*` id is passed through to the CLI unchanged.
+Model names map to the CLI's own aliases — `claude-haiku` becomes `--model haiku`. `GET /v1/models` lists every name that routes plus the models the CLIs report for this account, each with its limits: `context_window`, `context_window_1m`, `reasoning_efforts` and the rest, and in `x_shellm.sources` whether each came from the CLI, from the hand-kept manifest (`config/model-limits.yaml`) or from the 200,000-token default ([ADR-0009](../adr/0009-model-limits-manifest.md)). The limits inform; they never reject a request. Any other `claude-*` id is passed through to the CLI unchanged.
 
 **1M context** is asked for the way the Anthropic API asks for it: the same model id plus the header `anthropic-beta: context-1m-<date>` (any date), on `/v1/messages` or `/v1/chat/completions`. SheLLM then runs the CLI's `<alias>[1m]`. It applies to a named model the CLI lists a 1M variant for (`claude-sonnet`, `claude-opus`, `claude-fable` on the account this was written on); `claude-haiku` and the bare `claude` ignore it and run at 200k.
 
