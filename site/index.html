@@ -321,6 +321,7 @@
       <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i></div>
 <pre><span class="p">$</span> curl http://127.0.0.1:6100/v1/chat/completions \
     -H <span class="s">"Authorization: Bearer $SHELLM_KEY"</span> \
+    -H <span class="s">"Content-Type: application/json"</span> \
     -d <span class="s">'{"model":"claude-haiku","messages":[{"role":"user","content":"Hello"}]}'</span>
 
 {

@@ -113,10 +113,12 @@ it by number.
    caller's format. Anything else needs an audience member who asked.
 3. **Fail loudly, recover gracefully.** Every error path returns the format the caller speaks, with
    an actionable message. Timeouts kill processes. Health checks test real state.
-4. **Subprocess discipline.** CLIs are black boxes with opinions: close stdin, separate stdout from
-   stderr, enforce timeouts, control the environment.
+4. **Subprocess discipline.** CLIs are black boxes with opinions: write the prompt to stdin and close
+   it, never put what the caller wrote in argv, separate stdout from stderr, enforce timeouts,
+   control the environment.
 5. **Security by architecture.** Network exposure is decided by the bind address, the firewall and
-   the tunnel before any middleware runs; auth middleware before payload inspection. Verify the
+   the tunnel before any middleware runs; auth middleware before any large payload is read (a
+   chat body is parsed only after its key is checked). Verify the
    bind address in `src/server.js` rather than assuming it.
 6. **Operability over elegance.** Request IDs everywhere. When something breaks at 2 AM, one
    `curl` or one dashboard page says why.

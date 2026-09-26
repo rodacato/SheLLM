@@ -65,7 +65,7 @@ message = client.messages.create(
 | `top_p` | **Accepted** | Number 0-1 |
 | `reasoning_effort` | **Supported** | `minimal`, `low`, `medium` or `high`; `minimal` runs as `low`, the floor both CLIs accept. Omitted, Claude uses `SHELLM_CLAUDE_EFFORT` (`medium`) and Codex its own configuration. Any other value is a 400 |
 | `stream` | **Supported** | `true` enables SSE streaming |
-| `response_format` | **Supported** | `{ type: "json_schema", json_schema: { name, schema, strict? } }`, `{ type: "json_object" }` or `{ type: "text" }`. `name` is 1–64 letters, digits, `_` or `-`; the schema is at most 100 KiB, because Claude takes it as one command-line argument. The answer is the JSON as a string in `choices[0].message.content`; streamed, it arrives as `delta.content` like any other answer |
+| `response_format` | **Supported** | `{ type: "json_schema", json_schema: { name, schema, strict? } }`, `{ type: "json_object" }` or `{ type: "text" }`. `name` is 1–64 letters, digits, `_` or `-`; the schema is at most 100 KiB, because Claude takes it as one command-line argument. The answer is the JSON as a string in `choices[0].message.content`; streamed, it arrives whole in a single `delta.content` chunk once the CLI has validated it (see the capability matrix) |
 | `stop` | **Validated** | String or array of up to 4 strings. Validated but not passed to providers |
 | `n` | **Ignored** | Always returns 1 choice |
 | `seed` | **Ignored** | |
