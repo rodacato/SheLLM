@@ -34,7 +34,7 @@ ahead of the last tag for most of a cycle.
 
 | File | Screens | Kit | Domain entry point |
 |---|---|---|---|
-| `admin.pen` | 20 of 20 — **six route columns, one per URL**, each stacked in flow order rather than alphabetically. `/admin/login` carries Sign in and its two failures; `#overview`, `#logs`, `#keys`, `#playground` and `#system` each carry their page and every state it can show. The briefs and the Log are the documentation column at x=0. | **0.3.0** | `/admin/login` and `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209) |
+| `admin.pen` | 21 of 21 — **six route columns, one per URL**, each stacked in flow order rather than alphabetically. `/admin/login` carries Sign in and its two failures; `#overview`, `#logs`, `#keys`, `#playground` and `#system` each carry their page and every state it can show. The briefs and the Log are the documentation column at x=0. | **0.3.0** | `/admin/login` and `/admin/dashboard/`, sidebar in [`src/admin/public/js/app.js:348`](../src/admin/public/js/app.js#L348) |
 
 **A proposal column is allowed here, and it is expected to be temporary.** The auto-refresh control
 was drawn before it was built, in a column of its own whose brief said in its first line that it was not a
@@ -119,7 +119,7 @@ A fact written in two of them belongs in one; the others cite it.
 
 **code > production capture > legacy.** In that order, every time.
 
-- Derive the **domain list** from the dashboard sidebar ([`src/admin/public/js/app.js:209`](../src/admin/public/js/app.js#L209)), never from an old design. The audit's own mockups list a Models page that `252cd12` removed — that is what reading a domain list off a legacy file costs.
+- Derive the **domain list** from the dashboard sidebar ([`src/admin/public/js/app.js:348`](../src/admin/public/js/app.js#L348)), never from an old design. The audit's own mockups list a Models page that `252cd12` removed — that is what reading a domain list off a legacy file costs.
 - **Never invent copy** — every string must exist in the code.
 - Build states by finding their owner in the code; hunt the states a normal session never
   reaches (no data, no permission, failed request) — that's where design gaps AND code bugs
