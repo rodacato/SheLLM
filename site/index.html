@@ -182,6 +182,18 @@
   .nots strong, .fixes strong { display:block; color:#fff; font-weight:500; font-family:"Space Grotesk", sans-serif; margin-bottom:.35rem; }
   .nots span, .fixes span { color:var(--muted); font-size:.85rem; }
 
+  .compare { display:grid; gap:1px; margin-top:2rem; grid-template-columns:repeat(auto-fit, minmax(15rem, 1fr));
+             background:color-mix(in srgb, var(--line) 30%, transparent);
+             border:1px solid color-mix(in srgb, var(--line) 30%, transparent); }
+  .compare article { background:var(--surface); padding:1.5rem; }
+  .compare article.us { background:var(--panel); }
+  .compare h3 { margin:0; font-size:1rem; }
+  .compare h3 a { color:#fff; }
+  .compare .kind { margin:.25rem 0 1rem; color:var(--accent); font-size:.75rem; font-family:"Space Grotesk", sans-serif;
+                   letter-spacing:.08em; text-transform:uppercase; }
+  .compare dl { margin:0; font-size:.85rem; }
+  .compare dt { color:var(--muted); font-size:.7rem; text-transform:uppercase; letter-spacing:.12em; margin-top:.9rem; }
+  .compare dd { margin:.2rem 0 0; }
   table { width:100%; border-collapse:collapse; font-size:.9rem; margin-top:2rem; }
   th, td { text-align:left; padding:.9rem 1rem; border-bottom:1px solid color-mix(in srgb, var(--line) 50%, transparent); vertical-align:top; }
   th { font-family:"Space Grotesk", sans-serif; font-size:.7rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); font-weight:500; }
@@ -470,8 +482,54 @@ await stream.finalMessage();</pre>
     <div class="nots">
       <div><strong>Not a way to share a subscription.</strong><span>One owner, their own apps.</span></div>
       <div><strong>Not a backend for coding agents.</strong><span>They drive their own CLI already.</span></div>
-      <div><strong>Not an API-key gateway.</strong><span>LiteLLM does that better.</span></div>
+      <div><strong>Not an API-key gateway.</strong><span>LiteLLM does that better — <a href="#compare">how they differ</a>.</span></div>
       <div><strong>Not machine-scale.</strong><span>Quota is measured in human sessions.</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="compare">
+  <div class="wrap reveal">
+    <h2>How it compares</h2>
+    <p class="lede">The most-used projects in this space, one per kind. They differ less in features
+      than in how they reach the model — and that is what decides who carries the risk.</p>
+    <div class="compare">
+      <article>
+        <h3><a href="https://github.com/BerriAI/litellm">LiteLLM</a></h3>
+        <p class="kind">API-key gateway</p>
+        <dl>
+          <dt>Reaches the model through</dt><dd>Paid API keys, across many providers.</dd>
+          <dt>Built for</dt><dd>Teams: budgets per team, user and key.</dd>
+          <dt>Pick it when</dt><dd>You pay per token and want one endpoint over all of it.</dd>
+        </dl>
+      </article>
+      <article>
+        <h3><a href="https://github.com/router-for-me/CLIProxyAPI">CLIProxyAPI</a></h3>
+        <p class="kind">Subscription proxy</p>
+        <dl>
+          <dt>Reaches the model through</dt><dd>OAuth login to Claude Code and Codex, round-robin across several accounts.</dd>
+          <dt>Built for</dt><dd>Pooling subscriptions behind one API.</dd>
+          <dt>The catch</dt><dd>The login is used outside the official client — the route Anthropic's terms forbid.</dd>
+        </dl>
+      </article>
+      <article>
+        <h3><a href="https://github.com/QuantumNous/new-api">new-api</a></h3>
+        <p class="kind">Multi-tenant gateway</p>
+        <dl>
+          <dt>Reaches the model through</dt><dd>Upstream API keys, configured as channels.</dd>
+          <dt>Built for</dt><dd>Serving other people: quotas, subscriptions and billing per user.</dd>
+          <dt>Pick it when</dt><dd>You run a gateway for a team or for customers.</dd>
+        </dl>
+      </article>
+      <article class="us">
+        <h3>SheLLM</h3>
+        <p class="kind">Subscription wrapper</p>
+        <dl>
+          <dt>Reaches the model through</dt><dd>The official, unmodified CLI, which keeps its own login.</dd>
+          <dt>Built for</dt><dd>One owner and their own apps. No sharing, no pooling.</dd>
+          <dt>The catch</dt><dd>Slower: every request starts the CLI. Codex still carries <a href="#terms">classifier risk</a>.</dd>
+        </dl>
+      </article>
     </div>
   </div>
 </section>
