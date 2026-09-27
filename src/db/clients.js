@@ -2,6 +2,7 @@
 
 const { createHash, createHmac, randomBytes } = require('node:crypto');
 const config = require('../config');
+const { parseInstant } = require('../lib/time');
 
 const KEY_PREFIX_LEN = 8;
 let _hmacSecret = null;
@@ -160,9 +161,9 @@ function findClientByKey(rawKey) {
   }
 
   if (!row) return null;
-  // Check expiration
-  if (row.expires_at && new Date(row.expires_at + 'Z') < new Date()) {
-    return null;
+  if (row.expires_at) {
+    const expiresAt = parseInstant(row.expires_at);
+    if (!expiresAt || expiresAt <= new Date()) return null;
   }
   return decodeClient(row);
 }

@@ -208,6 +208,26 @@ describe('db layer', () => {
     });
   });
 
+  describe('findClientByKey expiry', () => {
+    // The dashboard sends toISOString(), so the stored value already ends in Z.
+    it('refuses a key whose ISO expiry has passed', () => {
+      const past = new Date(Date.now() - 60_000).toISOString();
+      const client = createClient({ name: 'iso-expired', expires_at: past });
+      assert.strictEqual(findClientByKey(client.rawKey), null);
+    });
+
+    it('accepts a key whose ISO expiry is in the future', () => {
+      const future = new Date(Date.now() + 3_600_000).toISOString();
+      const client = createClient({ name: 'iso-future', expires_at: future });
+      assert.ok(findClientByKey(client.rawKey));
+    });
+
+    it('refuses a key whose zoneless expiry has passed', () => {
+      const client = createClient({ name: 'naive-expired', expires_at: '2020-01-01 00:00:00' });
+      assert.strictEqual(findClientByKey(client.rawKey), null);
+    });
+  });
+
   describe('deleteClient', () => {
     it('deletes existing client', () => {
       const client = createClient({ name: 'delete-me' });
@@ -246,6 +266,14 @@ describe('db layer', () => {
       const client = createClient({ name: 'expired-client', expires_at: '2020-01-01T00:00:00' });
       // Manually ensure active
       getDb().prepare('UPDATE clients SET active = 1 WHERE id = ?').run(client.id);
+      pruneExpiredKeys();
+      const row = getDb().prepare('SELECT active FROM clients WHERE id = ?').get(client.id);
+      assert.strictEqual(row.active, 0);
+    });
+
+    it('marks a key inactive when its ISO expiry passed earlier the same day', () => {
+      const past = new Date(Date.now() - 1_000).toISOString();
+      const client = createClient({ name: 'iso-expired-today', expires_at: past });
       pruneExpiredKeys();
       const row = getDb().prepare('SELECT active FROM clients WHERE id = ?').get(client.id);
       assert.strictEqual(row.active, 0);

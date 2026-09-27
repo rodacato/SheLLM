@@ -29,4 +29,13 @@ function toInstant(sqliteDatetime) {
   return `${String(sqliteDatetime).replace(' ', 'T')}Z`;
 }
 
-module.exports = { DEFAULT_TIMEZONE, getTimezone, toInstant };
+// Stored instants come in both shapes: SQLite's zoneless UTC and an ISO string that already ends
+// in Z or an offset. Appending a second Z to the latter yields an Invalid Date.
+function parseInstant(value) {
+  if (!value) return null;
+  const text = String(value);
+  const d = new Date(/(Z|[+-]\d{2}:?\d{2})$/.test(text) ? text : `${text.replace(' ', 'T')}Z`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+module.exports = { DEFAULT_TIMEZONE, getTimezone, toInstant, parseInstant };
