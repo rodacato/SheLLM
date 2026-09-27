@@ -99,7 +99,7 @@
         <div class="bg-surface-container overflow-x-auto">
           <table class="w-full text-sm">
             <thead class="bg-surface-container-lowest">
-              <tr>
+              <tr class="whitespace-nowrap">
                 <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Name</th>
                 <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Key Prefix</th>
                 <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline min-w-[15rem]">Limits</th>
@@ -125,7 +125,7 @@
             </tbody>
             <template x-for="key in keys" :key="key.id">
               <tbody>
-                <tr class="border-t border-outline-variant/20 hover:bg-surface-container-high transition-colors duration-fast"
+                <tr class="border-t border-outline-variant/20 whitespace-nowrap hover:bg-surface-container-high transition-colors duration-fast"
                   :class="editing === key.id ? 'bg-surface-container-high' : ''">
                   <td class="px-4 py-3">
                     <span class="font-headline font-bold text-white text-sm block" x-text="key.name"></span>
@@ -189,41 +189,44 @@
                 </tr>
                 <tr x-show="editing === key.id" class="border-t border-outline-variant/20 bg-surface-container-lowest">
                   <td colspan="8" class="px-4 py-4">
-                    <p class="text-[10px] font-mono text-outline mb-3">
-                      The secret itself cannot be changed here — rotate replaces it.
-                    </p>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div>
-                        <label :for="'edit-name-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Name</label>
-                        <input :id="'edit-name-' + key.id" type="text" x-model="editForm.name" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                    <!-- The table scrolls sideways on a phone; the form stays where the viewport is. -->
+                    <div class="max-md:sticky max-md:left-4 max-md:w-[calc(100vw-4rem)]">
+                      <p class="text-[10px] font-mono text-outline mb-3">
+                        The secret itself cannot be changed here — rotate replaces it.
+                      </p>
+                      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                          <label :for="'edit-name-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Name</label>
+                          <input :id="'edit-name-' + key.id" type="text" x-model="editForm.name" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                        </div>
+                        <div>
+                          <label :for="'edit-rpm-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">RPM</label>
+                          <input :id="'edit-rpm-' + key.id" type="number" min="1" x-model="editForm.rpm" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                        </div>
+                        <div>
+                          <label :for="'edit-models-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Models (blank = all)</label>
+                          <input :id="'edit-models-' + key.id" type="text" x-model="editForm.models" placeholder="claude, claude-haiku" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                        </div>
+                        <div>
+                          <label :for="'edit-expires-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1" x-text="'Expires (' + timezone + ', blank = never)'"></label>
+                          <input :id="'edit-expires-' + key.id" type="datetime-local" x-model="editForm.expires_at" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                        </div>
+                        <div class="md:col-span-2">
+                          <label :for="'edit-description-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Description</label>
+                          <input :id="'edit-description-' + key.id" type="text" x-model="editForm.description" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                        </div>
+                        <div class="md:col-span-2">
+                          <label :for="'edit-origins-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Browser origins (blank = any caller)</label>
+                          <input :id="'edit-origins-' + key.id" type="text" x-model="editForm.origins" placeholder="https://rodacato.github.io, http://localhost:5173" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                        </div>
                       </div>
-                      <div>
-                        <label :for="'edit-rpm-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">RPM</label>
-                        <input :id="'edit-rpm-' + key.id" type="number" min="1" x-model="editForm.rpm" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                      <p x-show="editError" x-cloak class="text-xs font-mono text-error mt-4" x-text="editError"></p>
+                      <div class="flex gap-3 mt-4">
+                        <button @click="saveEdit(key)"
+                          class="btn-brand px-4 py-2 text-xs font-headline font-bold uppercase tracking-widest">Save</button>
+                        <button @click="cancelEdit()"
+                          class="px-4 py-2 text-xs font-headline font-bold uppercase tracking-widest text-outline hover:text-on-surface">Cancel</button>
                       </div>
-                      <div>
-                        <label :for="'edit-models-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Models (blank = all)</label>
-                        <input :id="'edit-models-' + key.id" type="text" x-model="editForm.models" placeholder="claude, claude-haiku" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
-                      </div>
-                      <div>
-                        <label :for="'edit-expires-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1" x-text="'Expires (' + timezone + ', blank = never)'"></label>
-                        <input :id="'edit-expires-' + key.id" type="datetime-local" x-model="editForm.expires_at" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
-                      </div>
-                      <div class="md:col-span-2">
-                        <label :for="'edit-description-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Description</label>
-                        <input :id="'edit-description-' + key.id" type="text" x-model="editForm.description" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
-                      </div>
-                      <div class="md:col-span-2">
-                        <label :for="'edit-origins-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Browser origins (blank = any caller)</label>
-                        <input :id="'edit-origins-' + key.id" type="text" x-model="editForm.origins" placeholder="https://rodacato.github.io, http://localhost:5173" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
-                      </div>
-                    </div>
-                    <p x-show="editError" x-cloak class="text-xs font-mono text-error mt-4" x-text="editError"></p>
-                    <div class="flex gap-3 mt-4">
-                      <button @click="saveEdit(key)"
-                        class="btn-brand px-4 py-2 text-xs font-headline font-bold uppercase tracking-widest">Save</button>
-                      <button @click="cancelEdit()"
-                        class="px-4 py-2 text-xs font-headline font-bold uppercase tracking-widest text-outline hover:text-on-surface">Cancel</button>
                     </div>
                   </td>
                 </tr>

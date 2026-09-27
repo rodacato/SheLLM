@@ -4,7 +4,7 @@
 > notes in `ui-kit.lib.pen` cite these by number. Keep entries after resolution — record the
 > outcome instead of deleting; the reasoning is the useful part.
 
-**Status:** 24 entries · 19 resolved · 5 open · 0 🔴 high-impact · 0 🐞 unfiled bugs.
+**Status:** 25 entries · 19 resolved · 6 open · 0 🔴 high-impact · 0 🐞 unfiled bugs.
 
 **The registry collided with itself on 2026-09-20, and this is the repair.** Two documents
 claimed `D30` and `D31` the same day for different findings: the design audit's second pass took
@@ -89,7 +89,7 @@ that doc tracks landing them.
 ## Out of scope (confirmed)
 
 - A light theme. The code ships one dark palette; the kit does not invent another.
-- A mobile layout for the dashboard. It is an operator tool used from a desktop browser.
+- ~~A mobile layout for the dashboard. It is an operator tool used from a desktop browser.~~ **Reopened 2026-09-27:** Adrian uses the installed app on his phone. The code is responsive without a restyle — the content column may shrink (`min-w-0`), tables scroll inside their cards, every mobile-only rule is a `max-md:` class, and desktop geometry was measured identical to the previous release on all five pages. The canvas draws no phone artboard yet (D72).
 
 ---
 
@@ -152,13 +152,13 @@ is what the next decision needs.
 | # | Finding | Outcome |
 |---|---|---|
 | D21 | The queue saturation bar animates a measurement | Landed |
-| D22 | The drawer and its backdrop disagree on the way out | Out of scope — the mobile drawer, ruled out below |
+| D22 | The drawer and its backdrop disagree on the way out | Landed 2026-09-27, once mobile reopened — the backdrop fades on `--dur-move`, the drawer's own duration |
 | D23 | Everything opens on `ease-in-out` | Landed |
 | D24 | The toggle is on a curve nothing else uses | Landed |
 | D25 | `prefers-reduced-motion` is ignored | Landed |
 | D26 | 35 hover targets, zero press states | Landed |
 | D27 | The Logs spinner runs on a hidden page | Landed |
-| D28 | 🐞 mobile drawer | Out of scope — ruled out below |
+| D28 | 🐞 mobile drawer | Landed 2026-09-27, once mobile reopened — the open drawer still covers its toggle (moving either is a design change), but it now closes on Escape as well as on the backdrop and on navigation |
 | D29 | 🐞 | Landed |
 
 ### Landing page audit
@@ -210,7 +210,8 @@ corrected in its row; the decision stays open. D21's width ramp was reviewed and
 | # | Decision | Status |
 |---|---|---|
 | **D70** ⏳ | Sample version on the artboards. Overview's header had to stop naming a real release (LP-02), so every board now runs `1.2.3 · a1b2c3d` — and System's settings table, whose `since` column comes from `src/config/schema.js`, had five values moved to fit (`v1.10.0 → v1.2.3`, `v1.6.0 → v1.2.0`, `v1.5.0 → v1.1.0`). That breaks "every value derivable from the code" on purpose; the happy-path brief says so. | Open — Adrian's call: keep the substitution, or let System show a real version and accept that the two boards disagree |
+| **D72** ⏳ | `admin.pen` draws no phone. The dashboard became responsive on 2026-09-27 by code alone; the canvas mirrors only the desktop width. | Open — Adrian's call whether a phone column earns its upkeep |
 | **D71** ⏳ | States no artboard hosts: a not-ready Overview provider row (dot, label, `→`), Logs' filter chips, charts with fewer than two points, the update-in-progress dot. Each is listed with its copy under the briefs' *states not drawn*. | Open — draw when a board needs them |
 
-**Next free number: D72.** D15–D20, D43–D49 and D61–D67 are this file's own and are above; D50–D60
-are spent by the landing audit; D70–D71 by the 2026-09-27 UI audit.
+**Next free number: D73.** D15–D20, D43–D49 and D61–D67 are this file's own and are above; D50–D60
+are spent by the landing audit; D70–D72 by the 2026-09-27 UI audit and the mobile pass after it.
