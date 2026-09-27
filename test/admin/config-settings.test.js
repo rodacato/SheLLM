@@ -152,6 +152,7 @@ function loadSystemPage(fetchImpl) {
   const vm = require('node:vm');
   const jsDir = path.join(__dirname, '../../src/admin/public/js');
   const context = vm.createContext({
+    AbortSignal,
     console, Intl, Date, URLSearchParams, Set,
     fetch: fetchImpl,
     navigator: { onLine: true },

@@ -18,6 +18,7 @@ function loadDashboard(fetchImpl) {
   location.replace = (url) => { location.replacedWith = url; };
 
   const context = vm.createContext({
+    AbortSignal,
     console,
     // Every wait in the page is a poll interval; firing them at once keeps the real loop and
     // takes the fifteen minutes out of the test. The cap turns a watch loop that never reaches
@@ -76,6 +77,22 @@ describe('formatTime', () => {
   it('shows a dash rather than NaN for something it cannot parse', () => {
     assert.strictEqual(format()('not a date at all'), '-');
     assert.strictEqual(format()(null), '-');
+  });
+});
+
+// Free and unpriced were both a dash. D5 told them apart on Overview only; every other table that
+// shows a cost goes through this helper.
+describe('formatCost', () => {
+  const format = (value) => vm.runInContext('formatCost', loadDashboard(async () => json(200, {})).context)(value);
+
+  it('says a missing price is not a price', () => {
+    assert.strictEqual(format(null), 'not priced');
+    assert.strictEqual(format(undefined), 'not priced');
+  });
+
+  it('prints a zero as a real amount, in the same format as any other', () => {
+    assert.strictEqual(format(0), '$0.0000');
+    assert.strictEqual(format(0.01234), '$0.0123');
   });
 });
 

@@ -79,7 +79,7 @@ describe('dashboard view composition', () => {
   // removed, so it opened a 404 in a new tab.
   it('sends the help link to the published documentation, not a route the server lacks', () => {
     const html = compose();
-    const help = html.match(/<a href="([^"]+)"[^>]*>\s*<span class="material-symbols-outlined[^"]*">help<\/span>/);
+    const help = html.match(/<a href="([^"]+)"[^>]*>\s*<span class="material-symbols-outlined[^"]*"[^>]*>help<\/span>/);
     assert.ok(help, 'the sidebar lost its help link');
     assert.strictEqual(help[1], 'https://rodacato.github.io/SheLLM/');
   });

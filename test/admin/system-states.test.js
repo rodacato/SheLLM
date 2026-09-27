@@ -14,6 +14,7 @@ const { compose } = require('../../src/admin/views');
 function loadSystem(fetchImpl, windowOverrides = {}) {
   const stores = {};
   const context = vm.createContext({
+    AbortSignal,
     console, Intl, Date, URLSearchParams,
     Alpine: { store: (n, v) => (v === undefined ? stores[n] : (stores[n] = v)) },
     fetch: fetchImpl, navigator: { onLine: true },

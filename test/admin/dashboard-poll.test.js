@@ -21,6 +21,7 @@ function browser(localStorage) {
   };
 
   const context = vm.createContext({
+    AbortSignal,
     console,
     document,
     setInterval: (fn, ms) => { const id = nextId++; timers.set(id, { fn, ms }); return id; },
@@ -149,6 +150,33 @@ describe('the poller only runs while someone is looking', () => {
     poller.every(1000);
 
     assert.deepEqual(page.armedIds, [first], 'the timer was torn down and rebuilt');
+  });
+
+  // Returning to a page used to show what it read last time for a whole interval: the visibility
+  // rule covered the tab, not the page. `now` is how a page says it was just entered.
+  it('reads at once when a page enters, and only then', () => {
+    const page = browser();
+    const { poller, reads } = page.make();
+    poller.every(30000, { now: true });
+    assert.strictEqual(reads.count, 1, 'entering the page owed an immediate read');
+    assert.strictEqual(page.armed.length, 1);
+
+    poller.every(30000, { now: true });
+    assert.strictEqual(reads.count, 1, 'an effect re-run read again — every read would trigger the next');
+
+    poller.stop();
+    poller.every(30000, { now: true });
+    assert.strictEqual(reads.count, 2, 'coming back to the page did not read');
+  });
+
+  it('reads once on entry even with auto-refresh off, and schedules nothing', () => {
+    const page = browser();
+    const { poller, reads } = page.make();
+    poller.every(0, { now: true });
+    poller.every(0, { now: true });
+
+    assert.strictEqual(reads.count, 1);
+    assert.strictEqual(page.armed.length, 0);
   });
 
   it('treats an interval of zero as off', () => {

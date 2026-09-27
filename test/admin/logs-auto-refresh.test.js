@@ -16,6 +16,7 @@ function logsPage(stored = null) {
   const document = { hidden: false, addEventListener() {} };
 
   const context = vm.createContext({
+    AbortSignal,
     console,
     document,
     setInterval: (fn, ms) => { const id = nextId++; timers.set(id, { fn, ms }); return id; },

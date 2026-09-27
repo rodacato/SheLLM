@@ -17,6 +17,7 @@ const WINDOW = '-30 days';
 // server really sends, so nothing needs stubbing past the browser globals.
 function overviewPage(stats) {
   const context = vm.createContext({
+    AbortSignal,
     console, Intl, Date, Math, JSON,
     Chart: class { destroy() {} },
     getComputedStyle: () => ({ getPropertyValue: () => '' }),

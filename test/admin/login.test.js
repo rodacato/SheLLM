@@ -150,6 +150,31 @@ describe('admin login', () => {
     assert.ok(script.headers['retry-after'], 'a script lost the Retry-After header');
   });
 
+  // An empty username spent one of the five attempts before the rate limit: the browser sent it.
+  it('asks the browser to refuse an empty username before it costs an attempt', async () => {
+    const page = (await request(app).get('/admin/login')).text;
+    assert.match(/<input id="username"[^>]*>/.exec(page)[0], /\brequired\b/);
+    assert.match(/<input id="username"[^>]*>/.exec(page)[0], /\bautofocus\b/, 'a fresh page starts at the username');
+  });
+
+  it('keeps the username after a refusal and puts the cursor on the password', async () => {
+    const res = await request(app).post('/admin/login').type('form')
+      .send({ username: 'ad"min<x>', password: 'wrong-password' });
+    assert.strictEqual(res.status, 401);
+
+    const user = /<input id="username"[^>]*>/.exec(res.text)[0];
+    const pass = /<input id="password"[^>]*>/.exec(res.text)[0];
+    assert.match(user, /value="ad&quot;min&lt;x&gt;"/, 'the username came back unescaped, or not at all');
+    assert.doesNotMatch(user, /autofocus/);
+    assert.match(pass, /autofocus/, 'the operator has to click back into the one field that was wrong');
+  });
+
+  it('announces the refusal to a screen reader', async () => {
+    const res = await request(app).post('/admin/login').type('form')
+      .send({ username: 'admin', password: 'wrong-password' });
+    assert.match(res.text, /<p class="error" role="alert">Invalid credentials<\/p>/);
+  });
+
   it('logs out and invalidates the browser session', async () => {
     const { cookie } = await login();
     const res = await request(app).post('/admin/logout').set('Cookie', cookie).set('Accept', 'text/html');

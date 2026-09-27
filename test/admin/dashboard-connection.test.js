@@ -14,6 +14,7 @@ function loadApp(fetchImpl, extraFiles = []) {
   const stores = {};
   const listeners = {};
   const context = vm.createContext({
+    AbortSignal,
     console,
     Alpine: { store: (name, value) => (value === undefined ? stores[name] : (stores[name] = value)) },
     fetch: fetchImpl,
@@ -123,3 +124,125 @@ describe('the admin knows when it could not ask', () => {
     assert.match(stores.connection.message, /offline/);
   });
 });
+
+// A refused write says nothing about reachability. A 400 on a duplicate key name raised "Could not
+// reach the gateway" over the whole page for a poll interval, while the gateway was answering fine.
+describe('writes are not reads', () => {
+  it('leaves the connection alone when a write is refused', async () => {
+    const { context, stores } = loadApp(async () => json(400, { error: 'invalid_request', message: 'name already exists' }));
+    const apiWrite = vm.runInContext('apiWrite', context);
+
+    await assert.rejects(() => apiWrite('/admin/keys', { body: { name: 'dup' } }),
+      { name: 'ApiError', status: 400, message: 'name already exists' });
+    assert.strictEqual(stores.connection.failed, false, 'a refused write raised the unreachable banner');
+    assert.strictEqual(stores.connection.degraded, false);
+  });
+
+  it('leaves the connection alone when a write gets no answer at all', async () => {
+    const { context, stores } = loadApp(async () => { throw new TypeError('Failed to fetch'); });
+    const apiWrite = vm.runInContext('apiWrite', context);
+
+    await assert.rejects(() => apiWrite('/admin/keys/1', { method: 'DELETE' }), { message: 'the gateway did not answer' });
+    assert.strictEqual(stores.connection.failed, false);
+  });
+
+  it('still reports a failed read through the same fetch path', async () => {
+    const { context, stores } = loadApp(async () => json(503, {}));
+    const apiFetch = vm.runInContext('apiFetch', context);
+
+    await apiFetch('/admin/keys', { method: 'get' });
+    assert.strictEqual(stores.connection.failed, true, 'a lowercase GET stopped counting as a read');
+  });
+
+  it('answers a landed write with its body, sent as JSON', async () => {
+    let sent;
+    const { context } = loadApp(async (url, options) => { sent = options; return json(201, { key: { id: 7 } }); });
+    const apiWrite = vm.runInContext('apiWrite', context);
+
+    const data = await apiWrite('/admin/keys', { body: { name: 'app' } });
+    assert.strictEqual(data.key.id, 7);
+    assert.strictEqual(sent.method, 'POST', 'a write with no method must default to POST');
+    assert.deepStrictEqual(JSON.parse(sent.body), { name: 'app' });
+  });
+
+  it('names the status when the refusal carries no reason it can read', async () => {
+    const { context } = loadApp(async () => ({ ok: false, status: 502, json: async () => { throw new SyntaxError('not json'); } }));
+    const apiWrite = vm.runInContext('apiWrite', context);
+    await assert.rejects(() => apiWrite('/admin/providers/claude', { method: 'PATCH', body: {} }),
+      { status: 502, message: 'the gateway answered 502' });
+  });
+
+  it('sends a body-less write without a body', async () => {
+    let sent;
+    const { context } = loadApp(async (url, options) => { sent = options; return json(200, { key: {} }); });
+    await vm.runInContext('apiWrite', context)('/admin/keys/1/rotate');
+    assert.strictEqual(sent.body, undefined);
+  });
+});
+
+// "Could not reach the gateway — the gateway answered 400" contradicted itself in one line.
+describe('the banner says what actually happened', () => {
+  it('says the gateway could not be reached when nothing answered', async () => {
+    const { page, stores } = loadApp(async () => { throw new TypeError('Failed to fetch'); });
+    await page.fetchHealth();
+    assert.strictEqual(stores.connection.message, 'Could not reach the gateway. Nothing below is being updated.');
+  });
+
+  it('names the status when the gateway answered with a failure', async () => {
+    const { page, stores } = loadApp(async () => json(503, {}));
+    await page.fetchHealth();
+    assert.strictEqual(stores.connection.message, 'The gateway answered 503. Nothing below is being updated.');
+  });
+
+  // With no limit a hung gateway never settled the health read, so the dot kept saying "alive".
+  it('gives every request a deadline, so a hung gateway reads as down', async () => {
+    let signal;
+    const { page } = loadApp((url, options) => {
+      signal = options.signal;
+      return new Promise((resolve, reject) => {
+        signal.addEventListener('abort', () => reject(new Error('timed out')));
+      });
+    });
+    const read = page.fetchHealth();
+    assert.ok(signal instanceof AbortSignal, 'the read was sent with no deadline');
+    assert.strictEqual(signal.aborted, false);
+    // Stands in for the deadline firing; waiting out the real 10s would buy nothing.
+    signal.dispatchEvent(new globalThis.Event('abort'));
+    await read;
+    assert.strictEqual(page.healthRead, 'failed');
+  });
+});
+
+describe('the health dot dims when its reading goes stale', () => {
+  it('is fresh right after a read and stale after two missed polls', async () => {
+    const { page } = loadApp(async () => json(200, HEALTHY));
+    await page.fetchHealth();
+    page.now = page.health.readAt + 1000;
+    assert.strictEqual(page.healthStale, false);
+
+    page.now = page.health.readAt + 2 * page.healthPollMs + 1;
+    assert.strictEqual(page.healthStale, true, 'a reading two polls old still read as live');
+  });
+
+  it('measures staleness against the interval it is actually polling at', async () => {
+    const { page } = loadApp(async () => json(200, { ...HEALTHY, queue: { in_flight: [{ id: 'r1', state: 'running', age_ms: 10 }] } }));
+    await page.fetchHealth();
+    assert.strictEqual(page.healthPollMs, 5000, 'an in-flight request should poll faster');
+    page.now = page.health.readAt + 15000;
+    assert.strictEqual(page.healthStale, true, 'staleness still measured against the 30s poll');
+  });
+});
+
+describe('the nav is links', () => {
+  it('closes the drawer and leaves routing to the hash', () => {
+    const { page, context } = loadApp(async () => json(200, HEALTHY));
+    page.sidebarOpen = true;
+    page.navigate();
+    assert.strictEqual(page.sidebarOpen, false);
+    assert.strictEqual(vm.runInContext('location', context).hash, '', 'a link click must not rewrite the hash itself');
+
+    page.navigate('system');
+    assert.strictEqual(vm.runInContext('location', context).hash, 'system', 'a programmatic caller lost its page');
+  });
+});
+

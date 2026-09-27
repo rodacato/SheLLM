@@ -12,6 +12,7 @@ const JS_DIR = path.join(__dirname, '../../src/admin/public/js');
 // page actually calls. Nothing here stubs a clock: every assertion names an absolute instant.
 function loadApp() {
   const context = vm.createContext({
+    AbortSignal,
     console, Intl, Date, fetch: async () => {}, navigator: { onLine: true },
     setTimeout: (fn) => { Promise.resolve().then(fn); return 0; },
     clearTimeout: () => {}, setInterval: () => 0,

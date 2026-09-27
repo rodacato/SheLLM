@@ -8,7 +8,7 @@ const logger = require('../lib/logger');
 
 const router = Router();
 
-const PAGE = (error, next) => `<!DOCTYPE html>
+const PAGE = (error, next, username) => `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -25,10 +25,11 @@ const PAGE = (error, next) => `<!DOCTYPE html>
 <link rel="apple-touch-icon" sizes="180x180" href="/admin/dashboard/img/favicon-180.png">
 <style>
   :root { color-scheme: dark; --bg:#101417; --panel:#1c2023; --line:#3b494c; --text:#e0e3e7; --accent:#03e3ff;
-          --error:#ffb4ab; --error-bg:#0b0f12; --muted:#849397; --on-accent:#00363e; }
+          --error:#ffb4ab; --error-bg:#0b0f12; --muted:#849397; --on-accent:#00363e;
+          --press-veil:rgba(255, 255, 255, 0.08); }
   * { box-sizing: border-box; }
   body { margin:0; min-height:100dvh; display:grid; place-items:center; background:var(--bg); color:var(--text);
-         font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+         font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
          padding: calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right))
                   calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left)); }
   form { position:relative; z-index:1; width:100%; max-width:22rem; background:var(--panel); border:1px solid var(--line); padding:2rem; }
@@ -40,27 +41,30 @@ const PAGE = (error, next) => `<!DOCTYPE html>
   input:focus { outline:2px solid var(--accent); outline-offset:-2px; }
   button { width:100%; margin-top:1.5rem; padding:.7rem; background:var(--accent); color:var(--on-accent); border:0;
            font:inherit; font-weight:700; text-transform:uppercase; letter-spacing:.08em; cursor:pointer; }
+  button:active { box-shadow:inset 0 0 0 999px var(--press-veil); }
   .error { margin:1rem 0 0; padding:.6rem .7rem; border-left:3px solid var(--error); background:var(--error-bg); color:var(--error); font-size:.8rem; }
 
   /* The CRT layers. Decoration only, aria-hidden, and every one of them stops moving under
-     prefers-reduced-motion — the sweep is removed outright rather than frozen mid-screen. */
+     prefers-reduced-motion — the sweep is removed outright rather than frozen mid-screen. They
+     move by transform so an idle sign-in screen composites instead of repainting every frame;
+     the grid overhangs by one tile so its travel never uncovers an edge. */
   .crt { position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
-  .crt-grid { position:absolute; inset:0; animation:drift 20s linear infinite;
+  .crt-grid { position:absolute; inset:-40px; animation:drift 20s linear infinite;
               background-image:radial-gradient(circle, color-mix(in srgb, var(--accent) 6%, transparent) 1px, transparent 1px);
               background-size:40px 40px; }
   .crt-glow { position:absolute; top:50%; left:50%; width:min(34rem, 90vw); aspect-ratio:1; transform:translate(-50%,-50%);
               background:radial-gradient(circle, color-mix(in srgb, var(--accent) 9%, transparent) 0%, transparent 70%);
               animation:breathe 4s ease-in-out infinite; }
-  .crt-sweep { position:absolute; left:0; width:100%; height:1px; animation:sweep 6s linear infinite;
+  .crt-sweep { position:absolute; top:0; left:0; width:100%; height:1px; animation:sweep 6s linear infinite;
                background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 18%, transparent), transparent); }
   .crt-lines { position:fixed; inset:0; z-index:2; pointer-events:none;
                background:repeating-linear-gradient(rgba(0,0,0,.22) 0 1px, transparent 1px 3px); }
   .cursor::after { content:'_'; color:var(--accent); animation:blink 1s step-end infinite; }
 
-  @keyframes drift   { from { background-position:0 0; } to { background-position:40px 40px; } }
+  @keyframes drift   { from { transform:translate(0, 0); } to { transform:translate(40px, 40px); } }
   @keyframes breathe { 0%,100% { opacity:.5; transform:translate(-50%,-50%) scale(1); }
                        50%     { opacity:1;  transform:translate(-50%,-50%) scale(1.1); } }
-  @keyframes sweep   { from { top:-1px; } to { top:100%; } }
+  @keyframes sweep   { from { transform:translateY(-1px); } to { transform:translateY(100vh); } }
   @keyframes blink   { 0%,100% { opacity:1; } 50% { opacity:0; } }
 
   @media (prefers-reduced-motion: reduce) {
@@ -81,11 +85,11 @@ const PAGE = (error, next) => `<!DOCTYPE html>
   <p class="cursor">Admin access</p>
   <input type="hidden" name="next" value="${next}">
   <label for="username">Username</label>
-  <input id="username" name="username" autocomplete="username" autofocus>
+  <input id="username" name="username" autocomplete="username" required${username ? ` value="${username}"` : ' autofocus'}>
   <label for="password">Password</label>
-  <input id="password" name="password" type="password" autocomplete="current-password" required>
+  <input id="password" name="password" type="password" autocomplete="current-password" required${username ? ' autofocus' : ''}>
   <button type="submit">Sign in</button>
-  ${error ? `<p class="error">${error}</p>` : ''}
+  ${error ? `<p class="error" role="alert">${error}</p>` : ''}
 </form>
 </body>
 </html>
@@ -101,8 +105,8 @@ function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-function sendPage(res, status, error, next) {
-  res.status(status).type('html').send(PAGE(error, escapeHtml(next)));
+function sendPage(res, status, error, next, username = '') {
+  res.status(status).type('html').send(PAGE(error, escapeHtml(next), escapeHtml(username)));
 }
 
 function wantsHtml(req) {
@@ -138,7 +142,7 @@ router.post('/login', urlencoded({ extended: false, limit: '4kb' }), (req, res) 
   if (!checkCredentials(username, password)) {
     recordFailedAttempt(ip);
     logger.warn({ event: 'admin_auth_failure', ip, username, reason: 'login_form' });
-    return sendPage(res, 401, 'Invalid credentials', safeNext(next));
+    return sendPage(res, 401, 'Invalid credentials', safeNext(next), username);
   }
 
   setSession(req, res);

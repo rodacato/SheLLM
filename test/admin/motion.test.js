@@ -9,10 +9,6 @@ const ADMIN = path.join(__dirname, '../../src/admin');
 const CSS = path.join(ADMIN, 'public/css/custom.css');
 const VIEWS = path.join(ADMIN, 'views');
 
-// The switch is the one timing the motion audit measured and kept: 150ms is right for a control
-// that flips, and it is hand-written CSS rather than a utility.
-const TOGGLE_MS = 150;
-
 function views() {
   return fs.readdirSync(VIEWS, { withFileTypes: true })
     .flatMap((e) => (e.isDirectory()
@@ -78,19 +74,21 @@ describe('motion is two durations and one curve', () => {
     }
   });
 
-  it('leaves no transition without a curve — the two hand-written ones are where drift started', () => {
+  // The switch kept a 150ms literal after the curve moved to the token, the drift the scale's own
+  // comment rules out. Hand-written transitions read the tokens like everything else.
+  it('leaves no hand-written transition outside the scale', () => {
     const declarations = [...css.matchAll(/transition:\s*([^;]+);/g)].map((m) => m[1].trim());
     assert.ok(declarations.length > 0, 'custom.css still hand-writes a transition — if it stopped, delete this test');
 
     for (const declaration of declarations) {
       assert.ok(declaration.includes('var(--ease-enter)'),
         `"transition: ${declaration}" falls back to the browser's bare ease`);
-      assert.ok(declaration.includes(`${TOGGLE_MS}ms`),
-        `"transition: ${declaration}" is outside the scale and is not the switch`);
+      assert.match(declaration, /var\(--dur-(fast|move)\)/, `"transition: ${declaration}" names no duration of the scale`);
+      assert.doesNotMatch(declaration, /\d+m?s\b/, `"transition: ${declaration}" retypes a duration`);
     }
   });
 
-  it('answers prefers-reduced-motion, and leaves the health dot readable', () => {
+  it('answers prefers-reduced-motion, and leaves any pulse readable', () => {
     const query = /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{([\s\S]*?\n\})/.exec(css);
     assert.ok(query, 'custom.css answers prefers-reduced-motion');
     assert.match(query[1], /transition-duration:\s*0\.01ms\s*!important/);
@@ -110,5 +108,51 @@ describe('motion is two durations and one curve', () => {
       assert.ok(selector.includes(target), `the press state still reaches ${target}`);
     }
     assert.match(rule[2], /var\(--press-veil\)/, 'and it reads the declared veil rather than a literal');
+  });
+});
+
+// The sidebar dot pulsed forever, always on screen, and claimed a liveness it never measured: a
+// hung gateway kept it pulsing. It now dims on a stale reading, which is the actual signal.
+describe('the health dot says liveness without looping', () => {
+  it('does not pulse', () => {
+    const html = fs.readFileSync(path.join(VIEWS, 'index.html'), 'utf8');
+    const dot = /<div class="w-1\.5 h-1\.5 rounded-full"\s*:class="([^"]+)"/.exec(html);
+    assert.ok(dot, 'the sidebar health dot is gone — this check proves nothing');
+    assert.doesNotMatch(dot[1], /animate-/);
+    assert.match(dot[1], /healthStale/, 'the dot no longer dims when its reading goes stale');
+  });
+});
+
+// The sign-in page idles for hours inside an installed app. Animating top or background-position
+// repaints on every frame; transform does not.
+describe('the sign-in screen moves only by transform', () => {
+  let style;
+  before(() => {
+    style = /<style>([\s\S]*?)<\/style>/.exec(fs.readFileSync(path.join(ADMIN, 'login.js'), 'utf8'))[1];
+  });
+
+  it('animates no layout or paint property', () => {
+    const keyframes = [...style.matchAll(/@keyframes\s+(\w+)\s*\{([\s\S]*?\}\s*)\}/g)];
+    assert.ok(keyframes.length >= 3, 'found no keyframes — this check proves nothing');
+    for (const [, name, body] of keyframes) {
+      assert.doesNotMatch(body, /\b(top|left|background-position)\s*:/, `@keyframes ${name} animates a property that repaints`);
+    }
+  });
+
+  it('overhangs the drifting grid by a tile, so its travel never uncovers an edge', () => {
+    assert.match(style, /\.crt-grid\s*\{[^}]*inset:\s*-40px/);
+    assert.match(style, /background-size:\s*40px 40px/);
+    assert.match(style, /@keyframes drift[^\n]*translate\(40px, 40px\)/);
+  });
+
+  it('confirms the press on the one button it has, with the dashboard\'s veil', () => {
+    assert.match(style, /button:active\s*\{[^}]*box-shadow:\s*inset 0 0 0 999px var\(--press-veil\)/);
+  });
+
+  it('still stops every loop under prefers-reduced-motion', () => {
+    const query = /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n  \}/.exec(style);
+    assert.ok(query, 'the sign-in page stopped answering prefers-reduced-motion');
+    assert.match(query[1], /\.crt-grid, \.crt-glow, \.cursor::after\s*\{\s*animation:\s*none/);
+    assert.match(query[1], /\.crt-sweep\s*\{\s*display:\s*none/);
   });
 });
