@@ -32,7 +32,7 @@ function pruneExpiredKeys() {
   const { getDb } = require('./index');
   const db = getDb();
   if (!db) return;
-  db.prepare("UPDATE clients SET active = 0 WHERE expires_at IS NOT NULL AND expires_at < datetime('now') AND active = 1").run();
+  db.prepare("UPDATE clients SET active = 0 WHERE expires_at IS NOT NULL AND datetime(expires_at) < datetime('now') AND active = 1").run();
 }
 
 module.exports = { insertRequestLog, pruneOldLogs, pruneExpiredKeys, LOG_FIELDS, RETENTION_DAYS };

@@ -3,7 +3,7 @@
 const { describe, it, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { DEFAULT_TIMEZONE, getTimezone, toInstant } = require('../../src/lib/time');
+const { DEFAULT_TIMEZONE, getTimezone, toInstant, parseInstant } = require('../../src/lib/time');
 
 describe('lib/time', () => {
   afterEach(() => { delete process.env.SHELLM_TZ; });
@@ -30,5 +30,14 @@ describe('lib/time', () => {
     assert.strictEqual(Date.parse(toInstant('2026-09-19 23:00:30')),
       Date.UTC(2026, 8, 19, 23, 0, 30));
     assert.strictEqual(toInstant(null), null);
+  });
+
+  it('parses a stored instant whether or not it already names its zone', () => {
+    const utc = Date.UTC(2026, 9, 1, 6, 0, 0);
+    assert.strictEqual(parseInstant('2026-10-01 06:00:00').getTime(), utc);
+    assert.strictEqual(parseInstant('2026-10-01T06:00:00.000Z').getTime(), utc);
+    assert.strictEqual(parseInstant('2026-10-01T01:00:00-05:00').getTime(), utc);
+    assert.strictEqual(parseInstant('not a date'), null);
+    assert.strictEqual(parseInstant(null), null);
   });
 });
