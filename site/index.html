@@ -32,12 +32,12 @@
     --line:           #3b494c;
     --accent-hover:   #39eeff;
     --ok:             #22c55e;
+    --fail:           #ef4444;
     --measure:        68rem;
 
     /* The admin's motion scale; the reveal is the one marketing timing it does not have. */
     --dur-fast:       100ms;
     --dur-reveal:     650ms;
-    --dur-step:       450ms;
     --ease-enter:     cubic-bezier(0, 0, .2, 1);
     --press-veil:     rgba(255, 255, 255, .08);
   }
@@ -176,33 +176,86 @@
   .snippet .copy:hover { background:var(--line); }
   .snippet .copy:active { box-shadow:inset 0 0 0 999px var(--press-veil); }
   .snippets :focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
-  /* The request path. Lit step by step once, when it scrolls into view; Replay runs it again. */
-  .flow { list-style:none; margin:2rem 0 0; padding:0; display:grid; grid-template-columns:repeat(5, 1fr); counter-reset:step; }
-  .flow li { position:relative; padding:1.1rem 1rem; background:var(--surface-low);
-             border:1px solid color-mix(in srgb, var(--line) 50%, transparent);
-             transition:border-color var(--dur-step) var(--ease-enter), box-shadow var(--dur-step) var(--ease-enter); }
-  .flow li + li { margin-left:1.5rem; }
-  .flow li + li::before, .flow li + li::after { content:''; position:absolute; top:50%; left:-1.5rem; width:1.5rem; height:1px; }
-  .flow li + li::before { background:color-mix(in srgb, var(--line) 60%, transparent); }
-  .flow li + li::after { background:var(--accent); transform:scaleX(0); transform-origin:left;
-                         transition:transform var(--dur-step) var(--ease-enter); }
-  .flow li.on { border-color:color-mix(in srgb, var(--accent) 55%, transparent);
-                box-shadow:0 0 1.5rem color-mix(in srgb, var(--accent) 10%, transparent); }
-  .flow li.on::after { transform:none; }
-  .flow b { display:block; color:#fff; font:700 .9rem "Space Grotesk", sans-serif; }
-  .flow b::before { counter-increment:step; content:counter(step, decimal-leading-zero) " "; color:var(--accent);
-                    font-family:ui-monospace, Menlo, monospace; font-weight:400; }
-  .flow span { display:block; margin-top:.4rem; color:var(--muted); font-size:.8rem; line-height:1.55; }
-  .flow em { font-style:normal; color:var(--accent); font-family:ui-monospace, Menlo, monospace; font-size:.75rem; }
-  .replay { margin-top:1.25rem; background:none; border:0; padding:0; color:var(--accent); cursor:pointer;
-            font:500 .75rem "Space Grotesk", sans-serif; letter-spacing:.08em; text-transform:uppercase; }
-  .replay:hover { text-decoration:underline; }
-  .replay:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }
+  /* The request inspector. Everything it shows is produced by test/site/inspector.test.js. */
+  .ins-picker { display:flex; flex-wrap:wrap; gap:.5rem; margin:2rem 0 1.5rem; }
+  .ins-picker [role=tab] { background:var(--surface-low); color:var(--muted); cursor:pointer; padding:.55rem .9rem;
+                           border:1px solid color-mix(in srgb, var(--line) 60%, transparent);
+                           font:500 .75rem ui-monospace, Menlo, monospace;
+                           transition:color var(--dur-fast) var(--ease-enter), border-color var(--dur-fast) var(--ease-enter); }
+  .ins-picker [role=tab]:hover { color:var(--text); }
+  .ins-picker [role=tab][aria-selected=true] { color:var(--accent); border-color:var(--accent); }
+  .ins-picker :focus-visible, .ins-replay:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .rig { position:relative; display:grid; grid-template-columns:1fr 1.25fr 1fr; gap:4rem; align-items:center;
+         padding:1.75rem; background:var(--surface-low); border:1px solid color-mix(in srgb, var(--line) 50%, transparent); }
+  .rig svg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
+  .rig path { fill:none; stroke:color-mix(in srgb, var(--line) 70%, transparent); stroke-width:1; }
+  .rig path.hot { stroke:var(--accent); stroke-dasharray:4 6; animation:flow-dash .6s linear infinite; }
+  .rig path.hot.fail { stroke:var(--fail); }
+  @keyframes flow-dash { to { stroke-dashoffset:-10; } }
+  .rig .col { position:relative; z-index:1; display:grid; gap:.75rem; }
+  .rig .col > span { color:var(--muted); font:500 .65rem "Space Grotesk", sans-serif; letter-spacing:.18em; text-transform:uppercase; }
+  .node { padding:.7rem .85rem; background:var(--surface); border:1px solid color-mix(in srgb, var(--line) 60%, transparent);
+          font:400 .78rem ui-monospace, Menlo, monospace; color:var(--muted);
+          transition:border-color var(--dur-fast) var(--ease-enter), color var(--dur-fast) var(--ease-enter), box-shadow .3s var(--ease-enter); }
+  .node b { display:block; color:var(--text); font:700 .9rem "Space Grotesk", sans-serif; }
+  .node.on { border-color:var(--accent); color:var(--text); box-shadow:0 0 1.5rem color-mix(in srgb, var(--accent) 14%, transparent); }
+  .node.fail { border-color:var(--fail); box-shadow:0 0 1.5rem color-mix(in srgb, var(--fail) 16%, transparent); }
+  .core ol { list-style:none; margin:.6rem 0 0; padding:0; display:grid; gap:.3rem; }
+  .core li { display:flex; justify-content:space-between; gap:1rem; color:var(--muted); font-size:.74rem; }
+  .core li i { font-style:normal; color:var(--line); }
+  .core li.ok { color:var(--text); }
+  .core li.ok i { color:var(--ok); }
+  .core li.fail { color:var(--text); }
+  .core li.fail i { color:var(--fail); }
+  .packet { position:absolute; z-index:2; top:0; left:0; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; background:var(--accent);
+            box-shadow:0 0 12px var(--accent); opacity:0; pointer-events:none; }
+  .packet.fail { background:var(--fail); box-shadow:0 0 12px var(--fail); }
+  .panes { display:grid; grid-template-columns:1fr 1fr; gap:1px; margin-top:1px;
+           background:color-mix(in srgb, var(--line) 50%, transparent); border:1px solid color-mix(in srgb, var(--line) 50%, transparent); }
+  .pane { background:var(--surface-low); min-width:0; }
+  .pane h3 { margin:0; padding:.7rem 1rem; display:flex; justify-content:space-between; gap:1rem;
+             color:var(--muted); font:500 .65rem "Space Grotesk", sans-serif; letter-spacing:.14em; text-transform:uppercase;
+             border-bottom:1px solid color-mix(in srgb, var(--line) 40%, transparent); }
+  .pane h3 small { font:400 .68rem ui-monospace, Menlo, monospace; letter-spacing:0; text-transform:none; }
+  .pane pre, .pane ol { margin:0; padding:.85rem 1rem; min-height:9.5rem; overflow-x:auto;
+                        font:400 .74rem/1.75 ui-monospace, Menlo, monospace; color:var(--text); }
+  .pane ol { list-style:none; }
+  .pane li.wrap { white-space:pre-wrap; word-break:break-word; }
+  .pane li { white-space:pre; opacity:0; transform:translateY(4px);
+             transition:opacity .25s var(--ease-enter), transform .25s var(--ease-enter); }
+  .pane li.in { opacity:1; transform:none; }
+  .pane li.flash { animation:flash .9s var(--ease-enter); }
+  @keyframes flash { from { background:color-mix(in srgb, var(--accent) 22%, transparent); } to { background:transparent; } }
+  .pane .k { color:var(--accent); }
+  .pane .m { color:var(--muted); }
+  .pane .s { color:var(--ok); }
+  .pane .x { color:var(--fail); }
+  .argv pre { white-space:pre-wrap; }
+  .argv .flag { color:var(--accent); }
+  .argv .hl { background:color-mix(in srgb, var(--accent) 16%, transparent); box-shadow:0 0 0 .2rem color-mix(in srgb, var(--accent) 16%, transparent); }
+  .caret::after { content:'▍'; color:var(--accent); animation:blink 1s step-end infinite; }
+  .logrow { display:grid; grid-template-columns:1fr 1.6fr 1fr .8fr .9fr 1.2fr 1fr 1.5fr; gap:1px; margin-top:1px;
+            background:color-mix(in srgb, var(--line) 50%, transparent); border:1px solid color-mix(in srgb, var(--line) 50%, transparent);
+            transition:color .4s var(--ease-enter); }
+  .logrow div { background:var(--surface-low); padding:.6rem .8rem; font:400 .74rem ui-monospace, Menlo, monospace; color:var(--text); }
+  .logrow:not(.in) div { color:transparent; }
+  .logrow:not(.in) div * { visibility:hidden; }
+  .logrow:not(.in) div em { visibility:visible; }
+  .logrow .s { color:var(--ok); }
+  .logrow .x { color:var(--fail); }
+  .logrow div em { font-style:normal; display:block; color:var(--muted); font:500 .6rem "Space Grotesk", sans-serif; letter-spacing:.14em; text-transform:uppercase; margin-bottom:.2rem; }
+  .ins-foot { display:flex; flex-wrap:wrap; justify-content:space-between; gap:.75rem 2rem; margin-top:1rem; color:var(--muted); font-size:.8rem; }
+  .ins-foot p { margin:0; max-width:44rem; }
+  .ins-replay { background:none; border:0; padding:0; color:var(--accent); cursor:pointer;
+                font:500 .75rem "Space Grotesk", sans-serif; letter-spacing:.08em; text-transform:uppercase; }
+  .ins-replay:hover { text-decoration:underline; }
   @media (max-width: 56rem) {
-    .flow { grid-template-columns:1fr; }
-    .flow li + li { margin:1.25rem 0 0; }
-    .flow li + li::before, .flow li + li::after { top:-1.25rem; left:1.5rem; width:1px; height:1.25rem; }
-    .flow li + li::after { transform:scaleY(0); transform-origin:top; }
+    .rig { grid-template-columns:1fr; gap:1.25rem; padding:1.25rem; }
+    .rig svg, .packet { display:none; }
+    .rig .col.api, .rig .col.engines { grid-template-columns:1fr 1fr; }
+    .rig .col.api > span, .rig .col.engines > span { grid-column:1 / -1; }
+    .panes { grid-template-columns:1fr; }
+    .logrow { grid-template-columns:1fr 1fr; }
   }
   .nots, .fixes { display:grid; gap:1px; grid-template-columns:repeat(auto-fit, minmax(16rem, 1fr));
           background:color-mix(in srgb, var(--line) 30%, transparent);
@@ -237,7 +290,8 @@
     .crt-grid, .crt-glow, .cursor::after { animation:none; }
     .crt-sweep { display:none; }
     .reveal { opacity:1; transform:none; transition:none; }
-    .flow li, .flow li::after { transition:none; }
+    .rig path.hot, .caret::after { animation:none; }
+    .pane li, .logrow { transition:none; }
   }
 </style>
 </head>
@@ -311,17 +365,53 @@
   </div>
 </section>
 
-<section id="flow">
+<section id="inside">
   <div class="wrap reveal">
-    <h2>How a request flows</h2>
-    <ol class="flow">
-      <li class="on"><b>Your app</b><span>An official SDK with the base URL swapped. Nothing else changes.</span></li>
-      <li class="on"><b>SheLLM</b><span>Checks the key, its rate limit and its models, then waits for a free slot.</span></li>
-      <li class="on"><b>Official CLI</b><span>A fresh <code>claude</code> or <code>codex</code> in an empty temp dir, its tools off. <em>~0.9 s to start</em></span></li>
-      <li class="on"><b>Stream</b><span>Tokens are translated to OpenAI or Anthropic events as they arrive. <em>first words at 1.7 s</em></span></li>
-      <li class="on"><b>Request log</b><span>Duration, tokens and what it would have cost, per key. The process is discarded.</span></li>
-    </ol>
-    <button type="button" class="replay" hidden>Replay</button>
+    <h2>Inside a request</h2>
+    <p class="lede">Four requests, played through SheLLM. Pick one and watch what it becomes on the way
+      to the CLI and back.</p>
+    <p class="sub">Nothing here is typed by hand. The argv, the responses and the log rows come from running
+      each request through the app against CLI output recorded from <code>claude</code> 2.1.273 and
+      <code>codex</code> 0.154.0 — and <a href="https://github.com/rodacato/SheLLM/blob/master/test/site/inspector.test.js">a test</a>
+      fails the day any of it stops being true.</p>
+    <div class="ins-picker" role="tablist" aria-label="Request"></div>
+    <div class="rig" aria-hidden="true">
+      <svg></svg>
+      <div class="col api"><span>Your app calls</span>
+        <div class="node" data-node="openai"><b>/v1/chat/completions</b>OpenAI format</div>
+        <div class="node" data-node="anthropic"><b>/v1/messages</b>Anthropic format</div>
+      </div>
+      <div class="col"><span>SheLLM</span>
+        <div class="node core" data-node="core"><b>shellm</b>
+          <ol>
+            <li data-step="key">API key<i>●</i></li>
+            <li data-step="fields">every field understood<i>●</i></li>
+            <li data-step="route">model → CLI<i>●</i></li>
+            <li data-step="queue">free slot<i>●</i></li>
+            <li data-step="spawn">fresh process, empty dir<i>●</i></li>
+            <li data-step="translate">translate the stream<i>●</i></li>
+          </ol>
+        </div>
+      </div>
+      <div class="col engines"><span>Official CLI</span>
+        <div class="node" data-node="claude"><b>claude</b>Claude Code 2.1.273</div>
+        <div class="node" data-node="codex"><b>codex</b>Codex CLI 0.154.0</div>
+      </div>
+      <div class="packet"></div>
+    </div>
+    <div class="panes">
+      <div class="pane"><h3>Request <small data-out="route"></small></h3><pre data-out="request"></pre></div>
+      <div class="pane argv"><h3>SheLLM runs <small data-out="cwd"></small></h3><pre data-out="argv"></pre></div>
+      <div class="pane"><h3>The CLI prints <small data-out="format"></small></h3><ol data-out="events"></ol></div>
+      <div class="pane"><h3>Your app receives <small data-out="status"></small></h3><ol data-out="response"></ol></div>
+    </div>
+    <div class="logrow" data-out="log"></div>
+    <div class="ins-foot">
+      <p data-out="note"></p>
+      <button type="button" class="ins-replay">Replay</button>
+    </div>
+    <noscript><p class="sub">The inspector needs JavaScript. The same path is described in
+      <a href="https://github.com/rodacato/SheLLM/blob/master/docs/guides/architecture.md">the architecture guide</a>.</p></noscript>
   </div>
 </section>
 
@@ -630,28 +720,6 @@ await stream.finalMessage();</pre>
 
   document.querySelectorAll('.reveal').forEach((el) => seen.observe(el));
 
-  // Lit in markup so the steps read without script; with it they light in order once, on sight.
-  const steps = [...document.querySelectorAll('.flow li')];
-  const replay = document.querySelector('.replay');
-  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let timers = [];
-  function play() {
-    timers.forEach(clearTimeout);
-    steps.forEach((step) => step.classList.remove('on'));
-    timers = steps.map((step, i) => setTimeout(() => step.classList.add('on'), 250 + i * 600));
-  }
-  if (steps.length && !still) {
-    steps.forEach((step) => step.classList.remove('on'));
-    replay.hidden = false;
-    replay.addEventListener('click', play);
-    const watch = new IntersectionObserver((entries) => {
-      if (!entries.some((entry) => entry.isIntersecting)) return;
-      watch.disconnect();
-      play();
-    }, { threshold: .5 });
-    watch.observe(document.querySelector('.flow'));
-  }
-
   // Without script every snippet shows, one after another; with it they become tabs.
   const tabs = [...document.querySelectorAll('.snippets [role=tab]')];
   function select(tab) {
@@ -687,5 +755,6 @@ await stream.finalMessage();</pre>
   });
 </script>
 
+<script src="inspector.js" defer></script>
 </body>
 </html>
