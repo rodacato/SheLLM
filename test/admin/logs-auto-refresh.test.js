@@ -93,10 +93,11 @@ describe('the Logs table holds its loop while you are reading it', () => {
   it('reads the table and its panels on every tick while it is running', () => {
     const { page, reads, tick } = logsPage('10000');
     page.startAutoRefresh();
+    assert.strictEqual(reads.logs, 1, 'arriving on the page reads it at once');
     tick(2);
 
-    assert.strictEqual(reads.logs, 2);
-    assert.strictEqual(reads.stats, 2);
+    assert.strictEqual(reads.logs, 3);
+    assert.strictEqual(reads.stats, 3);
     assert.strictEqual(reads.manual, 0, 'an automatic read must not count as a press');
   });
 
@@ -104,15 +105,15 @@ describe('the Logs table holds its loop while you are reading it', () => {
     const { page, reads, tick } = logsPage('10000');
     page.startAutoRefresh();
     tick(1);
-    assert.strictEqual(reads.logs, 1);
+    assert.strictEqual(reads.logs, 2);
 
     page.toggleRow('abc');
     tick(3);
-    assert.strictEqual(reads.logs, 1, 'the table was replaced under an open row');
+    assert.strictEqual(reads.logs, 2, 'the table was replaced under an open row');
 
     page.toggleRow('abc');
     tick(1);
-    assert.strictEqual(reads.logs, 2, 'closing the row did not resume the loop');
+    assert.strictEqual(reads.logs, 3, 'closing the row did not resume the loop');
   });
 
   it('arms nothing at all while the interval is off', () => {
@@ -120,7 +121,7 @@ describe('the Logs table holds its loop while you are reading it', () => {
     page.startAutoRefresh();
     tick(3);
 
-    assert.strictEqual(reads.logs, 0);
+    assert.strictEqual(reads.logs, 1, 'only the read on arrival, no loop');
   });
 
   it('remembers a chosen interval and arms it without waiting for a page change', () => {
@@ -130,6 +131,6 @@ describe('the Logs table holds its loop while you are reading it', () => {
     tick(1);
 
     assert.strictEqual(page.refreshMs, 30000);
-    assert.strictEqual(reads.logs, 1);
+    assert.strictEqual(reads.logs, 2, 'the arrival read, then the newly armed tick');
   });
 });

@@ -13,7 +13,7 @@ function logsPage(html) {
   const end = html.indexOf(' PAGE -->', start + '<!-- LOGS PAGE -->'.length);
   assert.ok(end > start, 'another page follows, which is what bounds this one');
   const slice = html.slice(start, html.lastIndexOf('<!--', end));
-  assert.ok(slice.includes('Total Tokens'), 'the slice reaches the panels below the table');
+  assert.ok(slice.includes('Total Tokens'), 'the slice reaches the summary panels');
   return slice;
 }
 
@@ -37,9 +37,9 @@ describe('refresh is an action on the logs table', () => {
   });
 
   // It shares a row with the filters now, but it is still an action: the group it sits in is the
-  // one holding export and clear, not the group holding the four selects.
-  it('sits in the same group as export and clear', () => {
-    const actions = slice(page, 'ml-auto flex items-center gap-4', 'Clear All');
+  // one holding export and delete, not the group holding the four selects.
+  it('sits in the same group as export and delete', () => {
+    const actions = slice(page, 'ml-auto flex items-center gap-4', 'Delete logs');
     assert.ok(actions.includes('>refresh<'), 'the reload icon belongs with the other actions');
     assert.ok(actions.includes('exportCSV()'), 'and that group is the one holding Export CSV');
   });
@@ -65,8 +65,8 @@ describe('refresh is an action on the logs table', () => {
   // table being read. The spin belongs to the press, not to the loop.
   it('spins only for a read the operator asked for', () => {
     const button = slice(page, '<button @click="refreshNow()"', '</button>');
-    assert.match(button, /manualLoading \? 'animate-spin'/, 'the press has no feedback');
-    assert.doesNotMatch(button, /[^l]loading \? 'animate-spin'/, 'an automatic poll spins the glyph too');
+    assert.match(button, /manualLoading \? 'animate-spin\b/, 'the press has no feedback');
+    assert.doesNotMatch(button, /[^l]loading \? 'animate-spin\b/, 'an automatic poll spins the glyph too');
   });
 });
 
