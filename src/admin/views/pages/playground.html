@@ -2,22 +2,22 @@
       <div x-show="page === 'playground'" x-data="playgroundPage()" x-init="initPlayground()">
 
         <header class="mb-6">
-          <h2 class="text-xl font-bold font-headline tracking-tighter text-on-surface">PLAYGROUND<span class="text-primary-container">_</span></h2>
+          <h1 class="text-xl font-bold font-headline tracking-tighter text-on-surface">PLAYGROUND<span class="text-primary-container">_</span></h1>
         </header>
 
-        <!-- Stacked rather than side by side: a response carries a curl, an answer and its stats,
-             and half the page truncated all three while the form never needed the width. -->
+        <!-- Stacked rather than side by side: a response carries an answer, its stats, the raw body
+             and a curl, and half the page truncated them while the form never needed the width. -->
         <div class="grid grid-cols-1 gap-6">
           <div class="bg-surface-container p-5">
             <!-- Three across rather than three stretched: stacking gave the row the whole page,
                  and a select holding one fixed string does not want 1400px of hit area. -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 items-start">
               <div>
-                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Client key</label>
-              <input type="password" x-model="apiKey" placeholder="shellm-…" autocomplete="off" class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container">
+                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2" for="playground-key">Client key</label>
+              <input id="playground-key" type="password" x-model="apiKey" placeholder="shellm-…" autocomplete="off" class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container">
               <div class="flex items-center justify-between mt-2">
-                <label class="flex items-center gap-2 text-[10px] font-mono text-outline">
-                  <input type="checkbox" x-model="rememberKey" @change="storeKey()" class="accent-primary-container">
+                <label for="playground-remember" class="flex items-center gap-2 text-[10px] font-mono text-outline">
+                  <input id="playground-remember" type="checkbox" x-model="rememberKey" @change="storeKey()" class="accent-primary-container">
                   keep it for this tab only
                 </label>
                 <button x-show="apiKey" @click="forgetKey()" class="text-[10px] font-mono text-outline hover:text-on-surface">forget</button>
@@ -28,15 +28,15 @@
             </div>
 
               <div>
-                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Format</label>
-                <select x-model="format" class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container">
+                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2" for="playground-format">Format</label>
+                <select id="playground-format" x-model="format" class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container">
                   <option value="openai">OpenAI · /v1/chat/completions</option>
                   <option value="anthropic">Anthropic · /v1/messages</option>
                 </select>
               </div>
               <div>
-                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Model</label>
-                <input type="text" x-model="model" list="playground-models" class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container">
+                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2" for="playground-model">Model</label>
+                <input id="playground-model" type="text" x-model="model" list="playground-models" class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container">
                 <datalist id="playground-models">
                   <template x-for="m in models" :key="m.id">
                     <option :value="m.id" x-text="m.description || m.label"></option>
@@ -62,17 +62,18 @@
             </div>
 
             <div class="mb-4">
-              <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Prompt</label>
-              <textarea x-model="prompt" rows="6" class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"></textarea>
+              <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2" for="playground-prompt">Prompt</label>
+              <textarea id="playground-prompt" x-model="prompt"
+                @keydown.meta.enter.prevent="send()" @keydown.ctrl.enter.prevent="send()" rows="6" class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"></textarea>
             </div>
 
             <div class="mb-4">
               <div class="flex items-baseline gap-3 mb-2">
                 <span class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Images</span>
-                <label x-show="imagesSupported"
+                <label x-show="imagesSupported" for="playground-images"
                   class="text-[10px] font-mono text-primary-container hover:text-on-surface cursor-pointer">
                   add
-                  <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple class="sr-only"
+                  <input id="playground-images" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple class="sr-only"
                     @change="addImages($event.target.files); $event.target.value = ''">
                 </label>
               </div>
@@ -112,7 +113,7 @@
             <p x-show="!error && !result && !running" class="text-xs font-mono text-outline">Nothing sent yet.</p>
             <div x-show="running" class="flex items-baseline gap-3">
               <p class="text-xs font-mono text-outline">Waiting for the CLI…
-                <span class="text-on-surface-variant" x-text="formatDuration(waitingMs)"></span></p>
+                <span class="text-on-surface-variant" x-text="formatAge(waitingMs)"></span></p>
               <button @click="stopWaiting()" class="text-[10px] font-mono text-outline hover:text-status-fail underline">stop waiting</button>
             </div>
 
@@ -126,15 +127,26 @@
                       tokens <span class="text-on-surface-variant" x-text="result.usage.input + ' in / ' + result.usage.output + ' out'"></span>
                     </span>
                   </template>
+                  <span x-show="result.served_model" class="text-outline">
+                    model <span :class="modelChanged(result) ? 'text-on-surface' : 'text-on-surface-variant'" x-text="result.served_model"></span>
+                  </span>
                   <span x-show="result.request_id" class="text-outline">id <span class="text-on-surface-variant" x-text="result.request_id"></span></span>
                 </div>
 
-                <pre x-show="result.ok" class="bg-surface-container-lowest p-4 text-xs font-mono text-on-surface whitespace-pre-wrap break-words max-h-[420px] overflow-y-auto terminal-scroll" x-text="result.answer"></pre>
+                <pre x-show="result.ok && result.answer" class="bg-surface-container-lowest p-4 text-xs font-mono text-on-surface whitespace-pre-wrap break-words max-h-[420px] overflow-y-auto terminal-scroll" x-text="result.answer"></pre>
+                <p x-show="result.ok && !result.answer" class="bg-surface-container-lowest p-4 text-xs font-mono text-outline">(empty answer; see raw response)</p>
                 <p x-show="!result.ok" class="bg-surface-container-lowest p-4 text-xs font-mono text-error break-words" x-text="errorMessage(result.body)"></p>
 
-                <button @click="showRaw = !showRaw" class="mt-3 text-[10px] font-mono text-outline hover:text-on-surface"
-                  x-text="showRaw ? 'hide raw response' : 'show raw response'"></button>
-                <pre x-show="showRaw" class="mt-2 bg-surface-container-lowest p-4 text-[10px] font-mono text-outline whitespace-pre-wrap break-words max-h-[300px] overflow-y-auto terminal-scroll"
+                <div class="mt-3 flex items-baseline gap-4">
+                  <button type="button" @click="showRaw = !showRaw" :aria-expanded="showRaw" aria-controls="playground-raw"
+                    class="text-[10px] font-mono text-outline hover:text-on-surface"
+                    x-text="showRaw ? 'hide raw response' : 'show raw response'"></button>
+                  <button type="button" @click="copyCurl()" class="text-[10px] font-mono text-outline hover:text-on-surface"
+                    x-text="copied ? 'copied' : 'copy as curl'"></button>
+                </div>
+                <p x-show="copyError" x-cloak class="text-[11px] font-mono text-status-warn mt-2">Could not reach the clipboard — select the command and copy it by hand.</p>
+                <pre x-show="copyError" x-cloak class="mt-2 bg-surface-container-lowest p-4 text-[10px] font-mono text-on-surface whitespace-pre-wrap break-all" x-text="result.curl"></pre>
+                <pre id="playground-raw" x-show="showRaw" class="mt-2 bg-surface-container-lowest p-4 text-[10px] font-mono text-outline whitespace-pre-wrap break-words max-h-[300px] overflow-y-auto terminal-scroll"
                   x-text="JSON.stringify(result.body, null, 2)"></pre>
               </div>
             </template>

@@ -47,6 +47,11 @@ async function prepareImage(file) {
   };
 }
 
+function elideDataUrl(key, value) {
+  if (key !== 'url' || typeof value !== 'string' || !value.startsWith('data:')) return value;
+  return `${value.slice(0, value.indexOf(',') + 1)}…`;
+}
+
 function playgroundPage() {
   return {
     apiKey: '',
@@ -63,6 +68,8 @@ function playgroundPage() {
     result: null,
     error: null,
     showRaw: false,
+    copied: false,
+    copyError: false,
     catalogsError: null,
     catalogsLoaded: false,
     waitingMs: 0,
@@ -175,14 +182,20 @@ function playgroundPage() {
     },
 
     async send() {
+      // Cmd/Ctrl+Enter reaches here while the button is disabled.
+      if (this.running) return;
       if (!this.apiKey.trim()) {
         this.error = 'A client key is required — the playground authenticates like any other caller.';
+        this.revealResponse();
         return;
       }
       this.running = true;
       this.error = null;
       this.result = null;
+      this.copied = false;
+      this.copyError = false;
       this.storeKey();
+      this.revealResponse();
 
       // Without this a hung CLI left "Waiting for the CLI…" on screen forever with the Send
       // button disabled, and the only way out was a page reload.
@@ -193,6 +206,7 @@ function playgroundPage() {
       // a finished-but-unrendered one looks like. The clock is what tells them apart.
       this.waitingMs = 0;
       this._ticker = setInterval(() => { this.waitingMs = Math.round(performance.now() - started); }, 100);
+      const requestBody = this.requestBody();
       try {
         // Deliberately not apiFetch: a 401 here means the client key was refused, and apiFetch
         // would read it as an expired admin session and navigate away mid-request.
@@ -202,7 +216,7 @@ function playgroundPage() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${this.apiKey.trim()}`,
           },
-          body: JSON.stringify(this.requestBody()),
+          body: JSON.stringify(requestBody),
           signal: this._abort.signal,
         });
         const elapsed = Math.round(performance.now() - started);
@@ -215,6 +229,9 @@ function playgroundPage() {
           request_id: res.headers.get('x-request-id'),
           answer: res.ok ? this.answerText(body) : '',
           usage: res.ok ? this.usageOf(body) : null,
+          requested_model: requestBody.model,
+          served_model: res.ok ? body?.model || null : null,
+          curl: this.curlCommand(requestBody),
           body,
         };
       } catch (err) {
@@ -226,16 +243,49 @@ function playgroundPage() {
       this._ticker = null;
       this._abort = null;
       this.running = false;
-      this.revealResponse();
     },
 
-    // The form is taller than the fold, so stacked the answer lands below it and pressing Send
-    // looked like nothing happened. Guarded because the page's own tests run without a DOM.
+    // An alias resolves to a dated name, so a difference is normal; it is shown, not flagged.
+    modelChanged(result) {
+      return Boolean(result?.served_model) && result.served_model !== result.requested_model;
+    },
+
+    // The key stays a shell variable so the command can be pasted anywhere, and an image is
+    // elided because its data URL runs to megabytes.
+    curlCommand(body) {
+      const shareable = JSON.stringify(body, elideDataUrl);
+      return [
+        'curl -s',
+        '-H "Authorization: Bearer $SHELLM_KEY"',
+        "-H 'Content-Type: application/json'",
+        `-d '${shareable.replace(/'/g, "'\\''")}'`,
+        `'${location.origin}${this.endpoint}'`,
+      ].join(' \\\n  ');
+    },
+
+    async copyCurl() {
+      if (await copyToClipboard(this.result.curl)) {
+        this.copied = true;
+        this.copyError = false;
+        setTimeout(() => { this.copied = false; }, 1500);
+        return;
+      }
+      this.copyError = true;
+      this.copied = false;
+    },
+
+    // The waiting clock is what tells a hung request from a finished one, so it has to be on
+    // screen from the first tick. Guarded because the page's own tests run without a DOM.
     revealResponse() {
       const panel = typeof document !== 'undefined' && document.getElementById
         ? document.getElementById('playground-response')
         : null;
-      if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (!panel || !panel.scrollIntoView) return;
+      // Already in view: scrolling anyway pushes the prompt away on every iteration.
+      if (panel.getBoundingClientRect().top <= window.innerHeight * 0.6) return;
+      const reduce = typeof window.matchMedia === 'function'
+        && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      panel.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
     },
 
     stopWaiting() {
@@ -261,6 +311,7 @@ function playgroundPage() {
     },
 
     formatDuration,
+    formatAge,
     formatBytes(bytes) {
       if (bytes < 1024) return `${bytes} B`;
       return bytes < 1024 * 1024 ? `${Math.round(bytes / 1024)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
