@@ -129,6 +129,8 @@ function systemPage() {
         this.providers = (await apiRead(`${API_BASE}/providers`)).providers || [];
         this.providersError = null;
       } catch (err) {
+        // A card left from the last good read keeps saying ready, with a live Pause, under a dead gateway.
+        this.providers = [];
         this.providersError = err.message;
       }
       this.providersLoaded = true;
@@ -170,6 +172,8 @@ function systemPage() {
         this.unseenSettings = this.settings.filter((setting) => added.has(setting.name));
         this.configError = null;
       } catch (err) {
+        this.settings = [];
+        this.unseenSettings = [];
         this.configError = err.message;
       }
       this.configLoaded = true;
