@@ -34,6 +34,7 @@ echo "==> Node.js 24"
 if node --version 2>/dev/null | grep -q "^v24"; then
   echo "  $(node --version) already installed"
 else
+  # nosemgrep: bash.curl.security.curl-pipe-bash.curl-pipe-bash — NodeSource's official installer over TLS; it adds the signed apt repo nodejs comes from
   curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
   apt-get install -y nodejs
   echo "  installed $(node --version)"

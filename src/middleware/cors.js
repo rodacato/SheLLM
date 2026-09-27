@@ -63,6 +63,7 @@ function corsV1(req, res, next) {
     return next();
   }
 
+  // nosemgrep: javascript.express.security.cors-misconfiguration.cors-misconfiguration — echoed only after isAllowedOrigin matched it against the configured allowlist
   res.set('Access-Control-Allow-Origin', req.headers.origin);
   res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.set('Access-Control-Allow-Headers', ALLOWED_HEADERS);

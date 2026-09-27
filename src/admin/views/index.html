@@ -93,6 +93,7 @@
   </div>
 
   <!-- Backdrop, mobile only -->
+  <!-- nosemgrep: java.lang.security.audit.xss.jsf.autoescape-disabled.autoescape-disabled — a JSF rule misreading Alpine's @keydown.escape; nothing is unescaped -->
   <div x-show="sidebarOpen" @click="sidebarOpen = false" @keydown.escape.window="sidebarOpen = false"
     x-transition:enter="transition-opacity duration-move" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
     x-transition:leave="transition-opacity duration-move" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
@@ -139,6 +140,7 @@
           <a href="https://rodacato.github.io/SheLLM/" target="_blank" rel="noopener" class="text-outline hover:text-primary-container transition-colors duration-fast" title="Documentation" aria-label="Documentation">
             <span class="material-symbols-outlined text-[18px]" aria-hidden="true">help</span>
           </a>
+          <!-- nosemgrep: python.django.security.django-no-csrf-token.django-no-csrf-token — SameSite=Lax cookie, and admin-auth refuses cookie writes whose Sec-Fetch-Site is not same-origin -->
           <form method="post" action="/admin/logout" class="flex">
             <button type="submit" class="text-outline hover:text-primary-container transition-colors duration-fast" title="Sign out" aria-label="Sign out">
               <span class="material-symbols-outlined text-[18px]" aria-hidden="true">logout</span>
