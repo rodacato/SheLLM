@@ -64,6 +64,7 @@ function usageWindow(hours, uptimeHours = hours) {
       COUNT(*) AS requests,
       COALESCE(SUM(tokens), 0) AS tokens,
       COALESCE(SUM(cache_read_tokens), 0) AS cache_read_tokens,
+      SUM(CASE WHEN cost_usd IS NOT NULL THEN 1 ELSE 0 END) AS priced_requests,
       COALESCE(ROUND(SUM(cost_usd), 4), 0) AS cost_usd
     FROM request_logs
     WHERE ${LOGGED}
@@ -120,6 +121,7 @@ function byClient(interval) {
       COALESCE(client_name, '(unknown)') AS client_name,
       COUNT(*) AS requests,
       COALESCE(SUM(tokens), 0) AS tokens,
+      SUM(CASE WHEN cost_usd IS NOT NULL THEN 1 ELSE 0 END) AS priced_requests,
       COALESCE(ROUND(SUM(cost_usd), 4), 0) AS cost_usd,
       SUM(CASE WHEN status >= 400 THEN 1 ELSE 0 END) AS errors,
       MAX(created_at) AS last_seen_at
@@ -138,6 +140,7 @@ function usageByKey(interval) {
       c.id,
       COUNT(r.id) AS requests,
       COALESCE(SUM(r.tokens), 0) AS tokens,
+      SUM(CASE WHEN r.cost_usd IS NOT NULL THEN 1 ELSE 0 END) AS priced_requests,
       COALESCE(ROUND(SUM(r.cost_usd), 4), 0) AS cost_usd,
       SUM(CASE WHEN r.status >= 400 THEN 1 ELSE 0 END) AS errors,
       MAX(r.created_at) AS last_used_at

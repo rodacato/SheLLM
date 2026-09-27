@@ -71,6 +71,14 @@ describe('db/stats', () => {
     assert.equal(claude.priced_requests, 10);
   });
 
+  it('counts priced requests on every cost figure, so an unpriced total is not read as free', () => {
+    const priced = stats.usageByProvider(DAY).reduce((sum, p) => sum + p.priced_requests, 0);
+    assert.ok(priced > 0);
+    assert.equal(stats.usageWindow(24).priced_requests, priced);
+    assert.equal(stats.byClient(DAY).reduce((sum, c) => sum + c.priced_requests, 0), priced);
+    for (const key of stats.usageByKey(DAY)) assert.equal(typeof key.priced_requests, 'number');
+  });
+
   it('reports a usage limit only when one was actually observed', () => {
     const limited = stats.limitState(DAY);
     assert.equal(limited.status, 429);

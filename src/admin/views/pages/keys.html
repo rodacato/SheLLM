@@ -144,7 +144,7 @@
                         <span x-show="key.usage.errors > 0" class="text-error ml-1" x-text="errorRate(key) + '% err'"></span>
                         <span class="text-outline block mt-0.5">
                           <span x-text="formatCompactNumber(key.usage.tokens)"></span> tok ·
-                          <span x-text="formatCost(key.usage.cost_usd)"></span>
+                          <span x-text="key.usage.priced_requests > 0 ? formatCost(key.usage.cost_usd) : 'not priced'"></span>
                         </span>
                       </div>
                     </template>
