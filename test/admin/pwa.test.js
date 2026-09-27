@@ -101,6 +101,24 @@ describe('installable dashboard', () => {
     assert.ok(worker.includes("'https://fonts.gstatic.com'"), 'the font files the stylesheets point at are never cached');
   });
 
+  // A script carrying integrity is requested in CORS mode. Precached as an opaque no-cors copy,
+  // it fails its own integrity check on a cold offline start and the page boots without it.
+  it('precaches every integrity-pinned script in CORS mode', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const worker = fs.readFileSync(path.join(__dirname, '../../src/admin/public/sw.js'), 'utf8');
+    const html = require('../../src/admin/views').compose();
+
+    const pinned = [...html.matchAll(/<script[^>]*\ssrc="(https:\/\/[^"]+)"[^>]*\sintegrity="sha384-/g)].map((m) => m[1]);
+    assert.ok(pinned.length >= 2, `found ${pinned.length} integrity-pinned scripts — this check proves nothing`);
+
+    const corsList = /const CORS_CDN = \[([^\]]*)\]/.exec(worker);
+    assert.ok(corsList, 'the worker no longer declares which CDN entries it fetches in CORS mode');
+    for (const url of pinned) {
+      assert.ok(corsList[1].includes(`'${url}'`), `${url} carries integrity but is precached as an opaque response`);
+    }
+  });
+
   // cache.put rejects a redirected response, so precaching a page that 302s without a session
   // fails the install outright and leaves the previous worker serving forever.
   it('precaches the assets but not the page, which redirects without a session', async () => {

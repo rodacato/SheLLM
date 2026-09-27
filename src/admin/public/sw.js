@@ -1,5 +1,5 @@
 // Shell cache only: every /admin/* response carries account data or a session, so none is stored.
-const CACHE = 'shellm-admin-v5';
+const CACHE = 'shellm-admin-v6';
 const SHELL = [
   '/admin/dashboard/',
   '/admin/dashboard/css/custom.css',
@@ -20,12 +20,17 @@ const SHELL = [
   '/admin/manifest.webmanifest',
 ];
 
+// Scripts the page pins with integrity load in CORS mode, and an opaque copy of one fails the check.
+const CORS_CDN = [
+  'https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js',
+  'https://cdn.jsdelivr.net/npm/alpinejs@3.17.4/dist/cdn.min.js',
+];
+
 // The page's scripts, stylesheets and fonts come from CDNs. Without them a cold offline start
 // renders no Tailwind and no Alpine, so the offline banner itself never appears.
 const CDN = [
   'https://cdn.tailwindcss.com',
-  'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js',
-  'https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js',
+  ...CORS_CDN,
   'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap',
   'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap',
 ];
@@ -37,10 +42,11 @@ const PRECACHE = SHELL.filter((url) => url !== '/admin/dashboard/');
 
 // skipWaiting is load-bearing: a reload does not release a waiting worker, so the post-update
 // reload in system.js would otherwise be served by the very worker it is replacing.
-// A CDN that is down must not fail the install, so its entries are best effort. no-cors matches
-// how the page requests them, and it is the only mode these servers never refuse.
+// A CDN that is down must not fail the install, so its entries are best effort. Each is fetched in
+// the mode the page requests it; no-cors is the only one the unpinned servers never refuse.
 function precacheCdn(cache) {
-  return Promise.allSettled(CDN.map((url) => fetch(url, { mode: 'no-cors' }).then((res) => cache.put(url, res))));
+  const mode = (url) => (CORS_CDN.includes(url) ? 'cors' : 'no-cors');
+  return Promise.allSettled(CDN.map((url) => fetch(url, { mode: mode(url) }).then((res) => cache.put(url, res))));
 }
 
 self.addEventListener('install', (event) => {
