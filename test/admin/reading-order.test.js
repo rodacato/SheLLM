@@ -37,8 +37,8 @@ describe('what describes the numbers comes before them', () => {
       ['summary', '<!-- Stats Summary -->'],
       ['table', '<!-- Table -->'],
     ]);
-    assert.ok(filters < summary, 'the summary sits above the filters that scope it');
-    assert.ok(summary < table, 'the summary is still below the table');
+    assert.ok(filters < summary, 'the summary moved above the filters');
+    assert.ok(summary < table, 'the summary fell below the table again');
   });
 
   it('keeps the tokens card reading as one figure, not two at opposite ends', () => {

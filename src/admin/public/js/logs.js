@@ -22,23 +22,41 @@ function logsPage() {
     _poller: null,
     stats: null,
     statsError: null,
+    deleteError: null,
+    copied: null,
+    copyError: null,
+    _inFlightSnapshot: null,
+    _liveInFlightIds: null,
 
     applyPendingFilter() {
       const nav = Alpine.store('nav');
       if (!nav.pendingLogFilter) return false;
       const wanted = nav.pendingLogFilter;
+      this.filterProvider = '';
       this.filterStatus = wanted.status || '';
       this.filterClient = wanted.client || '';
       this.filterModel = wanted.model || '';
       this.filterErrorCode = wanted.error_code || '';
       this.offset = 0;
+      this.expandedId = null;
       nav.pendingLogFilter = null;
-      this.fetchLogs();
       return true;
     },
 
     toggleRow(id) {
+      if (!this.inFlightFrozen) this.freezeInFlight();
       this.expandedId = this.expandedId === id ? null : id;
+    },
+
+    async copy(id, text) {
+      if (await copyToClipboard(text)) {
+        this.copied = id;
+        this.copyError = null;
+        setTimeout(() => { if (this.copied === id) this.copied = null; }, 1500);
+        return;
+      }
+      this.copyError = id;
+      this.copied = null;
     },
 
     async fetchLogs({ manual = true } = {}) {
@@ -60,12 +78,13 @@ function logsPage() {
         this.total = 0;
         this.loadError = err.message;
       }
+      this.freezeInFlight();
       this.loading = false;
       if (manual) this.settleSpinner(startedAt);
     },
 
     settleSpinner(startedAt) {
-      const remaining = SPINNER_FLOOR_MS - (Date.now() - startedAt);
+      const remaining = spinnerRemaining(startedAt);
       if (remaining <= 0) {
         this.manualLoading = false;
         return;
@@ -78,6 +97,7 @@ function logsPage() {
       this.fetchStats();
     },
 
+    // `now` so a revisit reads at once instead of showing the rows from the last visit.
     startAutoRefresh() {
       if (!this._poller) {
         this._poller = poller(() => {
@@ -86,7 +106,7 @@ function logsPage() {
           this.fetchStats();
         });
       }
-      this._poller.every(this.refreshMs);
+      this._poller.every(this.refreshMs, { now: true });
     },
 
     stopAutoRefresh() {
@@ -94,9 +114,53 @@ function logsPage() {
     },
 
     setRefresh(value) {
+      if (!this.inFlightFrozen) this.freezeInFlight();
       this.refreshMs = Number(value);
       storeInterval(LOGS_REFRESH_KEY, this.refreshMs);
       this.startAutoRefresh();
+    },
+
+    // The queue is read on the health poll's clock, not the table's. Where the table is not
+    // moving, the in-flight rows above it must not move either — their ages still tick.
+    get inFlightFrozen() {
+      return this.refreshMs === 0 || this.autoRefreshHeld;
+    },
+
+    freezeInFlight() {
+      this._inFlightSnapshot = this.healthRead === 'ok'
+        ? { jobs: this.inFlight, readAt: this.health.readAt }
+        : null;
+    },
+
+    get shownInFlight() {
+      if (this.inFlightFrozen && this._inFlightSnapshot) return this._inFlightSnapshot.jobs;
+      return this.inFlight;
+    },
+
+    get shownInFlightReadAt() {
+      if (this.inFlightFrozen && this._inFlightSnapshot) return this._inFlightSnapshot.readAt;
+      return this.health.readAt;
+    },
+
+    shownJobAge(job) { return inFlightAge(job, this.shownInFlightReadAt, this.now); },
+    shownJobStartedAt(job) { return new Date(this.shownInFlightReadAt - job.age_ms); },
+    shownJobNearTimeout(job) {
+      return isNearTimeout(job, this.shownJobAge(job), this.health.queue?.timeout_ms);
+    },
+
+    // A request leaves the queue the moment its log row is written, so a departure is the one
+    // signal that the table is behind. Not while someone is reading a row or a later page.
+    noticeInFlight() {
+      if (this.healthRead !== 'ok') return;
+      const ids = this.inFlight.map((job) => job.request_id).join(',');
+      const previous = this._liveInFlightIds;
+      if (ids === previous) return;
+      this._liveInFlightIds = ids;
+      if (this._inFlightSnapshot === null) this.freezeInFlight();
+      if (previous === null) return;
+      const current = new Set(ids.split(','));
+      const finished = previous.split(',').some((id) => id && !current.has(id));
+      if (finished && this.offset === 0 && this.expandedId === null) this.fetchLogs({ manual: false });
     },
 
     // Replacing the rows under someone who is reading one of them, or who has paged away from the
@@ -133,14 +197,49 @@ function logsPage() {
       return !!(this.filterProvider || this.filterStatus || this.filterClient || this.filterModel || this.filterErrorCode);
     },
 
-    // Both figures below the table read the one window /admin/stats measures, so the panel says
-    // which one rather than naming a period it does not cover.
+    // The band above the table reads /admin/stats, which takes no filters, so it names its window
+    // and says it ignores the filters above it rather than appearing to answer them.
     windowSpan() {
       const hours = this.stats?.window?.hours || 0;
       if (!hours) return '';
-      if (hours < 1) return `last ${Math.round(hours * 60)} min`;
-      if (hours < 48) return `last ${Math.round(hours)} h`;
-      return `last ${Math.round(hours / 24)} days`;
+      if (hours < 1) return `last ${Math.round(hours * 60)} min · not filtered`;
+      if (hours < 48) return `last ${Math.round(hours)} h · not filtered`;
+      return `last ${Math.round(hours / 24)} days · not filtered`;
+    },
+
+    // Height is volume; the red share inside it is the errors, so one failure in a busy
+    // bucket does not paint the whole bar as if everything failed.
+    get sparkBuckets() {
+      const buckets = (this.stats?.timeline || []).slice(-15);
+      const peak = Math.max(1, ...buckets.map((b) => b.requests || 0));
+      return buckets.map((b) => ({
+        height: Math.max(8, Math.min(100, ((b.requests || 0) / peak) * 100)),
+        errorShare: b.requests > 0 ? Math.min(100, ((b.errors || 0) / b.requests) * 100) : 0,
+      }));
+    },
+
+    // Filters that arrive from Overview or Keys can hold values no select offers (an exact 429,
+    // an error code), so those are listed where the operator can see and drop them.
+    get hiddenFilters() {
+      const hidden = [];
+      if (this.filterStatus && !['2', '4', '5'].includes(this.filterStatus)) {
+        hidden.push({ key: 'filterStatus', label: 'Status', value: this.filterStatus });
+      }
+      if (this.filterClient && !this.clientOptions.includes(this.filterClient)) {
+        hidden.push({ key: 'filterClient', label: 'Client', value: this.filterClient });
+      }
+      if (this.filterModel && !this.modelOptions.includes(this.filterModel)) {
+        hidden.push({ key: 'filterModel', label: 'Model', value: this.filterModel });
+      }
+      if (this.filterErrorCode) {
+        hidden.push({ key: 'filterErrorCode', label: 'Error', value: this.filterErrorCode });
+      }
+      return hidden;
+    },
+
+    dropFilter(key) {
+      this[key] = '';
+      this.applyFilters();
     },
 
     get clientOptions() {
@@ -163,16 +262,16 @@ function logsPage() {
 
     async clearLogs() {
       if (!confirm('Delete all request logs? This cannot be undone.')) return;
+      this.deleteError = null;
       try {
-        const res = await apiFetch(`${API_BASE}/logs`, { method: 'DELETE' });
-        if (!res.ok) {
-          const err = await res.json();
-          return alert(err.message || 'Failed to clear logs');
-        }
-        this.logs = [];
-        this.total = 0;
-        this.offset = 0;
-      } catch { alert('Network error'); }
+        await apiWrite(`${API_BASE}/logs`, { method: 'DELETE' });
+      } catch (err) {
+        this.deleteError = `Could not delete the logs — ${err.message}`;
+        return;
+      }
+      this.offset = 0;
+      this.expandedId = null;
+      this.refreshNow();
     },
 
     async applyFilters() {

@@ -1,24 +1,25 @@
       <!-- LOGS PAGE -->
-      <div x-show="page === 'logs'" x-data="logsPage()" x-effect="if (page === 'logs') { if (!applyPendingFilter() && logs.length === 0 && loading) fetchLogs(); fetchStats(); startAutoRefresh(); } else { stopAutoRefresh(); }">
+      <div x-show="page === 'logs'" x-data="logsPage()" x-effect="if (page === 'logs') { applyPendingFilter(); startAutoRefresh(); } else { stopAutoRefresh(); }">
+        <div x-effect="if (page === 'logs') noticeInFlight()" hidden></div>
 
-        <header class="mb-6 flex items-baseline gap-4">
-          <h2 class="text-xl font-bold font-headline tracking-tighter text-on-surface">REQUEST LOGS<span class="text-primary-container">_</span></h2>
+        <header class="mb-6">
+          <h1 class="text-xl font-bold font-headline tracking-tighter text-on-surface">REQUEST LOGS<span class="text-primary-container">_</span></h1>
         </header>
 
         <!-- Filters -->
         <div class="flex flex-wrap gap-4 mb-3 items-end">
           <div class="flex flex-wrap gap-4 items-end">
             <div>
-              <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Provider</label>
-              <select x-model="filterProvider" @change="applyFilters()" class="w-40 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
+              <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2" for="logs-filter-provider">Provider</label>
+              <select id="logs-filter-provider" x-model="filterProvider" @change="applyFilters()" class="w-40 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
                 <option value="">All Providers</option>
                 <option value="claude">claude</option>
                 <option value="codex">codex</option>
               </select>
             </div>
             <div>
-              <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Status</label>
-              <select x-model="filterStatus" @change="applyFilters()" class="w-40 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
+              <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2" for="logs-filter-status">Status</label>
+              <select id="logs-filter-status" x-model="filterStatus" @change="applyFilters()" class="w-40 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
                 <option value="">All Status</option>
                 <option value="2">2xx (Success)</option>
                 <option value="4">4xx (Client Err)</option>
@@ -26,8 +27,8 @@
               </select>
             </div>
             <div>
-              <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Client</label>
-              <select x-model="filterClient" @change="applyFilters()" class="w-40 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
+              <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2" for="logs-filter-client">Client</label>
+              <select id="logs-filter-client" x-model="filterClient" @change="applyFilters()" class="w-40 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
                 <option value="">All Clients</option>
                 <template x-for="name in clientOptions" :key="name">
                   <option :value="name" x-text="name"></option>
@@ -35,8 +36,8 @@
               </select>
             </div>
             <div>
-              <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Model</label>
-              <select x-model="filterModel" @change="applyFilters()" class="w-40 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
+              <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2" for="logs-filter-model">Model</label>
+              <select id="logs-filter-model" x-model="filterModel" @change="applyFilters()" class="w-40 bg-surface-container border border-outline-variant/30 text-on-surface px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary-container">
                 <option value="">All Models</option>
                 <template x-for="name in modelOptions" :key="name">
                   <option :value="name" x-text="name"></option>
@@ -52,11 +53,11 @@
                 :title="manualLoading ? 'Reading the table' : 'Re-read the table now'"
                 :class="manualLoading ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:bg-surface-container-high hover:text-on-surface'"
                 class="px-3 flex items-center transition-colors duration-fast">
-                <span class="material-symbols-outlined text-[16px]" :class="manualLoading ? 'animate-spin' : ''">refresh</span>
+                <span class="material-symbols-outlined text-[16px]" aria-hidden="true" :class="manualLoading ? 'animate-spin [animation-duration:500ms]' : ''">refresh</span>
               </button>
               <div class="w-px bg-outline-variant/30"></div>
               <div x-show="autoRefreshHeld" x-cloak class="flex items-center bg-surface-container pl-2">
-                <span class="material-symbols-outlined text-[16px] text-outline">pause</span>
+                <span class="material-symbols-outlined text-[16px] text-outline" aria-hidden="true">pause</span>
               </div>
               <select @change="setRefresh($event.target.value)"
                 aria-label="Auto-refresh interval" :title="intervalTitle"
@@ -74,17 +75,29 @@
               </button>
               <button x-show="total > 0" @click="clearLogs()"
                 class="px-4 py-2.5 text-xs font-headline font-bold uppercase tracking-widest text-status-fail bg-danger-surface hover:bg-danger-surface-hover transition-colors duration-fast flex items-center gap-2">
-                <span class="material-symbols-outlined text-sm">filter_list_off</span>
-                Clear All
+                <span class="material-symbols-outlined text-sm" aria-hidden="true">delete_forever</span>
+                Delete logs
               </button>
             </div>
           </div>
         </div>
 
+        <p x-show="deleteError" x-cloak class="text-error text-[11px] font-mono mb-3" x-text="deleteError"></p>
+
         <div class="flex flex-wrap items-center gap-4 mb-6">
+          <template x-for="f in hiddenFilters" :key="f.key">
+            <span class="inline-flex items-center gap-1 border border-outline-variant/30 pl-2 text-[11px] font-mono">
+              <span class="text-outline" x-text="f.label"></span>
+              <span class="text-on-surface" x-text="f.value"></span>
+              <button type="button" @click="dropFilter(f.key)" :aria-label="'Clear ' + f.label"
+                class="px-1 text-outline hover:text-on-surface transition-colors duration-fast flex items-center">
+                <span class="material-symbols-outlined text-[16px]" aria-hidden="true">close</span>
+              </button>
+            </span>
+          </template>
           <button x-show="hasFilters" @click="clearFilters()"
             class="text-[11px] font-mono text-primary-container hover:underline">clear filters</button>
-          <div x-show="!loadError" class="text-[11px] font-mono text-outline italic" x-text="total + ' total logs found'"></div>
+          <div x-show="!loadError && (!loading || logs.length > 0)" class="text-[11px] font-mono text-outline" x-text="total + ' total logs found'"></div>
         </div>
 
         <!-- Stats Summary -->
@@ -99,10 +112,9 @@
               <p class="text-2xl font-headline font-black text-white" x-text="stats ? (stats.error_rate.client_error_pct + stats.error_rate.server_error_pct).toFixed(1) + '%' : '-'"></p>
               <div class="flex-1 h-12 bg-surface-container-lowest relative overflow-hidden">
                 <div class="absolute inset-0 flex items-end gap-0.5 px-1" x-show="stats && stats.timeline">
-                  <template x-for="(bucket, i) in (stats ? stats.timeline.slice(-15) : [])" :key="i">
-                    <div class="flex-1 min-w-[3px]"
-                      :class="bucket.errors > 0 ? 'bg-status-fail' : 'bg-outline/20'"
-                      :style="'height: ' + Math.max(8, Math.min(100, (bucket.requests / Math.max(...(stats.timeline.slice(-15).map(b => b.requests || 1)))) * 100)) + '%'">
+                  <template x-for="(bar, i) in sparkBuckets" :key="i">
+                    <div class="flex-1 min-w-[3px] bg-outline/20 flex flex-col justify-end" :style="'height: ' + bar.height + '%'">
+                      <div class="bg-status-fail" :style="'height: ' + bar.errorShare + '%'"></div>
                     </div>
                   </template>
                 </div>
@@ -142,18 +154,18 @@
               </thead>
               <!-- Live from the queue, not from the log: a request writes its row only when it
                    finishes, so a long one is otherwise invisible here. No filter applies to it. -->
-              <tbody x-show="offset === 0 && healthRead === 'ok' && inFlight.length > 0" x-cloak
+              <tbody x-show="offset === 0 && healthRead === 'ok' && shownInFlight.length > 0" x-cloak
                 class="bg-surface-container-low border-b border-outline-variant/30">
                 <tr>
                   <td colspan="9" class="px-6 py-2.5">
                     <span class="text-[11px] font-headline font-bold uppercase tracking-[0.08em] text-primary-container"
-                      x-text="'In flight · ' + inFlight.length"></span>
+                      x-text="'In flight · ' + shownInFlight.length"></span>
                     <span class="ml-2 text-[10px] font-mono text-outline">live from the queue — not filtered, gone on restart</span>
                   </td>
                 </tr>
-                <template x-for="job in inFlight" :key="job.request_id + job.state">
+                <template x-for="job in shownInFlight" :key="job.request_id + job.state">
                   <tr class="border-t border-outline-variant/20">
-                    <td class="px-6 py-4 text-on-surface font-mono text-sm whitespace-nowrap" x-text="formatTime(jobStartedAt(job))"></td>
+                    <td class="px-6 py-4 text-on-surface font-mono text-sm whitespace-nowrap" x-text="formatTime(shownJobStartedAt(job))"></td>
                     <td class="px-6 py-4">
                       <span class="inline-block border px-1.5 py-0.5 text-[10px] font-bold font-mono uppercase whitespace-nowrap"
                         :class="job.state === 'queued' ? 'border-status-warn text-status-warn' : 'border-primary-container text-primary-container'"
@@ -167,8 +179,8 @@
                     <td class="px-6 py-4 text-outline text-sm" x-text="job.provider"></td>
                     <td class="px-6 py-4 text-sm font-headline text-primary-container" x-text="job.model"></td>
                     <td class="px-6 py-4 font-mono text-sm">
-                      <span :class="jobNearTimeout(job) ? 'text-status-fail' : (job.state === 'queued' ? 'text-status-warn' : 'text-primary-container')"
-                        x-text="formatAge(jobAge(job))"></span>
+                      <span :class="shownJobNearTimeout(job) ? 'text-status-fail' : (job.state === 'queued' ? 'text-status-warn' : 'text-primary-container')"
+                        x-text="formatAge(shownJobAge(job))"></span>
                       <span x-show="job.stream" class="text-[10px] text-outline block">stream</span>
                     </td>
                     <td class="px-6 py-4 text-outline font-mono text-sm">-</td>
@@ -179,15 +191,29 @@
               <tbody>
                 <tr x-show="logs.length === 0">
                   <td colspan="9" class="px-6 py-10 text-center font-mono text-sm"
-                    :class="loadError && !loading ? 'text-error' : 'text-outline'"
-                    x-text="loading ? 'Loading...' : (loadError ? 'Could not read the logs — ' + loadError : 'No logs found')"></td>
+                    :class="loadError && !loading ? 'text-error' : 'text-outline'">
+                    <span x-text="loading ? 'Loading...' : (loadError ? 'Could not read the logs — ' + loadError : 'No logs found')"></span>
+                    <template x-if="!loading && !loadError && hasFilters">
+                      <button type="button" @click="clearFilters()" class="ml-2 text-primary-container hover:underline">clear filters</button>
+                    </template>
+                  </td>
                 </tr>
               </tbody>
               <!-- One tbody per row: x-for takes a single root element, and a row plus its detail are two. -->
               <template x-for="log in logs" :key="log.id">
                 <tbody>
-                  <tr @click="toggleRow(log.id)" class="border-t border-outline-variant/20 hover:bg-surface-container-high transition-colors duration-fast cursor-pointer">
-                    <td class="px-6 py-4 text-on-surface font-mono text-sm whitespace-nowrap" x-text="formatTime(log.created_at)"></td>
+                  <tr @click="toggleRow(log.id)"
+                    :class="expandedId === log.id ? 'bg-surface-container-lowest' : ''"
+                    class="border-t border-outline-variant/20 hover:bg-surface-container-high transition-colors duration-fast cursor-pointer">
+                    <td class="px-6 py-4 text-on-surface font-mono text-sm whitespace-nowrap">
+                      <button type="button" @click.stop="toggleRow(log.id)"
+                        :aria-expanded="expandedId === log.id" :aria-controls="'log-' + log.id + '-detail'"
+                        class="flex items-center gap-1 -ml-1 text-left">
+                        <span class="material-symbols-outlined text-[16px] text-outline" aria-hidden="true"
+                          x-text="expandedId === log.id ? 'expand_more' : 'chevron_right'"></span>
+                        <span x-text="formatTime(log.created_at)"></span>
+                      </button>
+                    </td>
                     <td class="px-6 py-4">
                       <span class="px-2 py-0.5 text-[10px] font-bold font-mono"
                         :class="statusBadgeClass(log.status)" x-text="log.status"></span>
@@ -199,7 +225,7 @@
                     </td>
                     <td class="px-6 py-4 text-on-surface text-sm font-medium" x-text="log.client_name || '-'"></td>
                     <td class="px-6 py-4 text-outline text-sm" x-text="log.provider || '-'"></td>
-                    <td class="px-6 py-4 text-sm font-headline text-primary-container" x-text="log.model || '-'"></td>
+                    <td class="px-6 py-4 text-sm font-headline" :class="log.model ? 'text-primary-container' : 'text-outline'" x-text="log.model || '-'"></td>
                     <td class="px-6 py-4 font-mono text-sm">
                       <span class="text-white" x-text="formatDuration(log.duration_ms)"></span>
                       <span x-show="log.queued_ms" class="text-[10px] text-status-warn block" x-text="'(' + formatDuration(log.queued_ms) + ' queued)'"></span>
@@ -209,12 +235,21 @@
                       :class="log.cost_usd > 0 ? 'text-primary-container' : 'text-outline'"
                       x-text="formatCost(log.cost_usd)"></td>
                   </tr>
-                  <tr x-show="expandedId === log.id" class="border-t border-outline-variant/20 bg-surface-container-lowest">
+                  <tr x-show="expandedId === log.id" :id="'log-' + log.id + '-detail'" class="border-t border-outline-variant/20 bg-surface-container-lowest">
                     <td colspan="9" class="px-6 py-4">
                       <dl class="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] font-mono">
                         <div>
                           <dt class="text-outline uppercase text-[10px]">Request id</dt>
-                          <dd class="text-on-surface-variant break-all" x-text="log.request_id || '-'"></dd>
+                          <dd class="text-on-surface-variant flex items-start gap-1">
+                            <span class="break-all" x-text="log.request_id || '-'"></span>
+                            <button type="button" x-show="log.request_id" @click="copy('req-' + log.id, log.request_id)"
+                              class="shrink-0 text-outline hover:text-on-surface transition-colors duration-fast flex items-center"
+                              :title="copied === 'req-' + log.id ? 'Copied' : 'Copy to clipboard'" aria-label="Copy the request id">
+                              <span class="material-symbols-outlined text-[16px]" aria-hidden="true" :class="copied === 'req-' + log.id ? 'text-primary-container' : ''"
+                                x-text="copied === 'req-' + log.id ? 'check' : 'content_copy'"></span>
+                            </button>
+                          </dd>
+                          <p x-show="copyError === 'req-' + log.id" x-cloak class="text-[11px] font-mono text-status-warn mt-2">Could not reach the clipboard — select the line and copy it by hand.</p>
                         </div>
                         <div>
                           <dt class="text-outline uppercase text-[10px]">Error</dt>
@@ -260,8 +295,8 @@
           <div class="px-6 py-4 bg-surface-container-lowest/50 flex items-center justify-between border-t border-outline-variant/20">
             <!-- Page size selector -->
             <div class="flex items-center gap-2">
-              <span class="text-outline text-[10px] uppercase tracking-wider font-headline">Show</span>
-              <select @change="changeLimit($event.target.value)" :value="limit"
+              <label for="logs-page-size" class="text-outline text-[10px] uppercase tracking-wider font-headline">Show</label>
+              <select id="logs-page-size" @change="changeLimit($event.target.value)" :value="limit"
                 class="bg-surface-container border border-outline-variant/30 text-on-surface text-xs font-mono px-2 py-1 focus:outline-none focus:border-primary-container">
                 <option value="25">25</option>
                 <option value="50">50</option>
@@ -276,14 +311,14 @@
                 :class="currentPage <= 1 ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:bg-surface-container-high hover:text-on-surface'"
                 class="w-8 h-8 flex items-center justify-center text-xs transition-colors duration-fast"
                 title="First page">
-                <span class="material-symbols-outlined text-[16px]">first_page</span>
+                <span class="material-symbols-outlined text-[16px]" aria-hidden="true">first_page</span>
               </button>
               <!-- Prev -->
               <button @click="prevPage()" :disabled="offset <= 0"
                 :class="offset <= 0 ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:bg-surface-container-high hover:text-on-surface'"
                 class="w-8 h-8 flex items-center justify-center text-xs transition-colors duration-fast"
                 title="Previous page">
-                <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+                <span class="material-symbols-outlined text-[16px]" aria-hidden="true">chevron_left</span>
               </button>
               <!-- Page numbers -->
               <template x-for="p in visiblePages" :key="p">
@@ -298,14 +333,14 @@
                 :class="offset + limit >= total ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:bg-surface-container-high hover:text-on-surface'"
                 class="w-8 h-8 flex items-center justify-center text-xs transition-colors duration-fast"
                 title="Next page">
-                <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                <span class="material-symbols-outlined text-[16px]" aria-hidden="true">chevron_right</span>
               </button>
               <!-- Last -->
               <button @click="goToPage(totalPages)" :disabled="currentPage >= totalPages"
                 :class="currentPage >= totalPages ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:bg-surface-container-high hover:text-on-surface'"
                 class="w-8 h-8 flex items-center justify-center text-xs transition-colors duration-fast"
                 title="Last page">
-                <span class="material-symbols-outlined text-[16px]">last_page</span>
+                <span class="material-symbols-outlined text-[16px]" aria-hidden="true">last_page</span>
               </button>
             </div>
 

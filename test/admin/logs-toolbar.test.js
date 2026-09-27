@@ -52,11 +52,11 @@ describe('the Logs filter bar cannot be widened by its own data', () => {
     const page = logsPageHtml();
     const total = page.indexOf('total logs found');
     assert.ok(total > page.lastIndexOf('</select>'), 'the result count comes after every filter');
-    assert.ok(total > page.indexOf('Clear All'), 'the result count comes after the actions');
+    assert.ok(total > page.indexOf('Delete logs'), 'the result count comes after the actions');
   });
 
   it('keeps the destructive action away from the filters', () => {
     const page = logsPageHtml();
-    assert.ok(page.indexOf('Clear All') > page.lastIndexOf('</select>'));
+    assert.ok(page.indexOf('Delete logs') > page.lastIndexOf('</select>'));
   });
 });

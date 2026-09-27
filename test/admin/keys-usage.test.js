@@ -186,7 +186,7 @@ describe('a created key says where to send it', () => {
     assert.doesNotMatch(cell, />\s*(Edit|Rotate|Delete)\s*</, 'the words are gone, so the labels carry the meaning');
   });
 
-  // The product keeps its other destructive action's label (Clear All). This one gave its word up,
+  // The product keeps its other destructive action's label (Delete logs). This one gave its word up,
   // so the colour is what is left to say it is not the other two.
   it('keeps the destructive action visually apart from the safe ones', () => {
     const html = compose();
