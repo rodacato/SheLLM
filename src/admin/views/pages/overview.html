@@ -1,8 +1,8 @@
       <!-- OVERVIEW PAGE -->
-      <div x-show="page === 'overview'" x-data="overviewPage()" x-effect="if (page === 'overview') { if (!stats) fetchStats(); if (providers.length === 0) fetchProviders(); startAutoRefresh(); } else { stopAutoRefresh(); }">
+      <div x-show="page === 'overview'" x-data="overviewPage()" x-effect="if (page === 'overview') startAutoRefresh({ now: true }); else stopAutoRefresh();">
 
         <header class="mb-6 flex items-center justify-between gap-4 flex-wrap">
-          <h2 class="text-xl font-bold font-headline tracking-tighter text-on-surface">OVERVIEW<span class="text-primary-container">_</span></h2>
+          <h1 class="text-xl font-bold font-headline tracking-tighter text-on-surface">OVERVIEW<span class="text-primary-container">_</span></h1>
           <div class="flex items-center gap-6">
             <button @click="navigate('system')" x-show="health?.build"
               class="text-[11px] font-mono text-outline hover:text-primary-container transition-colors duration-fast">
@@ -15,7 +15,7 @@
                 :title="manualLoading ? 'Reading the page' : 'Re-read this page now'"
                 :class="manualLoading ? 'text-outline/30 cursor-not-allowed' : 'text-outline hover:bg-surface-container-high hover:text-on-surface'"
                 class="px-3 flex items-center transition-colors duration-fast">
-                <span class="material-symbols-outlined text-[16px]" :class="manualLoading ? 'animate-spin' : ''">refresh</span>
+                <span class="material-symbols-outlined text-[16px]" aria-hidden="true" :class="manualLoading ? 'animate-spin [animation-duration:500ms]' : ''">refresh</span>
               </button>
               <div class="w-px bg-outline-variant/30"></div>
               <select @change="setRefresh($event.target.value)"
@@ -30,8 +30,8 @@
         </header>
 
         <!-- Every figure below is over this window, and nothing on the page can narrow it -->
-        <div class="flex items-baseline gap-2 mb-6 text-[11px] font-mono text-outline flex-wrap">
-          <span class="text-on-surface-variant" x-text="stats ? (stats.total_requests || 0).toLocaleString() + ' requests' : '—'"></span>
+        <div x-show="stats" class="flex items-baseline gap-2 mb-6 text-[11px] font-mono text-outline flex-wrap">
+          <span class="text-on-surface-variant" x-text="stats ? (stats.total_requests || 0).toLocaleString() + ' requests' : ''"></span>
           <span x-show="stats && stats.window.from">over</span>
           <span class="text-on-surface-variant" x-show="stats && stats.window.from" x-text="stats ? windowSpan() : ''"></span>
           <span x-show="stats && stats.window.from" x-text="stats ? '· since ' + formatTime(stats.window.from) : ''"></span>
@@ -48,11 +48,12 @@
              page when something the gateway itself did went wrong; otherwise Now does. -->
         <div class="flex flex-col">
         <template x-if="stats && errorRows.length > 0">
-          <div class="bg-surface-container p-5 mb-8" :class="hasServerErrors ? 'order-1' : 'order-3'">
-            <div class="flex items-baseline justify-between mb-4">
-              <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant">Errors</p>
+          <div class="mb-8" :class="hasServerErrors ? 'order-1' : 'order-3'">
+            <div class="flex items-baseline gap-3 mb-3">
+              <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Errors</span>
               <span class="text-[10px] font-mono text-outline" x-text="stats.error_rate.success_pct + '% ok'"></span>
             </div>
+            <div class="bg-surface-container p-5">
             <table class="w-full text-xs font-mono">
               <thead>
                 <tr class="text-outline text-[10px] uppercase tracking-widest">
@@ -81,6 +82,7 @@
                 </template>
               </tbody>
             </table>
+            </div>
           </div>
         </template>
 
@@ -113,7 +115,7 @@
                   <div class="grid grid-cols-3 gap-4">
                     <div>
                       <p class="text-[10px] font-mono text-outline uppercase mb-1">Spent</p>
-                      <p class="text-xl font-headline font-black text-white" x-text="formatCost(w.cost_usd)"></p>
+                      <p class="text-xl font-headline font-black text-white" x-text="w.priced_requests > 0 ? formatCost(w.cost_usd) : 'not priced'"></p>
                     </div>
                     <div>
                       <p class="text-[10px] font-mono text-outline uppercase mb-1">Tokens</p>
@@ -160,26 +162,26 @@
         <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase block mb-3">Now</span>
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
           <div class="bg-surface-container p-5 lg:col-span-2">
-            <div class="flex items-center gap-2 mb-3">
+            <div class="flex items-baseline gap-x-3 gap-y-1 mb-3 flex-wrap">
               <span class="text-[10px] font-headline font-bold uppercase text-on-surface-variant">Request Queue</span>
-              <span class="text-[10px] text-outline" title="CLI providers run as subprocesses. Active = running now (max concurrent). Pending = waiting in line.">[?]</span>
+              <span class="text-[10px] text-outline">CLI providers run as subprocesses. Active = running now (max concurrent). Pending = waiting in line.</span>
             </div>
             <div class="flex items-end gap-8 mb-3">
               <div>
                 <span class="text-[10px] font-mono text-outline uppercase block">Active</span>
                 <span class="font-headline font-bold text-white text-lg" x-text="healthRead === 'ok' ? (health?.queue?.active ?? 0) : '—'"></span>
-                <span class="text-outline text-sm">/ <span x-text="health?.queue?.max_concurrent ?? 0"></span></span>
+                <span class="text-outline text-sm" x-text="healthRead === 'ok' ? '/ ' + (health?.queue?.max_concurrent ?? 0) : ''"></span>
               </div>
               <div>
                 <span class="text-[10px] font-mono text-outline uppercase block">Pending</span>
                 <span class="font-headline font-bold text-lg"
-                  :class="(health?.queue?.pending ?? 0) > 0 ? 'text-status-warn' : 'text-white'"
+                  :class="healthRead === 'ok' && (health?.queue?.pending ?? 0) > 0 ? 'text-status-warn' : 'text-white'"
                   x-text="healthRead === 'ok' ? (health?.queue?.pending ?? 0) : '—'"></span>
               </div>
               <div>
                 <span class="text-[10px] font-mono text-outline uppercase block">Streams</span>
                 <span class="font-headline font-bold text-white text-lg" x-text="healthRead === 'ok' ? (health?.queue?.active_streams ?? 0) : '—'"></span>
-                <span class="text-outline text-sm">/ <span x-text="health?.queue?.max_stream_concurrent ?? 0"></span></span>
+                <span class="text-outline text-sm" x-text="healthRead === 'ok' ? '/ ' + (health?.queue?.max_stream_concurrent ?? 0) : ''"></span>
               </div>
             </div>
             <div class="bg-surface-container-lowest h-1.5">
@@ -188,7 +190,7 @@
                 :style="'width:' + queueSaturation() + '%'"></div>
             </div>
             <p class="text-[10px] font-mono text-outline mt-2"
-              x-text="healthRead === 'ok' ? queueSaturation() + '% of concurrency in use' : 'not read yet'"></p>
+              x-text="healthRead === 'ok' ? queueSaturation() + '% of concurrency in use' : (healthRead === 'failed' ? 'could not read' : 'not read yet')"></p>
             <!-- The count says three are running; it cannot say one has been wedged for nine
                  minutes, nor whose it is. -->
             <table x-show="healthRead === 'ok' && inFlight.length > 0" x-cloak
@@ -225,16 +227,20 @@
           <div class="bg-surface-container p-5">
             <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-3">Providers</p>
             <div class="space-y-2">
+              <!-- Anything short of ready is fixed on System, so the row goes there; a ready row has no href. -->
               <template x-for="prov in providers" :key="prov.name">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 inline-block"
-                      :class="!prov.enabled ? 'dot-gray' : (prov.installed && prov.authenticated ? 'dot-green' : (prov.installed ? 'dot-red' : 'dot-gray'))"></span>
+                <a :href="providerReady(prov) ? null : '#system'"
+                  class="flex items-center justify-between"
+                  :class="providerReady(prov) ? '' : 'cursor-pointer hover:text-primary-container transition-colors duration-fast'">
+                  <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 inline-block" :class="providerDot(prov)"></span>
                     <span class="font-headline font-bold text-white text-xs" x-text="prov.name"></span>
-                  </div>
-                  <span class="text-[10px] font-mono text-outline"
-                    x-text="!prov.enabled ? 'disabled' : (prov.installed && prov.authenticated ? 'ready' : (prov.installed ? 'no auth' : 'missing'))"></span>
-                </div>
+                  </span>
+                  <span class="text-[10px] font-mono">
+                    <span class="text-outline" x-text="providerLabel(prov)"></span>
+                    <span x-show="!providerReady(prov)" class="ml-1">→</span>
+                  </span>
+                </a>
               </template>
             </div>
             <p x-show="!providersLoaded" class="text-outline text-xs font-mono">Loading providers...</p>
@@ -295,12 +301,13 @@
                 </div>
 
                 <!-- One mark per request: at this volume an averaged line invents shape that is not there -->
-                <div class="bg-surface-container p-5" x-show="stats.recent_requests && stats.recent_requests.length > 1">
+                <div class="bg-surface-container p-5">
                   <div class="flex items-baseline justify-between mb-3">
                     <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant">Every request</p>
                     <span class="text-[10px] font-mono text-outline" x-text="scatterCaption()"></span>
                   </div>
-                  <div class="h-[200px]"><canvas x-ref="scatter"></canvas></div>
+                  <div x-show="stats.recent_requests && stats.recent_requests.length > 1" class="h-[200px]"><canvas x-ref="scatter"></canvas></div>
+                  <p x-show="!(stats.recent_requests && stats.recent_requests.length > 1)" class="text-outline text-xs font-mono" x-text="sparseCaption()"></p>
                 </div>
               </div>
             </template>
@@ -355,7 +362,7 @@
                         <td class="py-2 text-on-surface-variant truncate max-w-[8rem]" x-text="c.client_name"></td>
                         <td class="py-2 text-right text-white" x-text="c.requests"></td>
                         <td class="py-2 text-right" :class="c.errors > 0 ? 'text-status-warn' : 'text-outline'" x-text="c.errors"></td>
-                        <td class="py-2 text-right text-outline" x-text="formatCost(c.cost_usd)"></td>
+                        <td class="py-2 text-right text-outline" x-text="c.priced_requests > 0 ? formatCost(c.cost_usd) : 'not priced'"></td>
                         <td class="py-2 text-right text-outline" :title="formatTime(c.last_seen_at)"
                           x-text="formatRelative(c.last_seen_at)"></td>
                       </tr>
@@ -367,12 +374,13 @@
             </div>
 
             <!-- Traffic over the period: how many, and how many of them failed -->
-            <div class="bg-surface-container p-5" x-show="stats.timeline && stats.timeline.length > 1">
+            <div class="bg-surface-container p-5">
               <div class="flex items-baseline justify-between mb-4">
                 <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant">Traffic</p>
                 <span class="text-[10px] font-mono text-outline" x-text="stats.error_rate.success_pct + '% ok'"></span>
               </div>
-              <div class="h-[180px]"><canvas x-ref="timeline"></canvas></div>
+              <div x-show="stats.timeline && stats.timeline.length > 1" class="h-[180px]"><canvas x-ref="timeline"></canvas></div>
+              <p x-show="!(stats.timeline && stats.timeline.length > 1)" class="text-outline text-xs font-mono" x-text="sparseCaption()"></p>
             </div>
 
           </div>

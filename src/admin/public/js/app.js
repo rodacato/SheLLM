@@ -129,9 +129,14 @@ function poller(read) {
   };
 }
 
-// A local read finishes in tens of milliseconds. A spinner that runs only that long is a twitch
-// rather than feedback, so a manual press holds it for at least this.
-const SPINNER_FLOOR_MS = 400;
+// A local read finishes in tens of milliseconds, so a manual press spins for at least one turn,
+// and it stops on a whole turn: releasing mid-arc snapped the glyph back to upright.
+const SPINNER_TURN_MS = 500;
+
+function spinnerRemaining(startedAt, now = Date.now()) {
+  const elapsed = now - startedAt;
+  return Math.max(1, Math.ceil(elapsed / SPINNER_TURN_MS)) * SPINNER_TURN_MS - elapsed;
+}
 
 const REFRESH_LADDER = [
   { ms: 0, label: 'Off' },

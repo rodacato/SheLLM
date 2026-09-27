@@ -30,8 +30,8 @@ describe('the Overview refresh control', () => {
   // loop this page has always run never spins it.
   it('spins only for a read the operator asked for', () => {
     const header = overviewHeader();
-    assert.match(header, /manualLoading \? 'animate-spin'/);
-    assert.doesNotMatch(header, /[^l]loading \? 'animate-spin'/);
+    assert.match(header, /manualLoading \? 'animate-spin\b/);
+    assert.doesNotMatch(header, /[^l]loading \? 'animate-spin\b/);
   });
 
   // The four filters replace the browser ring with a border change; this select has no border of
