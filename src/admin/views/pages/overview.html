@@ -31,7 +31,7 @@
 
         <!-- Every figure below is over this window, and nothing on the page can narrow it -->
         <div x-show="stats" class="flex items-baseline gap-2 mb-6 text-[11px] font-mono text-outline flex-wrap">
-          <span class="text-on-surface-variant" x-text="stats ? (stats.total_requests || 0).toLocaleString() + ' requests' : ''"></span>
+          <span class="text-on-surface-variant" x-text="stats ? countOf(stats.total_requests || 0, 'request') : ''"></span>
           <span x-show="stats && stats.window.from">over</span>
           <span class="text-on-surface-variant" x-show="stats && stats.window.from" x-text="stats ? windowSpan() : ''"></span>
           <span x-show="stats && stats.window.from" x-text="stats ? '· since ' + formatTime(stats.window.from) : ''"></span>

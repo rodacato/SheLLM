@@ -82,6 +82,16 @@ describe('formatTime', () => {
 
 // Free and unpriced were both a dash. D5 told them apart on Overview only; every other table that
 // shows a cost goes through this helper.
+describe('countOf', () => {
+  const count = (n, noun) => vm.runInContext('countOf', loadDashboard(async () => json(200, {})).context)(n, noun);
+
+  it('does not pluralise a single thing', () => {
+    assert.strictEqual(count(1, 'recent failure'), '1 recent failure');
+    assert.strictEqual(count(2, 'request'), '2 requests');
+    assert.strictEqual(count(0, 'request'), '0 requests');
+  });
+});
+
 describe('formatCost', () => {
   const format = (value) => vm.runInContext('formatCost', loadDashboard(async () => json(200, {})).context)(value);
 

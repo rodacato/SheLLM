@@ -342,7 +342,7 @@ function overviewPage() {
     sparseCaption() {
       const total = this.stats?.total_requests || 0;
       if (!total) return 'No requests in this window.';
-      return `${total.toLocaleString()} requests over ${this.windowSpan()}`;
+      return `${countOf(total, 'request')} over ${this.windowSpan()}`;
     },
 
     // Above the cap the scatter and the totals stop describing the same rows, so the chart says so
@@ -386,6 +386,7 @@ function overviewPage() {
     },
 
     formatCost,
+    countOf,
     formatDuration,
     formatTime,
     formatRelative,

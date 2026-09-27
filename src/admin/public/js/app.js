@@ -218,6 +218,10 @@ function isNearTimeout(job, ageMs, timeoutMs) {
   return job.state === 'running' && timeoutMs > 0 && ageMs >= timeoutMs * 0.8;
 }
 
+function countOf(n, noun) {
+  return `${n.toLocaleString()} ${noun}${n === 1 ? '' : 's'}`;
+}
+
 // Free and unpriced are different answers: a zero is a price, a missing value is not one.
 function formatCost(usd) {
   if (usd == null) return 'not priced';
