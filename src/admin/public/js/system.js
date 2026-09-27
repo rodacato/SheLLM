@@ -24,6 +24,8 @@ function systemPage() {
     toggleErrors: {},
     providersLoaded: false,
     busy: null,
+    checking: false,
+    checkError: null,
 
     // The update button's own state. `updater` is what the server says about the trigger and the
     // last run; the rest is this page's.
@@ -361,6 +363,20 @@ function systemPage() {
         this.toggleErrors = { ...this.toggleErrors, [prov.name]: `${prov.name} was not changed — ${err.message}.` };
       }
       this.busy = null;
+    },
+
+    // The poll re-probes on its own cadence; this is for "I just signed it in" or "I just upgraded
+    // the CLI", which the poll would otherwise report minutes later, and the version never.
+    async runChecks() {
+      this.checking = true;
+      this.checkError = null;
+      try {
+        await apiWrite(`${API_BASE}/providers/check`, { method: 'POST' });
+        await this.fetchProviders();
+      } catch (err) {
+        this.checkError = `The checks did not run — ${err.message}.`;
+      }
+      this.checking = false;
     },
 
     providerState(prov) {

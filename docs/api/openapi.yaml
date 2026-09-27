@@ -99,6 +99,8 @@ paths:
     $ref: "./paths/admin_audit.yaml"
   /admin/providers:
     $ref: "./paths/admin_providers.yaml"
+  /admin/providers/check:
+    $ref: "./paths/admin_providers_check.yaml"
   /admin/providers/{name}:
     $ref: "./paths/admin_providers_{name}.yaml"
   /admin/config:

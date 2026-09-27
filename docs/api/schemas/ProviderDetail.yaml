@@ -20,6 +20,12 @@ properties:
     type: [string, "null"]
   version:
     type: [string, "null"]
+  checked_at:
+    type: [string, "null"]
+    description: When the last sign-in probe ran.
+  passed_at:
+    type: [string, "null"]
+    description: When a probe last found the CLI installed and signed in.
   last_used_at:
     type: [string, "null"]
   last_status:

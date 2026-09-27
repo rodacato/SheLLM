@@ -1,0 +1,30 @@
+post:
+  operationId: runProviderChecks
+  tags: [Providers]
+  summary: Run all provider checks now
+  description: |
+    Probes every provider with the same sign-in check the health poll runs and re-reads each
+    CLI's version, which is otherwise read once per process. No request reaches a model, so no
+    quota is spent. The results are read back from `GET /admin/providers`.
+  security:
+    - BasicAuth: []
+  responses:
+    '200':
+      description: The checks ran
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [checked_at]
+            properties:
+              checked_at:
+                type: string
+                format: date-time
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+    '409':
+      description: A check is already running. `code` is `check_in_progress`.
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/Error.yaml"

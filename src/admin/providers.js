@@ -9,7 +9,7 @@ const {
   insertAuditLog,
 } = require('../db');
 const { engines } = require('../routing');
-const { getHealthStatus } = require('../infra/health');
+const { getHealthStatus, runAllChecks } = require('../infra/health');
 const { readCatalog } = require('../infra/model-catalog');
 const { getCircuitState } = require('../infra/circuit-breaker');
 const logger = require('../lib/logger');
@@ -44,6 +44,8 @@ router.get('/providers', async (req, res) => {
     authenticated: healthData[p.name]?.authenticated ?? null,
     health_error: healthData[p.name]?.error || null,
     version: healthData[p.name]?.version || null,
+    checked_at: healthData[p.name]?.checked_at || null,
+    passed_at: healthData[p.name]?.passed_at || null,
     last_used_at: lastUsageMap[p.name]?.last_used_at || null,
     last_status: lastUsageMap[p.name]?.last_status || null,
     circuit: getCircuitState(p.name),
@@ -53,6 +55,17 @@ router.get('/providers', async (req, res) => {
   }));
 
   res.json({ providers: result });
+});
+
+// POST /admin/providers/check — probe every provider now and re-read its CLI version. The probes
+// are the same ones the poll runs, so no quota is spent.
+router.post('/providers/check', async (req, res) => {
+  if (!(await runAllChecks())) {
+    return sendError(res, { status: 409, code: 'check_in_progress', message: 'A check is already running' }, req.requestId);
+  }
+  insertAuditLog({ action: 'check', resource: 'provider', resource_id: '*', details: null });
+  logger.info({ event: 'provider_checks_run' });
+  res.json({ checked_at: new Date().toISOString() });
 });
 
 // PATCH /admin/providers/:name — update provider (enabled, capabilities, priority)
