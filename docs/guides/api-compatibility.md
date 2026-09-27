@@ -209,6 +209,11 @@ model's window are the bounds.
 }
 ```
 
+A failure after a stream has opened arrives in the stream, typed the way the buffered response
+would type it: an `error` chunk with `type` and `code` on `/v1/chat/completions`, an
+`event: error` with an Anthropic error type (`api_error`, `rate_limit_error`, …) on
+`/v1/messages`. Both SDKs raise it as an `APIError` while iterating.
+
 ### 9. Rate Limiting
 
 SheLLM has its own rate limiting (configurable per API key and globally). Rate limit errors return 429 with a `Retry-After` header, matching both APIs' conventions.
@@ -252,6 +257,30 @@ Codex runs `codex exec --ephemeral --skip-git-repo-check -s read-only --json`, o
 Bare `codex` resolves to the default from the baked catalog, **not** to `~/.codex/config.toml`: without `-m` the CLI falls back to whatever that file names, and a ChatGPT account answers *"model is not supported"* to it. `codex-<model>` passes `<model>` to `-m` directly.
 
 ---
+
+## Conformance with the Official SDKs
+
+`test/sdk/` runs the official Node SDKs — `openai` and `@anthropic-ai/sdk`, pinned in
+`devDependencies` — against a SheLLM listening on a real port, with only the `claude` binary
+replaced by one that replays a recorded CLI transcript. Each SDK completes a buffered call, a
+streamed call and its stream helper (`chat.completions.stream().finalChatCompletion()`,
+`messages.stream().finalMessage()`) with no client-side workaround, reads the usage including the
+cache counters, and raises SheLLM's errors as its own typed classes: `BadRequestError` for the
+tools refusal and an unknown model, `AuthenticationError` for a wrong key (the Anthropic SDK sends
+it as `x-api-key`), `InternalServerError` for a CLI crash, `APIError` for one mid-stream.
+
+Fixed because the SDKs exposed them: the mid-stream Anthropic error carried `server_error`, a type
+that API never sends; and `stop_details`, `container`, `logprobs` and `message.refusal`, which the
+SDKs type as always present and nullable, were absent.
+
+Known differences, left as they are:
+
+| Field | What SheLLM sends | Why |
+|---|---|---|
+| Anthropic `usage.cache_creation`, `server_tool_use`, `service_tier`, `inference_geo`, `output_tokens_details` | absent | The CLI reports some of them, but they describe Anthropic's billing of the CLI's own call, not anything the caller controls. The counters a caller reads — input, output and both cache counts — are all there |
+| `stop_reason` / `finish_reason` | always `end_turn` / `stop` | No CLI has a token cap or a stop-sequence flag, so neither `max_tokens` nor `stop` can end a turn early |
+| `message_start.usage.input_tokens` | an estimate | The real count exists only once the CLI finishes; `message_delta` carries it and the SDK's stream helper adopts it |
+| OpenAI `system_fingerprint`, `service_tier` | absent | Optional in the SDK's types; nothing to report |
 
 ## Testing Compatibility
 
