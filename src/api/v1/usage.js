@@ -27,4 +27,15 @@ function anthropicCacheUsage(usage) {
   return cache;
 }
 
-module.exports = { openAIUsage, anthropicCacheUsage };
+// The API always sends both cache counters; null says the provider did not report one, which
+// the SDKs type as number | null.
+function anthropicUsage(usage) {
+  return {
+    input_tokens: usage?.input_tokens ?? 0,
+    cache_creation_input_tokens: usage?.cache_creation_input_tokens ?? null,
+    cache_read_input_tokens: usage?.cache_read_input_tokens ?? null,
+    output_tokens: usage?.output_tokens ?? 0,
+  };
+}
+
+module.exports = { openAIUsage, anthropicCacheUsage, anthropicUsage };
