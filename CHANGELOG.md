@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.18.0] - 2026-09-27
+
+### Added
+
+- **admin:** run every provider check on demand and show when each last passed
+
+### Fixed
+
+- **admin:** pin the CDN scripts to exact versions with subresource integrity
+- **api:** send the fields and error types the official SDKs expect
+- **messages:** always carry both cache counters in Anthropic usage
+- **api:** refuse tools with a native 400 instead of answering in prose
+
+### Documentation
+
+- **adr:** record the security model as the floor that ships today
+- **site:** an animated request path in the site's own style
+- **site:** compare SheLLM with LiteLLM, CLIProxyAPI and new-api
+- **site:** copy-paste streaming snippets for the official SDKs and curl
+- **site:** lead with what SheLLM is — a personal project on your own subscriptions
+
+### Maintenance
+
+- **security:** record the Trivy and Gitleaks exceptions with their reasons
+- **security:** suppress the reviewed Semgrep false positives inline
+
+### Testing
+
+- **sdk:** run the official openai and Anthropic SDKs against SheLLM
+- **providers:** prove the isolation floor on what the CLI receives
+
+### CI
+
+- **quality:** make Semgrep, Trivy and Gitleaks findings fail the check
+- **release:** pass the bump input through the environment, not into the script
+- hold Dependabot version updates for a week after publication
+- pin every GitHub Action to a full commit SHA
+
+
 ## [1.17.1] - 2026-09-27
 
 ### Fixed
@@ -1013,7 +1052,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.17.1...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.18.0...HEAD
+[1.18.0]: https://github.com/rodacato/SheLLM/compare/v1.17.1...v1.18.0
 [1.17.1]: https://github.com/rodacato/SheLLM/compare/v1.17.0...v1.17.1
 [1.17.0]: https://github.com/rodacato/SheLLM/compare/v1.16.1...v1.17.0
 [1.16.1]: https://github.com/rodacato/SheLLM/compare/v1.16.0...v1.16.1
