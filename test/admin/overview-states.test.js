@@ -276,7 +276,7 @@ describe('the Overview charts read the palette and say why they are empty', () =
     page.stats = { total_requests: 0, window: { hours: 0 } };
     assert.strictEqual(page.sparseCaption(), 'No requests in this window.');
     page.stats = { total_requests: 1, window: { hours: 0.2 } };
-    assert.strictEqual(page.sparseCaption(), '1 requests over 12 min');
+    assert.strictEqual(page.sparseCaption(), '1 request over 12 min');
   });
 });
 

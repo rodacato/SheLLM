@@ -83,6 +83,7 @@ module.exports = [
         formatUptime: 'readonly',
         formatDuration: 'readonly',
         formatCost: 'readonly',
+        countOf: 'readonly',
         formatTime: 'readonly',
         formatHourMinute: 'readonly',
         formatRelative: 'readonly',

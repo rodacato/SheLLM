@@ -54,7 +54,7 @@ function systemPage() {
     circuitLabel(prov) {
       const circuit = prov.circuit;
       if (!circuit) return '—';
-      if (circuit.state === 'closed') return circuit.failures > 0 ? `closed · ${circuit.failures} recent failures` : 'closed';
+      if (circuit.state === 'closed') return circuit.failures > 0 ? `closed · ${countOf(circuit.failures, 'recent failure')}` : 'closed';
       return `${circuit.state} · ${circuit.failures} failures`;
     },
 
