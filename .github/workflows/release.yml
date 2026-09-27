@@ -1,8 +1,8 @@
 name: Release
 
-# Cutting a release is a decision, not seven steps. `prepare` opens a pull request carrying the
-# version bump and the generated CHANGELOG entry; `publish` tags and publishes once that lands on
-# master. Nothing here pushes to master directly.
+# Cutting a release is a decision, not seven steps. `prepare` pushes a release/vX.Y.Z branch with
+# the version bump and the generated CHANGELOG entry, and stops: a person opens the pull request.
+# `publish` tags and publishes once that lands on master. Nothing here pushes to master directly.
 on:
   workflow_dispatch:
     inputs:
@@ -71,8 +71,8 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   publish:
-    # Runs on every push to master and decides for itself whether there is a release to cut:
-    # a version in the manifest that has no tag yet.
+    # Runs on a push to master that changes package.json, and decides for itself whether there is
+    # a release to cut: a version in the manifest that has no tag yet.
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:

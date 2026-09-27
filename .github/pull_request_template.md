@@ -16,7 +16,7 @@
 
 - [ ] `npm test` passes locally
 - [ ] Follows [conventional commit](../CONTRIBUTING.md#commit-messages) format (`feat:`, `fix:`, etc.)
-- [ ] `CHANGELOG.md` updated if this is a user-facing change
+- [ ] `CHANGELOG.md` **not** edited — the release entry is generated from the commit messages, so the commit message is what needs care
 - [ ] `docs/api/` updated and `npm run docs:build` re-run if an endpoint was added or changed
 - [ ] `VERSIONS.md` updated if a CLI dependency version changed
 - [ ] No secrets, tokens, or credentials in the diff
