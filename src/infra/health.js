@@ -21,6 +21,19 @@ function getAlertWebhookUrl() {
 let cache = { data: null, expires: 0 };
 let pollerInterval = null;
 let previousStatus = {};
+let manualCheck = null;
+
+// When each provider was last probed and when a probe last found it signed in. The poll keeps
+// replacing its verdict; these are what say how old that verdict is.
+const checkTimes = new Map();
+
+function stampCheck(name, status) {
+  const now = new Date().toISOString();
+  const previous = checkTimes.get(name);
+  const stamp = { checked_at: now, passed_at: status.installed && status.authenticated === true ? now : previous?.passed_at ?? null };
+  checkTimes.set(name, stamp);
+  return stamp;
+}
 
 // --- Provider list from DB (with fallback) ---
 
@@ -157,7 +170,7 @@ async function getHealthStatus() {
   for (let i = 0; i < providerList.length; i++) {
     const p = providerList[i];
     const version = results[i].installed ? await getProviderVersion(p.name) : null;
-    providers[p.name] = { ...results[i], enabled: !!p.enabled, version };
+    providers[p.name] = { ...results[i], ...stampCheck(p.name, results[i]), enabled: !!p.enabled, version };
   }
 
   const status = computeHealthStatus(providers);
@@ -245,12 +258,28 @@ async function pollAllProviders() {
     for (let i = 0; i < providerList.length; i++) {
       const p = providerList[i];
       const version = statuses[p.name].installed ? await getProviderVersion(p.name) : null;
-      providers[p.name] = { ...statuses[p.name], enabled: !!p.enabled, version };
+      providers[p.name] = { ...statuses[p.name], ...stampCheck(p.name, statuses[p.name]), enabled: !!p.enabled, version };
     }
     cache = { data: { status: computeHealthStatus(providers), providers }, expires: Date.now() + getPollInterval() + 5000 };
   } catch (err) {
     logger.error({ event: 'health_poll_error', error: err.message });
   }
+}
+
+// The operator's "check now". It also re-reads the CLI versions, because a binary upgraded in
+// place does not restart the service. Returns false, without probing, while one is running.
+async function runAllChecks() {
+  if (manualCheck) return false;
+  manualCheck = (async () => {
+    resetProviderVersions();
+    await pollAllProviders();
+  })();
+  try {
+    await manualCheck;
+  } finally {
+    manualCheck = null;
+  }
+  return true;
 }
 
 function startHealthPoller() {
@@ -267,4 +296,4 @@ function stopHealthPoller() {
   }
 }
 
-module.exports = { getHealthStatus, getCachedProviderStatus, startHealthPoller, stopHealthPoller, parseCheckError, checkProvider, getProviderVersion, resetProviderVersions, pollAllProviders };
+module.exports = { getHealthStatus, getCachedProviderStatus, startHealthPoller, stopHealthPoller, parseCheckError, checkProvider, getProviderVersion, resetProviderVersions, pollAllProviders, runAllChecks };

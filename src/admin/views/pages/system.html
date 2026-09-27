@@ -176,7 +176,11 @@
         <div class="flex items-baseline gap-3 mb-3">
           <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Providers</span>
           <span class="text-[10px] text-outline">Pausing one takes it out of routing; it does not sign it out.</span>
+          <button @click="runChecks()" :disabled="checking || !providersLoaded"
+            class="ml-auto shrink-0 px-4 py-1.5 text-xs font-headline uppercase tracking-wide bg-surface-container-high text-outline hover:text-white hover:bg-surface-container-highest transition-colors duration-fast disabled:opacity-40"
+            x-text="checking ? 'Checking…' : 'Run all checks'"></button>
         </div>
+        <p x-show="checkError" x-cloak class="text-status-fail text-sm font-mono mb-3" x-text="checkError"></p>
 
         <div class="space-y-4">
           <template x-for="prov in providers" :key="prov.name">
@@ -230,6 +234,15 @@
                   <span :class="circuitClass(prov)" x-text="circuitLabel(prov)"></span>
                   <span x-show="circuitVerdict(prov)" class="text-outline block mt-0.5 text-[10px]"
                     x-text="circuitVerdict(prov)"></span>
+                </div>
+                <div>
+                  <span class="text-outline uppercase block text-[10px]">Checked</span>
+                  <span class="text-on-surface-variant" x-text="prov.checked_at ? formatTime(prov.checked_at) : '—'"></span>
+                </div>
+                <div>
+                  <span class="text-outline uppercase block text-[10px]">Last passed</span>
+                  <span :class="prov.passed_at && prov.passed_at === prov.checked_at ? 'text-on-surface-variant' : 'text-status-warn'"
+                    x-text="prov.passed_at ? formatTime(prov.passed_at) : 'never'"></span>
                 </div>
                 <div class="col-span-2 md:col-span-4">
                   <span class="text-outline uppercase block text-[10px]">Models</span>

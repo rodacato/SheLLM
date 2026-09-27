@@ -918,6 +918,55 @@
         }
       }
     },
+    "/admin/providers/check": {
+      "post": {
+        "operationId": "runProviderChecks",
+        "tags": [
+          "Providers"
+        ],
+        "summary": "Run all provider checks now",
+        "description": "Probes every provider with the same sign-in check the health poll runs and re-reads each\nCLI's version, which is otherwise read once per process. No request reaches a model, so no\nquota is spent. The results are read back from `GET /admin/providers`.\n",
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The checks ran",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "checked_at"
+                  ],
+                  "properties": {
+                    "checked_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "A check is already running. `code` is `check_in_progress`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/providers/{name}": {
       "patch": {
         "operationId": "updateProvider",
@@ -1429,6 +1478,20 @@
               "string",
               "null"
             ]
+          },
+          "checked_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When the last sign-in probe ran."
+          },
+          "passed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When a probe last found the CLI installed and signed in."
           },
           "last_used_at": {
             "type": [
