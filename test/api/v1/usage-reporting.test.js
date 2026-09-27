@@ -212,6 +212,8 @@ describe('what a benchmark can read back', () => {
 
     assert.equal(typeof start.message.usage.input_tokens, 'number');
     assert.equal(start.message.usage.output_tokens, 0);
+    assert.strictEqual(start.message.usage.cache_creation_input_tokens, null, 'the API always carries both cache keys');
+    assert.strictEqual(start.message.usage.cache_read_input_tokens, null);
 
     assert.equal(delta.usage.output_tokens, 7);
     assert.equal(delta.usage.input_tokens, 11, 'the real input count should replace the estimate');

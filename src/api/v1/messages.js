@@ -1,6 +1,6 @@
 const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releaseStreamSlot } = require('../../routing');
 const { jobFor } = require('../../infra/queue');
-const { anthropicCacheUsage } = require('./usage');
+const { anthropicCacheUsage, anthropicUsage } = require('./usage');
 const { wantsLongContext } = require('./betas');
 const { refuseAnthropicTools } = require('./function-calling');
 const { sanitize } = require('../../middleware/sanitize');
@@ -231,11 +231,7 @@ async function messagesHandler(req, res) {
       model: result.upstream_model || result.model,
       stop_reason: 'end_turn',
       stop_sequence: null,
-      usage: {
-        input_tokens: result.usage?.input_tokens ?? 0,
-        ...anthropicCacheUsage(result.usage),
-        output_tokens: result.usage?.output_tokens ?? 0,
-      },
+      usage: anthropicUsage(result.usage),
       x_shellm: shellmMeta({
         cost_usd: result.cost_usd ?? null,
         queue_ms: result.queued_ms ?? null,

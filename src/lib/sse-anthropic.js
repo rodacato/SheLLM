@@ -20,7 +20,8 @@ function sendMessageStart(res, id, model, inputTokens) {
       model,
       stop_reason: null,
       stop_sequence: null,
-      usage: { input_tokens: inputTokens ?? 0, output_tokens: 0 },
+      // The cache counts are unknown until the CLI reports them; message_delta carries them.
+      usage: { input_tokens: inputTokens ?? 0, cache_creation_input_tokens: null, cache_read_input_tokens: null, output_tokens: 0 },
     },
   });
 }

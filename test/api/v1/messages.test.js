@@ -77,6 +77,20 @@ describe('/v1/messages', () => {
     assert.ok('output_tokens' in res.body.usage);
   });
 
+  it('reports both cache counters as null, not absent, when the CLI reports no usage', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({ model: 'claude', max_tokens: 1024, messages: [{ role: 'user', content: 'hello' }] });
+
+    assert.deepStrictEqual(res.body.usage, {
+      input_tokens: 0,
+      cache_creation_input_tokens: null,
+      cache_read_input_tokens: null,
+      output_tokens: 0,
+    });
+  });
+
   it('handles system prompt (top-level) + user message', async () => {
     const res = await request(app)
       .post('/v1/messages')
