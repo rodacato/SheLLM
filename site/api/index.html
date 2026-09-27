@@ -4,15 +4,24 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SheLLM API Reference</title>
-    <meta name="description" content="SheLLM REST API — OpenAI and Anthropic compatible endpoints for unified LLM access.">
+    <meta name="description" content="SheLLM exposes the owner's own LLM CLI subscriptions (Claude Code, Codex) as one REST API that answers in both the OpenAI and the Anthropic formats.">
+    <meta name="theme-color" content="#101417">
+    <meta property="og:title" content="SheLLM API Reference">
+    <meta property="og:description" content="SheLLM exposes the owner's own LLM CLI subscriptions (Claude Code, Codex) as one REST API that answers in both the OpenAI and the Anthropic formats.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://rodacato.github.io/SheLLM/api/">
+    <meta property="og:image" content="https://rodacato.github.io/SheLLM/img/overview.png">
+    <meta name="twitter:card" content="summary_large_image">
     <link rel="icon" type="image/svg+xml" href="../assets/favicon/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/favicon/favicon-180.png">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
       /* ── Fonts ── */
       body, html { font-family: 'Inter', system-ui, sans-serif !important; margin: 0; padding: 0; }
       h1, h2, h3, h4, h5 { font-family: 'Space Grotesk', system-ui, sans-serif !important; color: #FFFFFF !important; }
 
-      /* ── Page & panel backgrounds (terminal_core tokens) ── */
+      /* ── Page & panel backgrounds ── */
       body, html { background: #101417 !important; }
       [role="main"],
       .menu-content + div { background: #101417 !important; }
@@ -30,13 +39,15 @@
         text-transform: uppercase !important;
       }
 
-      /* ── Active sidebar item — no border-radius (terminal_core) ── */
+      /* ── Active sidebar item: the admin nav's selected state. An inset shadow draws its 4px
+         edge without shifting the label the way a border would. ── */
       li[class*="active"] > a,
       li[class*="active"] > label {
-        color: #FFFFFF !important;
-        background: #1c2023 !important;
+        color: #03E3FF !important;
+        background: #2e3b44 !important;
         border-radius: 0 !important;
-        border-left: 2px solid #03E3FF !important;
+        box-shadow: inset 4px 0 0 #03E3FF !important;
+        font-weight: 700 !important;
       }
 
       /* ── Property tables ── */
@@ -69,16 +80,28 @@
       /* ── Scrollbar ── */
       ::-webkit-scrollbar { width: 6px; height: 6px; }
       ::-webkit-scrollbar-track { background: #101417; }
-      ::-webkit-scrollbar-thumb { background: #1c2023; border-radius: 0; }
-      ::-webkit-scrollbar-thumb:hover { background: #262a2e; }
+      ::-webkit-scrollbar-thumb { background: #262a2e; border-radius: 0; }
+      ::-webkit-scrollbar-thumb:hover { background: #313538; }
+
+      .fallback { max-width: 40rem; margin: 4rem auto; padding: 0 1.5rem; color: #e0e3e7; line-height: 1.7; }
+      .fallback a { color: #03E3FF; }
     </style>
   </head>
   <body>
-    <a class="home" href="../">&lt;_ SheLLM</a>
+    <a class="home" href="../">&gt;_ SheLLM</a>
+    <noscript>
+      <p class="fallback">This reference is rendered by Redoc from a CDN. The OpenAPI document itself:
+        <a href="bundled.json">bundled.json</a> ·
+        <a href="https://github.com/rodacato/SheLLM/blob/master/docs/api/openapi.yaml">openapi.yaml</a></p>
+    </noscript>
+    <p class="fallback" id="fallback" hidden>This reference is rendered by Redoc from a CDN, which did not load. The OpenAPI document itself:
+      <a href="bundled.json">bundled.json</a> ·
+      <a href="https://github.com/rodacato/SheLLM/blob/master/docs/api/openapi.yaml">openapi.yaml</a></p>
     <div id="redoc-container"></div>
-    <script src="https://cdn.redocly.com/redoc/v2.5.0/bundles/redoc.standalone.js"></script>
+    <script src="https://cdn.redocly.com/redoc/v2.5.0/bundles/redoc.standalone.js"
+            onerror="document.getElementById('fallback').hidden = false"></script>
     <script>
-      Redoc.init('bundled.json', {
+      if (window.Redoc) Redoc.init('bundled.json', {
         theme: {
           colors: {
             primary: { main: '#03E3FF' },
@@ -91,13 +114,13 @@
               post: '#22c55e',
               put: '#ffb800',
               delete: '#ffb4ab',
-              patch: '#c4a6ff'
+              patch: '#bac9cd'
             }
           },
           sidebar: {
             backgroundColor: '#0b0f12',
             textColor: '#849397',
-            activeTextColor: '#FFFFFF'
+            activeTextColor: '#03E3FF'
           },
           rightPanel: {
             backgroundColor: '#0b0f12'
