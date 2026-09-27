@@ -418,17 +418,49 @@ describe('/v1/messages', () => {
     assert.strictEqual(res.status, 200);
   });
 
-  it('ignores tools field', async () => {
-    const res = await request(app)
+  // --- tool use is refused, never dropped ---
+
+  const TOOL = { name: 'get_weather', description: 'Get weather', input_schema: { type: 'object' } };
+
+  function sendMessages(body) {
+    return request(app)
       .post('/v1/messages')
       .set('Authorization', `Bearer ${testKey}`)
-      .send({
-        model: 'claude',
-        max_tokens: 1024,
-        tools: [{ name: 'get_weather', description: 'Get weather', input_schema: { type: 'object' } }],
-        messages: [{ role: 'user', content: 'hello' }],
-      });
-    assert.strictEqual(res.status, 200);
+      .send({ model: 'claude', max_tokens: 1024, messages: [{ role: 'user', content: 'hello' }], ...body });
+  }
+
+  it('refuses tools with an Anthropic 400 that names function calling', async () => {
+    const res = await sendMessages({ tools: [TOOL] });
+
+    assert.strictEqual(res.status, 400);
+    assert.strictEqual(res.body.type, 'error');
+    assert.deepStrictEqual(Object.keys(res.body.error).sort(), ['message', 'type']);
+    assert.strictEqual(res.body.error.type, 'invalid_request_error');
+    assert.match(res.body.error.message, /Function calling is not supported yet/);
+  });
+
+  it('refuses tools on a streaming request before any stream opens', async () => {
+    const res = await sendMessages({ stream: true, tools: [TOOL] });
+
+    assert.strictEqual(res.status, 400);
+    assert.match(res.headers['content-type'], /application\/json/);
+    assert.strictEqual(res.body.error.type, 'invalid_request_error');
+  });
+
+  it('refuses a tool_choice that forces a call', async () => {
+    for (const choice of [{ type: 'any' }, { type: 'tool', name: 'get_weather' }]) {
+      const res = await sendMessages({ tool_choice: choice });
+      assert.strictEqual(res.status, 400, JSON.stringify(choice));
+      assert.match(res.body.error.message, /tool_choice/);
+    }
+  });
+
+  it('answers an empty tools list and a tool_choice that asks for no call', async () => {
+    for (const extra of [{ tools: [] }, { tool_choice: { type: 'auto' } }, { tools: [], tool_choice: { type: 'none' } }]) {
+      const res = await sendMessages(extra);
+      assert.strictEqual(res.status, 200, JSON.stringify(extra));
+      assert.strictEqual(res.body.type, 'message');
+    }
   });
 
   // --- stop_sequences validation ---

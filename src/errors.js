@@ -6,6 +6,11 @@ function invalidRequest(message) {
   return appError(400, 'invalid_request', message);
 }
 
+// OpenAI's own code for a parameter the model cannot honour; param names it, as OpenAI does.
+function unsupportedParameter(param, message) {
+  return appError(400, 'unsupported_parameter', message, { param });
+}
+
 function payloadTooLarge(message) {
   return appError(413, 'invalid_request', message);
 }
@@ -83,6 +88,7 @@ function sendError(res, err, requestId) {
 // OpenAI-compatible error format for /v1/* endpoints
 const CODE_TO_TYPE = {
   invalid_request: 'invalid_request_error',
+  unsupported_parameter: 'invalid_request_error',
   auth_required: 'authentication_error',
   rate_limited: 'rate_limit_error',
   origin_not_allowed: 'invalid_request_error',
@@ -96,7 +102,7 @@ function sendOpenAIError(res, err) {
   const type = CODE_TO_TYPE[err.code] || 'server_error';
   if (err.retry_after) res.set('Retry-After', String(err.retry_after));
   const body = {
-    error: { message: err.message || 'Internal server error', type, code: err.code || 'internal_error', param: null },
+    error: { message: err.message || 'Internal server error', type, code: err.code || 'internal_error', param: err.param ?? null },
   };
   if (err.available_providers) body.available_providers = err.available_providers;
   res.status(err.status || 500).json(body);
@@ -105,6 +111,7 @@ function sendOpenAIError(res, err) {
 // Anthropic-compatible error format for /v1/messages endpoint
 const CODE_TO_ANTHROPIC_TYPE = {
   invalid_request: 'invalid_request_error',
+  unsupported_parameter: 'invalid_request_error',
   auth_required: 'authentication_error',
   rate_limited: 'rate_limit_error',
   origin_not_allowed: 'permission_error',
@@ -134,6 +141,7 @@ function sendApiError(req, res, err, requestId) {
 
 module.exports = {
   invalidRequest,
+  unsupportedParameter,
   payloadTooLarge,
   originNotAllowed,
   authRequired,

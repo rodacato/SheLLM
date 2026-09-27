@@ -75,7 +75,8 @@ message = client.messages.create(
 | `logprobs` | **Ignored** | |
 | `top_logprobs` | **Ignored** | |
 | `logit_bias` | **Ignored** | |
-| `tools` / `tool_choice` | **Ignored** | Function calling not yet supported |
+| `tools` / `functions` | **Rejected** | A non-empty list is a 400 `unsupported_parameter` with `param` naming the field: function calling is not supported yet, and answering in prose would break a caller waiting for a tool call. An empty list is accepted |
+| `tool_choice` / `function_call` | **Rejected when it forces a call** | `"required"` or a named function is a 400 `unsupported_parameter`; `"none"` and `"auto"` are accepted and change nothing |
 
 ### POST /v1/messages (Anthropic format)
 
@@ -92,7 +93,8 @@ message = client.messages.create(
 | `stop_sequences` | **Validated** | Array of strings. Validated but not passed to providers |
 | `metadata` | **Ignored** | |
 | `top_k` | **Ignored** | |
-| `tools` / `tool_choice` | **Ignored** | Tool use not yet supported |
+| `tools` | **Rejected** | A non-empty list is a 400 `invalid_request_error` saying function calling is not supported yet. An empty list is accepted |
+| `tool_choice` | **Rejected when it forces a call** | `{ "type": "any" }` or `{ "type": "tool" }` is a 400; `auto` and `none` are accepted and change nothing |
 
 ---
 
@@ -218,7 +220,7 @@ These features are not implemented and will be silently ignored or rejected:
 
 | Feature | Status | Both APIs |
 |---|---|---|
-| **Function calling / Tools** | Ignored | `tools`, `tool_choice` are accepted but have no effect |
+| **Function calling / Tools** | Rejected (400) | A non-empty `tools` (or legacy `functions`) and a `tool_choice` that forces a call are refused in each endpoint's error shape, before any process starts or any stream opens. The CLIs run with their own tools off ([ADR-0002](../adr/0002-cli-internal-tools-off.md)) |
 | **Images by URL** | Rejected (400) | Only inline `data:` URLs on `/v1/chat/completions` (§6); `/v1/messages` takes text only |
 | **Embeddings** | Not available | No `/v1/embeddings` endpoint |
 | **File uploads** | Not available | No file API |
