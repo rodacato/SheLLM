@@ -154,12 +154,21 @@ sudo shellm update
 That is the whole thing. It moves to the newest published release and does the rest in order:
 **snapshots the database and the config file** before anything moves, installs dependencies only
 if `package-lock.json` changed, runs migrations, re-installs any file the release changed that
-lives outside the checkout, restarts, and then polls `/health`. **If the service does not answer,
-it checks out the previous commit, restarts again, and exits non-zero** — so a bad release leaves
-you where you were rather than with a service that will not start.
+lives outside the checkout, restarts, and then asks the running service what it serves. It is
+healthy only when the process reports **the commit it was asked to run and at least one provider
+that can answer** — a port that answers proves only that node started. **If any step after the
+checkout fails, or the service is not healthy, it checks out the previous commit, reinstalls that
+release's dependencies if they were replaced, restarts, confirms the previous release is serving,
+and exits non-zero** — so a bad release leaves you where you were. Its last line, `RESULT:`, says
+which of those happened; the dashboard shows the same line.
+
+The check reads the admin credentials from the config file, as the service user. On a host with no
+`SHELLM_ADMIN_PASSWORD` it can only see that the port answers, and says `not verified` rather than
+claiming more.
 
 The snapshot comes first because migrations only go forward: the rollback restores the code, and
-the snapshot is what lets you restore the data behind it. It is the same `shellm backup` described
+the snapshot is what lets you restore the data behind it. When the failed release did carry a
+migration, `RESULT:` names the snapshot to restore — that step stays yours ([Restoring](#restoring)). It is the same `shellm backup` described
 below, writing to the same directory, and it runs whether the update came from the dashboard or
 from this command — **if it cannot be written, the update stops there with nothing changed.**
 
@@ -377,6 +386,8 @@ ssh root@your-server 'bash -s -- --purge' < scripts/setup/vps-uninstall.sh # rem
 | `shellm backup` refuses to run as root | Run it as the service user: `sudo -u shellmer -H shellm backup`. As root it would leave root-owned `-wal` and `-shm` files that the service cannot write |
 | `shellm backup` cannot create `/var/lib/shellm/backups` | `/var/lib` is root's. Re-run `vps.sh`, or `sudo install -d -m 0750 -o shellmer -g shellmer /var/lib/shellm/backups` once |
 | An update stopped at "Snapshotting the database" | Nothing was changed — the update refuses to go on without one. Fix the snapshot (the two rows above) and run it again |
+| The snapshot fails with `Cannot find module` | The install is incomplete — usually an earlier update died in `npm ci`, which deletes `node_modules` first. The update cannot snapshot, so it will not run. Reinstall with `sudo bash /home/shellmer/shellm/scripts/setup/vps.sh` (it is safe to re-run), which installs dependencies without going through the snapshot, then run `sudo shellm update` again |
+| `RESULT:` says the rollback failed too, or the previous release is not healthy either | The host is between releases. `sudo bash /home/shellmer/shellm/scripts/setup/vps.sh` puts the checkout, dependencies and units back in a startable state; then `shellm doctor` |
 | `shellm-backup.service` fails with a read-only filesystem error | The unit grants `/home/shellmer/.shellm` and `/var/lib/shellm` and nothing else. A `--dir` elsewhere needs `systemctl edit shellm-backup.service` with a `ReadWritePaths=` for it |
 | A `.partial-…` directory in the backup directory | A snapshot that was killed outright. It is not a snapshot, nothing will ever read it, and it is safe to delete |
 | Works locally but not through the tunnel | The tunnel points at the wrong port, or `HOST` is not loopback |
