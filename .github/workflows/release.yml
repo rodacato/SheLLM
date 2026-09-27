@@ -38,10 +38,12 @@ jobs:
       # generator again here produced a second copy of it.
       - name: Bump the version and generate the changelog entry
         id: bump
+        env:
+          BUMP: ${{ inputs.bump }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          npm version "${{ inputs.bump }}" --no-git-tag-version
+          npm version "$BUMP" --no-git-tag-version
           echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
 
       # The branch is pushed and the pull request is opened by a person. Letting Actions open it
