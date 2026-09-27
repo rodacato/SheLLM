@@ -2,7 +2,7 @@
 
 const { timingSafeEqual } = require('node:crypto');
 const { sendError, rateLimited } = require('../errors');
-const { verify, readCookie, isCrossSiteWrite, wantsHtml, isBrowserRequest } = require('./admin-session');
+const { verify, needsRenewal, setSession, readCookie, isCrossSiteWrite, wantsHtml, isBrowserRequest } = require('./admin-session');
 const logger = require('../lib/logger');
 const config = require('../config');
 
@@ -125,11 +125,13 @@ function createAdminAuth() {
   return (req, res, next) => {
     const ip = req.ip || req.socket?.remoteAddress || 'unknown';
 
-    if (verify(readCookie(req))) {
+    const cookie = readCookie(req);
+    if (verify(cookie)) {
       if (isCrossSiteWrite(req)) {
         logger.warn({ event: 'admin_auth_failure', ip, username: null, reason: 'cross_site' });
         return sendError(res, { status: 403, code: 'forbidden', message: 'Cross-site request refused' }, req.requestId);
       }
+      if (needsRenewal(cookie)) setSession(req, res);
       return next();
     }
 

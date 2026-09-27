@@ -3,7 +3,10 @@
 const { createHmac, randomBytes, timingSafeEqual } = require('node:crypto');
 
 const COOKIE_NAME = 'shellm_admin';
-const TTL_MS = 12 * 60 * 60 * 1000;
+const TTL_MS = 7 * 24 * 60 * 60 * 1000;
+// Renewed on use, at most once an hour, so a dashboard left polling does not rewrite its cookie
+// every few seconds.
+const RENEW_AFTER_MS = 60 * 60 * 1000;
 
 let fallbackKey = null;
 
@@ -27,20 +30,31 @@ function issue(now = Date.now()) {
   return `${payload}.${sign(payload)}`;
 }
 
-function verify(value, now = Date.now()) {
-  if (typeof value !== 'string') return false;
+function expiryOf(value) {
+  if (typeof value !== 'string') return null;
   const [payload, signature] = value.split('.');
-  if (!payload || !signature) return false;
+  if (!payload || !signature) return null;
 
   const expected = Buffer.from(sign(payload));
   const provided = Buffer.from(signature);
-  if (expected.length !== provided.length || !timingSafeEqual(expected, provided)) return false;
+  if (expected.length !== provided.length || !timingSafeEqual(expected, provided)) return null;
 
   try {
-    return JSON.parse(Buffer.from(payload, 'base64url').toString()).exp > now;
+    const { exp } = JSON.parse(Buffer.from(payload, 'base64url').toString());
+    return typeof exp === 'number' ? exp : null;
   } catch {
-    return false;
+    return null;
   }
+}
+
+function verify(value, now = Date.now()) {
+  const exp = expiryOf(value);
+  return exp !== null && exp > now;
+}
+
+function needsRenewal(value, now = Date.now()) {
+  const exp = expiryOf(value);
+  return exp !== null && exp > now && exp - now < TTL_MS - RENEW_AFTER_MS;
 }
 
 function readCookie(req) {
@@ -60,7 +74,9 @@ function isSecureRequest(req) {
 function setSession(req, res) {
   res.cookie(COOKIE_NAME, issue(), {
     httpOnly: true,
-    sameSite: 'strict',
+    // Strict dropped the cookie when an installed app was launched from the home screen, which
+    // some browsers treat as arriving from elsewhere. Writes stay guarded by isCrossSiteWrite.
+    sameSite: 'lax',
     secure: isSecureRequest(req),
     path: '/admin',
     maxAge: TTL_MS,
@@ -68,7 +84,7 @@ function setSession(req, res) {
 }
 
 function clearSession(req, res) {
-  res.clearCookie(COOKIE_NAME, { httpOnly: true, sameSite: 'strict', secure: isSecureRequest(req), path: '/admin' });
+  res.clearCookie(COOKIE_NAME, { httpOnly: true, sameSite: 'lax', secure: isSecureRequest(req), path: '/admin' });
 }
 
 // Sec-Fetch-Site is sent by every browser that honours SameSite; a missing header means a
@@ -90,6 +106,6 @@ function isBrowserRequest(req) {
 }
 
 module.exports = {
-  COOKIE_NAME, TTL_MS, issue, verify, readCookie, setSession, clearSession,
+  COOKIE_NAME, TTL_MS, RENEW_AFTER_MS, issue, verify, needsRenewal, readCookie, setSession, clearSession,
   isCrossSiteWrite, wantsHtml, isBrowserRequest,
 };
