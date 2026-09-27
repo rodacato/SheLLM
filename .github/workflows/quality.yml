@@ -10,9 +10,9 @@ permissions:
   contents: read
 
 env:
-  # Report-only: findings show in the job log without failing the check.
-  # Set to "true" to make Semgrep, Trivy and Gitleaks block a merge.
-  SECURITY_BLOCKING: "false"
+  # A finding fails the check. Suppress one inline with its reason (nosemgrep, .trivyignore.yaml,
+  # .gitleaks.toml); "false" turns the three scans back into report-only.
+  SECURITY_BLOCKING: "true"
 
 jobs:
   semgrep:
@@ -45,6 +45,7 @@ jobs:
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: "1"
+          trivyignores: .trivyignore.yaml
 
   gitleaks:
     name: gitleaks (secret scan)
