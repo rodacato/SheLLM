@@ -16,14 +16,14 @@ SheLLM is designed as an **internal service**. It is not intended to be exposed 
 
 The admin dashboard (`/admin/*`) authenticates in two ways against the same `SHELLM_ADMIN_PASSWORD`:
 
-- **Browsers** sign in at `/admin/login` and get a session cookie: HMAC-signed with a key derived from the database's key-hashing secret, `HttpOnly`, `SameSite=Strict`, `Secure` behind TLS, scoped to `/admin`, valid 12 hours, cleared by `POST /admin/logout`. Sessions are stateless — there is nothing to steal from the server, and rotating the secret invalidates every one of them.
+- **Browsers** sign in at `/admin/login` and get a session cookie: HMAC-signed with a key derived from the database's key-hashing secret, `HttpOnly`, `SameSite=Lax`, `Secure` behind TLS, scoped to `/admin`, valid 7 days and renewed on use (at most once an hour), cleared by `POST /admin/logout`. `Lax` rather than `Strict` because some browsers treat launching the installed app from the home screen as arriving from another site and drop a `Strict` cookie; a cross-site `POST` still carries no `Lax` cookie, and the `Sec-Fetch-Site` check below refuses it regardless. Sessions are stateless — there is nothing to steal from the server, and rotating the secret invalidates every one of them.
 - **Scripts** keep using HTTP Basic, so `curl -u admin:… /admin/keys` still works.
 
 A cookie-authenticated request that is not a GET is refused when the browser reports `Sec-Fetch-Site` as anything but `same-origin`, which is what stops a cross-site form from using the session.
 
 ### Dashboard assets and the service worker
 
-The SPA's own files (JS, CSS, images, the manifest and the worker) are served without a session — they carry no account data — while `/admin/dashboard/` itself and every `/admin/*` API route need one. The service worker caches that shell and nothing else: it ignores non-GET requests, anything cross-origin, and any path outside its hardcoded shell list, so no key, log or provider response is ever written to a device's cache.
+The SPA's own files (JS, CSS, images, the manifest and the worker) are served without a session — they carry no account data — while `/admin/dashboard/` itself and every `/admin/*` API route need one. The service worker caches that shell and the CDN scripts, stylesheets and fonts it loads, and nothing else: it ignores non-GET requests, any other origin, and any path outside its hardcoded shell list, so no key, log or provider response is ever written to a device's cache.
 
 **Brute-force protection:** Failed login attempts are tracked per IP address using an in-memory sliding window. After 5 failures within 5 minutes (configurable via `SHELLM_ADMIN_MAX_ATTEMPTS`), further attempts from that IP are rejected with `429 Too Many Requests` and a `Retry-After` header.
 

@@ -122,7 +122,7 @@ Whatever you choose, the API key is the only thing between a caller and your sub
 Do not expose `/admin/*` to the internet without a second factor in front of it.
 
 Over HTTPS the dashboard installs as a PWA: open it on a phone and use the browser's "Add to home
-screen". It runs standalone, keeps the 12-hour session, and caches only its own shell — every
+screen". It runs standalone, keeps a seven-day session that renews while you use it, and caches only its own shell — every
 request for keys, logs or provider status still goes to the server.
 
 **The install is a launcher, not an offline app.** Tailwind, Alpine and Chart.js come from a CDN,

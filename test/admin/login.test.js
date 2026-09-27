@@ -71,7 +71,8 @@ describe('admin login', () => {
     assert.strictEqual(res.status, 302);
     assert.strictEqual(res.headers.location, '/admin/dashboard/');
     assert.match(cookie, /HttpOnly/i);
-    assert.match(cookie, /SameSite=Strict/i);
+    assert.match(cookie, /SameSite=Lax/i);
+    assert.match(cookie, /Max-Age=604800/i, 'the session lasts seven days');
     assert.match(cookie, /Path=\/admin/i);
 
     const dashboard = await request(app).get('/admin/dashboard/').set('Cookie', cookie);
@@ -94,6 +95,26 @@ describe('admin login', () => {
       const res = await request(app).get('/admin/keys').set('Cookie', bad);
       assert.strictEqual(res.status, 401, bad.slice(0, 40));
     }
+  });
+
+  it('renews a session that is in use, and leaves a fresh one alone', async () => {
+    const issuedTwoHoursAgo = session.issue(Date.now() - 2 * 60 * 60 * 1000);
+    const used = await request(app).get('/admin/keys').set('Cookie', `${session.COOKIE_NAME}=${issuedTwoHoursAgo}`);
+    assert.strictEqual(used.status, 200);
+    const renewed = cookieFrom(used);
+    assert.ok(renewed, 'a session in use was not extended');
+    assert.match(renewed, /Max-Age=604800/i);
+
+    const { cookie } = await login();
+    const fresh = await request(app).get('/admin/keys').set('Cookie', cookie.split(';')[0]);
+    assert.strictEqual(cookieFrom(fresh), undefined, 'every poll rewrote the cookie');
+  });
+
+  it('does not renew a session that has already expired', async () => {
+    const expired = session.issue(Date.now() - session.TTL_MS - 1000);
+    const res = await request(app).get('/admin/keys').set('Cookie', `${session.COOKIE_NAME}=${expired}`);
+    assert.strictEqual(res.status, 401);
+    assert.strictEqual(cookieFrom(res), undefined);
   });
 
   it('still accepts Basic auth for scripts', async () => {
