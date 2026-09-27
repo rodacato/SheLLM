@@ -64,6 +64,8 @@ describe('/v1/messages', () => {
     assert.strictEqual(res.body.model, 'claude');
     assert.strictEqual(res.body.stop_reason, 'end_turn');
     assert.strictEqual(res.body.stop_sequence, null);
+    assert.strictEqual(res.body.stop_details, null, 'the SDK types stop_details as nullable, never absent');
+    assert.strictEqual(res.body.container, null);
 
     // content blocks
     assert.ok(Array.isArray(res.body.content));

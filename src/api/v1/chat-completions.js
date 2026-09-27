@@ -302,7 +302,8 @@ async function chatCompletionsHandler(req, res) {
       model: result.upstream_model || result.model,
       choices: [{
         index: 0,
-        message: { role: 'assistant', content: result.content },
+        message: { role: 'assistant', content: result.content, refusal: null },
+        logprobs: null,
         finish_reason: 'stop',
       }],
       usage: openAIUsage(result.usage),

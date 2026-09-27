@@ -47,6 +47,8 @@ describe('sse-anthropic helpers', () => {
     assert.strictEqual(data.message.model, 'claude');
     assert.deepStrictEqual(data.message.content, []);
     assert.strictEqual(data.message.stop_reason, null);
+    assert.strictEqual(data.message.stop_details, null);
+    assert.strictEqual(data.message.container, null);
   });
 
   it('sendMessageStart accepts inputTokens parameter', () => {
@@ -102,6 +104,7 @@ describe('sse-anthropic helpers', () => {
     assert.strictEqual(event, 'message_delta');
     assert.strictEqual(data.delta.stop_reason, 'end_turn');
     assert.strictEqual(data.delta.stop_sequence, null);
+    assert.strictEqual(data.delta.stop_details, null, 'the SDK stream helper copies it onto the message');
     assert.strictEqual(data.usage.output_tokens, 42);
   });
 
@@ -114,6 +117,13 @@ describe('sse-anthropic helpers', () => {
     assert.strictEqual(res.ended, true);
   });
 
+  it('sendStreamError names a rate limit with Anthropic\'s own type', () => {
+    const res = mockRes();
+    sendStreamError(res, { code: 'rate_limited', message: 'Too many concurrent streams' });
+    const errorData = JSON.parse(res.chunks[0].split('\n')[1].slice(6));
+    assert.strictEqual(errorData.error.type, 'rate_limit_error');
+  });
+
   it('sendStreamError emits error event then message_stop', () => {
     const res = mockRes();
     sendStreamError(res, new Error('test failure'));
@@ -123,7 +133,7 @@ describe('sse-anthropic helpers', () => {
     assert.ok(errorLines[0].includes('error'));
     const errorData = JSON.parse(errorLines[1].slice(6));
     assert.strictEqual(errorData.type, 'error');
-    assert.strictEqual(errorData.error.type, 'server_error');
+    assert.strictEqual(errorData.error.type, 'api_error', 'server_error is not a type the Anthropic API sends');
     assert.strictEqual(errorData.error.message, 'test failure');
     // Second chunk: message_stop
     assert.ok(res.chunks[1].includes('message_stop'));

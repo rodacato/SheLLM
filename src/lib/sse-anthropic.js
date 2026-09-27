@@ -1,5 +1,7 @@
 'use strict';
 
+const { anthropicErrorType } = require('../errors');
+
 /**
  * Anthropic-format Server-Sent Events helpers.
  * Implements the streaming event sequence for /v1/messages.
@@ -20,6 +22,8 @@ function sendMessageStart(res, id, model, inputTokens) {
       model,
       stop_reason: null,
       stop_sequence: null,
+      stop_details: null,
+      container: null,
       // The cache counts are unknown until the CLI reports them; message_delta carries them.
       usage: { input_tokens: inputTokens ?? 0, cache_creation_input_tokens: null, cache_read_input_tokens: null, output_tokens: 0 },
     },
@@ -52,7 +56,7 @@ function sendContentBlockStop(res, index) {
 function sendMessageDelta(res, stopReason, outputTokens, { ttft_ms, input_tokens, cache, meta } = {}) {
   const data = {
     type: 'message_delta',
-    delta: { stop_reason: stopReason, stop_sequence: null },
+    delta: { stop_reason: stopReason, stop_sequence: null, stop_details: null },
     usage: { output_tokens: outputTokens },
   };
   // message_start could only estimate the input, so the real count lands here once the CLI has
@@ -72,7 +76,7 @@ function sendMessageStop(res) {
 function sendStreamError(res, error) {
   sendEvent(res, 'error', {
     type: 'error',
-    error: { type: 'server_error', message: error.message || 'Internal error' },
+    error: { type: anthropicErrorType(error), message: error.message || 'Internal error' },
   });
   sendMessageStop(res);
 }
