@@ -1,9 +1,9 @@
       <!-- KEYS PAGE -->
-      <div x-show="page === 'keys'" x-data="keysPage()" x-effect="if (page === 'keys' && keys.length === 0 && loading) { fetchKeys(); fetchAuditLogs(); }">
+      <div x-show="page === 'keys'" x-data="keysPage()" x-effect="visit(page === 'keys')">
 
         <header class="mb-6 flex items-center justify-between gap-4 flex-wrap">
-          <h2 class="text-xl font-bold font-headline tracking-tighter text-on-surface">API KEYS<span class="text-primary-container">_</span></h2>
-          <button @click="showCreateModal = true" class="btn-brand px-5 py-2.5 text-xs font-headline font-bold uppercase tracking-wide">
+          <h1 class="text-xl font-bold font-headline tracking-tighter text-on-surface">API KEYS<span class="text-primary-container">_</span></h1>
+          <button @click="openCreate()" class="btn-brand px-5 py-2.5 text-xs font-headline font-bold uppercase tracking-wide">
             + Create Key
           </button>
         </header>
@@ -21,7 +21,7 @@
                 <button @click="copy('key', newKeyResult?.raw_key)"
                   class="shrink-0 px-3 border border-outline-variant/40 text-outline hover:text-on-surface hover:border-outline/50 transition-colors duration-fast flex items-center"
                   :title="copied === 'key' ? 'Copied' : 'Copy to clipboard'" aria-label="Copy the key">
-                  <span class="material-symbols-outlined text-[16px]" :class="copied === 'key' ? 'text-primary-container' : ''"
+                  <span aria-hidden="true" class="material-symbols-outlined text-[16px]" :class="copied === 'key' ? 'text-primary-container' : ''"
                     x-text="copied === 'key' ? 'check' : 'content_copy'"></span>
                 </button>
               </div>
@@ -36,7 +36,7 @@
                     <button @click="copy(snippet.id, snippet.command)"
                       class="shrink-0 px-3 border border-outline-variant/40 text-outline hover:text-on-surface hover:border-outline/50 transition-colors duration-fast flex items-center"
                       :title="copied === snippet.id ? 'Copied' : 'Copy to clipboard'" :aria-label="'Copy the ' + snippet.label + ' line'">
-                      <span class="material-symbols-outlined text-[16px]" :class="copied === snippet.id ? 'text-primary-container' : ''"
+                      <span aria-hidden="true" class="material-symbols-outlined text-[16px]" :class="copied === snippet.id ? 'text-primary-container' : ''"
                         x-text="copied === snippet.id ? 'check' : 'content_copy'"></span>
                     </button>
                   </div>
@@ -44,7 +44,7 @@
                 </div>
               </template>
             </div>
-            <button @click="newKeyResult = null" class="shrink-0 text-outline hover:text-white text-xl" aria-label="Dismiss">&times;</button>
+            <button @click="dismissNewKey()" class="shrink-0 text-outline hover:text-white text-xl" aria-label="Dismiss">&times;</button>
           </div>
         </div>
 
@@ -56,7 +56,7 @@
           class="flex items-center gap-3 w-full text-left mb-2 cursor-pointer">
           <span class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline shrink-0">Connection</span>
           <span class="text-[11px] font-mono text-primary-container truncate min-w-0" x-show="!connectionOpen" x-text="baseUrl"></span>
-          <span class="material-symbols-outlined text-[16px] text-outline ml-auto shrink-0"
+          <span aria-hidden="true" class="material-symbols-outlined text-[16px] text-outline ml-auto shrink-0"
             x-text="connectionOpen ? 'expand_less' : 'expand_more'"></span>
         </button>
         <div id="connection-card" class="bg-surface-container p-5 mb-6" x-show="connectionOpen" x-cloak>
@@ -66,7 +66,7 @@
             <button @click="copy('base', baseUrl)"
               class="shrink-0 px-3 border border-outline-variant/40 text-outline hover:text-on-surface hover:border-outline/50 transition-colors duration-fast flex items-center"
               :title="copied === 'base' ? 'Copied' : 'Copy to clipboard'" aria-label="Copy the base URL">
-              <span class="material-symbols-outlined text-[16px]" :class="copied === 'base' ? 'text-primary-container' : ''"
+              <span aria-hidden="true" class="material-symbols-outlined text-[16px]" :class="copied === 'base' ? 'text-primary-container' : ''"
                 x-text="copied === 'base' ? 'check' : 'content_copy'"></span>
             </button>
           </div>
@@ -84,7 +84,7 @@
                 <button @click="copy('sample-' + snippet.id, snippet.command)"
                   class="shrink-0 px-3 border border-outline-variant/40 text-outline hover:text-on-surface hover:border-outline/50 transition-colors duration-fast flex items-center"
                   :title="copied === 'sample-' + snippet.id ? 'Copied' : 'Copy to clipboard'" :aria-label="'Copy the ' + snippet.label + ' line'">
-                  <span class="material-symbols-outlined text-[16px]" :class="copied === 'sample-' + snippet.id ? 'text-primary-container' : ''"
+                  <span aria-hidden="true" class="material-symbols-outlined text-[16px]" :class="copied === 'sample-' + snippet.id ? 'text-primary-container' : ''"
                     x-text="copied === 'sample-' + snippet.id ? 'check' : 'content_copy'"></span>
                 </button>
               </div>
@@ -113,8 +113,14 @@
             <tbody>
               <tr x-show="keys.length === 0">
                 <td colspan="8" class="px-4 py-10 text-center font-mono text-sm"
-                  :class="loadError && !loading ? 'text-error' : 'text-outline'"
-                  x-text="loading ? 'Loading...' : (loadError ? 'Could not read the keys — ' + loadError : 'No keys created yet')"></td>
+                  :class="loadError && !loading ? 'text-error' : 'text-outline'">
+                  <span x-text="loading ? 'Loading...' : (loadError ? 'Could not read the keys — ' + loadError : 'No keys created yet')"></span>
+                  <div x-show="!loading && !loadError" class="mt-4">
+                    <button type="button" @click="openCreate()" class="btn-brand px-5 py-2.5 text-xs font-headline font-bold uppercase tracking-wide">
+                      + Create Key
+                    </button>
+                  </div>
+                </td>
               </tr>
             </tbody>
             <template x-for="key in keys" :key="key.id">
@@ -148,13 +154,14 @@
                     :class="key.usage && key.usage.last_used_at ? 'text-on-surface-variant' : 'text-outline'"
                     x-text="key.usage && key.usage.last_used_at ? formatTime(key.usage.last_used_at) : 'never'"></td>
                   <td class="px-4 py-3 text-center">
-                    <button @click="toggleActive(key)" class="inline-flex items-center gap-2" :title="key.active ? 'Disable this key' : 'Enable this key'">
-                      <div class="toggle-track" :class="{ 'active': key.active }">
+                    <button @click="toggleActive(key)" class="inline-flex items-center gap-2 disabled:cursor-not-allowed"
+                      :disabled="isExpired(key)" :title="isExpired(key) ? null : (key.active ? 'Disable this key' : 'Enable this key')">
+                      <div class="toggle-track" :class="{ 'active': key.active && !isExpired(key) }">
                         <div class="toggle-knob"></div>
                       </div>
                       <span class="text-[10px] font-headline font-bold uppercase"
-                        :class="key.active ? 'text-status-ok' : 'text-outline'"
-                        x-text="key.active ? 'Active' : 'Off'"></span>
+                        :class="isExpired(key) ? 'text-error' : key.active ? 'text-status-ok' : 'text-outline'"
+                        x-text="isExpired(key) ? 'Expired' : key.active ? 'Active' : 'Off'"></span>
                     </button>
                   </td>
                   <td class="px-4 py-3 text-xs font-mono whitespace-nowrap">
@@ -166,16 +173,19 @@
                   <td class="px-4 py-3 whitespace-nowrap">
                     <div class="flex items-center justify-end gap-4">
                       <button @click="startEdit(key)" class="link-brand transition-colors duration-fast" title="Edit this key" aria-label="Edit this key">
-                        <span class="material-symbols-outlined text-[18px] block">edit</span>
+                        <span aria-hidden="true" class="material-symbols-outlined text-[18px] block">edit</span>
                       </button>
                       <button @click="rotateKey(key)" class="link-brand transition-colors duration-fast" title="Rotate: the current key stops working immediately" aria-label="Rotate this key">
-                        <span class="material-symbols-outlined text-[18px] block">autorenew</span>
+                        <span aria-hidden="true" class="material-symbols-outlined text-[18px] block">autorenew</span>
                       </button>
                       <button @click="deleteKey(key)" class="text-error/70 hover:text-error transition-colors duration-fast" title="Delete this key" aria-label="Delete this key">
-                        <span class="material-symbols-outlined text-[18px] block">delete</span>
+                        <span aria-hidden="true" class="material-symbols-outlined text-[18px] block">delete</span>
                       </button>
                     </div>
                   </td>
+                </tr>
+                <tr x-show="rowError?.id === key.id" x-cloak>
+                  <td colspan="8" class="px-4 pb-3 text-right text-xs font-mono text-error" x-text="rowError?.message"></td>
                 </tr>
                 <tr x-show="editing === key.id" class="border-t border-outline-variant/20 bg-surface-container-lowest">
                   <td colspan="8" class="px-4 py-4">
@@ -184,33 +194,34 @@
                     </p>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div>
-                        <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Name</label>
-                        <input type="text" x-model="editForm.name" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                        <label :for="'edit-name-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Name</label>
+                        <input :id="'edit-name-' + key.id" type="text" x-model="editForm.name" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
                       </div>
                       <div>
-                        <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">RPM</label>
-                        <input type="number" min="1" x-model="editForm.rpm" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                        <label :for="'edit-rpm-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">RPM</label>
+                        <input :id="'edit-rpm-' + key.id" type="number" min="1" x-model="editForm.rpm" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
                       </div>
                       <div>
-                        <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Models (blank = all)</label>
-                        <input type="text" x-model="editForm.models" placeholder="claude, claude-haiku" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                        <label :for="'edit-models-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Models (blank = all)</label>
+                        <input :id="'edit-models-' + key.id" type="text" x-model="editForm.models" placeholder="claude, claude-haiku" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
                       </div>
                       <div>
-                        <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Expires (UTC, blank = never)</label>
-                        <input type="datetime-local" x-model="editForm.expires_at" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                        <label :for="'edit-expires-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1" x-text="'Expires (' + timezone + ', blank = never)'"></label>
+                        <input :id="'edit-expires-' + key.id" type="datetime-local" x-model="editForm.expires_at" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
                       </div>
                       <div class="md:col-span-2">
-                        <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Description</label>
-                        <input type="text" x-model="editForm.description" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                        <label :for="'edit-description-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Description</label>
+                        <input :id="'edit-description-' + key.id" type="text" x-model="editForm.description" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
                       </div>
                       <div class="md:col-span-2">
-                        <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Browser origins (blank = any caller)</label>
-                        <input type="text" x-model="editForm.origins" placeholder="https://rodacato.github.io, http://localhost:5173" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                        <label :for="'edit-origins-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Browser origins (blank = any caller)</label>
+                        <input :id="'edit-origins-' + key.id" type="text" x-model="editForm.origins" placeholder="https://rodacato.github.io, http://localhost:5173" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
                       </div>
                     </div>
+                    <p x-show="editError" x-cloak class="text-xs font-mono text-error mt-4" x-text="editError"></p>
                     <div class="flex gap-3 mt-4">
                       <button @click="saveEdit(key)"
-                        class="px-4 py-2 text-xs font-headline font-bold uppercase tracking-widest bg-primary-container text-surface-container-lowest">Save</button>
+                        class="btn-brand px-4 py-2 text-xs font-headline font-bold uppercase tracking-widest">Save</button>
                       <button @click="cancelEdit()"
                         class="px-4 py-2 text-xs font-headline font-bold uppercase tracking-widest text-outline hover:text-on-surface">Cancel</button>
                     </div>
@@ -225,7 +236,7 @@
         <div class="mt-6">
           <button @click="showAudit = !showAudit; if (showAudit && auditLogs.length === 0) fetchAuditLogs()"
             class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline hover:text-primary-container transition-colors duration-fast flex items-center gap-2 mb-3">
-            <span class="material-symbols-outlined text-sm" x-text="showAudit ? 'expand_less' : 'expand_more'"></span>
+            <span aria-hidden="true" class="material-symbols-outlined text-sm" x-text="showAudit ? 'expand_less' : 'expand_more'"></span>
             Activity Log
           </button>
           <div x-show="showAudit" x-cloak class="bg-surface-container-lowest border border-outline-variant/20 p-4 font-mono text-xs max-h-[300px] overflow-y-auto terminal-scroll">
@@ -244,56 +255,58 @@
         </div>
 
         <!-- Create Key Modal -->
-        <div x-show="showCreateModal" x-cloak class="modal-overlay" @click.self="showCreateModal = false">
-          <div class="bg-surface-container border border-outline-variant/40 p-8 w-full max-w-md" @click.stop>
-            <h3 class="font-headline font-bold text-white text-lg uppercase mb-6">Create API Key</h3>
+        <div x-show="showCreateModal" x-cloak class="modal-overlay" @click.self="showCreateModal = false" @keydown.escape="showCreateModal = false">
+          <form class="bg-surface-container border border-outline-variant/40 p-8 w-full max-w-md" @click.stop @submit.prevent="createKey()"
+            role="dialog" aria-modal="true" aria-labelledby="create-key-title">
+            <h3 id="create-key-title" class="font-headline font-bold text-white text-lg uppercase mb-6">Create API Key</h3>
             <div class="space-y-4">
               <div>
-                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Client Name</label>
-                <input type="text" x-model="createForm.name"
+                <label for="create-name" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Client Name</label>
+                <input type="text" id="create-name" x-ref="createName" x-model="createForm.name"
                   class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"
                   placeholder="e.g. my-app">
               </div>
               <div>
-                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">RPM (requests/min)</label>
-                <input type="number" x-model="createForm.rpm"
+                <label for="create-rpm" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">RPM (requests/min)</label>
+                <input type="number" id="create-rpm" x-model="createForm.rpm"
                   class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"
                   min="1">
               </div>
               <div>
-                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Models (comma-separated, blank = all)</label>
-                <input type="text" x-model="createForm.models"
+                <label for="create-models" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Models (comma-separated, blank = all)</label>
+                <input type="text" id="create-models" x-model="createForm.models"
                   class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"
                   placeholder="claude, codex">
               </div>
               <div>
-                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Browser origins (comma-separated, blank = any caller)</label>
+                <label for="create-origins" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Browser origins (comma-separated, blank = any caller)</label>
                 <p class="text-[11px] font-mono text-outline mb-2">Browsers only — a caller that sends no Origin header is never checked against this.</p>
-                <input type="text" x-model="createForm.origins"
+                <input type="text" id="create-origins" x-model="createForm.origins"
                   class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"
                   placeholder="https://rodacato.github.io">
               </div>
               <div>
-                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Expires At (optional)</label>
-                <input type="datetime-local" x-model="createForm.expires_at"
+                <label for="create-expires" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2" x-text="'Expires At (' + timezone + ', optional)'"></label>
+                <input type="datetime-local" id="create-expires" x-model="createForm.expires_at"
                   class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container">
               </div>
               <div>
-                <label class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Description (optional)</label>
-                <input type="text" x-model="createForm.description"
+                <label for="create-description" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2">Description (optional)</label>
+                <input type="text" id="create-description" x-model="createForm.description"
                   class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"
                   placeholder="e.g. Production key for my blog pipeline">
               </div>
             </div>
+            <p x-show="createError" x-cloak class="text-xs font-mono text-error mt-6" x-text="createError"></p>
             <div class="flex justify-end gap-3 mt-8">
-              <button @click="showCreateModal = false"
+              <button type="button" @click="showCreateModal = false"
                 class="px-5 py-2.5 text-xs font-headline font-bold uppercase text-outline border border-outline-variant/40 hover:text-white hover:bg-surface-container-high transition-colors duration-fast">
                 Cancel
               </button>
-              <button @click="createKey()" class="btn-brand px-5 py-2.5 text-xs font-headline font-bold uppercase">
+              <button type="submit" :disabled="creating" class="btn-brand px-5 py-2.5 text-xs font-headline font-bold uppercase disabled:opacity-40">
                 Create
               </button>
             </div>
-          </div>
+          </form>
         </div>
       </div>

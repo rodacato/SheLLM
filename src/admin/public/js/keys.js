@@ -1,5 +1,41 @@
 /* global Alpine */
 
+function wallClockParts(instant, tz) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(instant);
+  return Object.fromEntries(parts.map((p) => [p.type, p.value]));
+}
+
+function zoneOffsetMs(instant, tz) {
+  const p = wallClockParts(instant, tz);
+  const wall = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+  return wall - Math.floor(instant.getTime() / 1000) * 1000;
+}
+
+// datetime-local carries no zone, so the field is written and read in the zone the table prints.
+function zonedInputValue(value, tz) {
+  const d = parseInstant(value);
+  if (!d) return '';
+  const p = wallClockParts(d, tz);
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+}
+
+// The offset depends on the instant being solved for, so a second pass settles it across a DST change.
+function instantFromZonedInput(text, tz) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(text || '');
+  if (!m) return null;
+  const wall = Date.UTC(m[1], m[2] - 1, m[3], m[4], m[5]);
+  const first = wall - zoneOffsetMs(new Date(wall), tz);
+  return new Date(wall - zoneOffsetMs(new Date(first), tz));
+}
+
+const EMPTY_KEY_FORM = () => ({ name: '', rpm: 10, models: '', origins: '', expires_at: '', description: '' });
+const UNCOPIED_KEY_WARNING = 'A key that was never copied cannot be read back — rotate it for a new one.';
+
 function keysPage() {
   return {
     // Shut until asked: the same two lines arrive filled in when a key is created, so this card
@@ -9,10 +45,16 @@ function keysPage() {
     loading: true,
     loadError: null,
     showCreateModal: false,
+    creating: false,
+    createError: null,
     newKeyResult: null,
-    createForm: { name: '', rpm: 10, models: '', origins: '', expires_at: '', description: '' },
+    keyCopied: false,
+    createForm: EMPTY_KEY_FORM(),
     editing: null,
-    editForm: { name: '', rpm: 10, models: '', origins: '', expires_at: '', description: '' },
+    editError: null,
+    editForm: EMPTY_KEY_FORM(),
+    rowError: null,
+    timezone: dashboardTimezone,
     usagePeriod: '7d',
     auditLogs: [],
     auditError: null,
@@ -56,11 +98,18 @@ function keysPage() {
     // created from the modal with the table scrolled down would appear off-screen.
     showNewKey(result) {
       this.newKeyResult = result;
+      this.keyCopied = false;
       window.scrollTo(0, 0);
+    },
+
+    dismissNewKey() {
+      if (!this.keyCopied && !confirm(UNCOPIED_KEY_WARNING)) return;
+      this.newKeyResult = null;
     },
 
     async copy(id, text) {
       if (await copyToClipboard(text)) {
+        if (id === 'key') this.keyCopied = true;
         this.copied = id;
         this.copyError = null;
         setTimeout(() => { if (this.copied === id) this.copied = null; }, 1500);
@@ -74,6 +123,13 @@ function keysPage() {
 
     splitList(value) {
       return value.split(',').map((item) => item.trim()).filter(Boolean);
+    },
+
+    // Read on every visit, so a failed read never outlives the visit it failed on.
+    visit(onPage) {
+      if (!this._reader) this._reader = poller(() => { this.fetchKeys(); this.fetchAuditLogs(); });
+      if (onPage) this._reader.every(0, { now: true });
+      else this._reader.stop();
     },
 
     async fetchKeys() {
@@ -101,7 +157,15 @@ function keysPage() {
       }
     },
 
+    openCreate() {
+      this.timezone = dashboardTimezone;
+      this.createError = null;
+      this.showCreateModal = true;
+      this.$nextTick(() => this.$refs.createName?.focus());
+    },
+
     async createKey() {
+      if (this.creating) return;
       const body = {
         name: this.createForm.name.trim(),
         rpm: parseInt(this.createForm.rpm, 10) || 10,
@@ -112,72 +176,69 @@ function keysPage() {
       if (this.createForm.origins.trim()) {
         body.origins = this.splitList(this.createForm.origins);
       }
-      if (this.createForm.expires_at) {
-        body.expires_at = new Date(this.createForm.expires_at).toISOString();
-      }
+      const expires = instantFromZonedInput(this.createForm.expires_at, this.timezone);
+      if (expires) body.expires_at = expires.toISOString();
       if (this.createForm.description.trim()) {
         body.description = this.createForm.description.trim();
       }
 
+      this.creating = true;
+      this.createError = null;
       try {
-        const res = await apiFetch(`${API_BASE}/keys`, {
-          method: 'POST',
-          body: JSON.stringify(body),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          this.showNewKey({ ...data.key, action: 'created' });
-          this.createForm = { name: '', rpm: 10, models: '', origins: '', expires_at: '', description: '' };
-          this.showCreateModal = false;
-          await this.fetchKeys();
-          await this.fetchAuditLogs();
-        } else {
-          const err = await res.json();
-          alert(err.message || 'Failed to create key');
-        }
-      } catch { alert('Network error'); }
+        const data = await apiWrite(`${API_BASE}/keys`, { body });
+        this.showNewKey({ ...data.key, action: 'created' });
+        this.createForm = EMPTY_KEY_FORM();
+        this.showCreateModal = false;
+      } catch (err) {
+        this.createError = err.message;
+        return;
+      } finally {
+        this.creating = false;
+      }
+      await this.fetchKeys();
+      await this.fetchAuditLogs();
     },
 
     startEdit(key) {
+      this.timezone = dashboardTimezone;
+      this.editError = null;
       this.editing = key.id;
       this.editForm = {
         name: key.name,
         rpm: key.rpm,
         models: (key.models || []).join(', '),
         origins: (key.origins || []).join(', '),
-        // datetime-local wants no zone and no seconds, and the API stores UTC without the marker.
-        expires_at: key.expires_at ? key.expires_at.replace(' ', 'T').slice(0, 16) : '',
+        expires_at: zonedInputValue(key.expires_at, this.timezone),
         description: key.description || '',
       };
     },
 
     cancelEdit() {
       this.editing = null;
+      this.editError = null;
     },
 
     async saveEdit(key) {
+      const expires = instantFromZonedInput(this.editForm.expires_at, this.timezone);
       const body = {
         name: this.editForm.name.trim() || key.name,
         rpm: parseInt(this.editForm.rpm, 10) || key.rpm,
         models: this.editForm.models.trim() ? this.splitList(this.editForm.models) : null,
         origins: this.editForm.origins.trim() ? this.splitList(this.editForm.origins) : null,
-        expires_at: this.editForm.expires_at ? new Date(this.editForm.expires_at + 'Z').toISOString() : null,
+        expires_at: expires ? expires.toISOString() : null,
         description: this.editForm.description.trim() || null,
       };
 
+      this.editError = null;
       try {
-        const res = await apiFetch(`${API_BASE}/keys/${key.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify(body),
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          return alert(err.message || 'Failed to update key');
-        }
-        this.editing = null;
-        await this.fetchKeys();
-        await this.fetchAuditLogs();
-      } catch { alert('Network error'); }
+        await apiWrite(`${API_BASE}/keys/${key.id}`, { method: 'PATCH', body });
+      } catch (err) {
+        this.editError = err.message;
+        return;
+      }
+      this.editing = null;
+      await this.fetchKeys();
+      await this.fetchAuditLogs();
     },
 
     errorRate(key) {
@@ -191,59 +252,49 @@ function keysPage() {
       location.hash = 'logs';
     },
 
-    async toggleActive(key) {
-      const newActive = key.active ? 0 : 1;
+    // One line per row, so a refusal is read next to the key it refused.
+    async rowAction(key, url, options) {
+      this.rowError = null;
       try {
-        const res = await apiFetch(`${API_BASE}/keys/${key.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ active: newActive }),
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          return alert(err.message || 'Failed to update key');
-        }
-        await this.fetchKeys();
-        await this.fetchAuditLogs();
-      } catch { alert('Network error'); }
+        return { data: await apiWrite(url, options) };
+      } catch (err) {
+        this.rowError = { id: key.id, message: err.message };
+        return null;
+      }
+    },
+
+    async toggleActive(key) {
+      if (this.isExpired(key)) return;
+      const body = { active: key.active ? 0 : 1 };
+      if (!await this.rowAction(key, `${API_BASE}/keys/${key.id}`, { method: 'PATCH', body })) return;
+      await this.fetchKeys();
+      await this.fetchAuditLogs();
     },
 
     async rotateKey(key) {
       if (!confirm(`Rotate key for "${key.name}"? The old key will stop working immediately.`)) return;
-      try {
-        const res = await apiFetch(`${API_BASE}/keys/${key.id}/rotate`, { method: 'POST' });
-        if (!res.ok) {
-          const err = await res.json();
-          return alert(err.message || 'Failed to rotate key');
-        }
-        const data = await res.json();
-        this.showNewKey({ ...data.key, name: key.name, action: 'rotated' });
-        await this.fetchKeys();
-        await this.fetchAuditLogs();
-      } catch { alert('Network error'); }
+      const done = await this.rowAction(key, `${API_BASE}/keys/${key.id}/rotate`, { method: 'POST' });
+      if (!done) return;
+      this.showNewKey({ ...done.data.key, name: key.name, action: 'rotated' });
+      await this.fetchKeys();
+      await this.fetchAuditLogs();
     },
 
     async deleteKey(key) {
       if (!confirm(`Delete key "${key.name}"? This cannot be undone.`)) return;
-      try {
-        const res = await apiFetch(`${API_BASE}/keys/${key.id}`, { method: 'DELETE' });
-        if (!res.ok) {
-          const err = await res.json();
-          return alert(err.message || 'Failed to delete key');
-        }
-        await this.fetchKeys();
-        await this.fetchAuditLogs();
-      } catch { alert('Network error'); }
+      if (!await this.rowAction(key, `${API_BASE}/keys/${key.id}`, { method: 'DELETE' })) return;
+      await this.fetchKeys();
+      await this.fetchAuditLogs();
     },
 
-    isExpired(key) {
-      return key.expires_at && new Date(key.expires_at + 'Z') < new Date();
+    isExpired(key, now = Date.now()) {
+      const exp = parseInstant(key.expires_at);
+      return exp !== null && exp.getTime() <= now;
     },
 
-    isExpiringSoon(key) {
-      if (!key.expires_at) return false;
-      const exp = new Date(key.expires_at + 'Z');
-      const now = new Date();
-      return exp > now && (exp - now) < 7 * 24 * 60 * 60 * 1000;
+    isExpiringSoon(key, now = Date.now()) {
+      const exp = parseInstant(key.expires_at);
+      return exp !== null && exp.getTime() > now && exp.getTime() - now < 7 * 24 * 60 * 60 * 1000;
     },
 
     formatExpiry(key) {
