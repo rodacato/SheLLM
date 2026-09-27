@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **admin:** run every provider check on demand and show when each last passed
 
+### Changed
+
+- **api:** a request carrying `tools` or `functions`, or a `tool_choice` that forces a call, now gets a 400 `invalid_request_error` instead of a 200 prose answer that ignored them. Function calling was never supported; a caller that sent tools and read the prose will now see the error. `tools: []`, `"none"` and `"auto"` still pass
+
 ### Fixed
 
 - **admin:** pin the CDN scripts to exact versions with subresource integrity
