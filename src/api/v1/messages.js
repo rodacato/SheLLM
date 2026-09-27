@@ -4,7 +4,7 @@ const { anthropicCacheUsage, anthropicUsage } = require('./usage');
 const { wantsLongContext } = require('./betas');
 const { refuseAnthropicTools } = require('./function-calling');
 const { sanitize } = require('../../middleware/sanitize');
-const { invalidRequest, fromCatchable, recordErrorCode, sendAnthropicError } = require('../../errors');
+const { invalidRequest, rateLimited, fromCatchable, recordErrorCode, sendAnthropicError } = require('../../errors');
 const { initSSE, announceQueued, keepAlive } = require('../../lib/sse');
 const { shellmMeta } = require('../../lib/shellm-meta');
 const {
@@ -231,6 +231,8 @@ async function messagesHandler(req, res) {
       model: result.upstream_model || result.model,
       stop_reason: 'end_turn',
       stop_sequence: null,
+      stop_details: null,
+      container: null,
       usage: anthropicUsage(result.usage),
       x_shellm: shellmMeta({
         cost_usd: result.cost_usd ?? null,
@@ -301,7 +303,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
       res.locals.queued_ms = queued_ms;
       // Stream concurrency check (inside queue to avoid holding slots while waiting)
       if (!acquireStreamSlot()) {
-        sendStreamError(res, new Error('Too many concurrent streams, try again later'));
+        sendStreamError(res, rateLimited('Too many concurrent streams, try again later'));
         return;
       }
       slotAcquired = true;

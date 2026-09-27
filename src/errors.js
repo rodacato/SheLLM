@@ -97,9 +97,13 @@ const CODE_TO_TYPE = {
   not_found: 'invalid_request_error',
 };
 
+function openAIErrorType(err) {
+  return CODE_TO_TYPE[err.code] || 'server_error';
+}
+
 function sendOpenAIError(res, err) {
   recordErrorCode(res, err);
-  const type = CODE_TO_TYPE[err.code] || 'server_error';
+  const type = openAIErrorType(err);
   if (err.retry_after) res.set('Retry-After', String(err.retry_after));
   const body = {
     error: { message: err.message || 'Internal server error', type, code: err.code || 'internal_error', param: err.param ?? null },
@@ -120,9 +124,13 @@ const CODE_TO_ANTHROPIC_TYPE = {
   not_found: 'not_found_error',
 };
 
+function anthropicErrorType(err) {
+  return CODE_TO_ANTHROPIC_TYPE[err.code] || 'api_error';
+}
+
 function sendAnthropicError(res, err) {
   recordErrorCode(res, err);
-  const type = CODE_TO_ANTHROPIC_TYPE[err.code] || 'api_error';
+  const type = anthropicErrorType(err);
   if (err.retry_after) res.set('Retry-After', String(err.retry_after));
   const body = {
     type: 'error',
@@ -159,4 +167,6 @@ module.exports = {
   sendApiError,
   sendOpenAIError,
   sendAnthropicError,
+  openAIErrorType,
+  anthropicErrorType,
 };

@@ -67,6 +67,14 @@ describe('SSE helpers', () => {
     assert.strictEqual(parts[1].trim(), '[DONE]');
     assert.ok(ended);
   });
+
+  it('sendSSEError types the error as the buffered response would', () => {
+    let written = '';
+    const res = { write(d) { written += d; }, end() {} };
+    sendSSEError(res, { message: 'Too many concurrent streams', code: 'rate_limited' });
+
+    assert.strictEqual(JSON.parse(written.split('data: ')[1].trim()).error.type, 'rate_limit_error');
+  });
 });
 
 // --- Unit tests for handleStream logic ---

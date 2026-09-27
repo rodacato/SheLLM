@@ -72,6 +72,8 @@ describe('/v1/chat/completions', () => {
     assert.strictEqual(res.body.choices[0].message.role, 'assistant');
     assert.strictEqual(typeof res.body.choices[0].message.content, 'string');
     assert.strictEqual(res.body.choices[0].finish_reason, 'stop');
+    assert.strictEqual(res.body.choices[0].logprobs, null, 'the SDK types logprobs as nullable, never absent');
+    assert.strictEqual(res.body.choices[0].message.refusal, null);
 
     assert.ok('usage' in res.body);
     assert.ok('prompt_tokens' in res.body.usage);

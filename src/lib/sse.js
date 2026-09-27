@@ -1,5 +1,7 @@
 'use strict';
 
+const { openAIErrorType } = require('../errors');
+
 /**
  * Server-Sent Events (SSE) response helpers.
  */
@@ -54,7 +56,7 @@ function sendSSEError(res, error) {
   const payload = {
     error: {
       message: error.message || 'Internal error',
-      type: 'server_error',
+      type: openAIErrorType(error),
       code: error.code || 'stream_error',
     },
   };
