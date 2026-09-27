@@ -186,6 +186,27 @@ describe('the System page keeps re-reading while it is shown', () => {
     assert.strictEqual(host.count('/admin/providers'), 2, 'an open circuit stays on screen after it closed');
   });
 
+  it('drops the last good providers and settings once a re-read fails', async () => {
+    let up = true;
+    const host = gateway({
+      '/admin/providers': () => (up ? json(200, { providers: [{ name: 'claude', enabled: true }] }) : Promise.reject(new Error('down'))),
+      '/admin/config': () => (up ? json(200, { settings: [{ name: 'PORT', source: 'default' }] }) : Promise.reject(new Error('down'))),
+      '/admin/update': json(200, { trigger: 'ready' }),
+    });
+    const { page, intervals } = loadSystem(host.fetchImpl);
+    page.show();
+    await settle();
+    assert.strictEqual(page.providers.length, 1);
+    assert.strictEqual(page.settings.length, 1);
+
+    up = false;
+    intervals.find((i) => !i.cleared).fn();
+    await settle();
+    assert.deepStrictEqual([...page.providers], [], 'a dead gateway still shows its providers as ready');
+    assert.deepStrictEqual([...page.settings], []);
+    assert.ok(page.providersError && page.configError);
+  });
+
   it('does not read again when the effect re-runs, and stops when the page is hidden', async () => {
     const host = routes();
     const { page, intervals } = loadSystem(host.fetchImpl);
