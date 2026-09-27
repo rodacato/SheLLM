@@ -161,6 +161,20 @@
   pre .p { color:var(--accent); }
   pre .s { color:var(--ok); }
 
+  .snippets .tabs { display:flex; flex-wrap:wrap; border-bottom:1px solid color-mix(in srgb, var(--line) 45%, transparent); }
+  .snippets [role=tab] { background:none; border:0; padding:.8rem 1.1rem; color:var(--muted); cursor:pointer;
+                         font:500 .75rem "Space Grotesk", sans-serif; letter-spacing:.06em;
+                         border-bottom:2px solid transparent; margin-bottom:-1px;
+                         transition:color var(--dur-fast) var(--ease-enter); }
+  .snippets [role=tab]:hover { color:var(--text); }
+  .snippets [role=tab][aria-selected=true] { color:#fff; border-bottom-color:var(--accent); }
+  .snippet { position:relative; }
+  .snippet .copy { position:absolute; top:.75rem; right:.75rem; background:var(--panel-high); color:var(--text); border:0;
+                   padding:.35rem .75rem; font:500 .7rem "Space Grotesk", sans-serif; letter-spacing:.08em;
+                   text-transform:uppercase; cursor:pointer; transition:background var(--dur-fast) var(--ease-enter); }
+  .snippet .copy:hover { background:var(--line); }
+  .snippet .copy:active { box-shadow:inset 0 0 0 999px var(--press-veil); }
+  .snippets :focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
   .nots, .fixes { display:grid; gap:1px; grid-template-columns:repeat(auto-fit, minmax(16rem, 1fr));
           background:color-mix(in srgb, var(--line) 30%, transparent);
           border:1px solid color-mix(in srgb, var(--line) 30%, transparent); }
@@ -354,13 +368,84 @@
   "usage": { "prompt_tokens": 10, "completion_tokens": 9, "total_tokens": 19 }
 }</pre>
     </div>
-    <div class="term frame">
-      <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i></div>
-<pre><span class="c">// Node — official SDKs read the exports above</span>
-const client = new Anthropic();
-await client.messages.create({ model: <span class="s">'claude-haiku'</span>, max_tokens: 256,
-  messages: [{ role: <span class="s">'user'</span>, content: <span class="s">'Hello'</span> }] });</pre>
+    <div class="term frame snippets">
+      <div class="tabs" role="tablist" aria-label="Client">
+        <button type="button" role="tab" id="tab-py-openai" aria-controls="snip-py-openai" aria-selected="true">Python · OpenAI</button>
+        <button type="button" role="tab" id="tab-py-anthropic" aria-controls="snip-py-anthropic" aria-selected="false" tabindex="-1">Python · Anthropic</button>
+        <button type="button" role="tab" id="tab-js-openai" aria-controls="snip-js-openai" aria-selected="false" tabindex="-1">Node · OpenAI</button>
+        <button type="button" role="tab" id="tab-js-anthropic" aria-controls="snip-js-anthropic" aria-selected="false" tabindex="-1">Node · Anthropic</button>
+        <button type="button" role="tab" id="tab-curl" aria-controls="snip-curl" aria-selected="false" tabindex="-1">curl</button>
+      </div>
+      <div class="snippet" role="tabpanel" id="snip-py-openai" aria-labelledby="tab-py-openai">
+<pre>import os
+from openai import OpenAI
+
+client = OpenAI(base_url="http://127.0.0.1:6100/v1", api_key=os.environ["SHELLM_KEY"])
+
+stream = client.chat.completions.create(
+    model="claude-sonnet",
+    messages=[{"role": "user", "content": "Hello"}],
+    stream=True,
+)
+for chunk in stream:
+    if chunk.choices:
+        print(chunk.choices[0].delta.content or "", end="", flush=True)</pre>
+        <button type="button" class="copy">Copy</button>
+      </div>
+      <div class="snippet" role="tabpanel" id="snip-py-anthropic" aria-labelledby="tab-py-anthropic">
+<pre>import os
+from anthropic import Anthropic
+
+client = Anthropic(base_url="http://127.0.0.1:6100", api_key=os.environ["SHELLM_KEY"])
+
+with client.messages.stream(
+    model="claude-sonnet",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Hello"}],
+) as stream:
+    for text in stream.text_stream:
+        print(text, end="", flush=True)</pre>
+        <button type="button" class="copy">Copy</button>
+      </div>
+      <div class="snippet" role="tabpanel" id="snip-js-openai" aria-labelledby="tab-js-openai">
+<pre>import OpenAI from 'openai';
+
+const client = new OpenAI({ baseURL: 'http://127.0.0.1:6100/v1', apiKey: process.env.SHELLM_KEY });
+
+const stream = await client.chat.completions.create({
+  model: 'claude-sonnet',
+  messages: [{ role: 'user', content: 'Hello' }],
+  stream: true,
+});
+for await (const chunk of stream) {
+  process.stdout.write(chunk.choices[0]?.delta?.content ?? '');
+}</pre>
+        <button type="button" class="copy">Copy</button>
+      </div>
+      <div class="snippet" role="tabpanel" id="snip-js-anthropic" aria-labelledby="tab-js-anthropic">
+<pre>import Anthropic from '@anthropic-ai/sdk';
+
+const client = new Anthropic({ baseURL: 'http://127.0.0.1:6100', apiKey: process.env.SHELLM_KEY });
+
+const stream = client.messages.stream({
+  model: 'claude-sonnet',
+  max_tokens: 1024,
+  messages: [{ role: 'user', content: 'Hello' }],
+});
+stream.on('text', (text) =&gt; process.stdout.write(text));
+await stream.finalMessage();</pre>
+        <button type="button" class="copy">Copy</button>
+      </div>
+      <div class="snippet" role="tabpanel" id="snip-curl" aria-labelledby="tab-curl">
+<pre>curl -sN http://127.0.0.1:6100/v1/chat/completions \
+  -H "Authorization: Bearer $SHELLM_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"claude-sonnet","stream":true,"messages":[{"role":"user","content":"Hello"}]}'</pre>
+        <button type="button" class="copy">Copy</button>
+      </div>
     </div>
+    <p class="sub">Every snippet streams, and runs as it is with <code>SHELLM_KEY</code> set. The SDKs
+      also read the two <code>export</code> lines at the top, if you would rather not pass the URL.</p>
     <p class="sub">Streaming, JSON Schema output and images behave the way the SDKs expect —
       <a href="https://github.com/rodacato/SheLLM/blob/master/docs/guides/usage.md#5-what-works-today-with-claude">what works today</a>,
       each row a probe run against a live instance.</p>
@@ -442,6 +527,40 @@ await client.messages.create({ model: <span class="s">'claude-haiku'</span>, max
   }, { threshold: .12, rootMargin: '0px 0px -6% 0px' });
 
   document.querySelectorAll('.reveal').forEach((el) => seen.observe(el));
+
+  // Without script every snippet shows, one after another; with it they become tabs.
+  const tabs = [...document.querySelectorAll('.snippets [role=tab]')];
+  function select(tab) {
+    for (const t of tabs) {
+      const on = t === tab;
+      t.setAttribute('aria-selected', on);
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    }
+  }
+  tabs.forEach((tab, i) => {
+    tab.addEventListener('click', () => select(tab));
+    tab.addEventListener('keydown', (e) => {
+      const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      if (!step) return;
+      const next = tabs[(i + step + tabs.length) % tabs.length];
+      select(next);
+      next.focus();
+    });
+  });
+  if (tabs.length) select(tabs[0]);
+
+  document.querySelectorAll('.snippet .copy').forEach((button) => {
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(button.previousElementSibling.textContent);
+        button.textContent = 'Copied';
+      } catch {
+        button.textContent = 'Select and copy';
+      }
+      setTimeout(() => { button.textContent = 'Copy'; }, 1500);
+    });
+  });
 </script>
 
 </body>
