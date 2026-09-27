@@ -83,6 +83,8 @@
   header h1 { margin:0; }
   header img { width:min(22rem, 78vw); height:auto; }
   header p { color:var(--muted); font-size:1.15rem; margin:1.75rem auto 2.5rem; max-width:34rem; }
+  header p.cursor { margin-bottom:1rem; }
+  header p.aside { font-size:.9rem; margin-top:0; }
   .actions { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
   .swap { margin:2.5rem auto 0; max-width:34rem; text-align:left; font-size:.72rem; line-height:2.1;
           color:var(--muted); border:1px solid color-mix(in srgb, var(--line) 50%, transparent);
@@ -207,6 +209,8 @@
   <div class="inner">
     <h1><img src="assets/logo/logo-dark.svg" alt="SheLLM"></h1>
     <p class="cursor">Your LLM subscription — as a REST API for your own apps</p>
+    <p class="aside">A personal project for experimenting on the subscriptions you already pay for,
+      through the official, unmodified CLIs — <a href="#terms">the lowest-risk way to do it</a>.</p>
     <div class="actions">
       <a class="btn btn-solid" href="#start">Get started</a>
       <a class="btn btn-ghost" href="https://github.com/rodacato/SheLLM">GitHub</a>
@@ -233,9 +237,9 @@
   <div class="wrap reveal">
     <h2>What it is</h2>
     <p class="lede">
-      You pay for Claude Code or Codex. Your apps cannot use that subscription — they need API
-      credit you would buy separately. SheLLM runs the official CLI behind one endpoint that
-      answers in both formats.
+      A personal project: experiment with LLMs from your own software on the Claude Code or Codex
+      subscription you already pay for, instead of buying API credit on top. SheLLM runs the
+      official CLI behind one endpoint that answers in both the OpenAI and the Anthropic formats.
     </p>
     <p class="sub">
       You already pay the subscription, so the marginal request costs nothing extra — and for
@@ -387,7 +391,7 @@ await client.messages.create({ model: <span class="s">'claude-haiku'</span>, max
   </div>
 </section>
 
-<section>
+<section id="terms">
   <div class="wrap reveal">
     <h2>Fair use and provider terms</h2>
     <p class="lede">
