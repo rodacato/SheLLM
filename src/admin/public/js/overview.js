@@ -38,6 +38,13 @@ const nowMarker = {
 
 const axisTicks = () => ({ color: statusVar('--outline'), font: { size: 10, family: 'monospace' } });
 
+function withAlpha(hex, alpha) {
+  const [r, g, b] = [1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16));
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+const gridColor = () => withAlpha(statusVar('--outline'), 0.1);
+
 const OVERVIEW_REFRESH_KEY = 'shellm.refresh.overview';
 
 function overviewPage() {
@@ -75,7 +82,7 @@ function overviewPage() {
     },
 
     settleSpinner(startedAt) {
-      const remaining = SPINNER_FLOOR_MS - (Date.now() - startedAt);
+      const remaining = spinnerRemaining(startedAt);
       if (remaining <= 0) {
         this.manualLoading = false;
         return;
@@ -85,11 +92,17 @@ function overviewPage() {
 
     refreshNow() {
       this.fetchStats({ manual: true });
+      this.fetchProviders();
     },
 
-    startAutoRefresh() {
-      if (!this._poller) this._poller = poller(() => this.fetchStats());
-      this._poller.every(this.refreshMs);
+    startAutoRefresh({ now = false } = {}) {
+      if (!this._poller) {
+        this._poller = poller(() => {
+          this.fetchStats();
+          this.fetchProviders();
+        });
+      }
+      this._poller.every(this.refreshMs, { now });
     },
 
     setRefresh(value) {
@@ -102,7 +115,9 @@ function overviewPage() {
       if (this._poller) this._poller.stop();
     },
 
+    // health keeps its last good reading after a failed one, so a bar drawn from it would be stale.
     queueSaturation() {
+      if (this.healthRead !== 'ok') return 0;
       const q = this.health?.queue;
       if (!q || !q.max_concurrent) return 0;
       return Math.min(100, Math.round((q.active / q.max_concurrent) * 100));
@@ -194,7 +209,7 @@ function overviewPage() {
             x: this.timeAxis(domain),
             y: {
               beginAtZero: true,
-              grid: { color: 'rgba(132,147,151,0.1)' },
+              grid: { color: gridColor() },
               ticks: { ...axisTicks(), precision: 0 },
             },
           },
@@ -252,7 +267,7 @@ function overviewPage() {
             x: this.timeAxis(domain),
             y: {
               beginAtZero: true,
-              grid: { color: 'rgba(132,147,151,0.1)' },
+              grid: { color: gridColor() },
               ticks: { ...axisTicks(), callback: (value) => formatDuration(value) },
             },
           },
@@ -266,9 +281,31 @@ function overviewPage() {
         this.providers = data.providers || [];
         this.providersError = null;
       } catch (err) {
+        this.providers = [];
         this.providersError = err.message;
       }
       this.providersLoaded = true;
+    },
+
+    providerReady(prov) {
+      return this.providerLabel(prov) === 'ready';
+    },
+
+    // Wording from System's circuitLabel. Auth outranks the circuit: it is the cause, not the effect.
+    providerLabel(prov) {
+      if (!prov.enabled) return 'disabled';
+      if (!prov.installed) return 'missing';
+      if (!prov.authenticated) return 'no auth';
+      const circuit = prov.circuit;
+      if (circuit && circuit.state !== 'closed') return `${circuit.state} · ${circuit.failures} failures`;
+      return 'ready';
+    },
+
+    providerDot(prov) {
+      if (!prov.enabled || !prov.installed) return 'dot-gray';
+      if (!prov.authenticated || prov.circuit?.state === 'open') return 'dot-red';
+      if (prov.circuit?.state === 'half_open') return 'bg-status-warn';
+      return 'dot-green';
     },
 
     // Both charts answer "when did this happen", so they get one domain. Computing it per chart
@@ -291,7 +328,7 @@ function overviewPage() {
         type: 'linear',
         min: domain.min,
         max: domain.max,
-        grid: { color: 'rgba(132,147,151,0.1)' },
+        grid: { color: gridColor() },
         ticks: {
           ...axisTicks(),
           maxTicksLimit: 7,
@@ -299,6 +336,13 @@ function overviewPage() {
           callback: (value) => (multiDay ? formatDayHour(value) : formatHourMinute(value)),
         },
       };
+    },
+
+    // What a chart that needs two points says instead of vanishing.
+    sparseCaption() {
+      const total = this.stats?.total_requests || 0;
+      if (!total) return 'No requests in this window.';
+      return `${total.toLocaleString()} requests over ${this.windowSpan()}`;
     },
 
     // Above the cap the scatter and the totals stop describing the same rows, so the chart says so

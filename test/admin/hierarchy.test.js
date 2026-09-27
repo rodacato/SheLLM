@@ -84,10 +84,10 @@ describe('a panel is as tall as what it holds', () => {
 });
 
 describe('a metric value is not a heading', () => {
-  it('gives each page exactly one <h2>, its title', () => {
+  it('gives each page exactly one <h1>, its title', () => {
     for (const [file, text] of pages()) {
-      const count = (text.match(/<h2/g) || []).length;
-      assert.strictEqual(count, 1, `${file} has ${count} <h2> elements`);
+      const count = (text.match(/<h1/g) || []).length;
+      assert.strictEqual(count, 1, `${file} has ${count} <h1> elements`);
     }
   });
 });
