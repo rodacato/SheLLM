@@ -258,6 +258,7 @@
         </div>
 
         <!-- Create Key Modal -->
+        <!-- nosemgrep: java.lang.security.audit.xss.jsf.autoescape-disabled.autoescape-disabled — a JSF rule misreading Alpine's @keydown.escape; nothing is unescaped -->
         <div x-show="showCreateModal" x-cloak class="modal-overlay" @click.self="showCreateModal = false" @keydown.escape="showCreateModal = false">
           <form class="bg-surface-container border border-outline-variant/40 p-8 w-full max-w-md" @click.stop @submit.prevent="createKey()"
             role="dialog" aria-modal="true" aria-labelledby="create-key-title">

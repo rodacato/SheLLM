@@ -117,6 +117,7 @@ components:
       scheme: bearer
       description: Client API key (e.g. `shellm-a1b2c3…`)
     BasicAuth:
+      # nosemgrep: yaml.openapi.security.use-of-basic-authentication.use-of-basic-authentication — admin auth for scripts and curl, over TLS; browsers get a session cookie
       type: http
       scheme: basic
       description: Admin password via `SHELLM_ADMIN_PASSWORD`

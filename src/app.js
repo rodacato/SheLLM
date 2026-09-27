@@ -21,6 +21,7 @@ const { wantsHtml } = require('./middleware/admin-session');
 const { sendApiError, invalidRequest, notFound, payloadTooLarge } = require('./errors');
 const path = require('node:path');
 
+// nosemgrep: javascript.express.security.audit.express-check-csurf-middleware-usage.express-check-csurf-middleware-usage — SameSite=Lax session, and admin-auth refuses cross-site cookie writes (isCrossSiteWrite)
 const app = express();
 app.disable('x-powered-by');
 
