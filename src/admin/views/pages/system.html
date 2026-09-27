@@ -1,8 +1,8 @@
       <!-- SYSTEM PAGE -->
-      <div x-show="page === 'system'" x-data="systemPage()" x-effect="if (page === 'system' && loading) load()">
+      <div x-show="page === 'system'" x-data="systemPage()" x-effect="if (page === 'system') show(); else hide()">
 
         <header class="mb-6">
-          <h2 class="text-xl font-bold font-headline tracking-tighter text-on-surface">SYSTEM<span class="text-primary-container">_</span></h2>
+          <h1 class="text-xl font-bold font-headline tracking-tighter text-on-surface">SYSTEM<span class="text-primary-container">_</span></h1>
         </header>
 
         <template x-if="installHint">
@@ -22,18 +22,18 @@
             </div>
             <div>
               <p class="text-[10px] font-mono text-outline uppercase mb-1">Commit</p>
-              <p class="text-2xl font-headline font-black text-white font-mono"
-                x-text="health?.build?.commit || 'unknown'"></p>
+              <p class="text-2xl font-black text-white font-mono"
+                x-text="health?.build?.commit || '—'"></p>
             </div>
             <div>
               <p class="text-[10px] font-mono text-outline uppercase mb-1">Uptime</p>
-              <p class="text-2xl font-headline font-black text-white" x-text="formatUptime(health?.uptime) || '—'"></p>
+              <p class="text-2xl font-headline font-black text-white" x-text="healthRead === 'ok' ? (formatUptime(health?.uptime) || '—') : '—'"></p>
             </div>
             <div>
               <p class="text-[10px] font-mono text-outline uppercase mb-1">Status</p>
               <p class="text-2xl font-headline font-black"
-                :class="health?.status === 'ok' ? 'text-status-ok' : (health?.status === 'degraded' ? 'text-status-warn' : 'text-status-fail')"
-                x-text="health?.status || '—'"></p>
+                :class="healthRead !== 'ok' ? 'text-white' : (health?.status === 'ok' ? 'text-status-ok' : (health?.status === 'degraded' ? 'text-status-warn' : 'text-status-fail'))"
+                x-text="healthRead === 'ok' ? (health?.status || '—') : '—'"></p>
             </div>
           </div>
 
@@ -49,6 +49,9 @@
             </template>
             <template x-if="releaseError">
               <p class="text-xs font-mono text-outline" x-text="'Latest release unknown — ' + releaseError"></p>
+            </template>
+            <template x-if="updaterError && !watching">
+              <p class="text-xs font-mono text-outline" x-text="'Update status unknown — ' + updaterError"></p>
             </template>
           </div>
 
@@ -78,7 +81,7 @@
                       class="text-xs font-mono text-primary-container underline">release notes</a>
                   </template>
                   <button @click="requestUpdate()" :disabled="!canRequest"
-                    class="text-xs font-headline font-bold uppercase tracking-wider px-4 py-2 bg-primary-container text-surface disabled:opacity-40 disabled:cursor-not-allowed"
+                    class="btn-brand text-xs font-headline font-bold uppercase tracking-wider px-4 py-2 disabled:opacity-40 disabled:cursor-not-allowed"
                     x-text="updateButtonLabel"></button>
                 </div>
 
@@ -112,13 +115,15 @@
                   <p class="text-status-warn">A request is waiting to be picked up.</p>
                 </template>
                 <template x-if="updater.last && updater.last.state === 'running' && !updater.last.stalled">
-                  <p class="text-status-warn" x-text="'Updating to ' + updater.last.ref + '…'"></p>
+                  <p class="text-status-warn">
+                    <span class="w-1.5 h-1.5 inline-block align-middle mr-2 bg-status-warn animate-pulse" aria-hidden="true"></span><span x-text="'Updating to ' + updater.last.ref + '…'"></span>
+                  </p>
                 </template>
                 <!-- The restart happens under this page, so say what is being waited for. Without
                      it a press looks like nothing happened, and the second press is refused. -->
                 <template x-if="watching">
                   <p class="text-outline">
-                    Watching the host — the service restarts during this, and the page reloads
+                    <span class="w-1.5 h-1.5 inline-block align-middle mr-2 bg-status-warn animate-pulse" aria-hidden="true"></span>Watching the host — the service restarts during this, and the page reloads
                     itself when the update reports done.
                   </p>
                 </template>
@@ -151,7 +156,7 @@
             <div>
               <span class="text-outline uppercase block text-[10px]">Waiting</span>
               <span class="text-lg font-headline font-bold"
-                :class="(health?.queue?.pending ?? 0) > 0 ? 'text-status-warn' : 'text-white'"
+                :class="healthRead === 'ok' && (health?.queue?.pending ?? 0) > 0 ? 'text-status-warn' : 'text-white'"
                 x-text="healthRead === 'ok' ? (health?.queue?.pending ?? 0) : '—'"></span>
             </div>
             <div>
@@ -192,13 +197,16 @@
                   class="px-4 py-1.5 text-xs font-headline uppercase tracking-wide transition-colors duration-fast disabled:opacity-40"
                   :class="prov.enabled
                     ? 'bg-surface-container-high text-outline hover:text-white hover:bg-surface-container-highest'
-                    : 'bg-primary-container text-on-primary font-bold'"
+                    : 'btn-brand font-bold'"
                   x-text="busy === prov.name ? '···' : (prov.enabled ? 'Pause' : 'Enable')"></button>
               </div>
 
               <div x-show="prov.health_error" class="bg-surface-container-lowest p-3 mb-4">
                 <p class="text-[10px] font-mono text-error break-all" x-text="prov.health_error"></p>
               </div>
+
+              <p x-show="toggleErrors[prov.name]" x-cloak class="text-status-fail text-sm font-mono mb-4"
+                x-text="toggleErrors[prov.name]"></p>
 
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] font-mono">
                 <div>
@@ -231,7 +239,6 @@
             </div>
           </template>
         </div>
-        <p x-show="toggleError" x-cloak class="text-status-fail text-sm font-mono mt-4" x-text="toggleError"></p>
         <p x-show="!providersLoaded" class="text-outline text-sm font-mono">Loading…</p>
         <p x-show="providersLoaded && providersError" class="text-status-fail text-sm font-mono"
           x-text="'Could not read the providers — ' + providersError + '.'"></p>
@@ -247,7 +254,7 @@
           <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase shrink-0">Settings</span>
           <span class="text-[10px] truncate min-w-0" :class="!settingsExpanded && unseenSettings.length > 0 ? 'text-status-warn' : 'text-outline'"
             x-text="settingsSummary"></span>
-          <span class="material-symbols-outlined text-[16px] text-outline ml-auto shrink-0"
+          <span class="material-symbols-outlined text-[16px] text-outline ml-auto shrink-0" aria-hidden="true"
             x-text="settingsExpanded ? 'expand_less' : 'expand_more'"></span>
         </button>
         <div id="settings-card" class="bg-surface-container p-5 mb-8" x-show="settingsExpanded" x-cloak>
@@ -298,7 +305,7 @@
                 <tr x-show="settings.length === 0">
                   <td colspan="5" class="py-6 text-center font-mono text-sm"
                     :class="configError ? 'text-status-fail' : 'text-outline'"
-                    x-text="!configLoaded ? 'Loading…' : (configError ? 'Could not read the settings — ' + configError : 'No settings declared.')"></td>
+                    x-text="!configLoaded ? 'Loading…' : (configError ? 'Could not read the settings — ' + configError + '.' : 'No settings declared.')"></td>
                 </tr>
               </tbody>
               <template x-for="group in groupedSettings" :key="group.section">

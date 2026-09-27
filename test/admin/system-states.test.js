@@ -88,8 +88,8 @@ describe('the System page reports a provider toggle that did not apply', () => {
     const page = loadSystem(answer(403, { error: 'nope' }));
     await page.toggleProvider({ name: 'claude', enabled: true });
 
-    assert.ok(page.toggleError, 'a silent failed write leaves the operator believing a false state');
-    assert.ok(page.toggleError.includes('claude'), 'and it names which provider did not change');
+    assert.ok(page.toggleErrors.claude, 'a silent failed write leaves the operator believing a false state');
+    assert.ok(page.toggleErrors.claude.includes('claude'), 'and it names which provider did not change');
     assert.strictEqual(page.busy, null, 'the spinner clears either way');
   });
 
@@ -97,14 +97,14 @@ describe('the System page reports a provider toggle that did not apply', () => {
     const page = loadSystem(async () => { throw new Error('offline'); });
     await page.toggleProvider({ name: 'codex', enabled: false });
 
-    assert.ok(page.toggleError.includes('codex'));
+    assert.ok(page.toggleErrors.codex.includes('codex'));
   });
 
   it('stays quiet when the write lands', async () => {
     const page = loadSystem(answer(200, { providers: [{ name: 'claude', enabled: false }] }));
     await page.toggleProvider({ name: 'claude', enabled: true });
 
-    assert.strictEqual(page.toggleError, null, 'a successful toggle reports nothing');
+    assert.strictEqual(page.toggleErrors.claude, null, 'a successful toggle reports nothing');
   });
 });
 
