@@ -18,7 +18,7 @@ const logsPageHtml = () => {
 const filterGroupHtml = () => {
   const page = logsPageHtml();
   const start = page.indexOf('<div class="flex flex-wrap gap-4 items-end">');
-  const end = page.indexOf('<div class="ml-auto flex items-center gap-4">', start);
+  const end = page.indexOf('<div class="ml-auto flex flex-wrap items-center gap-4">', start);
   assert.ok(start > -1 && end > start, 'the filters are no longer grouped');
   return page.slice(start, end);
 };

@@ -46,7 +46,7 @@
             </div>
           </div>
 
-          <div class="ml-auto flex items-center gap-4">
+          <div class="ml-auto flex flex-wrap items-center gap-4">
             <!-- Never gated on total > 0: an empty table is exactly when you want to re-read it -->
             <div class="flex items-stretch h-8 border border-outline-variant/30">
               <button @click="refreshNow()" :disabled="manualLoading" aria-label="Re-read the table now"
@@ -70,11 +70,11 @@
             </div>
             <div class="flex gap-2">
               <button x-show="total > 0" @click="exportCSV()"
-                class="px-4 py-2 text-xs font-headline font-bold uppercase text-primary-container border border-primary-container/40 hover:bg-primary-container/10 transition-colors duration-fast">
+                class="px-4 py-2 whitespace-nowrap text-xs font-headline font-bold uppercase text-primary-container border border-primary-container/40 hover:bg-primary-container/10 transition-colors duration-fast">
                 Export CSV
               </button>
               <button x-show="total > 0" @click="clearLogs()"
-                class="px-4 py-2.5 text-xs font-headline font-bold uppercase tracking-widest text-status-fail bg-danger-surface hover:bg-danger-surface-hover transition-colors duration-fast flex items-center gap-2">
+                class="px-4 py-2.5 whitespace-nowrap text-xs font-headline font-bold uppercase tracking-widest text-status-fail bg-danger-surface hover:bg-danger-surface-hover transition-colors duration-fast flex items-center gap-2">
                 <span class="material-symbols-outlined text-sm" aria-hidden="true">delete_forever</span>
                 Delete logs
               </button>
@@ -140,7 +140,7 @@
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead class="bg-surface-container-lowest">
-                <tr>
+                <tr class="whitespace-nowrap">
                   <th class="px-6 py-4 text-left text-[11px] font-headline font-bold uppercase tracking-[0.08em] text-outline">Time</th>
                   <th class="px-6 py-4 text-left text-[11px] font-headline font-bold uppercase tracking-[0.08em] text-outline">Status</th>
                   <th class="px-6 py-4 text-left text-[11px] font-headline font-bold uppercase tracking-[0.08em] text-outline">Request</th>
@@ -164,7 +164,7 @@
                   </td>
                 </tr>
                 <template x-for="job in shownInFlight" :key="job.request_id + job.state">
-                  <tr class="border-t border-outline-variant/20">
+                  <tr class="border-t border-outline-variant/20 whitespace-nowrap">
                     <td class="px-6 py-4 text-on-surface font-mono text-sm whitespace-nowrap" x-text="formatTime(shownJobStartedAt(job))"></td>
                     <td class="px-6 py-4">
                       <span class="inline-block border px-1.5 py-0.5 text-[10px] font-bold font-mono uppercase whitespace-nowrap"
@@ -204,7 +204,7 @@
                 <tbody>
                   <tr @click="toggleRow(log.id)"
                     :class="expandedId === log.id ? 'bg-surface-container-lowest' : ''"
-                    class="border-t border-outline-variant/20 hover:bg-surface-container-high transition-colors duration-fast cursor-pointer">
+                    class="border-t border-outline-variant/20 whitespace-nowrap hover:bg-surface-container-high transition-colors duration-fast cursor-pointer">
                     <td class="px-6 py-4 text-on-surface font-mono text-sm whitespace-nowrap">
                       <button type="button" @click.stop="toggleRow(log.id)"
                         :aria-expanded="expandedId === log.id" :aria-controls="'log-' + log.id + '-detail'"

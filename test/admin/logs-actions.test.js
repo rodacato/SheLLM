@@ -39,7 +39,7 @@ describe('refresh is an action on the logs table', () => {
   // It shares a row with the filters now, but it is still an action: the group it sits in is the
   // one holding export and delete, not the group holding the four selects.
   it('sits in the same group as export and delete', () => {
-    const actions = slice(page, 'ml-auto flex items-center gap-4', 'Delete logs');
+    const actions = slice(page, 'ml-auto flex flex-wrap items-center gap-4', 'Delete logs');
     assert.ok(actions.includes('>refresh<'), 'the reload icon belongs with the other actions');
     assert.ok(actions.includes('exportCSV()'), 'and that group is the one holding Export CSV');
   });

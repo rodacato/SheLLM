@@ -317,12 +317,12 @@
                   <template x-for="setting in group.rows" :key="setting.name">
                     <tr class="border-t border-outline-variant/20 align-top">
                       <td class="py-3 pr-6 font-mono text-[11px] text-white whitespace-nowrap" x-text="setting.name"></td>
-                      <td class="py-3 pr-6 font-mono text-[11px] break-all"
+                      <td class="py-3 pr-6 font-mono text-[11px] break-all max-md:min-w-[8rem]"
                         :class="setting.source === 'default' ? 'text-outline' : 'text-on-surface-variant'"
                         x-text="settingValue(setting)"></td>
                       <td class="py-3 pr-6 font-mono text-[11px] text-outline whitespace-nowrap" x-text="setting.source"></td>
                       <td class="py-3 pr-6 font-mono text-[11px] text-outline whitespace-nowrap" x-text="setting.since"></td>
-                      <td class="py-3 font-mono text-[11px] text-outline" x-text="setting.describe"></td>
+                      <td class="py-3 font-mono text-[11px] text-outline max-md:min-w-[24rem]" x-text="setting.describe"></td>
                     </tr>
                   </template>
                 </tbody>

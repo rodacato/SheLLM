@@ -54,14 +54,15 @@
               <span class="text-[10px] font-mono text-outline" x-text="stats.error_rate.success_pct + '% ok'"></span>
             </div>
             <div class="bg-surface-container p-5">
+            <div class="overflow-x-auto">
             <table class="w-full text-xs font-mono">
               <thead>
                 <tr class="text-outline text-[10px] uppercase tracking-widest">
-                  <th class="text-left pb-2 font-headline">Last seen</th>
-                  <th class="text-left pb-2 font-headline">Status</th>
-                  <th class="text-left pb-2 font-headline">Error</th>
-                  <th class="text-left pb-2 font-headline">Client</th>
-                  <th class="text-left pb-2 font-headline">Model</th>
+                  <th class="text-left pb-2 max-md:pr-4 font-headline">Last seen</th>
+                  <th class="text-left pb-2 max-md:pr-4 font-headline">Status</th>
+                  <th class="text-left pb-2 max-md:pr-4 font-headline">Error</th>
+                  <th class="text-left pb-2 max-md:pr-4 font-headline">Client</th>
+                  <th class="text-left pb-2 max-md:pr-4 font-headline">Model</th>
                   <th class="text-right pb-2 font-headline">Count</th>
                 </tr>
               </thead>
@@ -69,19 +70,20 @@
                 <template x-for="row in errorRows" :key="row.status + row.error_code + row.client_name + row.model + row.path">
                   <tr @click="openErrorLogs(row)"
                     class="border-t border-outline-variant/20 cursor-pointer hover:bg-surface-container-high transition-colors duration-fast">
-                    <td class="py-2 text-outline whitespace-nowrap" :title="formatTime(row.last_seen_at)"
+                    <td class="py-2 max-md:pr-4 text-outline whitespace-nowrap" :title="formatTime(row.last_seen_at)"
                       x-text="formatRelative(row.last_seen_at)"></td>
-                    <td class="py-2 font-bold"
+                    <td class="py-2 max-md:pr-4 font-bold"
                       :class="row.status < 500 ? 'text-status-warn' : 'text-status-fail'"
                       x-text="row.status"></td>
-                    <td class="py-2 text-on-surface-variant" x-text="row.error_code"></td>
-                    <td class="py-2 text-on-surface-variant" x-text="row.client_name"></td>
-                    <td class="py-2 text-outline" x-text="row.model"></td>
+                    <td class="py-2 max-md:pr-4 text-on-surface-variant max-md:whitespace-nowrap" x-text="row.error_code"></td>
+                    <td class="py-2 max-md:pr-4 text-on-surface-variant max-md:whitespace-nowrap" x-text="row.client_name"></td>
+                    <td class="py-2 max-md:pr-4 text-outline max-md:whitespace-nowrap" x-text="row.model"></td>
                     <td class="py-2 text-right text-white font-bold" x-text="row.count"></td>
                   </tr>
                 </template>
               </tbody>
             </table>
+            </div>
             </div>
           </div>
         </template>
@@ -103,7 +105,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <template x-for="w in stats.quota.windows" :key="w.hours">
                 <div class="bg-surface-container p-5">
-                  <div class="flex items-baseline justify-between mb-3">
+                  <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-3">
                     <span class="text-[10px] font-headline font-bold uppercase text-on-surface-variant"
                       x-text="quotaLabel(w)"></span>
                     <span class="flex items-baseline gap-2">
@@ -132,6 +134,7 @@
 
             <div class="bg-surface-container p-5">
               <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-4">By Subscription</p>
+              <div class="overflow-x-auto">
               <table class="w-full text-xs font-mono">
                 <thead>
                   <tr class="text-outline text-[10px] uppercase tracking-wider">
@@ -153,6 +156,7 @@
                   </template>
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
         </template>
@@ -193,6 +197,7 @@
               x-text="healthRead === 'ok' ? queueSaturation() + '% of concurrency in use' : (healthRead === 'failed' ? 'could not read' : 'not read yet')"></p>
             <!-- The count says three are running; it cannot say one has been wedged for nine
                  minutes, nor whose it is. -->
+            <div class="overflow-x-auto">
             <table x-show="healthRead === 'ok' && inFlight.length > 0" x-cloak
               class="w-full mt-3 border-t border-outline-variant/30 text-[11px] font-mono">
               <thead>
@@ -222,6 +227,7 @@
                 </template>
               </tbody>
             </table>
+            </div>
           </div>
 
           <div class="bg-surface-container p-5">
@@ -318,6 +324,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
               <div class="bg-surface-container p-5">
                 <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-4">By Model</p>
+                <div class="overflow-x-auto">
                 <table class="w-full text-xs font-mono">
                   <thead>
                     <tr class="text-outline text-[10px] uppercase tracking-wider">
@@ -341,11 +348,13 @@
                     </template>
                   </tbody>
                 </table>
+                </div>
                 <p x-show="!stats.by_model || stats.by_model.length === 0" class="text-outline text-xs font-mono">No requests in this window.</p>
               </div>
 
               <div class="bg-surface-container p-5">
                 <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-4">By Client</p>
+                <div class="overflow-x-auto">
                 <table class="w-full text-xs font-mono">
                   <thead>
                     <tr class="text-outline text-[10px] uppercase tracking-wider">
@@ -369,6 +378,7 @@
                     </template>
                   </tbody>
                 </table>
+                </div>
                 <p x-show="!stats.by_client || stats.by_client.length === 0" class="text-outline text-xs font-mono">No requests in this window.</p>
               </div>
             </div>
