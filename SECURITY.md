@@ -2,6 +2,10 @@
 
 ## Architecture
 
+The isolation floor for a served request — what each protection is, what enforces it, the risks
+accepted and what is deferred until the CLIs get tools back — is recorded in
+[ADR-0011](docs/adr/0011-security-model.md).
+
 SheLLM is designed as an **internal service**. It is not intended to be exposed to the public internet.
 
 ### Network Isolation
@@ -80,13 +84,14 @@ All user-supplied input passes through sanitization before reaching a CLI subpro
 
 ### Subprocess Safety
 
-- Stdin is set to `ignore` — prevents CLIs from hanging on interactive prompts
+- The prompt is written to stdin and stdin is closed; nothing the caller wrote goes in argv. With no input, stdin is `ignore`, so a CLI never hangs on an interactive prompt
 - `NO_COLOR=1` is injected — prevents ANSI escape codes in output
 - **Output sanitization** — ANSI escape codes and control characters are stripped from CLI responses
 - Arguments are passed as an array to `spawn()` — **no shell interpolation**, preventing command injection
 - Each subprocess has a configurable timeout (default: 120s) — prevents runaway processes
 - **Process group kill** — subprocesses run in detached mode; timeout kills the entire process group (including grandchild processes)
-- **Environment isolation** — subprocesses receive only PATH, HOME, TMPDIR, NO_COLOR (via `buildSafeEnv()`)
+- **Environment isolation** — subprocesses receive an allowlist: PATH, HOME, TMPDIR, NO_COLOR, NODE_EXTRA_CA_CERTS and the XDG config/data paths (via `buildSafeEnv()`), plus `CLAUDE_CODE_OAUTH_TOKEN` for claude only. No other SheLLM setting reaches a CLI
+- **Per-request working directory** — each CLI starts in a fresh temp directory outside the checkout, holding only that request's files, removed when it exits
 
 ### Health Endpoint
 
@@ -105,7 +110,7 @@ ask. The flag removes the prompt, not the sandbox. **Compensating controls:**
 - The CLI's own tools are off — `--tools ''`, plus `--disable-slash-commands`,
   `--strict-mcp-config` and `disableAllHooks` ([ADR-0002](docs/adr/0002-cli-internal-tools-off.md)).
   There is nothing for skipped permissions to authorize.
-- Each request runs in an empty working directory, so a tool that did run would find no code.
+- Each request runs in its own temp directory outside the checkout, so a tool that did run would find no code.
 - The systemd unit sandboxes the process and every CLI it spawns: `ProtectSystem=strict`,
   `ReadOnlyPaths=/home/shellmer/shellm` (the service cannot write the code it runs),
   `PrivateTmp=yes`, `NoNewPrivileges=yes`.
