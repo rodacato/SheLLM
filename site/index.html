@@ -37,6 +37,7 @@
     /* The admin's motion scale; the reveal is the one marketing timing it does not have. */
     --dur-fast:       100ms;
     --dur-reveal:     650ms;
+    --dur-step:       450ms;
     --ease-enter:     cubic-bezier(0, 0, .2, 1);
     --press-veil:     rgba(255, 255, 255, .08);
   }
@@ -175,6 +176,34 @@
   .snippet .copy:hover { background:var(--line); }
   .snippet .copy:active { box-shadow:inset 0 0 0 999px var(--press-veil); }
   .snippets :focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+  /* The request path. Lit step by step once, when it scrolls into view; Replay runs it again. */
+  .flow { list-style:none; margin:2rem 0 0; padding:0; display:grid; grid-template-columns:repeat(5, 1fr); counter-reset:step; }
+  .flow li { position:relative; padding:1.1rem 1rem; background:var(--surface-low);
+             border:1px solid color-mix(in srgb, var(--line) 50%, transparent);
+             transition:border-color var(--dur-step) var(--ease-enter), box-shadow var(--dur-step) var(--ease-enter); }
+  .flow li + li { margin-left:1.5rem; }
+  .flow li + li::before, .flow li + li::after { content:''; position:absolute; top:50%; left:-1.5rem; width:1.5rem; height:1px; }
+  .flow li + li::before { background:color-mix(in srgb, var(--line) 60%, transparent); }
+  .flow li + li::after { background:var(--accent); transform:scaleX(0); transform-origin:left;
+                         transition:transform var(--dur-step) var(--ease-enter); }
+  .flow li.on { border-color:color-mix(in srgb, var(--accent) 55%, transparent);
+                box-shadow:0 0 1.5rem color-mix(in srgb, var(--accent) 10%, transparent); }
+  .flow li.on::after { transform:none; }
+  .flow b { display:block; color:#fff; font:700 .9rem "Space Grotesk", sans-serif; }
+  .flow b::before { counter-increment:step; content:counter(step, decimal-leading-zero) " "; color:var(--accent);
+                    font-family:ui-monospace, Menlo, monospace; font-weight:400; }
+  .flow span { display:block; margin-top:.4rem; color:var(--muted); font-size:.8rem; line-height:1.55; }
+  .flow em { font-style:normal; color:var(--accent); font-family:ui-monospace, Menlo, monospace; font-size:.75rem; }
+  .replay { margin-top:1.25rem; background:none; border:0; padding:0; color:var(--accent); cursor:pointer;
+            font:500 .75rem "Space Grotesk", sans-serif; letter-spacing:.08em; text-transform:uppercase; }
+  .replay:hover { text-decoration:underline; }
+  .replay:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }
+  @media (max-width: 56rem) {
+    .flow { grid-template-columns:1fr; }
+    .flow li + li { margin:1.25rem 0 0; }
+    .flow li + li::before, .flow li + li::after { top:-1.25rem; left:1.5rem; width:1px; height:1.25rem; }
+    .flow li + li::after { transform:scaleY(0); transform-origin:top; }
+  }
   .nots, .fixes { display:grid; gap:1px; grid-template-columns:repeat(auto-fit, minmax(16rem, 1fr));
           background:color-mix(in srgb, var(--line) 30%, transparent);
           border:1px solid color-mix(in srgb, var(--line) 30%, transparent); }
@@ -208,6 +237,7 @@
     .crt-grid, .crt-glow, .cursor::after { animation:none; }
     .crt-sweep { display:none; }
     .reveal { opacity:1; transform:none; transition:none; }
+    .flow li, .flow li::after { transition:none; }
   }
 </style>
 </head>
@@ -278,6 +308,20 @@
       Streaming is what makes it usable: <code>claude-sonnet</code> starts writing at 1.7 s of a 5.5 s request
       (<a href="https://github.com/rodacato/SheLLM/blob/master/docs/guides/benchmarks.md#streaming-before-and-after-the-fix">measured</a>).
     </p>
+  </div>
+</section>
+
+<section id="flow">
+  <div class="wrap reveal">
+    <h2>How a request flows</h2>
+    <ol class="flow">
+      <li class="on"><b>Your app</b><span>An official SDK with the base URL swapped. Nothing else changes.</span></li>
+      <li class="on"><b>SheLLM</b><span>Checks the key, its rate limit and its models, then waits for a free slot.</span></li>
+      <li class="on"><b>Official CLI</b><span>A fresh <code>claude</code> or <code>codex</code> in an empty temp dir, its tools off. <em>~0.9 s to start</em></span></li>
+      <li class="on"><b>Stream</b><span>Tokens are translated to OpenAI or Anthropic events as they arrive. <em>first words at 1.7 s</em></span></li>
+      <li class="on"><b>Request log</b><span>Duration, tokens and what it would have cost, per key. The process is discarded.</span></li>
+    </ol>
+    <button type="button" class="replay" hidden>Replay</button>
   </div>
 </section>
 
@@ -585,6 +629,28 @@ await stream.finalMessage();</pre>
   }, { threshold: .12, rootMargin: '0px 0px -6% 0px' });
 
   document.querySelectorAll('.reveal').forEach((el) => seen.observe(el));
+
+  // Lit in markup so the steps read without script; with it they light in order once, on sight.
+  const steps = [...document.querySelectorAll('.flow li')];
+  const replay = document.querySelector('.replay');
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let timers = [];
+  function play() {
+    timers.forEach(clearTimeout);
+    steps.forEach((step) => step.classList.remove('on'));
+    timers = steps.map((step, i) => setTimeout(() => step.classList.add('on'), 250 + i * 600));
+  }
+  if (steps.length && !still) {
+    steps.forEach((step) => step.classList.remove('on'));
+    replay.hidden = false;
+    replay.addEventListener('click', play);
+    const watch = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      watch.disconnect();
+      play();
+    }, { threshold: .5 });
+    watch.observe(document.querySelector('.flow'));
+  }
 
   // Without script every snippet shows, one after another; with it they become tabs.
   const tabs = [...document.querySelectorAll('.snippets [role=tab]')];
