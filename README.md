@@ -20,10 +20,12 @@
   <a href="docs/guides/deployment.md">Running it on a server</a>
 </p>
 
-You pay for Claude Code or Codex. Your own apps cannot use that subscription — they need API
-credit you would buy separately. SheLLM runs the official CLI you already have, behind one HTTP
-endpoint that answers in both the OpenAI and the Anthropic formats, so an official SDK pointed at
-it works on the first try.
+A personal project for experimenting with LLMs from your own software on the subscriptions you
+already pay for. You pay for Claude Code or Codex; your own apps cannot use that subscription —
+they need API credit you would buy separately. SheLLM runs the official CLI you already have,
+unmodified, behind one HTTP endpoint that answers in both the OpenAI and the Anthropic formats, so
+an official SDK pointed at it works on the first try. Driving the official binary is the
+lowest-risk way to do this, not a risk-free one — see [Fair use and provider terms](#fair-use-and-provider-terms).
 
 ## What it is not
 
