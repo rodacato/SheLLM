@@ -31,7 +31,7 @@ describe('health parseCheckError', () => {
   it('treats keychain fallback with cached credentials as authenticated', () => {
     const result = parseCheckError({
       code: 1,
-      stderr: 'Keychain error: libsecret-1.so.0 not found. Using FileKeychain fallback for secure storage. Loaded cached credentials.',
+      stderr: 'Keychain error: libsecret-1.so.0 not found. Using FileKeychain fallback for secure storage. Loaded cached credentials.', // gitleaks:allow — a libsecret error, not a key
     });
     assert.strictEqual(result.installed, true);
     assert.strictEqual(result.authenticated, true);
@@ -80,13 +80,13 @@ describe('health parseCheckError', () => {
   });
 
   it('redacts short API keys with known prefixes', () => {
-    const result = parseCheckError({ code: 1, stderr: 'Invalid key: sk-abc123def456xyz' });
+    const result = parseCheckError({ code: 1, stderr: 'Invalid key: sk-abc123def456xyz' }); // gitleaks:allow — fixture
     assert.ok(result.error.includes('[REDACTED]'));
     assert.ok(!result.error.includes('sk-abc123'));
   });
 
   it('redacts Cerebras keys', () => {
-    const result = parseCheckError({ code: 1, stderr: 'Auth failed: csk-abcdef1234567890' });
+    const result = parseCheckError({ code: 1, stderr: 'Auth failed: csk-abcdef1234567890' }); // gitleaks:allow — fixture
     assert.ok(result.error.includes('[REDACTED]'));
     assert.ok(!result.error.includes('csk-abcdef'));
   });

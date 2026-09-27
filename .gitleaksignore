@@ -1,0 +1,20 @@
+# History only: none of these lines exist at HEAD. A full-history scan (workflow_dispatch) reads them.
+
+# Placeholder admin credentials in doc examples (admin:your-password, admin:your-admin-password).
+27c64a128bc7092fc233b35e0a644dcbaec38cd1:docs/guides/deployment.md:curl-auth-user:404
+c65355e234188fc5321e43337ae52e2c1a70a95a:README.md:curl-auth-user:155
+a46645bf61cf27a2ab574ccbc47674e47a311eab:README.md:curl-auth-user:155
+a46645bf61cf27a2ab574ccbc47674e47a311eab:README.md:curl-auth-header:155
+
+# Example bearer tokens in early READMEs; the env-configured client keys they illustrate no longer exist.
+c65355e234188fc5321e43337ae52e2c1a70a95a:README.md:curl-auth-header:162
+6ce79c5a3f31261a3bd43f9a0cdccd0387d7af3e:README.md:curl-auth-header:105
+15e5a4a9716d219401f412b52318a86eea608a0b:README.md:curl-auth-header:86
+64ff04bf3e5c89a0a1cdf8412563c33675219134:README.md:curl-auth-header:82
+
+# Test fixtures: fake keys fed to the redaction and auth tests, and a libsecret error string.
+51648905b4c226adbf01e4a17ea6585d16d597a1:test/health-parse.test.js:generic-api-key:100
+51648905b4c226adbf01e4a17ea6585d16d597a1:test/health-parse.test.js:generic-api-key:106
+2ba9971fae93d7fca671fd9ad191d20d3e12e7a1:test/health-parse.test.js:generic-api-key:33
+19170031a24db2c5fb2d1f4b3a0798622f4b284a:test/middleware/auth.test.js:generic-api-key:36
+19170031a24db2c5fb2d1f4b3a0798622f4b284a:test/middleware/auth.test.js:generic-api-key:52
