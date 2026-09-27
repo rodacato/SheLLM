@@ -171,18 +171,19 @@ echo "    resolves to ${resolved_sha}"
 # file would break the next update.
 as_service_user git -C "${APP_DIR}" remote set-url origin "${REPO_URL}"
 
-# 4. Hand the commit id to the CLI, which owns the sequence — including the snapshot it takes
-# before anything moves.
+# 4. Hand the commit id to the CLI, which owns the sequence and judges it by what the restarted
+# service serves. Its last line, RESULT, is what the dashboard shows when it fails.
 shellm_bin="$(command -v shellm)" || fail "shellm is not on the updater's PATH"
 echo "==> ${shellm_bin} update"
-SHELLM_REF="${resolved_sha}" "${shellm_bin}" update \
-  || fail "shellm update failed — it rolls back on its own; journalctl -u shellm-update -n 100"
-
-# 5. Confirm the checkout is where it was told to go. This detects the case the resolution above
-# is designed around, rather than assuming it worked.
-head="$(as_service_user git -C "${APP_DIR}" rev-parse HEAD)"
-[[ ${head} == "${resolved_sha}" ]] \
-  || fail "the checkout is at ${head}, not the requested ${resolved_sha}"
+output="$(mktemp)"
+if ! SHELLM_REF="${resolved_sha}" "${shellm_bin}" update 2>&1 | tee "${output}"; then
+  result="$(sed -n 's/^RESULT: //p' "${output}" | tail -1)"
+  rm -f "${output}"
+  # The CLI was handed the commit id; the dashboard asked for a tag, so it reads the tag back.
+  result="${result//${resolved_sha}/${requested_ref}}"
+  fail "${result:-shellm update failed without saying why}; journalctl -u shellm-update -n 100"
+fi
+rm -f "${output}"
 
 state="ok"
 detail="running ${requested_ref}"

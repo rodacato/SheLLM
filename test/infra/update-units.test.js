@@ -214,6 +214,11 @@ describe('the runner', () => {
     );
   });
 
+  it('reports what the update says happened, not a rollback it promised in advance', () => {
+    assert.doesNotMatch(RUNNER, /rolls back on its own/, 'a failure before the health check never rolled back');
+    assert.match(RUNNER, /s\/\^RESULT: \/\/p/, 'the runner no longer reads the RESULT line the CLI ends with');
+  });
+
   it('leaves the snapshot to the CLI rather than taking its own', () => {
     assert.ok(
       !/sqlite3|\.backup/.test(RUNNER),
@@ -224,11 +229,8 @@ describe('the runner', () => {
       !/\bcp\b.*shellm\.db/.test(RUNNER),
       'WAL mode makes a copied .db file torn or stale',
     );
-    const update = readFileSync(path.join(root, 'src/cli/update.js'), 'utf8');
-    assert.ok(
-      update.indexOf('backup') < update.indexOf("step('Running migrations')"),
-      'the update takes the snapshot before the migrations it cannot undo',
-    );
+    // That the snapshot comes before the migrations is exercised, not read from the source:
+    // test/cli/update-run.test.js runs the sequence and records the order.
   });
 
   it('reports on every exit, including the failures', () => {
@@ -271,18 +273,7 @@ describe('the two installers agree on what lives outside the checkout', () => {
       );
     }
   });
-
-  it('applies a new tmpfiles entry during the update rather than at the next boot', () => {
-    const source = readFileSync(path.join(root, 'src/cli/update.js'), 'utf8');
-    assert.ok(
-      /systemd-tmpfiles --create/.test(source),
-      'the directory has to exist before the restart, which is what rebuilds the mount namespace',
-    );
-    assert.ok(
-      source.indexOf('systemd-tmpfiles --create') < source.indexOf("execAsRoot('systemctl restart shellm')"),
-      'creating it after the restart leaves the service unable to write there until the next one',
-    );
-  });
+  // Applying a new tmpfiles entry before the restart is exercised in test/cli/update-run.test.js.
 });
 
 describe('vps.sh installs the trigger without arming it', () => {
