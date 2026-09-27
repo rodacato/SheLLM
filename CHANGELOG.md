@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.17.1] - 2026-09-27
+
+### Fixed
+
+- **update:** judge an update by what the service serves, and roll back every failure
+- **logs:** record a zero queue wait and a zero cost as zeros, not as unmeasured
+- **admin:** keep the dashboard signed in for seven days while it is used
+- **admin:** fit the dashboard on a phone without restyling it
+
+### Documentation
+
+- **ci:** say what the release workflow does, and stop asking for hand-written changelog entries
+
+
 ## [1.17.0] - 2026-09-27
 
 ### Added
@@ -999,7 +1013,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.17.0...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.17.1...HEAD
+[1.17.1]: https://github.com/rodacato/SheLLM/compare/v1.17.0...v1.17.1
 [1.17.0]: https://github.com/rodacato/SheLLM/compare/v1.16.1...v1.17.0
 [1.16.1]: https://github.com/rodacato/SheLLM/compare/v1.16.0...v1.16.1
 [1.16.0]: https://github.com/rodacato/SheLLM/compare/v1.15.0...v1.16.0
