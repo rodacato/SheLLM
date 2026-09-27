@@ -184,7 +184,7 @@ describe('the update button', () => {
   it('reports a refused request and leaves the button usable', async () => {
     // Whatever the page believes, the server is the one that decides. This is the 409 the second
     // press used to get, arriving on the first.
-    const refuse = async () => json(409, { error: { code: 'update_pending', message: 'An update request is already waiting to be picked up' } });
+    const refuse = async () => json(409, { error: 'update_pending', message: 'An update request is already waiting to be picked up' });
     const { page, location } = systemPage(refuse);
     Object.assign(page, { updater: { ...READY, last: PREVIOUS }, target: 'v1.4.0' });
 

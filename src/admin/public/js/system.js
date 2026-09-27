@@ -8,21 +8,28 @@ function compareTags(tag, version) {
   return 0;
 }
 
+// The health poll's resting cadence. A circuit verdict "at 14:02" has to stop being shown as
+// current once 14:02 has passed.
+const SYSTEM_POLL_MS = 30000;
+
 function systemPage() {
   return {
     providers: [],
     latestRelease: null,
     releases: [],
     releaseError: null,
-    loading: true,
+    releaseAsked: false,
     providersError: null,
-    toggleError: null,
+    // Keyed by provider name, so a refusal is shown on the card that was pressed.
+    toggleErrors: {},
     providersLoaded: false,
     busy: null,
 
     // The update button's own state. `updater` is what the server says about the trigger and the
     // last run; the rest is this page's.
     updater: null,
+    updaterError: null,
+    updaterAsked: false,
     target: '',
     confirmText: '',
     updateError: null,
@@ -84,16 +91,35 @@ function systemPage() {
     circuitClass(prov) {
       const state = prov.circuit?.state;
       if (state === 'open') return 'text-status-fail font-bold';
-      if (state === 'half-open') return 'text-status-warn font-bold';
+      if (state === 'half_open') return 'text-status-warn font-bold';
       return 'text-on-surface-variant';
     },
 
-    async load() {
-      this.loading = true;
-      await Promise.all([
-        this.fetchProviders(), this.fetchLatestRelease(), this.fetchUpdater(), this.fetchConfig(),
-      ]);
-      this.loading = false;
+    // Runs from the page's x-effect, so it re-runs whenever the health it reads changes.
+    show() {
+      if (!this._poller) this._poller = poller(() => this.refresh());
+      this._poller.every(SYSTEM_POLL_MS, { now: true });
+      if (!this.updaterAsked) {
+        this.updaterAsked = true;
+        this.fetchUpdater();
+      }
+      this.askForRelease();
+    },
+
+    hide() {
+      if (this._poller) this._poller.stop();
+    },
+
+    refresh() {
+      return Promise.all([this.fetchProviders(), this.fetchConfig()]);
+    },
+
+    // A cold load straight to #system gets here before health has answered, and the repository
+    // to ask GitHub about is in that answer.
+    askForRelease() {
+      if (this.releaseAsked || this.healthRead !== 'ok') return;
+      this.releaseAsked = true;
+      this.fetchLatestRelease();
     },
 
     // A swallowed read left the section rendering nothing, which reads as "no providers" on the
@@ -112,7 +138,11 @@ function systemPage() {
     // network to report its own state, and an unauthenticated read is rate-limited per viewer.
     async fetchLatestRelease() {
       const repo = this.health?.build?.repository;
-      if (!repo) return;
+      if (!repo) {
+        this.releaseError = 'this build names no GitHub repository';
+        return;
+      }
+      this.releaseError = null;
       try {
         const res = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=10`);
         if (!res.ok) {
@@ -155,8 +185,8 @@ function systemPage() {
     // Open, the header says where to write; closed, it answers the question you ask walking past
     // this section — has anything here been changed — rather than how many settings exist.
     get settingsSummary() {
-      if (this.settingsExpanded) return this.configFile ? `Write them in ${this.configFile}` : 'Settings in effect';
       if (this.configError) return 'Could not be read';
+      if (this.settingsExpanded) return this.configFile ? `Write them in ${this.configFile}` : 'Settings in effect';
       if (this.unseenSettings.length > 0) return this.unseenHeadline;
       if (this.settings.length === 0) return 'Loading…';
       const set = this.settings.filter((setting) => setting.source !== 'default').length;
@@ -199,9 +229,11 @@ function systemPage() {
 
     async fetchUpdater() {
       try {
-        const res = await apiFetch(`${API_BASE}/update`);
-        if (res.ok) this.updater = await res.json();
-      } catch { /* the panel degrades to "unknown" on its own */ }
+        this.updater = await apiRead(`${API_BASE}/update`);
+        this.updaterError = null;
+      } catch (err) {
+        this.updaterError = err.message;
+      }
     },
 
     // Only releases newer than what runs here. A downgrade is refused by the server anyway —
@@ -244,17 +276,9 @@ function systemPage() {
       const since = this.updater?.last?.started_at ?? null;
 
       try {
-        const res = await apiFetch(`${API_BASE}/update`, {
-          method: 'POST',
-          body: JSON.stringify({ ref, confirm: this.confirmText || undefined }),
-        });
-        if (!res.ok) {
-          this.updateError = (await res.json().catch(() => ({})))?.error?.message ?? `the server answered ${res.status}`;
-          this.busy = null;
-          return;
-        }
-      } catch {
-        this.updateError = 'could not reach the server';
+        await apiWrite(`${API_BASE}/update`, { body: { ref, confirm: this.confirmText || undefined } });
+      } catch (err) {
+        this.updateError = err.message;
         this.busy = null;
         return;
       }
@@ -318,26 +342,19 @@ function systemPage() {
     get updateAvailable() {
       const latest = this.latestRelease?.tag_name?.replace(/^v/, '');
       const running = this.runningVersion;
-      return latest && running && latest !== running ? latest : null;
+      return latest && running && compareTags(latest, running) > 0 ? latest : null;
     },
 
     // A swallowed write is worse than a swallowed read: the switch springs back and the operator
     // is left believing a routing state that was never applied.
     async toggleProvider(prov) {
       this.busy = prov.name;
-      this.toggleError = null;
+      this.toggleErrors = { ...this.toggleErrors, [prov.name]: null };
       try {
-        const res = await apiFetch(`${API_BASE}/providers/${prov.name}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ enabled: !prov.enabled }),
-        });
-        if (res.ok) {
-          await this.fetchProviders();
-        } else {
-          this.toggleError = `${prov.name} was not changed — the gateway answered ${res.status}.`;
-        }
-      } catch {
-        this.toggleError = `${prov.name} was not changed — the gateway did not answer.`;
+        await apiWrite(`${API_BASE}/providers/${prov.name}`, { method: 'PATCH', body: { enabled: !prov.enabled } });
+        await this.fetchProviders();
+      } catch (err) {
+        this.toggleErrors = { ...this.toggleErrors, [prov.name]: `${prov.name} was not changed — ${err.message}.` };
       }
       this.busy = null;
     },
