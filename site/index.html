@@ -62,7 +62,8 @@
   .split { display:grid; gap:0 3rem; }
   @media (min-width: 60rem) {
     .split { grid-template-columns:1fr 1fr; align-items:start; }
-    .split .sub:first-child { margin-top:0; }
+    .split .sub:first-child, .split > .sub { margin-top:0; }
+    .term + .split { margin-top:1.5rem; }
   }
 
   .btn { display:inline-block; padding:.9rem 2rem; font-family:"Space Grotesk", sans-serif; font-weight:700;
@@ -240,7 +241,7 @@
   .argv .flag { color:var(--accent); }
   .argv .hl { background:color-mix(in srgb, var(--accent) 16%, transparent); box-shadow:0 0 0 .2rem color-mix(in srgb, var(--accent) 16%, transparent); }
   .caret::after { content:'▍'; color:var(--accent); animation:blink 1s step-end infinite; }
-  .logrow { display:grid; grid-template-columns:1fr 1.6fr 1fr .8fr .9fr 1.2fr 1fr 1.5fr; gap:1px; margin-top:1px;
+  .logrow { display:grid; grid-template-columns:1.3fr 1.5fr .9fr .7fr .8fr 1.1fr .9fr 1.6fr; gap:1px; margin-top:1px;
             background:color-mix(in srgb, var(--line) 50%, transparent); border:1px solid color-mix(in srgb, var(--line) 50%, transparent);
             transition:color .4s var(--ease-enter); }
   .logrow div { background:var(--surface-low); padding:.6rem .8rem; font:400 .74rem ui-monospace, Menlo, monospace; color:var(--text); }
@@ -378,12 +379,14 @@
 <section id="inside">
   <div class="wrap reveal">
     <h2>Inside a request</h2>
-    <p class="lede">Four requests, played through SheLLM. Pick one and watch what it becomes on the way
-      to the CLI and back.</p>
-    <p class="sub">Nothing here is typed by hand. The argv, the responses and the log rows come from running
-      each request through the app against CLI output recorded from <code>claude</code> 2.1.273 and
-      <code>codex</code> 0.154.0 — and <a href="https://github.com/rodacato/SheLLM/blob/master/test/site/inspector.test.js">a test</a>
-      fails the day any of it stops being true.</p>
+    <div class="split">
+      <p class="lede">Four requests, played through SheLLM. Pick one and watch what it becomes on the way
+        to the CLI and back.</p>
+      <p class="sub">Nothing here is typed by hand. The argv, the responses and the log rows come from running
+        each request through the app against CLI output recorded from <code>claude</code> 2.1.273 and
+        <code>codex</code> 0.154.0 — and <a href="https://github.com/rodacato/SheLLM/blob/master/test/site/inspector.test.js">a test</a>
+        fails the day any of it stops being true.</p>
+    </div>
     <div class="ins-picker" role="tablist" aria-label="Request"></div>
     <div class="rig" aria-hidden="true">
       <svg></svg>
@@ -600,11 +603,13 @@ await stream.finalMessage();</pre>
         <button type="button" class="copy">Copy</button>
       </div>
     </div>
-    <p class="sub">Every snippet streams, and runs as it is with <code>SHELLM_KEY</code> set. The SDKs
-      also read the two <code>export</code> lines at the top, if you would rather not pass the URL.</p>
-    <p class="sub">Streaming, JSON Schema output and images behave the way the SDKs expect —
-      <a href="https://github.com/rodacato/SheLLM/blob/master/docs/guides/usage.md#5-what-works-today-with-claude">what works today</a>,
-      each row a probe run against a live instance.</p>
+    <div class="split">
+      <p class="sub">Every snippet streams, and runs as it is with <code>SHELLM_KEY</code> set. The SDKs
+        also read the two <code>export</code> lines at the top, if you would rather not pass the URL.</p>
+      <p class="sub">Streaming, JSON Schema output and images behave the way the SDKs expect —
+        <a href="https://github.com/rodacato/SheLLM/blob/master/docs/guides/usage.md#5-what-works-today-with-claude">what works today</a>,
+        each row a probe run against a live instance.</p>
+    </div>
   </div>
 </section>
 
