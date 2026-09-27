@@ -223,6 +223,7 @@ something is wrong. You can also set it yourself to correlate with your own logs
 | Status | Code | What it means | What to do |
 |---|---|---|---|
 | 400 | `invalid_request` | bad field, unknown model name, or an image SheLLM does not accept | fix the request; the message names the field |
+| 400 | `unsupported_parameter` | the request declares `tools` or forces a tool call; function calling is not supported yet | send it without `tools` |
 | 400 | `context_length_exceeded` | the prompt is past the model's context window; the message carries the CLI's count | send less, or split the work |
 | 401 | `auth_required` | missing, unknown or deactivated key | check the key |
 | 404 | `model_not_found` | the CLI does not know that `claude-*` model | use one from `GET /v1/models` |

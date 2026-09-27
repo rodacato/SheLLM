@@ -485,13 +485,69 @@ describe('/v1/chat/completions', () => {
     assert.strictEqual(res.status, 200);
   });
 
-  it('ignores tools field', async () => {
-    const res = await post({
-      model: 'claude',
-      messages: [{ role: 'user', content: 'hello' }],
-      tools: [{ type: 'function', function: { name: 'f', parameters: {} } }],
-    });
+  // --- function calling is refused, never dropped ---
+
+  const TOOL = { type: 'function', function: { name: 'get_weather', parameters: { type: 'object' } } };
+
+  it('refuses tools with a 400 that names function calling, not a malformed request', async () => {
+    const res = await post({ model: 'claude', messages: [{ role: 'user', content: 'hello' }], tools: [TOOL] });
+
+    assert.strictEqual(res.status, 400);
+    assert.deepStrictEqual(Object.keys(res.body.error).sort(), ['code', 'message', 'param', 'type']);
+    assert.strictEqual(res.body.error.type, 'invalid_request_error');
+    assert.strictEqual(res.body.error.code, 'unsupported_parameter');
+    assert.strictEqual(res.body.error.param, 'tools');
+    assert.match(res.body.error.message, /Function calling is not supported yet/);
+  });
+
+  it('refuses tools on a streaming request before any stream opens', async () => {
+    const res = await post({ model: 'claude', stream: true, messages: [{ role: 'user', content: 'hello' }], tools: [TOOL] });
+
+    assert.strictEqual(res.status, 400);
+    assert.match(res.headers['content-type'], /application\/json/);
+    assert.strictEqual(res.body.error.param, 'tools');
+  });
+
+  it('refuses the legacy functions field the same way', async () => {
+    const res = await post({ model: 'claude', messages: [{ role: 'user', content: 'hello' }], functions: [TOOL.function] });
+
+    assert.strictEqual(res.status, 400);
+    assert.strictEqual(res.body.error.param, 'functions');
+  });
+
+  it('refuses a tool_choice or function_call that forces a call', async () => {
+    for (const [field, value] of [
+      ['tool_choice', 'required'],
+      ['tool_choice', { type: 'function', function: { name: 'get_weather' } }],
+      ['function_call', { name: 'get_weather' }],
+    ]) {
+      const res = await post({ model: 'claude', messages: [{ role: 'user', content: 'hello' }], [field]: value });
+      assert.strictEqual(res.status, 400, `${field}: ${JSON.stringify(value)}`);
+      assert.strictEqual(res.body.error.param, field);
+    }
+  });
+
+  it('refuses a tools field that is not an array as malformed', async () => {
+    const res = await post({ model: 'claude', messages: [{ role: 'user', content: 'hello' }], tools: TOOL });
+
+    assert.strictEqual(res.status, 400);
+    assert.strictEqual(res.body.error.code, 'invalid_request');
+  });
+
+  it('answers an empty tools list and a tool_choice that asks for no call, since neither declares a tool', async () => {
+    for (const extra of [{ tools: [] }, { tools: [], tool_choice: 'none' }, { tool_choice: 'auto' }, { function_call: 'none' }]) {
+      const res = await post({ model: 'claude', messages: [{ role: 'user', content: 'hello' }], ...extra });
+      assert.strictEqual(res.status, 200, JSON.stringify(extra));
+      assert.strictEqual(res.body.choices[0].message.content, 'test reply');
+    }
+  });
+
+  it('leaves a request without tools untouched', async () => {
+    const res = await post({ model: 'claude', messages: [{ role: 'user', content: 'hello' }] });
+
     assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.object, 'chat.completion');
+    assert.strictEqual(res.body.choices[0].message.content, 'test reply');
   });
 
   // --- stop field validation ---

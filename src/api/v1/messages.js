@@ -2,6 +2,7 @@ const { route, resolveProvider, selectProvider, queue, acquireStreamSlot, releas
 const { jobFor } = require('../../infra/queue');
 const { anthropicCacheUsage } = require('./usage');
 const { wantsLongContext } = require('./betas');
+const { refuseAnthropicTools } = require('./function-calling');
 const { sanitize } = require('../../middleware/sanitize');
 const { invalidRequest, fromCatchable, recordErrorCode, sendAnthropicError } = require('../../errors');
 const { initSSE, announceQueued, keepAlive } = require('../../lib/sse');
@@ -130,7 +131,7 @@ function validate(body) {
     }
   }
 
-  return null;
+  return refuseAnthropicTools(body);
 }
 
 /**

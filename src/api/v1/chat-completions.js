@@ -7,6 +7,7 @@ const { invalidRequest, fromCatchable, recordErrorCode, sendOpenAIError } = requ
 const { initSSE, announceQueued, keepAlive, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../lib/sse');
 const { shellmMeta } = require('../../lib/shellm-meta');
 const { imagePart, renderParts, maxImages } = require('./image-parts');
+const { refuseOpenAITools } = require('./function-calling');
 
 const text = (value) => ({ type: 'text', text: value });
 
@@ -223,7 +224,7 @@ function validate(body) {
     }
   }
 
-  return null;
+  return refuseOpenAITools(body);
 }
 
 // OpenAI's values.
