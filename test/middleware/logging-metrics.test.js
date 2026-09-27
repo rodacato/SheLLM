@@ -53,4 +53,20 @@ describe('request logging — metrics persisted', () => {
     assert.equal(row.streamed, 1);
     assert.equal(row.tokens, null, 'no usage reported means no token count, not zero');
   });
+
+  // A zero is a measurement: no wait, no charge. NULL means nobody measured, and the queue
+  // percentiles skip it, so logging a zero as NULL made the queue look slower than it was.
+  it('keeps a measured zero queue wait and a zero cost as zeros', () => {
+    fireRequest({ provider: 'claude', model: 'claude', queued_ms: 0, cost_usd: 0, usage: null, metrics: null });
+    const row = getDb().prepare("SELECT queued_ms, cost_usd FROM request_logs WHERE request_id = 'req-1' ORDER BY id DESC").get();
+    assert.strictEqual(row.queued_ms, 0);
+    assert.strictEqual(row.cost_usd, 0);
+  });
+
+  it('still records an unmeasured queue wait and an unpriced call as NULL', () => {
+    fireRequest({ provider: 'codex', model: 'codex', usage: null, metrics: null });
+    const row = getDb().prepare("SELECT queued_ms, cost_usd FROM request_logs WHERE request_id = 'req-1' ORDER BY id DESC").get();
+    assert.strictEqual(row.queued_ms, null);
+    assert.strictEqual(row.cost_usd, null);
+  });
 });
