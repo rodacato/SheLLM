@@ -1,0 +1,7 @@
+misconfigurations:
+  - id: DS-0002
+    paths:
+      - .devcontainer/Dockerfile
+    statement: >-
+      Dev container only, never deployed. devcontainer.json sets remoteUser to vscode, so sessions
+      already run unprivileged; the image stays root like the devcontainers/base image it extends.
