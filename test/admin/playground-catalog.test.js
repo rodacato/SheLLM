@@ -15,6 +15,7 @@ const notes = (page) => [...page.catalogNotes];
 function loadPlayground(fetchImpl) {
   const stores = {};
   const context = vm.createContext({
+    AbortSignal,
     console, Intl, Date, Math, URLSearchParams, Promise, AbortController, Error,
     Alpine: { store: (n, v) => (v === undefined ? stores[n] : (stores[n] = v)) },
     performance: { now: () => 0 },

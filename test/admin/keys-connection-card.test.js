@@ -11,6 +11,7 @@ const JS_DIR = path.join(__dirname, '../../src/admin/public/js');
 // The page's own file, loaded the way the browser loads it.
 function loadKeysPage() {
   const context = vm.createContext({
+    AbortSignal,
     console, Intl, Date, URLSearchParams, Set,
     fetch: async () => ({ ok: true, json: async () => ({}) }),
     navigator: { onLine: true },

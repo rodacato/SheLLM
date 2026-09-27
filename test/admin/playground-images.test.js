@@ -10,6 +10,7 @@ const JS_DIR = path.join(__dirname, '../../src/admin/public/js');
 
 function loadPlayground() {
   const context = vm.createContext({
+    AbortSignal,
     console, Intl, Date, Math, URLSearchParams, Promise, AbortController, Error,
     Alpine: { store: () => undefined },
     performance: { now: () => 0 },

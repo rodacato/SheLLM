@@ -104,7 +104,7 @@ a:active,
 .toggle-track {
   width: 28px; height: 14px;
   background: var(--outline-variant);
-  transition: background-color 150ms var(--ease-enter);
+  transition: background-color var(--dur-fast) var(--ease-enter);
   cursor: pointer;
   position: relative;
 }
@@ -114,7 +114,7 @@ a:active,
   background: var(--on-surface);
   position: absolute;
   top: 2px; left: 2px;
-  transition: transform 150ms var(--ease-enter);
+  transition: transform var(--dur-fast) var(--ease-enter);
 }
 .toggle-track.active .toggle-knob { transform: translateX(14px); background: var(--on-primary); }
 
@@ -131,7 +131,8 @@ select option { background-color: var(--surface-container); }
 .safe-foot       { margin-bottom: env(safe-area-inset-bottom); }
 @media (min-width: 768px) { .safe-bar-offset { padding-top: env(safe-area-inset-top); } }
 
-/* The health dot is the only sign the page is live, so it ends solid rather than frozen dim. */
+/* A pulse ends solid rather than frozen at whatever opacity its last frame had. The sidebar
+   health dot does not pulse at all: it dims when its reading goes stale, which is liveness. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

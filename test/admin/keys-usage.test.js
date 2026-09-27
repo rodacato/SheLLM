@@ -14,6 +14,7 @@ const scrolled = [];
 function loadKeys(origin, clipboard, realTimers = false) {
   const stores = {};
   const context = vm.createContext({
+    AbortSignal,
     console, Intl, Date, URLSearchParams,
     Alpine: { store: (n, v) => (v === undefined ? stores[n] : (stores[n] = v)) },
     fetch: async () => ({ ok: true, status: 200, json: async () => ({}), headers: { get: () => null } }),

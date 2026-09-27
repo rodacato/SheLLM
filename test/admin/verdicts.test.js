@@ -11,6 +11,7 @@ const JS_DIR = path.join(__dirname, '../../src/admin/public/js');
 function loadPage(file, factory) {
   const stores = {};
   const context = vm.createContext({
+    AbortSignal,
     console, Intl, Date, Math, URLSearchParams,
     Alpine: { store: (n, v) => (v === undefined ? stores[n] : (stores[n] = v)) },
     fetch: async () => {}, navigator: { onLine: true },

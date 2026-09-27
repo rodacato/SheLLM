@@ -23,6 +23,7 @@ function loadOverview() {
   }
 
   const context = vm.createContext({
+    AbortSignal,
     console, Intl, Date, Chart, Math, JSON,
     getComputedStyle: () => ({ getPropertyValue: () => '#7ee787' }),
     document: { documentElement: {}, addEventListener: () => {} },

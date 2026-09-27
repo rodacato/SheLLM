@@ -23,20 +23,25 @@ class ApiError extends Error {
   }
 }
 
+// A hung gateway has to go down the failure path. Without a limit the health read never settled,
+// and the dot kept saying the server was alive while nothing answered.
+const API_TIMEOUT_MS = 10000;
+
 // Every admin read reports into this store, so one banner can say "I could not ask" instead of
-// each page rendering a failed request as an empty one.
-function reportRead(detail) {
+// each page rendering a failed request as an empty one. `status` is null when nothing answered.
+function reportRead(failure) {
   const conn = typeof Alpine === 'undefined' ? null : Alpine.store('connection');
   if (!conn) return;
-  conn.detail = detail;
-  conn.failed = detail !== null;
-  if (detail === null) conn.lastReadAt = new Date();
+  conn.failed = failure !== null;
+  conn.status = failure ? failure.status : null;
+  if (failure === null) conn.lastReadAt = new Date();
 }
 
-async function apiFetch(url, options = {}) {
+async function send(url, options) {
   let res;
   try {
     res = await fetch(url, {
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
       ...options,
       headers: {
         'Content-Type': 'application/json',
@@ -45,11 +50,24 @@ async function apiFetch(url, options = {}) {
       },
     });
   } catch {
-    reportRead('the gateway did not answer');
     throw new ApiError('the gateway did not answer');
   }
   if (res.status === 401) redirectToLogin();
-  reportRead(res.ok ? null : `the gateway answered ${res.status}`);
+  return res;
+}
+
+// A refused write says nothing about whether the gateway is reachable, so only reads report:
+// a duplicate key name used to raise "Could not reach the gateway" for a whole poll interval.
+async function apiFetch(url, options = {}) {
+  const isRead = (options.method || 'GET').toUpperCase() === 'GET';
+  let res;
+  try {
+    res = await send(url, options);
+  } catch (err) {
+    if (isRead) reportRead({ status: null });
+    throw err;
+  }
+  if (isRead) reportRead(res.ok ? null : { status: res.status });
   return res;
 }
 
@@ -62,12 +80,25 @@ async function apiRead(url, options = {}) {
   return res.json();
 }
 
+// What a write path uses. A refusal carries the server's own reason, because "answered 400"
+// tells the operator nothing about the duplicate name they just typed.
+async function apiWrite(url, { method = 'POST', body } = {}) {
+  const res = await apiFetch(url, { method, body: body === undefined ? undefined : JSON.stringify(body) });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    const reason = typeof data?.message === 'string' ? data.message : `the gateway answered ${res.status}`;
+    throw new ApiError(reason, res.status);
+  }
+  return data;
+}
+
 // A tab nobody is looking at must stop asking. At the intervals this control offers, a dashboard
 // left open overnight would spend the night querying the same event loop that proxies the CLIs.
 // Every page-level read goes through one of these, so the rule is written once.
 function poller(read) {
   let id = null;
   let ms = 0;
+  let running = false;
 
   const clear = () => { if (id !== null) { clearInterval(id); id = null; } };
   const arm = () => { clear(); if (ms > 0 && !document.hidden) id = setInterval(read, ms); };
@@ -80,13 +111,21 @@ function poller(read) {
 
   return {
     // Idempotent on purpose: the Alpine effects that call this re-run on every read, and a loop
-    // that restarts its own countdown each time it completes never reaches the next one.
-    every(next) {
+    // that restarts its own countdown each time it completes never reaches the next one. For the
+    // same reason `now` reads only when this call starts the poller, never on a re-run.
+    every(next, { now = false } = {}) {
+      const starting = !running;
+      running = true;
+      if (now && starting) {
+        ms = next;
+        read();
+        return arm();
+      }
       if (next === ms && id !== null) return;
       ms = next;
       arm();
     },
-    stop() { ms = 0; clear(); },
+    stop() { ms = 0; running = false; clear(); },
   };
 }
 
@@ -174,8 +213,9 @@ function isNearTimeout(job, ageMs, timeoutMs) {
   return job.state === 'running' && timeoutMs > 0 && ageMs >= timeoutMs * 0.8;
 }
 
+// Free and unpriced are different answers: a zero is a price, a missing value is not one.
 function formatCost(usd) {
-  if (usd == null || usd === 0) return '-';
+  if (usd == null) return 'not priced';
   return `$${usd.toFixed(4)}`;
 }
 
@@ -274,12 +314,13 @@ document.addEventListener('alpine:init', () => {
   Alpine.store('connection', {
     online: navigator.onLine,
     failed: false,
-    detail: null,
+    status: null,
     lastReadAt: null,
     get degraded() { return !this.online || this.failed; },
     get message() {
       if (!this.online) return 'This browser is offline. Nothing below is being updated.';
-      return `Could not reach the gateway — ${this.detail}. Nothing below is being updated.`;
+      if (this.status === null) return 'Could not reach the gateway. Nothing below is being updated.';
+      return `The gateway answered ${this.status}. Nothing below is being updated.`;
     },
   });
   for (const event of ['online', 'offline']) {
@@ -293,6 +334,7 @@ function app() {
     sidebarOpen: false,
     health: { uptime: null, providers: {}, queue: {}, readAt: 0 },
     healthRead: 'pending',
+    healthPollMs: 30000,
     now: Date.now(),
     nav: [
       { id: 'overview', label: 'Overview', icon: 'dashboard' },
@@ -301,10 +343,11 @@ function app() {
       { id: 'playground', label: 'Playground', icon: 'terminal' },
       { id: 'system', label: 'System', icon: 'settings_heart' },
     ],
+    // The nav items are links, so the hash changes on its own and hashchange routes it. What
+    // is left is the drawer, and the programmatic callers that pass the page they want.
     navigate(pageId) {
-      this.show(pageId);
       this.sidebarOpen = false;
-      location.hash = pageId;
+      if (pageId) location.hash = pageId;
     },
     // Never smooth: this fires on every navigation, and it delays the first read of a page the
     // operator opened to read.
@@ -325,6 +368,8 @@ function app() {
     jobStartedAt(job) { return new Date(this.health.readAt - job.age_ms); },
     jobNearTimeout(job) { return isNearTimeout(job, this.jobAge(job), this.health.queue?.timeout_ms); },
     get lastReadAt() { return formatClock(Alpine.store('connection').lastReadAt); },
+    // Two missed polls: one late answer is jitter, two is a gateway that stopped answering.
+    get healthStale() { return this.now - this.health.readAt > 2 * this.healthPollMs; },
     async init() {
       window.addEventListener('hashchange', () => {
         const id = location.hash.slice(1);
@@ -351,11 +396,15 @@ function app() {
         this.healthRead = 'ok';
         // A request in flight finishes within seconds of the last read; waiting out 30 of them
         // would leave it on screen as running long after its log row exists.
-        this._health?.every(this.inFlight.length > 0 ? 5000 : 30000);
+        this.pollHealth(this.inFlight.length > 0 ? 5000 : 30000);
       } catch {
         this.healthRead = 'failed';
-        this._health?.every(30000);
+        this.pollHealth(30000);
       }
+    },
+    pollHealth(ms) {
+      this.healthPollMs = ms;
+      this._health?.every(ms);
     },
   };
 }

@@ -117,6 +117,28 @@ describe('the palette is declared once and never retyped', () => {
     }
   });
 
+  // The veil is not a hex, so the loop above cannot see it, and the button's press reads it.
+  it('keeps the sign-in press veil pinned to the dashboard\'s', () => {
+    const login = fs.readFileSync(path.join(ADMIN, 'login.js'), 'utf8');
+    const { rootBlock: root } = paletteFromRoot();
+    const veil = (text) => /--press-veil:\s*([^;}]+?)\s*[;}]/.exec(text)?.[1].replace(/\s+/g, '');
+    assert.ok(veil(login), 'the sign-in page no longer declares --press-veil — if it stopped, delete this test');
+    assert.strictEqual(veil(login), veil(root), 'sign-in\'s --press-veil has drifted from the dashboard\'s');
+  });
+
+  // The two pages are the same application; a second mono stack made the sign-in fall back to
+  // Menlo or monospace on the machines the dashboard renders in SF Mono, Consolas or Liberation.
+  it('gives the sign-in page the dashboard\'s mono stack', () => {
+    const login = fs.readFileSync(path.join(ADMIN, 'login.js'), 'utf8');
+    const sandbox = { tailwind: {} };
+    vm.runInNewContext(tailwindConfig().source, sandbox);
+    const dashboard = sandbox.tailwind.config.theme.extend.fontFamily.mono.join(', ');
+
+    const found = /body\s*\{[^}]*font-family:\s*([^;]+);/.exec(login);
+    assert.ok(found, 'the sign-in page no longer sets its font on body — if it moved, follow it');
+    assert.strictEqual(found[1].trim(), dashboard);
+  });
+
   // The exemption above says the manifest may carry the literal. It does not say the literal may
   // be the wrong one: background_color was surface-shell, a colour the page never shows full-bleed.
   it('keeps the manifest pinned to the tokens it has to spell out', () => {

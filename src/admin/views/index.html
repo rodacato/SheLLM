@@ -86,7 +86,7 @@
   <!-- Mobile top bar -->
   <div class="md:hidden fixed top-0 inset-x-0 safe-bar z-40 bg-surface-shell border-b border-outline-variant/20 flex items-center gap-3 px-4">
     <button @click="sidebarOpen = !sidebarOpen" class="text-on-surface-variant hover:text-primary-container" :aria-expanded="sidebarOpen" aria-label="Toggle navigation">
-      <span class="material-symbols-outlined text-[20px]" x-text="sidebarOpen ? 'close' : 'menu'"></span>
+      <span class="material-symbols-outlined text-[20px]" aria-hidden="true" x-text="sidebarOpen ? 'close' : 'menu'"></span>
     </button>
     <img src="img/logo-dark.svg" alt="SheLLM" class="h-6 w-auto">
   </div>
@@ -106,15 +106,17 @@
     <!-- Nav -->
     <nav class="flex-1 mt-4">
       <template x-for="item in nav" :key="item.id">
-        <button
-          @click="navigate(item.id)"
+        <a
+          :href="'#' + item.id"
+          @click="navigate()"
+          :aria-current="page === item.id ? 'page' : null"
           :class="page === item.id
             ? 'text-primary-container bg-nav-selected border-l-4 border-primary-container font-bold'
             : 'text-outline hover:text-white hover:bg-nav-selected border-l-4 border-transparent'"
           class="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-fast font-headline uppercase tracking-[0.15em] text-[11px]">
-          <span class="material-symbols-outlined text-[20px]" x-text="item.icon"></span>
+          <span class="material-symbols-outlined text-[20px]" aria-hidden="true" x-text="item.icon"></span>
           <span x-text="item.label"></span>
-        </button>
+        </a>
       </template>
     </nav>
 
@@ -124,22 +126,22 @@
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2 text-outline text-[10px] font-mono tracking-wider">
           <div class="w-1.5 h-1.5 rounded-full"
-            :class="healthRead === 'failed' ? 'bg-status-fail' : (healthRead === 'ok' && health.uptime ? 'bg-primary-container animate-pulse' : 'bg-outline/30')"></div>
+            :class="healthRead === 'failed' ? 'bg-status-fail' : (healthRead === 'ok' && health.uptime && !healthStale ? 'bg-primary-container' : 'bg-outline/30')"></div>
           <span :class="healthRead === 'failed' ? 'text-status-fail' : ''"
             x-text="healthRead === 'failed' ? 'UNREACHABLE' : (health.uptime ? 'UP ' + formatUptime(health.uptime).toUpperCase() : 'CONNECTING...')"></span>
         </div>
         <div class="flex items-center gap-3">
           <!-- The server answers /docs/openapi.json and nothing else under /docs; the guides live on the published site. -->
-          <a href="https://rodacato.github.io/SheLLM/" target="_blank" rel="noopener" class="text-outline hover:text-primary-container transition-colors duration-fast" title="Documentation">
-            <span class="material-symbols-outlined text-[18px]">help</span>
+          <a href="https://rodacato.github.io/SheLLM/" target="_blank" rel="noopener" class="text-outline hover:text-primary-container transition-colors duration-fast" title="Documentation" aria-label="Documentation">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">help</span>
           </a>
           <form method="post" action="/admin/logout" class="flex">
-            <button type="submit" class="text-outline hover:text-primary-container transition-colors duration-fast" title="Sign out">
-              <span class="material-symbols-outlined text-[18px]">logout</span>
+            <button type="submit" class="text-outline hover:text-primary-container transition-colors duration-fast" title="Sign out" aria-label="Sign out">
+              <span class="material-symbols-outlined text-[18px]" aria-hidden="true">logout</span>
             </button>
           </form>
-          <a href="https://github.com/rodacato/SheLLM" target="_blank" class="text-outline hover:text-white transition-colors duration-fast" title="GitHub">
-            <svg class="w-[16px] h-[16px]" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <a href="https://github.com/rodacato/SheLLM" target="_blank" rel="noopener" class="text-outline hover:text-white transition-colors duration-fast" title="GitHub" aria-label="GitHub">
+            <svg class="w-[16px] h-[16px]" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
           </a>
         </div>
       </div>
@@ -152,7 +154,7 @@
     <!-- Content -->
     <main class="flex-1 p-4 md:p-8 overflow-auto">
 
-      <div x-show="$store.connection.degraded" x-cloak
+      <div x-show="$store.connection.degraded" x-cloak role="status"
         class="bg-surface-container border-l-2 border-status-fail p-4 mb-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <span class="font-headline font-bold text-status-fail text-[10px] uppercase tracking-[0.2em]">Not updating</span>
         <span class="text-xs font-mono text-on-surface-variant" x-text="$store.connection.message"></span>
@@ -174,13 +176,9 @@
     </main>
 
     <!-- Footer -->
-    <footer class="h-10 border-t border-surface-container-low bg-surface px-8 flex items-center justify-between text-[10px] font-mono text-outline uppercase tracking-widest shrink-0">
-      <span>SheLLM Admin</span>
-      <span class="flex items-center gap-4">
-        <span x-show="lastReadAt" :class="$store.connection.degraded ? 'text-status-warn' : ''"
-          x-text="'Read ' + lastReadAt"></span>
-        <span x-show="healthRead === 'ok' && health.uptime" x-text="'Uptime: ' + formatUptime(health.uptime)"></span>
-      </span>
+    <!-- The degraded banner carries "last read" while it shows, so the footer's clock steps aside. -->
+    <footer class="h-10 border-t border-surface-container-low bg-surface px-8 flex items-center justify-end text-[10px] font-mono text-outline uppercase tracking-widest shrink-0">
+      <span x-show="lastReadAt && !$store.connection.degraded" x-text="'Read ' + lastReadAt"></span>
     </footer>
   </div>
 

@@ -81,6 +81,26 @@ describe('installable dashboard', () => {
     }
   });
 
+  // Tailwind, Alpine and the fonts come from CDNs. With only the local shell cached, a cold
+  // offline start rendered unstyled markup and no Alpine, so not even the offline banner showed.
+  it('caches every CDN script and stylesheet the page loads', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const worker = fs.readFileSync(path.join(__dirname, '../../src/admin/public/sw.js'), 'utf8');
+    const html = require('../../src/admin/views').compose();
+
+    const remote = [
+      ...[...html.matchAll(/<script[^>]*\ssrc="(https:\/\/[^"]+)"/g)].map((m) => m[1]),
+      ...[...html.matchAll(/<link[^>]*href="(https:\/\/[^"]+)"[^>]*rel="stylesheet"/g)].map((m) => m[1]),
+    ];
+    assert.ok(remote.length >= 5, `found ${remote.length} CDN assets — this check proves nothing`);
+
+    for (const url of remote) {
+      assert.ok(worker.includes(`'${url}'`), `${url} is loaded by the page but absent from the worker's CDN list`);
+    }
+    assert.ok(worker.includes("'https://fonts.gstatic.com'"), 'the font files the stylesheets point at are never cached');
+  });
+
   // cache.put rejects a redirected response, so precaching a page that 302s without a session
   // fails the install outright and leaves the previous worker serving forever.
   it('precaches the assets but not the page, which redirects without a session', async () => {

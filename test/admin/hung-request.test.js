@@ -11,6 +11,7 @@ const JS_DIR = path.join(__dirname, '../../src/admin/public/js');
 function loadPage(file, factory, extra = {}) {
   const stores = {};
   const context = vm.createContext({
+    AbortSignal,
     console, Intl, Date, Math, URLSearchParams, Promise, AbortController, Error,
     Alpine: { store: (n, v) => (v === undefined ? stores[n] : (stores[n] = v)) },
     performance: { now: () => 0 },
@@ -32,6 +33,7 @@ function loadPage(file, factory, extra = {}) {
 
 function appGlobals() {
   const context = vm.createContext({
+    AbortSignal,
     console, Intl, Date, Math, URLSearchParams, Promise,
     Alpine: { store: () => ({}) },
     document: { documentElement: {}, addEventListener: () => {} },
