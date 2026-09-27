@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.17.0] - 2026-09-27
+
+### Added
+
+- **playground:** show the model that answered and copy the call as curl
+- **claude:** run on the 1M-context variant by default where the account has one
+- **models:** list the catalog on /v1/models with each model's limits, and take the context-1m beta
+
+### Fixed
+
+- **admin:** say 1 request and 1 recent failure
+- **system:** drop the last good providers and settings when a re-read fails
+- **logs:** keep the table still while it is being read, and name what the controls do
+- **overview:** re-read providers with the stats, and stop showing unread or refused as ready
+- **stats:** count priced requests on every cost figure
+- **keys:** read expiry as an instant, in one zone, and report refused writes inline
+- **system:** read what the page shows while it is on screen, and say when a read failed
+- **admin:** stop the shell from reporting what it did not observe
+- **site:** make the landing's copy-paste block work and bring both pages onto the admin kit
+- **keys:** parse a stored expiry the same way whatever shape it was written in
+
+### Changed
+
+- **models:** keep the limits manifest as commented YAML under config/
+
+### Documentation
+
+- bring the guides, README and site up to date with the last releases
+
+
 ## [1.16.1] - 2026-09-25
 
 ### Fixed
@@ -969,7 +999,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.16.1...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.17.0...HEAD
+[1.17.0]: https://github.com/rodacato/SheLLM/compare/v1.16.1...v1.17.0
 [1.16.1]: https://github.com/rodacato/SheLLM/compare/v1.16.0...v1.16.1
 [1.16.0]: https://github.com/rodacato/SheLLM/compare/v1.15.0...v1.16.0
 [1.15.0]: https://github.com/rodacato/SheLLM/compare/v1.14.0...v1.15.0
