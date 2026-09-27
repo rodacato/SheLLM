@@ -33,7 +33,8 @@
     --accent-hover:   #39eeff;
     --ok:             #22c55e;
     --fail:           #ef4444;
-    --measure:        68rem;
+    --wrap:           68rem;
+    --prose:          36rem;
 
     /* The admin's motion scale; the reveal is the one marketing timing it does not have. */
     --dur-fast:       100ms;
@@ -51,12 +52,18 @@
   img { max-width:100%; }
   figure { margin:0; }
 
-  .wrap { max-width:var(--measure); margin:0 auto; padding:0 1.5rem; }
+  .wrap { max-width:var(--wrap); margin:0 auto; padding:0 1.5rem; }
   section { padding:4rem 0; border-top:1px solid color-mix(in srgb, var(--line) 35%, transparent); }
   section h2 { font-size:.7rem; text-transform:uppercase; letter-spacing:.2em; color:var(--accent);
                margin:0 0 1.5rem; font-weight:500; }
-  .lede { font-size:1.35rem; line-height:1.55; max-width:36rem; margin:0; color:#fff; font-weight:300; }
-  .sub { max-width:36rem; margin:1.5rem 0 0; color:var(--muted); }
+  .lede { font-size:1.35rem; line-height:1.55; max-width:var(--prose); margin:0; color:#fff; font-weight:300; }
+  .sub { max-width:var(--prose); margin:1.5rem 0 0; color:var(--muted); }
+  /* A prose-only section: the lede and its support side by side, so neither line outgrows --prose. */
+  .split { display:grid; gap:0 3rem; }
+  @media (min-width: 60rem) {
+    .split { grid-template-columns:1fr 1fr; align-items:start; }
+    .split .sub:first-child { margin-top:0; }
+  }
 
   .btn { display:inline-block; padding:.9rem 2rem; font-family:"Space Grotesk", sans-serif; font-weight:700;
          text-transform:uppercase; letter-spacing:.1em; font-size:.85rem; transition:background var(--dur-fast) var(--ease-enter); }
@@ -155,7 +162,6 @@
   .examples .panel:hover h3 a { color:var(--accent); text-decoration:none; }
   .examples .uses { font-family:ui-monospace, Menlo, monospace; font-size:.72rem; color:var(--muted); }
 
-  .term { max-width:46rem; }
   .term + .term { margin-top:1.5rem; }
   .term pre { margin:0; padding:1.35rem 1.5rem; overflow-x:auto; font-size:.85rem; line-height:2; }
   pre .c { color:var(--muted); }
@@ -346,22 +352,26 @@
 <section>
   <div class="wrap reveal">
     <h2>What it is</h2>
-    <p class="lede">
-      A personal project: experiment with LLMs from your own software on the Claude Code or Codex
-      subscription you already pay for, instead of buying API credit on top. SheLLM runs the
-      official CLI behind one endpoint that answers in both the OpenAI and the Anthropic formats.
-    </p>
-    <p class="sub">
-      You already pay the subscription, so the marginal request costs nothing extra — and for
-      Claude the CLI reports what it <em>would</em> have cost on the API, attributed to the key
-      that made it. That is the figure above.
-    </p>
-    <p class="sub">
-      Every request starts the CLI and pays for it — about 0.9 s of a short call on the server,
-      <a href="https://github.com/rodacato/SheLLM/blob/master/docs/adr/0006-spawn-per-request-stays.md">a cold start that is permanent</a>.
-      Streaming is what makes it usable: <code>claude-sonnet</code> starts writing at 1.7 s of a 5.5 s request
-      (<a href="https://github.com/rodacato/SheLLM/blob/master/docs/guides/benchmarks.md#streaming-before-and-after-the-fix">measured</a>).
-    </p>
+    <div class="split">
+      <p class="lede">
+        A personal project: experiment with LLMs from your own software on the Claude Code or Codex
+        subscription you already pay for, instead of buying API credit on top. SheLLM runs the
+        official CLI behind one endpoint that answers in both the OpenAI and the Anthropic formats.
+      </p>
+      <div>
+        <p class="sub">
+          You already pay the subscription, so the marginal request costs nothing extra — and for
+          Claude the CLI reports what it <em>would</em> have cost on the API, attributed to the key
+          that made it. That is the figure above.
+        </p>
+        <p class="sub">
+          Every request starts the CLI and pays for it — about 0.9 s of a short call on the server,
+          <a href="https://github.com/rodacato/SheLLM/blob/master/docs/adr/0006-spawn-per-request-stays.md">a cold start that is permanent</a>.
+          Streaming is what makes it usable: <code>claude-sonnet</code> starts writing at 1.7 s of a 5.5 s request
+          (<a href="https://github.com/rodacato/SheLLM/blob/master/docs/guides/benchmarks.md#streaming-before-and-after-the-fix">measured</a>).
+        </p>
+      </div>
+    </div>
   </div>
 </section>
 
