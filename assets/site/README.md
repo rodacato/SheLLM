@@ -49,5 +49,4 @@ design and the chat rather than its landing hero; AI Town as it loads. They sit 
 render near 40% of the UI, which is the point: they show what an app looks like, and nobody has to
 read a number in them.
 
-Retake one when its app changes enough that the picture lies about it. AI Town is light, so the
-page's scanline overlay (`.crt-lines`) shows on it and on nothing else.
+Retake one when its app changes enough that the picture lies about it.
