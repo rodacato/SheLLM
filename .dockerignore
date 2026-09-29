@@ -7,7 +7,7 @@ coverage/
 data/
 *.log
 
-# initialize.sh writes the host's gh token into .host.env; local.env holds HOST_IP.
+# initialize.sh writes the derived GITHUB_* values into .host.env; local.env holds HOST_IP.
 .env
 .env.*
 .devcontainer/.host.env
