@@ -11,7 +11,7 @@ The last known-good version of each upstream CLI. Read this table and the tool's
 | Tool | Version | Pinned | Notes |
 |---|---|:---:|---|
 | `claude` (Claude Code) | `2.1.273` | ✅ | `CLAUDE_VERSION` in `scripts/setup/vps.sh`, passed to the official installer |
-| `codex` | `0.154.0` | ✅ | `CODEX_VERSION` in `scripts/setup/vps.sh`, installed as the service user from the npm package `@openai/codex`; the devcontainer still installs the latest. The adapter was rewritten against this version on 2026-09-19 and its event output is recorded in `test/fixtures/codex/0.154.0/` |
+| `codex` | `0.154.0` | ✅ | `CODEX_VERSION` in `scripts/setup/vps.sh`, installed as the service user from the npm package `@openai/codex`. The adapter was rewritten against this version on 2026-09-19 and its event output is recorded in `test/fixtures/codex/0.154.0/` |
 
 ## Tested Combinations
 

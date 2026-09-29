@@ -23,7 +23,7 @@ from inside it. For getting the app running, see [CONTRIBUTING.md](../CONTRIBUTI
 | `GITHUB_REPOSITORY`, `GITHUB_REPOSITORY_OWNER`, `GITHUB_ACTOR` | `initialize.sh` derives them from the `origin` remote | Yes |
 | Git author name and email | VS Code copies the host's `~/.gitconfig` | Yes |
 | `HOST_IP` | `local.env`, which you write | Yes |
-| `claude`, `codex` logins | Not inherited — you log in once inside the container; named volumes keep `~/.claude`, `~/.codex` | Yes |
+| AI coding agents (Claude Code, Codex…) | Not part of this devcontainer: install and log in the one you use, from the host or inside | Only if its home is kept outside the container layer |
 | Production secrets | Not inherited, by design | **No** |
 
 `initializeCommand` runs `initialize.sh` **on the host** before every start. It writes
@@ -44,8 +44,8 @@ keeps the old values; **Dev Containers: Rebuild Container** picks up new ones.
    ```
    Doing this after the container exists works too, followed by a rebuild.
 3. Open the folder in VS Code and run **Dev Containers: Reopen in Container**. `post-create.sh`
-   fixes volume ownership, runs `npm install`, installs the Codex CLI when missing,
-   and creates `~/.config/shellm/env` from `.env.example` on first creation. That copy has every
+   fixes volume ownership, runs `npm install` and creates `~/.config/shellm/env` from
+   `.env.example` on first creation. That copy has every
    secret commented out, so `shellm init` is still what makes `/admin/*` answer. `.env.example` is
    generated from `src/config/schema.js`; to change a setting, edit your own
    `~/.config/shellm/env` and restart, and run `shellm config` to see what is in effect.
@@ -62,8 +62,9 @@ keeps the old values; **Dev Containers: Rebuild Container** picks up new ones.
    gh auth status          # logged in, after step 4
    env | grep ^GITHUB_     # the three derived values
    ```
-6. Log in to each provider you want to exercise — `claude`, `codex` — once. The
-   logins live in named volumes and survive rebuilds.
+6. To exercise a provider, its CLI — `claude`, `codex` — has to be installed and logged in
+   inside the container. This devcontainer installs neither: bring them with your own tooling,
+   or install and log in by hand (a rebuild drops a CLI and login kept in the container layer).
 
 ## Deploy tooling from the container
 
@@ -86,9 +87,9 @@ provisioning. No production secret lives in this container.
 - **GitHub Projects owned by a user account are out of reach for fine-grained tokens.** If you
   work a board from here, use a separate classic token with only `project`, `read:org` and
   `read:discussion` for it, never a wider one.
-- **Provider logins are subscription credentials.** The `claude-auth` and
-  `codex-auth` volumes hold OAuth tokens for your own subscriptions; anything running in the
-  container can read them. Remove the volumes (`docker volume rm`) to log out for good.
+- **Provider logins are subscription credentials.** Wherever a CLI keeps its login inside the
+  container, anything running in the container can read it. Log out, or delete that home, to
+  revoke it here.
 - **On Windows**, `initializeCommand` runs under `cmd.exe`. With Git for Windows' `sh` on the
   `PATH` it behaves as above; without it the command falls through, no `.host.env` is written,
   and the `GITHUB_*` values have to go in `local.env`.
@@ -104,6 +105,6 @@ provisioning. No production secret lives in this container.
 | An edit to `local.env` has no effect | Environment files are read at creation; reopening does not recreate | **Rebuild Container** |
 | `gh` asks you to log in | The container was rebuilt, or step 4 of First open never ran | Step 4, on the host |
 | `gh` answers `Bad credentials`, or 403/404 on another repository | The token expired — or it is scoped to this repository, by design | A new token; another repository gets its own |
-| `EACCES` writing to `~/.claude`, `~/.codex` or `node_modules` | A volume was created root-owned and `post-create.sh` has not run since | Run `bash .devcontainer/post-create.sh` |
+| `EACCES` writing to `node_modules` | The volume was created root-owned and `post-create.sh` has not run since | Run `bash .devcontainer/post-create.sh` |
 | `better-sqlite3` fails to load (invalid ELF header, or `NODE_MODULE_VERSION` mismatch) | `node_modules` was built on the host, or under an older Node | Run `bash .devcontainer/post-create.sh`; if it persists, delete the `node_modules` volume and **Rebuild Container** |
 | `ssh-add -l` says it cannot connect to the agent, or SSH fails with `Permission denied (publickey)` | The agent is forwarded only to processes VS Code starts; `docker exec` and outside terminals have no `SSH_AUTH_SOCK`, and the host agent may hold no key | Use a VS Code terminal; on the host, `ssh-add` your key |

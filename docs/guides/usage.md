@@ -94,8 +94,8 @@ used, in the dashboard and in `catalog.source` on `GET /admin/providers`:
 | `declared` | no catalog at all, only the hardcoded tier names | `claude: could not ask — built-in aliases only` |
 
 The baked file is a floor, never the source of truth: your host runs its own binaries under its own
-account, and a live probe always wins. Regenerate it in the dev container, where both CLIs are
-installed and signed in:
+account, and a live probe always wins. Regenerate it in the dev container, once both CLIs are
+installed and signed in there:
 
 ```bash
 node scripts/build-model-catalog.js   # writes src/catalog/models.json, stamped with the date and the CLI versions

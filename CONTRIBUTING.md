@@ -42,8 +42,8 @@ lints and scans staged changes for secrets.
 The project includes a devcontainer configuration for local development. Open in VS Code with the Dev Containers extension. How credentials reach the container and what survives a rebuild is in [`.devcontainer/README.md`](.devcontainer/README.md).
 
 ```bash
-# The devcontainer installs all CLI tools automatically
-# After opening, verify:
+# The devcontainer does not install the provider CLIs: bring claude and codex
+# (installed and logged in) with your own tooling, then verify:
 claude --version
 codex --version
 ```
