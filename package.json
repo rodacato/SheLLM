@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
-    "@redocly/cli": "^2.53.3",
+    "@redocly/cli": "^2.54.2",
     "eslint": "^10.11.0",
     "openai": "^7.23.0",
     "supertest": "^7.3.0"
