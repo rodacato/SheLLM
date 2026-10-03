@@ -183,11 +183,18 @@ function errorBreakdown(interval, limit = 20) {
   `).all(interval, limit);
 }
 
+// Only a 429 that came from a provider counts: the gateway's own (client rate limit, full queue,
+// too many streams) is rejected before any provider is chosen, so its row has no provider. The
+// banner clears as soon as that provider answers a request again.
 function limitState(interval) {
   const row = db().prepare(`
     SELECT created_at, provider, api_error_status, status
-    FROM request_logs
-    WHERE ${LOGGED} AND (api_error_status = 429 OR status = 429)
+    FROM request_logs AS hit
+    WHERE ${LOGGED} AND provider IS NOT NULL AND (api_error_status = 429 OR status = 429)
+      AND NOT EXISTS (
+        SELECT 1 FROM request_logs AS ok
+        WHERE ok.provider = hit.provider AND ok.id > hit.id AND ok.status < 400
+      )
     ORDER BY id DESC
     LIMIT 1
   `).get(interval);
