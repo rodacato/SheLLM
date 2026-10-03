@@ -81,7 +81,7 @@ function quotaSection(interval, uptimeHours) {
   return {
     windows,
     by_provider: stats.usageByProvider(interval),
-    limited: stats.limitState('-7 days'),
+    limited: stats.limitState(`-${QUOTA_WINDOW_HOURS[0]} hours`),
     note: 'Derived from observed usage. Neither CLI reports remaining quota or a reset time.',
   };
 }

@@ -99,7 +99,11 @@
             <div x-show="stats.quota.limited" class="bg-error-container border-l-2 border-status-fail p-4 mb-4">
               <span class="font-headline font-bold text-error text-sm">USAGE LIMIT HIT</span>
               <span class="text-xs font-mono text-on-surface-variant ml-2"
-                x-text="stats.quota.limited ? stats.quota.limited.provider + ' · since ' + formatTime(stats.quota.limited.since) : ''"></span>
+                x-text="stats.quota.limited ? stats.quota.limited.provider + ' answered 429 at ' + formatTime(stats.quota.limited.since) : ''"></span>
+              <p class="text-xs text-on-surface-variant mt-2">
+                The provider refused a request because the subscription's quota is spent. This clears on its own
+                when that provider answers a request again; the CLI reports no reset time, so wait for the quota window to roll over.
+              </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">

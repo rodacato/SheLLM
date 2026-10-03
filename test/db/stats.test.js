@@ -98,3 +98,28 @@ describe('db/stats', () => {
     assert.ok(recent.every((r) => r.duration_ms != null));
   });
 });
+
+describe('db/stats limitState', () => {
+  before(() => {
+    try { closeDb(); } catch { /* not open */ }
+    initDb(':memory:');
+  });
+
+  after(() => closeDb());
+
+  it('ignores a 429 the gateway issued itself, which carries no provider', () => {
+    insertRequestLog({ request_id: 'g1', client_name: 'app', status: 429, error_code: 'rate_limited' });
+    assert.equal(stats.limitState(DAY), null);
+  });
+
+  it('clears once the limited provider answers a request again', () => {
+    insertRequestLog({ request_id: 'p1', client_name: 'app', provider: 'claude', status: 429, api_error_status: 429 });
+    assert.equal(stats.limitState(DAY).provider, 'claude');
+
+    insertRequestLog({ request_id: 'p2', client_name: 'app', provider: 'codex', status: 200 });
+    assert.equal(stats.limitState(DAY).provider, 'claude', 'another provider succeeding proves nothing');
+
+    insertRequestLog({ request_id: 'p3', client_name: 'app', provider: 'claude', status: 200 });
+    assert.equal(stats.limitState(DAY), null);
+  });
+});
