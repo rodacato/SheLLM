@@ -134,7 +134,7 @@
             </div>
           </div>
         </div>
-        <p class="text-xs text-outline mb-6">The API equivalent counts only requests with a reported price. It is not a charge to your subscription. <span x-show="costCoverage(usageSummary)" x-text="costCoverage(usageSummary)"></span></p>
+        <p class="text-xs text-outline mb-6">The API equivalent counts requests with a reported price; codex requests show an estimate from API list prices, marked est. Neither is a charge to your subscription. <span x-show="costCoverage(usageSummary)" x-text="costCoverage(usageSummary)"></span></p>
 
         <!-- Table -->
         <div class="bg-surface-container overflow-hidden">
@@ -234,7 +234,7 @@
                     <td class="px-6 py-4 text-on-surface font-mono text-sm" x-text="log.tokens != null ? log.tokens.toLocaleString() : '-'"></td>
                     <td class="px-6 py-4 font-mono text-sm font-bold"
                       :class="log.cost_usd > 0 ? 'text-primary-container' : 'text-outline'"
-                      x-text="formatCost(log.cost_usd)"></td>
+                      x-text="rowCost(log)"></td>
                   </tr>
                   <tr x-show="expandedId === log.id" :id="'log-' + log.id + '-detail'" class="border-t border-outline-variant/20 bg-surface-container-lowest">
                     <td colspan="9" class="px-6 py-4">
