@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-10-13
+
+### Added
+
+- **admin:** clarify observed usage and unify product branding
+
+### Fixed
+
+- **api:** honor a body request_id on /v1/chat/completions
+- **admin:** treat an undecodable session cookie as no session
+- **admin:** compare log date filters as dates, not strings
+- **auth:** spend the global rate limit only on admitted requests
+- **queue:** let MAX_QUEUE_DEPTH=0 run requests that need no wait
+- **api:** log a provider's failure against that provider
+- **api:** report streamed outcomes to the circuit breaker consistently
+- **providers:** stop the CLI when a stream's caller is gone
+- **routing:** give back the circuit probe slot on every exit
+- **admin:** only show USAGE LIMIT HIT for a provider 429 that has not cleared
+- **devcontainer:** stop passing the host's gh token into the container
+- **site:** give every lede-and-support section the same two columns
+- **site:** stop What it is and Get started at the width of the page, not half of it
+
+### Maintenance
+
+- **deps:** bump dotenv from 18.0.1 to 18.0.4
+- **deps:** bump ghcr.io/devcontainers/features/github-cli
+- **deps-dev:** bump @redocly/cli from 2.53.3 to 2.54.2
+- **deps-dev:** bump supertest from 7.2.2 to 7.3.0
+- **devcontainer:** stop installing and persisting AI agent CLIs
+
+### Testing
+
+- **cli:** wait for restored server to exit before cleanup
+
+
 ## [1.18.0] - 2026-09-27
 
 ### Added
@@ -1056,7 +1091,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.18.0...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.19.0...HEAD
+[1.19.0]: https://github.com/rodacato/SheLLM/compare/v1.18.0...v1.19.0
 [1.18.0]: https://github.com/rodacato/SheLLM/compare/v1.17.1...v1.18.0
 [1.17.1]: https://github.com/rodacato/SheLLM/compare/v1.17.0...v1.17.1
 [1.17.0]: https://github.com/rodacato/SheLLM/compare/v1.16.1...v1.17.0
