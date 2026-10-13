@@ -66,7 +66,7 @@ what it is for.
 You already pay the subscription, so the marginal request costs nothing extra — and for Claude the
 CLI reports what that request *would* have cost on the API, attributed to the key that made it.
 Build the feature, run it for a week, and you know the bill before you decide to pay one. Codex
-reports no cost, so its dashboard requests read `Sin precio` (unpriced).
+reports no cost, so its dashboard requests read `not priced`.
 
 Four shapes, one integration — an official SDK with the base URL and the key swapped:
 

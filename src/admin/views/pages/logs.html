@@ -129,12 +129,12 @@
               <p class="text-2xl font-headline font-black text-primary-container" x-text="stats ? formatCompactNumber(stats.total_tokens) : '-'"></p>
             </div>
             <div>
-              <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-2">Equivalente API estimado</p>
+              <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-2">Estimated API equivalent</p>
               <p class="text-2xl font-headline font-black text-white" x-text="stats ? observedCost(usageSummary) : '-'"></p>
             </div>
           </div>
         </div>
-        <p class="text-xs text-outline mb-6">El equivalente API suma solo las requests con precio reportado. No es un cargo a tu suscripción. <span x-show="costCoverage(usageSummary)" x-text="costCoverage(usageSummary)"></span></p>
+        <p class="text-xs text-outline mb-6">The API equivalent counts only requests with a reported price. It is not a charge to your subscription. <span x-show="costCoverage(usageSummary)" x-text="costCoverage(usageSummary)"></span></p>
 
         <!-- Table -->
         <div class="bg-surface-container overflow-hidden">

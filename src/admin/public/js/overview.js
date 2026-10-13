@@ -147,8 +147,8 @@ function overviewPage() {
     },
 
     usageRate(usage) {
-      if (!usage.requests) return 'Sin actividad';
-      const cost = usage.priced_requests > 0 ? `${formatCost(usage.cost_per_hour)}/h en API` : 'Precio desconocido';
+      if (!usage.requests) return 'No activity';
+      const cost = usage.priced_requests > 0 ? `${formatCost(usage.cost_per_hour)}/h API equivalent` : 'Price unknown';
       const rpm = usage.requests_per_minute > 0 ? usage.requests_per_minute : '<0.01';
       return `${cost} · ${rpm} rpm`;
     },
