@@ -228,14 +228,31 @@ function formatCost(usd) {
   return `$${usd.toFixed(4)}`;
 }
 
+// An estimate is marked as one and shown beside a reported cost, never added to it (ADR-0012).
+function formatEstimate(usd) {
+  return `~$${usd.toFixed(4)} est.`;
+}
+
+function rowCost(log) {
+  if (log.cost_usd == null && log.cost_estimate_usd != null) return formatEstimate(log.cost_estimate_usd);
+  return formatCost(log.cost_usd);
+}
+
 function observedCost(usage) {
   if (!usage.requests) return 'No activity';
-  return usage.priced_requests > 0 ? formatCost(usage.cost_usd) : 'not priced';
+  const reported = usage.priced_requests > 0 ? formatCost(usage.cost_usd) : null;
+  const estimate = usage.estimated_requests > 0 ? formatEstimate(usage.cost_estimate_usd) : null;
+  if (reported && estimate) return `${reported} + ${estimate}`;
+  return reported || estimate || 'not priced';
 }
 
 function costCoverage(usage) {
-  if (!usage.requests || usage.priced_requests === usage.requests) return '';
-  return `${usage.priced_requests || 0}/${usage.requests} requests priced; the rest is not counted in the API equivalent.`;
+  const priced = usage.priced_requests || 0;
+  const estimated = usage.estimated_requests || 0;
+  if (!usage.requests || priced === usage.requests) return '';
+  if (!estimated) return `${priced}/${usage.requests} requests priced; the rest is not counted in the API equivalent.`;
+  const unpriced = usage.requests - priced - estimated;
+  return `${priced} reported, ${estimated} estimated from API list prices${unpriced > 0 ? `, ${unpriced} not priced` : ''}.`;
 }
 
 // Whose clock the page speaks. The browser's used to, so the same dashboard read differently

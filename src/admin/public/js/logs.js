@@ -338,13 +338,18 @@ function logsPage() {
     formatTime,
     formatDuration,
     formatCost,
+    rowCost,
     observedCost,
     costCoverage,
     get usageSummary() {
+      const providers = this.stats?.quota?.by_provider || [];
+      const total = (field) => providers.reduce((sum, p) => sum + (p[field] || 0), 0);
       return {
         requests: this.stats?.total_requests || 0,
-        priced_requests: (this.stats?.quota?.by_provider || []).reduce((sum, p) => sum + (p.priced_requests || 0), 0),
+        priced_requests: total('priced_requests'),
         cost_usd: this.stats?.total_cost_usd,
+        estimated_requests: total('estimated_requests'),
+        cost_estimate_usd: total('cost_estimate_usd'),
       };
     },
     formatCompactNumber,

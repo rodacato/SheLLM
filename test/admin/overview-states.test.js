@@ -320,6 +320,16 @@ describe('observed usage keeps unknown prices apart from zero', () => {
     assert.strictEqual(page.costCoverage({ requests: 2, priced_requests: 2 }), '');
   });
 
+  it('marks an estimate as one and never adds it to a reported cost', () => {
+    const estimatedOnly = { requests: 3, priced_requests: 0, cost_usd: 0, estimated_requests: 3, cost_estimate_usd: 0.0126 };
+    assert.strictEqual(page.observedCost(estimatedOnly), '~$0.0126 est.');
+    assert.strictEqual(page.costCoverage(estimatedOnly), '0 reported, 3 estimated from API list prices.');
+
+    const mixed = { requests: 5, priced_requests: 2, cost_usd: 1.25, estimated_requests: 2, cost_estimate_usd: 0.5 };
+    assert.strictEqual(page.observedCost(mixed), '$1.2500 + ~$0.5000 est.');
+    assert.strictEqual(page.costCoverage(mixed), '2 reported, 2 estimated from API list prices, 1 not priced.');
+  });
+
   it('does not draw an unknown hourly price as zero, or rounded traffic as no activity', () => {
     assert.strictEqual(page.usageRate({ requests: 0 }), 'No activity');
     assert.strictEqual(page.usageRate({ requests: 2, priced_requests: 0, requests_per_minute: 0 }), 'Price unknown · <0.01 rpm');

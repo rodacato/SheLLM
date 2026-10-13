@@ -84,6 +84,7 @@ module.exports = [
         formatDuration: 'readonly',
         formatCost: 'readonly',
         observedCost: 'readonly',
+        rowCost: 'readonly',
         costCoverage: 'readonly',
         countOf: 'readonly',
         formatTime: 'readonly',
