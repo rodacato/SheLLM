@@ -3,7 +3,7 @@ const { jobFor } = require('../../infra/queue');
 const { openAIUsage } = require('./usage');
 const { wantsLongContext } = require('./betas');
 const { sanitize } = require('../../middleware/sanitize');
-const { invalidRequest, isClientError, fromCatchable, recordErrorCode, sendOpenAIError } = require('../../errors');
+const { invalidRequest, isClientError, fromCatchable, keepProviderLimit, recordErrorCode, sendOpenAIError } = require('../../errors');
 const { recordSuccess, recordFailure, holdsProbe, releaseProbe } = require('../../infra/circuit-breaker');
 const { initSSE, announceQueued, keepAlive, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../lib/sse');
 const { shellmMeta } = require('../../lib/shellm-meta');
@@ -461,6 +461,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
     logger.debug({ event: 'stream_error', error: err.message, request_id: req.requestId });
     const failure = fromCatchable(err, provider.name);
     if (!ac.signal.aborted && !isClientError(failure)) recordFailure(provider.name);
+    keepProviderLimit(res, failure, cliStart);
     if (!ac.signal.aborted && !res.writableEnded) {
       // The headers went out as 200, so the log learns what failed from error_code alone.
       recordErrorCode(res, failure);

@@ -4,7 +4,7 @@ const { anthropicCacheUsage, anthropicUsage } = require('./usage');
 const { wantsLongContext } = require('./betas');
 const { refuseAnthropicTools } = require('./function-calling');
 const { sanitize } = require('../../middleware/sanitize');
-const { invalidRequest, rateLimited, isClientError, fromCatchable, recordErrorCode, sendAnthropicError } = require('../../errors');
+const { invalidRequest, rateLimited, isClientError, fromCatchable, keepProviderLimit, recordErrorCode, sendAnthropicError } = require('../../errors');
 const { recordSuccess, recordFailure, holdsProbe, releaseProbe } = require('../../infra/circuit-breaker');
 const { initSSE, announceQueued, keepAlive } = require('../../lib/sse');
 const { shellmMeta } = require('../../lib/shellm-meta');
@@ -369,6 +369,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
     logger.debug({ event: 'stream_error', format: 'anthropic', error: err.message, request_id: req.requestId });
     const failure = fromCatchable(err, provider.name);
     if (!ac.signal.aborted && !isClientError(failure)) recordFailure(provider.name);
+    keepProviderLimit(res, failure, cliStart);
     if (!ac.signal.aborted && !res.writableEnded) {
       recordErrorCode(res, failure);
       sendStreamError(res, failure);
