@@ -97,6 +97,16 @@ describe('admin login', () => {
     }
   });
 
+  it('treats an undecodable session cookie as no session, not a server error', async () => {
+    const malformed = `${session.COOKIE_NAME}=%E0%A4%A`;
+
+    const api = await request(app).get('/admin/keys').set('Cookie', malformed);
+    assert.strictEqual(api.status, 401);
+
+    const page = await request(app).get('/admin/login').set('Cookie', malformed);
+    assert.strictEqual(page.status, 200, 'the operator can still sign in again');
+  });
+
   it('renews a session that is in use, and leaves a fresh one alone', async () => {
     const issuedTwoHoursAgo = session.issue(Date.now() - 2 * 60 * 60 * 1000);
     const used = await request(app).get('/admin/keys').set('Cookie', `${session.COOKIE_NAME}=${issuedTwoHoursAgo}`);
