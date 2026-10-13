@@ -65,7 +65,7 @@ Everything else is documented in [`.env.example`](../../.env.example). What matt
 |---|---|---|
 | `HOST` | `127.0.0.1` | Keep it. Expose SheLLM through a tunnel or proxy, not by binding publicly |
 | `PORT` | `6100` | A port collision |
-| `MAX_CONCURRENT` | `4` | Each CLI process costs 150–215 MB of RAM (measured in [`benchmarks.md`](./benchmarks.md)) |
+| `MAX_CONCURRENT` | `4` | Each CLI process costs 150–215 MB of RAM (measured in [`benchmarks.md`](./benchmarks.md)). Every claude spawn rewrites the shared `~/.claude.json`; 5 parallel spawns were measured without corrupting it, so 4 stays under what was proven |
 | `MAX_STREAM_CONCURRENT` | `4` | Streaming holds a slot for the whole response and is capped separately |
 | `SHELLM_GLOBAL_RPM` | `60` | Requests per minute across all keys |
 | `SHELLM_ADMIN_PASSWORD` | generated | The dashboard login, at `/admin/login` |
@@ -314,7 +314,7 @@ under load.
 
 ### Restoring
 
-The snapshot is two ordinary files. Nothing about restoring assumes the tool that carried them
+The snapshot is ordinary files: the database, the config file and, where there is one, claude's state. Nothing about restoring assumes the tool that carried them
 here, or that they came from this host.
 
 ```bash
@@ -342,6 +342,11 @@ sudo -iu shellmer shellm doctor
 
 Restore the config file only if you are also restoring its secrets — a snapshot from another host,
 or one taken before you rotated the admin password, will put the old values back.
+
+A snapshot also holds `claude.json` when the service user had one: the claude CLI's own state,
+which every spawn rewrites. Restore it only if that file is what broke (claude fails to parse its
+config), with the service stopped:
+`sudo install -o shellmer -g shellmer -m 600 "$snapshot/claude.json" /home/shellmer/.claude.json`.
 
 **Rehearse it.** A backup nobody has restored is not a backup, and this costs nothing: point
 `HOME` at a throwaway directory and start a second instance on another port, with the live one

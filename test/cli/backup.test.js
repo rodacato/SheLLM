@@ -11,7 +11,7 @@ const Database = require('better-sqlite3');
 const CLI = path.resolve(__dirname, '../../src/cli.js');
 const DB_MODULE = path.resolve(__dirname, '../../src/db');
 const BETTER_SQLITE3 = require.resolve('better-sqlite3');
-const { SNAPSHOT_NAME, DB_NAME, CONFIG_NAME } = require('../../src/cli/backup');
+const { SNAPSHOT_NAME, DB_NAME, CONFIG_NAME, CLAUDE_STATE_NAME } = require('../../src/cli/backup');
 
 let home;
 let backups;
@@ -87,6 +87,20 @@ describe('shellm backup', () => {
     assert.strictEqual(fs.statSync(path.join(snapshot, DB_NAME)).mode & 0o777, 0o600,
       'the database carries the API key hashes and the request log');
     assert.strictEqual(fs.statSync(snapshot).mode & 0o777, 0o700);
+  });
+
+  it('keeps a private copy of claude\'s state file when there is one, and does without it otherwise', async () => {
+    await shellm(['backup', '--dir', backups]);
+    assert.ok(!fs.existsSync(path.join(backups, snapshots()[0], CLAUDE_STATE_NAME)), 'a codex-only host has none');
+
+    fs.writeFileSync(path.join(home, '.claude.json'), '{"userID":"u1"}');
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+    const result = await shellm(['backup', '--dir', backups]);
+    assert.strictEqual(result.code, 0, result.stdout + result.stderr);
+
+    const copy = path.join(backups, snapshots().at(-1), CLAUDE_STATE_NAME);
+    assert.strictEqual(fs.readFileSync(copy, 'utf8'), '{"userID":"u1"}');
+    assert.strictEqual(fs.statSync(copy).mode & 0o777, 0o600);
   });
 
   it('refuses to run as root, because it would leave root-owned WAL files behind', async (t) => {
