@@ -62,7 +62,12 @@ function readCookie(req) {
   if (!header) return null;
   for (const part of header.split(';')) {
     const [name, ...rest] = part.trim().split('=');
-    if (name === COOKIE_NAME) return decodeURIComponent(rest.join('='));
+    if (name !== COOKIE_NAME) continue;
+    try {
+      return decodeURIComponent(rest.join('='));
+    } catch {
+      return null;
+    }
   }
   return null;
 }
