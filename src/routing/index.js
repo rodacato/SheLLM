@@ -1,4 +1,4 @@
-const { recordSuccess, recordFailure } = require('../infra/circuit-breaker');
+const { recordSuccess, recordFailure, holdsProbe, releaseProbe } = require('../infra/circuit-breaker');
 const { isClientError } = require('../errors');
 const { queue } = require('../infra/queue');
 const { acquireStreamSlot, releaseStreamSlot } = require('../infra/stream-slots');
@@ -16,6 +16,7 @@ async function route({ model, prompt, parts, system, max_tokens, temperature, to
   }
 
   const provider = selectProvider(model);
+  const probe = holdsProbe(provider.name);
   const startTime = Date.now();
 
   let result;
@@ -28,6 +29,8 @@ async function route({ model, prompt, parts, system, max_tokens, temperature, to
   } catch (err) {
     if (!isClientError(err)) recordFailure(provider.name);
     throw err;
+  } finally {
+    if (probe) releaseProbe(provider.name);
   }
 
   return {

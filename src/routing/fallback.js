@@ -1,5 +1,5 @@
 const { invalidRequest, providerUnavailable, isClientError } = require('../errors');
-const { recordSuccess, recordFailure } = require('../infra/circuit-breaker');
+const { recordSuccess, recordFailure, holdsProbe, releaseProbe } = require('../infra/circuit-breaker');
 const { queue } = require('../infra/queue');
 const { engines } = require('./engines');
 const { resolveProvider, checkProviderAvailability, getAvailableProviders } = require('./provider-select');
@@ -41,6 +41,7 @@ async function routeWithFallback({ model, prompt, parts, system, max_tokens, tem
       continue;
     }
 
+    const probe = holdsProbe(candidate.name);
     const startTime = Date.now();
     try {
       const result = await queue.enqueue(({ queued_ms, position }) => {
@@ -75,6 +76,8 @@ async function routeWithFallback({ model, prompt, parts, system, max_tokens, tem
       if (isClientError(err)) {
         throw err;
       }
+    } finally {
+      if (probe) releaseProbe(candidate.name);
     }
   }
 

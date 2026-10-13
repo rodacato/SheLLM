@@ -1,5 +1,5 @@
 const { invalidRequest, providerUnavailable } = require('../errors');
-const { canSendTraffic } = require('../infra/circuit-breaker');
+const { canSendTraffic, isAvailable } = require('../infra/circuit-breaker');
 const { engines } = require('./engines');
 
 function resolveProvider(model) {
@@ -11,7 +11,7 @@ function resolveProvider(model) {
  * Check if a provider is available (enabled, authenticated, circuit closed).
  * Returns null if available, or a reason string if not.
  */
-function checkProviderAvailability(provider) {
+function checkProviderAvailability(provider, { takeProbe = true } = {}) {
   const { getProviderSetting } = require('../db');
   const { getCachedProviderStatus } = require('../infra/health');
 
@@ -21,7 +21,8 @@ function checkProviderAvailability(provider) {
   const healthStatus = getCachedProviderStatus(provider.name);
   if (healthStatus && healthStatus.authenticated === false) return 'not authenticated';
 
-  if (!canSendTraffic(provider.name)) return 'circuit_open';
+  const passes = takeProbe ? canSendTraffic(provider.name) : isAvailable(provider.name);
+  if (!passes) return 'circuit_open';
 
   return null;
 }
@@ -51,7 +52,7 @@ function selectProvider(model) {
  */
 function getAvailableProviders() {
   return Object.values(engines)
-    .filter((p) => !checkProviderAvailability(p))
+    .filter((p) => !checkProviderAvailability(p, { takeProbe: false }))
     .map((p) => p.name);
 }
 

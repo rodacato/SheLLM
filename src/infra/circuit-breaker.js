@@ -75,6 +75,25 @@ function canSendTraffic(name) {
   return true;
 }
 
+// Same answer as canSendTraffic without taking the probe slot, for callers that only report.
+function isAvailable(name) {
+  const circuit = getOrCreate(name);
+  if (circuit.state === 'closed') return true;
+  if (circuit.state === 'open') return Date.now() - circuit.lastTransitionAt >= RESET_MS;
+  return !circuit.probing;
+}
+
+// Only meaningful right after canSendTraffic returned true: in half_open only the probe gets through.
+function holdsProbe(name) {
+  return getOrCreate(name).state === 'half_open';
+}
+
+// A probe that ended in neither success nor provider failure (client error, abort) frees the slot.
+function releaseProbe(name) {
+  const circuit = getOrCreate(name);
+  if (circuit.state === 'half_open') circuit.probing = false;
+}
+
 // retry_at is reported rather than left to the caller: RESET_MS is this module's policy and a
 // dashboard that guessed it would be wrong the moment the env var changed.
 function getCircuitState(name) {
@@ -106,4 +125,4 @@ function resetCircuit(name) {
   }
 }
 
-module.exports = { recordSuccess, recordFailure, canSendTraffic, getCircuitState, getAllCircuitStates, resetCircuit };
+module.exports = { recordSuccess, recordFailure, canSendTraffic, isAvailable, holdsProbe, releaseProbe, getCircuitState, getAllCircuitStates, resetCircuit };
