@@ -3,6 +3,7 @@
 const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const { execFile, spawn } = require('node:child_process');
+const { once } = require('node:events');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -82,8 +83,12 @@ describe('a restored snapshot', () => {
     });
   });
 
-  after(() => {
-    if (server) server.kill('SIGKILL');
+  after(async () => {
+    if (server && server.exitCode === null && server.signalCode === null) {
+      const exited = once(server, 'exit');
+      server.kill('SIGKILL');
+      await exited;
+    }
     for (const dir of [home, backups, restored]) fs.rmSync(dir, { recursive: true, force: true });
   });
 
