@@ -242,6 +242,7 @@ async function messagesHandler(req, res) {
       }),
     });
   } catch (catchErr) {
+    res.locals.provider = catchErr.provider ?? null;
     const errObj = fromCatchable(catchErr, model);
     errObj.duration_ms = Date.now() - startTime;
     sendAnthropicError(res, errObj);
