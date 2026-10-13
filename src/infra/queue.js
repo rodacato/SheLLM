@@ -38,13 +38,13 @@ class RequestQueue {
   }
 
   async enqueue(fn, job = {}, { onQueued } = {}) {
-    if (this.pending.length >= getMaxQueueDepth()) {
+    const position = this.nextPosition;
+    if (position > 0 && this.pending.length >= getMaxQueueDepth()) {
       logger.warn({ event: 'queue_full', active: this.active, pending: this.pending.length });
       throw rateLimited('Queue is full, try again later');
     }
 
     const arrivedAt = this.now();
-    const position = this.nextPosition;
     if (position > 0) {
       if (onQueued) onQueued(position);
       await new Promise((resolve) => this.pending.push({ resolve, job, arrivedAt }));
