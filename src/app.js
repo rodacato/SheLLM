@@ -5,6 +5,7 @@ const { messagesHandler } = require('./api/v1/messages');
 const { modelsHandler } = require('./api/v1/models');
 const { requestLogger } = require('./middleware/logging');
 const { requestId } = require('./middleware/request-id');
+const { errorHandler } = require('./middleware/error-handler');
 const { createAuthMiddleware } = require('./middleware/auth');
 const { corsV1 } = require('./middleware/cors');
 const config = require('./config');
@@ -191,5 +192,6 @@ app.get('/admin/dashboard/', adminAuth, adminSecurityHeaders, (_req, res) => {
 app.use((req, res) => {
   sendApiError(req, res, notFound(req.method, req.path.slice(0, 100)), req.requestId);
 });
+app.use(errorHandler);
 
 module.exports = app;
