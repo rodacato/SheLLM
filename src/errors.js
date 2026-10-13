@@ -55,6 +55,13 @@ function isClientError(err) {
   return err.status >= 400 && err.status < 500;
 }
 
+// The request log credits a failure to the provider that produced it. A gateway refusal (full
+// queue) is never blamed on one: the usage-limit banner reads a provider 429 as the CLI's own.
+function blame(err, provider) {
+  if (err && typeof err === 'object') err.provider = provider;
+  return err;
+}
+
 // Normalize a caught error (plain object from base.js or structured appError)
 function fromCatchable(err, provider) {
   if (err.code && err.status) return err;
@@ -163,6 +170,7 @@ module.exports = {
   fromCatchable,
   recordErrorCode,
   isClientError,
+  blame,
   sendError,
   sendApiError,
   sendOpenAIError,

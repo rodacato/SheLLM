@@ -1,5 +1,5 @@
 const { recordSuccess, recordFailure, holdsProbe, releaseProbe } = require('../infra/circuit-breaker');
-const { isClientError } = require('../errors');
+const { isClientError, blame } = require('../errors');
 const { queue } = require('../infra/queue');
 const { acquireStreamSlot, releaseStreamSlot } = require('../infra/stream-slots');
 const { engines } = require('./engines');
@@ -23,7 +23,7 @@ async function route({ model, prompt, parts, system, max_tokens, temperature, to
   try {
     result = await queue.enqueue(({ queued_ms, position }) => {
       return provider.chat({ prompt, parts, system, max_tokens, temperature, top_p, response_format, effort, longContext, model })
-        .then((r) => ({ ...r, queued_ms, queue_position: position }));
+        .then((r) => ({ ...r, queued_ms, queue_position: position }), (err) => { throw blame(err, provider.name); });
     }, { ...job, provider: provider.name, model: model || provider.name });
     recordSuccess(provider.name);
   } catch (err) {

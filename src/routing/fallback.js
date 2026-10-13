@@ -1,4 +1,4 @@
-const { invalidRequest, providerUnavailable, isClientError } = require('../errors');
+const { invalidRequest, providerUnavailable, isClientError, blame } = require('../errors');
 const { recordSuccess, recordFailure, holdsProbe, releaseProbe } = require('../infra/circuit-breaker');
 const { queue } = require('../infra/queue');
 const { engines } = require('./engines');
@@ -46,7 +46,7 @@ async function routeWithFallback({ model, prompt, parts, system, max_tokens, tem
     try {
       const result = await queue.enqueue(({ queued_ms, position }) => {
         return candidate.chat({ prompt, parts, system, max_tokens, temperature, top_p, response_format, effort, longContext, model })
-          .then((r) => ({ ...r, queued_ms, queue_position: position }));
+          .then((r) => ({ ...r, queued_ms, queue_position: position }), (err) => { throw blame(err, candidate.name); });
       }, { ...job, provider: candidate.name, model: model || candidate.name });
       recordSuccess(candidate.name);
 
