@@ -136,7 +136,7 @@
             <p x-show="!providersLoaded" class="text-outline text-xs font-mono">Loading providers...</p>
             <p x-show="providersLoaded && providersError" class="text-error text-xs font-mono"
               x-text="'Could not read providers — ' + providersError + '.'"></p>
-            <p x-show="providersLoaded && !providersError && providers.length === 0" class="text-outline text-xs font-mono">No hay proveedores configurados. <a href="#system" @click="navigate('system')" class="link-brand">Revisar configuración</a></p>
+            <p x-show="providersLoaded && !providersError && providers.length === 0" class="text-outline text-xs font-mono">No providers configured. <a href="#system" @click="navigate('system')" class="link-brand">Check the configuration</a></p>
           </div>
         </div>
         </div>
@@ -147,7 +147,7 @@
               <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Consumo observado</span>
               <span class="text-[10px] text-outline" x-text="stats.quota.note"></span>
             </div>
-            <p class="text-xs text-on-surface-variant mb-4">El equivalente en API estima lo que costarían las requests con precio reportado por el CLI. No es un cargo ni el saldo de tu suscripción.</p>
+            <p class="text-xs text-on-surface-variant mb-4">The API equivalent estimates what the requests the CLI priced would cost on the API. It is not a charge, nor your subscription's balance.</p>
 
             <div x-show="stats.quota.limited" class="bg-error-container border-l-2 border-status-fail p-4 mb-4">
               <span class="font-headline font-bold text-error text-sm">USAGE LIMIT HIT</span>
@@ -173,7 +173,7 @@
                   </div>
                   <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <div class="col-span-2 sm:col-span-1 min-w-0">
-                      <p class="text-[10px] font-mono text-outline uppercase mb-1">Equivalente API</p>
+                      <p class="text-[10px] font-mono text-outline uppercase mb-1">API equivalent</p>
                       <p class="text-xl font-headline font-black text-white" x-text="observedCost(w)"></p>
                     </div>
                     <div class="min-w-0 break-words">
@@ -199,7 +199,7 @@
                     <th class="text-left font-normal pb-2">Provider</th>
                     <th class="text-right font-normal pb-2">Requests</th>
                     <th class="text-right font-normal pb-2">Tokens</th>
-                    <th class="text-right font-normal pb-2">Equivalente API</th>
+                    <th class="text-right font-normal pb-2">API equivalent</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -225,7 +225,7 @@
               <span class="material-symbols-outlined text-[16px]" aria-hidden="true">history</span>
               <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Errors</span>
               <span class="text-[10px] font-mono text-outline" x-text="stats.error_rate.success_pct + '% ok'"></span>
-              <span class="text-[10px] text-outline">Histórico del periodo · abrir detalle</span>
+              <span class="text-[10px] text-outline">Period history · open details</span>
             </summary>
             <div class="bg-surface-container p-5">
             <div class="overflow-x-auto">
@@ -341,7 +341,7 @@
                       <th class="text-right font-normal pb-2">Reqs</th>
                       <th class="text-right font-normal pb-2">Avg</th>
                       <th class="text-right font-normal pb-2">Tokens</th>
-                      <th class="text-right font-normal pb-2">Equivalente API</th>
+                      <th class="text-right font-normal pb-2">API equivalent</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -370,7 +370,7 @@
                       <th class="text-left font-normal pb-2">Client</th>
                       <th class="text-right font-normal pb-2">Reqs</th>
                       <th class="text-right font-normal pb-2">Errors</th>
-                      <th class="text-right font-normal pb-2">Equivalente API</th>
+                      <th class="text-right font-normal pb-2">API equivalent</th>
                       <th class="text-right font-normal pb-2">Last seen</th>
                     </tr>
                   </thead>

@@ -224,18 +224,18 @@ function countOf(n, noun) {
 
 // Free and unpriced are different answers: a zero is a price, a missing value is not one.
 function formatCost(usd) {
-  if (usd == null) return 'Sin precio';
+  if (usd == null) return 'not priced';
   return `$${usd.toFixed(4)}`;
 }
 
 function observedCost(usage) {
-  if (!usage.requests) return 'Sin actividad';
-  return usage.priced_requests > 0 ? formatCost(usage.cost_usd) : 'Sin precio';
+  if (!usage.requests) return 'No activity';
+  return usage.priced_requests > 0 ? formatCost(usage.cost_usd) : 'not priced';
 }
 
 function costCoverage(usage) {
   if (!usage.requests || usage.priced_requests === usage.requests) return '';
-  return `${usage.priced_requests || 0}/${usage.requests} requests con precio; el resto no se suma al equivalente API.`;
+  return `${usage.priced_requests || 0}/${usage.requests} requests priced; the rest is not counted in the API equivalent.`;
 }
 
 // Whose clock the page speaks. The browser's used to, so the same dashboard read differently

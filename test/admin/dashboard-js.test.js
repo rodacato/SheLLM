@@ -96,8 +96,8 @@ describe('formatCost', () => {
   const format = (value) => vm.runInContext('formatCost', loadDashboard(async () => json(200, {})).context)(value);
 
   it('says a missing price is not a price', () => {
-    assert.strictEqual(format(null), 'Sin precio');
-    assert.strictEqual(format(undefined), 'Sin precio');
+    assert.strictEqual(format(null), 'not priced');
+    assert.strictEqual(format(undefined), 'not priced');
   });
 
   it('prints a zero as a real amount, in the same format as any other', () => {
