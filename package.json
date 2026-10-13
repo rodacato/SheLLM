@@ -45,7 +45,7 @@
     "@redocly/cli": "^2.54.2",
     "@resvg/resvg-js": "2.6.2",
     "eslint": "^10.11.0",
-    "openai": "^7.23.0",
+    "openai": "^7.28.0",
     "supertest": "^7.3.0"
   },
   "engines": {
