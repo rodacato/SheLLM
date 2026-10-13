@@ -20,6 +20,9 @@ properties:
     type: integer
   cost_usd:
     type: number
+  cost_estimate_usd:
+    type: ['number', 'null']
+    description: API list-price estimate for a request the CLI did not price (ADR-0012).
   created_at:
     type: string
     format: date-time

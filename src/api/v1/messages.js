@@ -8,6 +8,7 @@ const { invalidRequest, rateLimited, isClientError, fromCatchable, keepProviderL
 const { recordSuccess, recordFailure, holdsProbe, releaseProbe } = require('../../infra/circuit-breaker');
 const { initSSE, announceQueued, keepAlive } = require('../../lib/sse');
 const { shellmMeta } = require('../../lib/shellm-meta');
+const { estimateFor } = require('../../infra/model-prices');
 const {
   sendMessageStart, sendContentBlockStart, sendContentBlockDelta,
   sendContentBlockStop, sendMessageDelta, sendMessageStop, sendStreamError,
@@ -214,6 +215,7 @@ async function messagesHandler(req, res) {
     res.locals.cost_usd = result.cost_usd ?? null;
     res.locals.usage = result.usage ?? null;
     res.locals.metrics = result.metrics ?? null;
+    res.locals.cost_estimate_usd = estimateFor(res.locals);
 
     res.set('X-Powered-By', 'SheLLM');
     res.set('X-Queue-Depth', String(queue.stats.pending));
@@ -237,6 +239,7 @@ async function messagesHandler(req, res) {
       usage: anthropicUsage(result.usage),
       x_shellm: shellmMeta({
         cost_usd: result.cost_usd ?? null,
+        cost_estimate_usd: res.locals.cost_estimate_usd,
         queue_ms: result.queued_ms ?? null,
         cli_ms: result.duration_ms != null ? result.duration_ms - (result.queued_ms ?? 0) : null,
       }),
@@ -328,6 +331,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
             res.locals.usage = event.usage ?? null;
             res.locals.cost_usd = event.cost_usd ?? null;
             res.locals.metrics = event.metrics ?? null;
+            res.locals.cost_estimate_usd = estimateFor(res.locals);
           }
           if (event.type === 'delta') {
             chunkCount++;
@@ -356,6 +360,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
           cache: anthropicCacheUsage(reportedUsage),
           meta: shellmMeta({
             cost_usd: res.locals.cost_usd ?? null,
+            cost_estimate_usd: res.locals.cost_estimate_usd ?? null,
             queue_ms: queuedMs,
             cli_ms: cliStart == null ? null : Date.now() - cliStart,
             ttft_ms: ttftMs,

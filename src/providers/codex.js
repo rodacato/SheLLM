@@ -202,7 +202,7 @@ async function chat({ prompt, parts, system, response_format, model, effort }) {
       .catch((err) => { throw toProviderError(err, model); });
     const { failure, ...parsed } = parseOutput(result.stdout, model);
     if (failure) throw failure;
-    return parsed;
+    return { ...parsed, metrics: { upstream_model: cliModel(model) } };
   });
 }
 
@@ -228,7 +228,7 @@ async function* chatStream({ prompt, parts, system, response_format, model, effo
             yield { type: 'delta', content: stripNonPrintable(event.item.text) };
           }
           if (event.type === 'turn.completed' && event.usage) {
-            yield { type: 'usage', usage: usageFrom(event), cost_usd: null };
+            yield { type: 'usage', usage: usageFrom(event), cost_usd: null, metrics: { upstream_model: cliModel(model) } };
           }
         }
       }

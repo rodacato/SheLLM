@@ -2349,6 +2349,13 @@
           "cost_usd": {
             "type": "number"
           },
+          "cost_estimate_usd": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "API list-price estimate for a request the CLI did not price (ADR-0012)."
+          },
           "created_at": {
             "type": "string",
             "format": "date-time"
@@ -2608,7 +2615,7 @@
       },
       "ShellmMeta": {
         "type": "object",
-        "description": "SheLLM's own numbers for the request, namespaced so no SDK collides with them. The four keys are always present; a value SheLLM could not measure is null rather than absent. On a streamed response the same block rides the final chunk (OpenAI) or the message_delta event (Anthropic).\n",
+        "description": "SheLLM's own numbers for the request, namespaced so no SDK collides with them. Every key is always present; a value SheLLM could not measure is null rather than absent. On a streamed response the same block rides the final chunk (OpenAI) or the message_delta event (Anthropic).\n",
         "properties": {
           "cost_usd": {
             "type": [
@@ -2617,6 +2624,14 @@
             ],
             "description": "What the request would have cost on the provider's API, when the CLI reports it.",
             "example": 0.0042
+          },
+          "cost_estimate_usd": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "What the request would have cost at the API's list price, estimated by SheLLM from the token counts when the CLI reports no cost (codex). Null whenever cost_usd is set, or the model has no listed price. An estimate, not a charge; never summed into cost_usd.\n",
+            "example": 0.012586
           },
           "queue_ms": {
             "type": [

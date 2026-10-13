@@ -4,6 +4,10 @@ const { toInstant } = require('../lib/time');
 
 const LOGGED = "created_at >= datetime('now', ?)";
 
+// Beside the reported cost, never summed into it (ADR-0012).
+const estimated = (prefix = '') => `SUM(CASE WHEN ${prefix}cost_estimate_usd IS NOT NULL THEN 1 ELSE 0 END) AS estimated_requests,
+      COALESCE(ROUND(SUM(${prefix}cost_estimate_usd), 4), 0) AS cost_estimate_usd`;
+
 function db() {
   return require('./index').getDb();
 }
@@ -65,7 +69,8 @@ function usageWindow(hours, uptimeHours = hours) {
       COALESCE(SUM(tokens), 0) AS tokens,
       COALESCE(SUM(cache_read_tokens), 0) AS cache_read_tokens,
       SUM(CASE WHEN cost_usd IS NOT NULL THEN 1 ELSE 0 END) AS priced_requests,
-      COALESCE(ROUND(SUM(cost_usd), 4), 0) AS cost_usd
+      COALESCE(ROUND(SUM(cost_usd), 4), 0) AS cost_usd,
+      ${estimated()}
     FROM request_logs
     WHERE ${LOGGED}
   `).get(interval);
@@ -88,7 +93,8 @@ function usageByProvider(interval) {
       COUNT(*) AS requests,
       COALESCE(SUM(tokens), 0) AS tokens,
       SUM(CASE WHEN cost_usd IS NOT NULL THEN 1 ELSE 0 END) AS priced_requests,
-      COALESCE(ROUND(SUM(cost_usd), 4), 0) AS cost_usd
+      COALESCE(ROUND(SUM(cost_usd), 4), 0) AS cost_usd,
+      ${estimated()}
     FROM request_logs
     WHERE ${LOGGED} AND provider IS NOT NULL
     GROUP BY provider
@@ -106,6 +112,7 @@ function byModel(interval) {
       COALESCE(SUM(tokens), 0) AS tokens,
       SUM(CASE WHEN cost_usd IS NOT NULL THEN 1 ELSE 0 END) AS priced_requests,
       COALESCE(ROUND(SUM(cost_usd), 4), 0) AS cost_usd,
+      ${estimated()},
       COALESCE(ROUND(AVG(duration_ms)), 0) AS avg_duration_ms,
       SUM(CASE WHEN status >= 400 THEN 1 ELSE 0 END) AS errors
     FROM request_logs
@@ -123,6 +130,7 @@ function byClient(interval) {
       COALESCE(SUM(tokens), 0) AS tokens,
       SUM(CASE WHEN cost_usd IS NOT NULL THEN 1 ELSE 0 END) AS priced_requests,
       COALESCE(ROUND(SUM(cost_usd), 4), 0) AS cost_usd,
+      ${estimated()},
       SUM(CASE WHEN status >= 400 THEN 1 ELSE 0 END) AS errors,
       MAX(created_at) AS last_seen_at
     FROM request_logs
@@ -142,6 +150,7 @@ function usageByKey(interval) {
       COALESCE(SUM(r.tokens), 0) AS tokens,
       SUM(CASE WHEN r.cost_usd IS NOT NULL THEN 1 ELSE 0 END) AS priced_requests,
       COALESCE(ROUND(SUM(r.cost_usd), 4), 0) AS cost_usd,
+      ${estimated('r.')},
       SUM(CASE WHEN r.status >= 400 THEN 1 ELSE 0 END) AS errors,
       MAX(r.created_at) AS last_used_at
     FROM clients c

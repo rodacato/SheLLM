@@ -60,6 +60,7 @@ function requestLogger(req, res, next) {
         queued_ms: res.locals.queued_ms ?? null,
         tokens: billableTokens(usage),
         cost_usd: res.locals.cost_usd ?? null,
+        cost_estimate_usd: res.locals.cost_estimate_usd ?? null,
         tokens_in: usage?.input_tokens ?? null,
         tokens_out: usage?.output_tokens ?? null,
         cache_write_tokens: usage?.cache_creation_input_tokens ?? null,
