@@ -144,7 +144,7 @@
         <template x-if="stats && stats.quota">
           <div class="mb-8 order-2">
             <div class="flex items-baseline gap-3 mb-3">
-              <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Consumo observado</span>
+              <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Observed usage</span>
               <span class="text-[10px] text-outline" x-text="stats.quota.note"></span>
             </div>
             <p class="text-xs text-on-surface-variant mb-4">The API equivalent estimates what the requests would cost on the API: claude reports its own figure, codex is estimated from API list prices and marked est. It is not a charge, nor your subscription's balance.</p>
@@ -246,7 +246,7 @@
                     <td class="max-md:pr-4 text-outline whitespace-nowrap">
                       <a href="#logs" @click="openErrorLogs(row)" class="error-log-link link-brand"
                         :title="formatTime(row.last_seen_at)"
-                        :aria-label="'Ver requests: ' + row.status + ' ' + row.error_code + ', ' + row.client_name"
+                        :aria-label="'View requests: ' + row.status + ' ' + row.error_code + ', ' + row.client_name"
                         x-text="formatRelative(row.last_seen_at)"></a>
                     </td>
                     <td class="py-2 max-md:pr-4 font-bold"
