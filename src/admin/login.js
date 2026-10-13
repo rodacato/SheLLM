@@ -17,7 +17,7 @@ const PAGE = (error, next, username) => `<!DOCTYPE html>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SheLLM">
-<title>SheLLM — sign in</title>
+<title>SheLLM · Sign in</title>
 <link rel="manifest" href="/admin/manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="/admin/dashboard/img/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/admin/dashboard/img/favicon-32.png">
