@@ -58,6 +58,7 @@ src/
 │   ├── admin-session.js   # HMAC-signed session cookie, content negotiation (wantsHtml)
 │   ├── cors.js            # CORS for /v1 only, off unless SHELLM_CORS_ORIGINS names an origin
 │   ├── request-id.js      # Request ID generation/pass-through
+│   ├── error-handler.js   # Last stop for next(err): JSON in the path's error shape
 │   ├── logging.js         # Request/response logging to DB
 │   └── sanitize.js        # Input normalization
 │
@@ -234,6 +235,10 @@ Middleware runs in order — changing the order changes behavior:
 5. Content-Type check — Reject non-JSON POST/PATCH
 6. `auth` — Validate Bearer token, check rate limits (global + per-client), enforce the key's
    own origin list
+
+After the routes: an unmatched path gets a JSON 404, and `errorHandler` turns anything passed to
+`next(err)` — a body that is not JSON, one past the limit, a thrown error — into the error shape
+the path speaks, never Express's HTML page.
 
 ---
 
