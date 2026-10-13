@@ -1,6 +1,6 @@
 {
   "id": "/admin/",
-  "name": "SheLLM Admin",
+  "name": "SheLLM · Your LLM subscription as a REST API",
   "short_name": "SheLLM",
   "description": "Keys, request logs and provider status for your SheLLM instance.",
   "start_url": "/admin/dashboard/",
