@@ -3,7 +3,8 @@ const { jobFor } = require('../../infra/queue');
 const { openAIUsage } = require('./usage');
 const { wantsLongContext } = require('./betas');
 const { sanitize } = require('../../middleware/sanitize');
-const { invalidRequest, fromCatchable, recordErrorCode, sendOpenAIError } = require('../../errors');
+const { invalidRequest, isClientError, fromCatchable, recordErrorCode, sendOpenAIError } = require('../../errors');
+const { recordSuccess, recordFailure, holdsProbe, releaseProbe } = require('../../infra/circuit-breaker');
 const { initSSE, announceQueued, keepAlive, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../lib/sse');
 const { shellmMeta } = require('../../lib/shellm-meta');
 const { imagePart, renderParts, maxImages } = require('./image-parts');
@@ -333,6 +334,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
     logger.debug({ event: 'stream_blocked', reason: err.message, model });
     return sendOpenAIError(res, err);
   }
+  const probe = holdsProbe(provider.name);
 
   res.locals.provider = provider.name;
   res.locals.model = model;
@@ -424,6 +426,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
 
       // Final chunk with finish_reason + TTFT metric
       if (!ac.signal.aborted) {
+        recordSuccess(provider.name);
         const meta = shellmMeta({
           cost_usd: res.locals.cost_usd ?? null,
           queue_ms: queuedMs,
@@ -455,9 +458,10 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
     }, { ...jobFor(req, { stream: true }), provider: provider.name, model }, { onQueued: (position) => { stopQueueNotices = announceQueued(res, position); } });
   } catch (err) {
     logger.debug({ event: 'stream_error', error: err.message, request_id: req.requestId });
+    const failure = fromCatchable(err, provider.name);
+    if (!ac.signal.aborted && !isClientError(failure)) recordFailure(provider.name);
     if (!ac.signal.aborted && !res.writableEnded) {
       // The headers went out as 200, so the log learns what failed from error_code alone.
-      const failure = fromCatchable(err, provider.name);
       recordErrorCode(res, failure);
       sendSSEError(res, failure);
     }
@@ -465,6 +469,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
     stopKeepAlive();
     if (stopQueueNotices) stopQueueNotices();
     if (slotAcquired) releaseStreamSlot();
+    if (probe) releaseProbe(provider.name);
   }
 }
 

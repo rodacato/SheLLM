@@ -4,7 +4,8 @@ const { anthropicCacheUsage, anthropicUsage } = require('./usage');
 const { wantsLongContext } = require('./betas');
 const { refuseAnthropicTools } = require('./function-calling');
 const { sanitize } = require('../../middleware/sanitize');
-const { invalidRequest, rateLimited, fromCatchable, recordErrorCode, sendAnthropicError } = require('../../errors');
+const { invalidRequest, rateLimited, isClientError, fromCatchable, recordErrorCode, sendAnthropicError } = require('../../errors');
+const { recordSuccess, recordFailure, holdsProbe, releaseProbe } = require('../../infra/circuit-breaker');
 const { initSSE, announceQueued, keepAlive } = require('../../lib/sse');
 const { shellmMeta } = require('../../lib/shellm-meta');
 const {
@@ -252,7 +253,6 @@ async function messagesHandler(req, res) {
  */
 async function handleAnthropicStream(req, res, { model, max_tokens, temperature, top_p, longContext, prompt, system }) {
   const logger = require('../../lib/logger');
-  const { recordSuccess, recordFailure } = require('../../infra/circuit-breaker');
 
   let provider;
   try {
@@ -261,6 +261,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
     logger.debug({ event: 'stream_blocked', reason: err.message, model });
     return sendAnthropicError(res, err);
   }
+  const probe = holdsProbe(provider.name);
 
   res.locals.provider = provider.name;
   res.locals.model = model;
@@ -337,16 +338,15 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
             sendContentBlockDelta(res, 0, event.content);
           }
         }
-        recordSuccess(provider.name);
       } else {
         logger.debug({ event: 'stream_fallback', format: 'anthropic', provider: provider.name });
         const result = await provider.chat({ prompt, system, max_tokens, temperature, top_p, longContext, model });
         totalChars += result.content.length;
         sendContentBlockDelta(res, 0, result.content);
-        recordSuccess(provider.name);
       }
 
       if (!ac.signal.aborted) {
+        recordSuccess(provider.name);
         const outputTokens = reportedUsage?.output_tokens ?? Math.ceil(totalChars / 4);
         sendContentBlockStop(res, 0);
         sendMessageDelta(res, 'end_turn', outputTokens, {
@@ -365,10 +365,10 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
       }
     }, { ...jobFor(req, { stream: true }), provider: provider.name, model }, { onQueued: (position) => { stopQueueNotices = announceQueued(res, position); } });
   } catch (err) {
-    recordFailure(provider.name);
     logger.debug({ event: 'stream_error', format: 'anthropic', error: err.message, request_id: req.requestId });
+    const failure = fromCatchable(err, provider.name);
+    if (!ac.signal.aborted && !isClientError(failure)) recordFailure(provider.name);
     if (!ac.signal.aborted && !res.writableEnded) {
-      const failure = fromCatchable(err, provider.name);
       recordErrorCode(res, failure);
       sendStreamError(res, failure);
     }
@@ -376,6 +376,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
     stopKeepAlive();
     if (stopQueueNotices) stopQueueNotices();
     if (slotAcquired) releaseStreamSlot();
+    if (probe) releaseProbe(provider.name);
   }
 }
 
