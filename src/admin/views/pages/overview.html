@@ -44,129 +44,9 @@
             x-text="stats ? 'logs are kept ' + stats.window.retention_days + ' days' : ''"></span>
         </div>
 
-        <!-- A 4xx is the gateway refusing a caller, which is it working. Errors only leads the
-             page when something the gateway itself did went wrong; otherwise Now does. -->
         <div class="flex flex-col">
-        <template x-if="stats && errorRows.length > 0">
-          <div class="mb-8" :class="hasServerErrors ? 'order-1' : 'order-3'">
-            <div class="flex items-baseline gap-3 mb-3">
-              <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Errors</span>
-              <span class="text-[10px] font-mono text-outline" x-text="stats.error_rate.success_pct + '% ok'"></span>
-            </div>
-            <div class="bg-surface-container p-5">
-            <div class="overflow-x-auto">
-            <table class="w-full text-xs font-mono">
-              <thead>
-                <tr class="text-outline text-[10px] uppercase tracking-widest">
-                  <th class="text-left pb-2 max-md:pr-4 font-headline">Last seen</th>
-                  <th class="text-left pb-2 max-md:pr-4 font-headline">Status</th>
-                  <th class="text-left pb-2 max-md:pr-4 font-headline">Error</th>
-                  <th class="text-left pb-2 max-md:pr-4 font-headline">Client</th>
-                  <th class="text-left pb-2 max-md:pr-4 font-headline">Model</th>
-                  <th class="text-right pb-2 font-headline">Count</th>
-                </tr>
-              </thead>
-              <tbody>
-                <template x-for="row in errorRows" :key="row.status + row.error_code + row.client_name + row.model + row.path">
-                  <tr @click="openErrorLogs(row)"
-                    class="border-t border-outline-variant/20 cursor-pointer hover:bg-surface-container-high transition-colors duration-fast">
-                    <td class="py-2 max-md:pr-4 text-outline whitespace-nowrap" :title="formatTime(row.last_seen_at)"
-                      x-text="formatRelative(row.last_seen_at)"></td>
-                    <td class="py-2 max-md:pr-4 font-bold"
-                      :class="row.status < 500 ? 'text-status-warn' : 'text-status-fail'"
-                      x-text="row.status"></td>
-                    <td class="py-2 max-md:pr-4 text-on-surface-variant max-md:whitespace-nowrap" x-text="row.error_code"></td>
-                    <td class="py-2 max-md:pr-4 text-on-surface-variant max-md:whitespace-nowrap" x-text="row.client_name"></td>
-                    <td class="py-2 max-md:pr-4 text-outline max-md:whitespace-nowrap" x-text="row.model"></td>
-                    <td class="py-2 text-right text-white font-bold" x-text="row.count"></td>
-                  </tr>
-                </template>
-              </tbody>
-            </table>
-            </div>
-            </div>
-          </div>
-        </template>
-
-        <!-- ================= CAPACITY ================= -->
-        <template x-if="stats && stats.quota">
-          <div class="mb-8 order-2">
-            <div class="flex items-baseline gap-3 mb-3">
-              <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Capacity</span>
-              <span class="text-[10px] text-outline" x-text="stats.quota.note"></span>
-            </div>
-
-            <div x-show="stats.quota.limited" class="bg-error-container border-l-2 border-status-fail p-4 mb-4">
-              <span class="font-headline font-bold text-error text-sm">USAGE LIMIT HIT</span>
-              <span class="text-xs font-mono text-on-surface-variant ml-2"
-                x-text="stats.quota.limited ? stats.quota.limited.provider + ' answered 429 at ' + formatTime(stats.quota.limited.since) : ''"></span>
-              <p class="text-xs text-on-surface-variant mt-2">
-                The provider refused a request because the subscription's quota is spent. This clears on its own
-                when that provider answers a request again; the CLI reports no reset time, so wait for the quota window to roll over.
-              </p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <template x-for="w in stats.quota.windows" :key="w.hours">
-                <div class="bg-surface-container p-5">
-                  <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-3">
-                    <span class="text-[10px] font-headline font-bold uppercase text-on-surface-variant"
-                      x-text="quotaLabel(w)"></span>
-                    <span class="flex items-baseline gap-2">
-                      <span class="text-xs font-mono text-primary-container"
-                        x-text="'$' + w.cost_per_hour + '/hr · ' + w.requests_per_minute + ' rpm'"></span>
-                      <span x-show="burnVerdict(w)" class="text-[10px] font-mono text-outline" x-text="burnVerdict(w)"></span>
-                    </span>
-                  </div>
-                  <div class="grid grid-cols-3 gap-4">
-                    <div>
-                      <p class="text-[10px] font-mono text-outline uppercase mb-1">Spent</p>
-                      <p class="text-xl font-headline font-black text-white" x-text="w.priced_requests > 0 ? formatCost(w.cost_usd) : 'not priced'"></p>
-                    </div>
-                    <div>
-                      <p class="text-[10px] font-mono text-outline uppercase mb-1">Tokens</p>
-                      <p class="text-xl font-headline font-black text-white" x-text="(w.tokens || 0).toLocaleString()"></p>
-                    </div>
-                    <div>
-                      <p class="text-[10px] font-mono text-outline uppercase mb-1">Requests</p>
-                      <p class="text-xl font-headline font-black text-white" x-text="w.requests"></p>
-                    </div>
-                  </div>
-                </div>
-              </template>
-            </div>
-
-            <div class="bg-surface-container p-5">
-              <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-4">By Subscription</p>
-              <div class="overflow-x-auto">
-              <table class="w-full text-xs font-mono">
-                <thead>
-                  <tr class="text-outline text-[10px] uppercase tracking-wider">
-                    <th class="text-left font-normal pb-2">Provider</th>
-                    <th class="text-right font-normal pb-2">Requests</th>
-                    <th class="text-right font-normal pb-2">Tokens</th>
-                    <th class="text-right font-normal pb-2">Cost</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <template x-for="p in stats.quota.by_provider" :key="p.provider">
-                    <tr class="border-t border-outline-variant/30">
-                      <td class="py-2 text-on-surface-variant" x-text="p.provider"></td>
-                      <td class="py-2 text-right text-outline" x-text="p.requests"></td>
-                      <td class="py-2 text-right text-outline" x-text="(p.tokens || 0).toLocaleString()"></td>
-                      <td class="py-2 text-right" :class="p.priced_requests > 0 ? 'text-white' : 'text-outline'"
-                        x-text="p.priced_requests > 0 ? formatCost(p.cost_usd) : 'not priced'"></td>
-                    </tr>
-                  </template>
-                </tbody>
-              </table>
-              </div>
-            </div>
-          </div>
-        </template>
-
         <!-- ================= NOW ================= -->
-        <div :class="hasServerErrors ? 'order-3' : 'order-1'">
+        <div class="order-1">
         <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase block mb-3">Now</span>
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
           <div class="bg-surface-container p-5 lg:col-span-2">
@@ -216,7 +96,7 @@
               <tbody>
                 <template x-for="job in inFlight" :key="job.request_id + job.state">
                   <tr>
-                    <td class="py-1 pr-3 whitespace-nowrap" :class="jobNearTimeout(job) ? 'text-status-fail' : 'text-on-surface'"
+                    <td class="py-1 pr-3 whitespace-nowrap" :class="jobNearTimeout(job) ? 'text-error' : 'text-on-surface'"
                       :title="jobNearTimeout(job) ? 'Close to TIMEOUT_MS: the CLI is killed when it gets there' : ''"
                       x-text="formatAge(jobAge(job))"></td>
                     <td class="py-1 pr-3 whitespace-nowrap">
@@ -254,12 +134,137 @@
               </template>
             </div>
             <p x-show="!providersLoaded" class="text-outline text-xs font-mono">Loading providers...</p>
-            <p x-show="providersLoaded && providersError" class="text-status-fail text-xs font-mono"
+            <p x-show="providersLoaded && providersError" class="text-error text-xs font-mono"
               x-text="'Could not read providers — ' + providersError + '.'"></p>
-            <p x-show="providersLoaded && !providersError && providers.length === 0" class="text-outline text-xs font-mono">No providers configured.</p>
+            <p x-show="providersLoaded && !providersError && providers.length === 0" class="text-outline text-xs font-mono">No hay proveedores configurados. <a href="#system" @click="navigate('system')" class="link-brand">Revisar configuración</a></p>
           </div>
         </div>
         </div>
+        <!-- ================= OBSERVED USAGE ================= -->
+        <template x-if="stats && stats.quota">
+          <div class="mb-8 order-2">
+            <div class="flex items-baseline gap-3 mb-3">
+              <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Consumo observado</span>
+              <span class="text-[10px] text-outline" x-text="stats.quota.note"></span>
+            </div>
+            <p class="text-xs text-on-surface-variant mb-4">El equivalente en API estima lo que costarían las requests con precio reportado por el CLI. No es un cargo ni el saldo de tu suscripción.</p>
+
+            <div x-show="stats.quota.limited" class="bg-error-container border-l-2 border-status-fail p-4 mb-4">
+              <span class="font-headline font-bold text-error text-sm">USAGE LIMIT HIT</span>
+              <span class="text-xs font-mono text-on-surface-variant ml-2"
+                x-text="stats.quota.limited ? stats.quota.limited.provider + ' answered 429 at ' + formatTime(stats.quota.limited.since) : ''"></span>
+              <p class="text-xs text-on-surface-variant mt-2">
+                The provider refused a request because the subscription's quota is spent. This clears on its own
+                when that provider answers a request again; the CLI reports no reset time, so wait for the quota window to roll over.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <template x-for="w in stats.quota.windows" :key="w.hours">
+                <div class="bg-surface-container p-5">
+                  <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-3">
+                    <span class="text-[10px] font-headline font-bold uppercase text-on-surface-variant"
+                      x-text="quotaLabel(w)"></span>
+                    <span class="flex items-baseline gap-2">
+                      <span class="text-xs font-mono text-primary-container"
+                        x-text="usageRate(w)"></span>
+                      <span x-show="burnVerdict(w)" class="text-[10px] font-mono text-outline" x-text="burnVerdict(w)"></span>
+                    </span>
+                  </div>
+                  <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div class="col-span-2 sm:col-span-1 min-w-0">
+                      <p class="text-[10px] font-mono text-outline uppercase mb-1">Equivalente API</p>
+                      <p class="text-xl font-headline font-black text-white" x-text="observedCost(w)"></p>
+                    </div>
+                    <div class="min-w-0 break-words">
+                      <p class="text-[10px] font-mono text-outline uppercase mb-1">Tokens</p>
+                      <p class="text-xl font-headline font-black text-white" x-text="(w.tokens || 0).toLocaleString()"></p>
+                    </div>
+                    <div class="min-w-0 break-words">
+                      <p class="text-[10px] font-mono text-outline uppercase mb-1">Requests</p>
+                      <p class="text-xl font-headline font-black text-white" x-text="w.requests"></p>
+                    </div>
+                  </div>
+                  <p class="text-[10px] font-mono text-outline mt-3" x-show="costCoverage(w)" x-text="costCoverage(w)"></p>
+                </div>
+              </template>
+            </div>
+
+            <div class="bg-surface-container p-5">
+              <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-4">By Subscription</p>
+              <div class="overflow-x-auto">
+              <table class="w-full text-xs font-mono">
+                <thead>
+                  <tr class="text-outline text-[10px] uppercase tracking-wider">
+                    <th class="text-left font-normal pb-2">Provider</th>
+                    <th class="text-right font-normal pb-2">Requests</th>
+                    <th class="text-right font-normal pb-2">Tokens</th>
+                    <th class="text-right font-normal pb-2">Equivalente API</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="p in stats.quota.by_provider" :key="p.provider">
+                    <tr class="border-t border-outline-variant/30">
+                      <td class="py-2 text-on-surface-variant" x-text="p.provider"></td>
+                      <td class="py-2 text-right text-outline" x-text="p.requests"></td>
+                      <td class="py-2 text-right text-outline" x-text="(p.tokens || 0).toLocaleString()"></td>
+                      <td class="py-2 text-right" :class="p.priced_requests > 0 ? 'text-white' : 'text-outline'"
+                        x-text="observedCost(p)" :title="costCoverage(p)"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <template x-if="stats && errorRows.length > 0">
+          <details class="mb-8 order-3">
+            <summary class="flex items-baseline gap-3 mb-3 cursor-pointer">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">history</span>
+              <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Errors</span>
+              <span class="text-[10px] font-mono text-outline" x-text="stats.error_rate.success_pct + '% ok'"></span>
+              <span class="text-[10px] text-outline">Histórico del periodo · abrir detalle</span>
+            </summary>
+            <div class="bg-surface-container p-5">
+            <div class="overflow-x-auto">
+            <table class="w-full text-xs font-mono">
+              <thead>
+                <tr class="text-outline text-[10px] uppercase tracking-widest">
+                  <th class="text-left pb-2 max-md:pr-4 font-headline">Last seen</th>
+                  <th class="text-left pb-2 max-md:pr-4 font-headline">Status</th>
+                  <th class="text-left pb-2 max-md:pr-4 font-headline">Error</th>
+                  <th class="text-left pb-2 max-md:pr-4 font-headline">Client</th>
+                  <th class="text-left pb-2 max-md:pr-4 font-headline">Model</th>
+                  <th class="text-right pb-2 font-headline">Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="row in errorRows" :key="row.status + row.error_code + row.client_name + row.model + row.path">
+                  <tr class="border-t border-outline-variant/20 hover:bg-surface-container-high transition-colors duration-fast">
+                    <td class="max-md:pr-4 text-outline whitespace-nowrap">
+                      <a href="#logs" @click="openErrorLogs(row)" class="error-log-link link-brand"
+                        :title="formatTime(row.last_seen_at)"
+                        :aria-label="'Ver requests: ' + row.status + ' ' + row.error_code + ', ' + row.client_name"
+                        x-text="formatRelative(row.last_seen_at)"></a>
+                    </td>
+                    <td class="py-2 max-md:pr-4 font-bold"
+                      :class="row.status < 500 ? 'text-status-warn' : 'text-error'"
+                      x-text="row.status"></td>
+                    <td class="py-2 max-md:pr-4 text-on-surface-variant max-md:whitespace-nowrap" x-text="row.error_code"></td>
+                    <td class="py-2 max-md:pr-4 text-on-surface-variant max-md:whitespace-nowrap" x-text="row.client_name"></td>
+                    <td class="py-2 max-md:pr-4 text-outline max-md:whitespace-nowrap" x-text="row.model"></td>
+                    <td class="py-2 text-right text-white font-bold" x-text="row.count"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+            </div>
+            </div>
+          </details>
+        </template>
+
         </div>
 
         <template x-if="stats">
@@ -336,7 +341,7 @@
                       <th class="text-right font-normal pb-2">Reqs</th>
                       <th class="text-right font-normal pb-2">Avg</th>
                       <th class="text-right font-normal pb-2">Tokens</th>
-                      <th class="text-right font-normal pb-2">Cost</th>
+                      <th class="text-right font-normal pb-2">Equivalente API</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -347,7 +352,7 @@
                         <td class="py-2 text-right text-outline" x-text="formatDuration(m.avg_duration_ms)"></td>
                         <td class="py-2 text-right text-outline" x-text="(m.tokens || 0).toLocaleString()"></td>
                         <td class="py-2 text-right" :class="m.priced_requests > 0 ? 'text-white' : 'text-outline'"
-                          x-text="m.priced_requests > 0 ? formatCost(m.cost_usd) : 'not priced'"></td>
+                          x-text="observedCost(m)" :title="costCoverage(m)"></td>
                       </tr>
                     </template>
                   </tbody>
@@ -365,17 +370,17 @@
                       <th class="text-left font-normal pb-2">Client</th>
                       <th class="text-right font-normal pb-2">Reqs</th>
                       <th class="text-right font-normal pb-2">Errors</th>
-                      <th class="text-right font-normal pb-2">Cost</th>
+                      <th class="text-right font-normal pb-2">Equivalente API</th>
                       <th class="text-right font-normal pb-2">Last seen</th>
                     </tr>
                   </thead>
                   <tbody>
                     <template x-for="c in stats.by_client" :key="c.client_name">
                       <tr class="border-t border-outline-variant/30">
-                        <td class="py-2 text-on-surface-variant truncate max-w-[8rem]" x-text="c.client_name"></td>
+                        <td class="py-2 text-on-surface-variant break-words max-w-[8rem]" x-text="c.client_name"></td>
                         <td class="py-2 text-right text-white" x-text="c.requests"></td>
                         <td class="py-2 text-right" :class="c.errors > 0 ? 'text-status-warn' : 'text-outline'" x-text="c.errors"></td>
-                        <td class="py-2 text-right text-outline" x-text="c.priced_requests > 0 ? formatCost(c.cost_usd) : 'not priced'"></td>
+                        <td class="py-2 text-right text-outline" x-text="observedCost(c)" :title="costCoverage(c)"></td>
                         <td class="py-2 text-right text-outline" :title="formatTime(c.last_seen_at)"
                           x-text="formatRelative(c.last_seen_at)"></td>
                       </tr>
@@ -400,7 +405,7 @@
           </div>
         </template>
         <p x-show="loading && !stats" class="text-outline text-sm font-mono">Loading stats...</p>
-        <p x-show="!loading && !stats" class="text-status-fail text-sm font-mono"
+        <p x-show="!loading && !stats" class="text-error text-sm font-mono"
           x-text="'Could not read stats — ' + (statsError || 'the gateway did not answer') + '.'"></p>
 
       </div>

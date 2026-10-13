@@ -304,6 +304,7 @@ function keysPage() {
 
     formatTime,
     formatCost,
+    observedCost,
     formatCompactNumber,
   };
 }

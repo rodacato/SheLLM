@@ -33,11 +33,14 @@ jobs:
 
       - run: npm ci
 
+      - run: npm run brand:check
+
       - name: Assemble the site
         run: |
           mkdir -p site/assets site/img
           cp -r assets/favicon site/assets/favicon
           cp -r assets/logo site/assets/logo
+          cp -r assets/brand site/assets/brand
           cp assets/site/overview.png site/img/overview.png
           cp assets/site/request-logs.png site/img/request-logs.png
           cp assets/site/api-keys.png site/img/api-keys.png

@@ -32,7 +32,7 @@
             <div>
               <p class="text-[10px] font-mono text-outline uppercase mb-1">Status</p>
               <p class="text-2xl font-headline font-black"
-                :class="healthRead !== 'ok' ? 'text-white' : (health?.status === 'ok' ? 'text-status-ok' : (health?.status === 'degraded' ? 'text-status-warn' : 'text-status-fail'))"
+                :class="healthRead !== 'ok' ? 'text-white' : (health?.status === 'ok' ? 'text-status-ok' : (health?.status === 'degraded' ? 'text-status-warn' : 'text-error'))"
                 x-text="healthRead === 'ok' ? (health?.status || '—') : '—'"></p>
             </div>
           </div>
@@ -104,7 +104,7 @@
             </template>
 
             <template x-if="updateError">
-              <p class="text-xs font-mono text-status-fail mt-3" x-text="updateError"></p>
+              <p class="text-xs font-mono text-error mt-3" x-text="updateError"></p>
             </template>
 
             <!-- What happened last time. After an update this is read across a restart, which is
@@ -128,7 +128,7 @@
                   </p>
                 </template>
                 <template x-if="updater.last && updater.last.stalled">
-                  <p class="text-status-fail"
+                  <p class="text-error"
                     x-text="'The update to ' + updater.last.ref + ' stopped without reporting. Check journalctl -u shellm-update.'"></p>
                 </template>
                 <template x-if="updater.last && updater.last.state === 'ok'">
@@ -136,7 +136,7 @@
                     x-text="'Last update: ' + updater.last.detail + ' · ' + formatTime(updater.last.finished_at)"></p>
                 </template>
                 <template x-if="updater.last && updater.last.state === 'failed'">
-                  <p class="text-status-fail"
+                  <p class="text-error"
                     x-text="'Last update failed: ' + updater.last.detail"></p>
                 </template>
               </div>
@@ -166,7 +166,7 @@
             <div>
               <span class="text-outline uppercase block text-[10px]">Open circuits</span>
               <span class="text-lg font-headline font-bold"
-                :class="openCircuits.length > 0 ? 'text-status-fail' : 'text-white'"
+                :class="openCircuits.length > 0 ? 'text-error' : 'text-white'"
                 x-text="providersLoaded && !providersError ? (openCircuits.length > 0 ? openCircuits.join(', ') : 'none') : '—'"></span>
             </div>
           </div>
@@ -180,7 +180,7 @@
             class="ml-auto shrink-0 px-4 py-1.5 text-xs font-headline uppercase tracking-wide bg-surface-container-high text-outline hover:text-white hover:bg-surface-container-highest transition-colors duration-fast disabled:opacity-40"
             x-text="checking ? 'Checking…' : 'Run all checks'"></button>
         </div>
-        <p x-show="checkError" x-cloak class="text-status-fail text-sm font-mono mb-3" x-text="checkError"></p>
+        <p x-show="checkError" x-cloak class="text-error text-sm font-mono mb-3" x-text="checkError"></p>
 
         <div class="space-y-4">
           <template x-for="prov in providers" :key="prov.name">
@@ -209,7 +209,7 @@
                 <p class="text-[10px] font-mono text-error break-all" x-text="prov.health_error"></p>
               </div>
 
-              <p x-show="toggleErrors[prov.name]" x-cloak class="text-status-fail text-sm font-mono mb-4"
+              <p x-show="toggleErrors[prov.name]" x-cloak class="text-error text-sm font-mono mb-4"
                 x-text="toggleErrors[prov.name]"></p>
 
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] font-mono">
@@ -253,7 +253,7 @@
           </template>
         </div>
         <p x-show="!providersLoaded" class="text-outline text-sm font-mono">Loading…</p>
-        <p x-show="providersLoaded && providersError" class="text-status-fail text-sm font-mono"
+        <p x-show="providersLoaded && providersError" class="text-error text-sm font-mono"
           x-text="'Could not read the providers — ' + providersError + '.'"></p>
         <p x-show="providersLoaded && !providersError && providers.length === 0"
           class="text-outline text-sm font-mono">No providers configured.</p>
@@ -317,7 +317,7 @@
               <tbody>
                 <tr x-show="settings.length === 0">
                   <td colspan="5" class="py-6 text-center font-mono text-sm"
-                    :class="configError ? 'text-status-fail' : 'text-outline'"
+                    :class="configError ? 'text-error' : 'text-outline'"
                     x-text="!configLoaded ? 'Loading…' : (configError ? 'Could not read the settings — ' + configError + '.' : 'No settings declared.')"></td>
                 </tr>
               </tbody>

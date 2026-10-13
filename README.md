@@ -66,7 +66,7 @@ what it is for.
 You already pay the subscription, so the marginal request costs nothing extra — and for Claude the
 CLI reports what that request *would* have cost on the API, attributed to the key that made it.
 Build the feature, run it for a week, and you know the bill before you decide to pay one. Codex
-reports no cost, so its requests read `not priced`.
+reports no cost, so its dashboard requests read `Sin precio` (unpriced).
 
 Four shapes, one integration — an official SDK with the base URL and the key swapped:
 
@@ -426,6 +426,9 @@ history is in [CHANGELOG.md](CHANGELOG.md).
 Found a security problem? Do not open an issue — report it through
 [the private advisory form](https://github.com/rodacato/SheLLM/security/advisories/new).
 [SECURITY.md](SECURITY.md) has the scope, the threat model and the disclosure timeline.
+
+The [brand guide](https://rodacato.github.io/SheLLM/brand/) provides the logo and social assets.
+[Identity sources and regeneration](docs/guides/branding.md) explains how to update them.
 
 ## License
 

@@ -146,10 +146,11 @@ function overviewPage() {
       return this.stats?.error_breakdown || [];
     },
 
-    // The page already knows a 4xx and a 5xx are different news — it colours them apart. Only the
-    // second kind is the gateway failing, so only the second kind earns the top of the page.
-    get hasServerErrors() {
-      return this.errorRows.some((row) => row.status >= 500);
+    usageRate(usage) {
+      if (!usage.requests) return 'Sin actividad';
+      const cost = usage.priced_requests > 0 ? `${formatCost(usage.cost_per_hour)}/h en API` : 'Precio desconocido';
+      const rpm = usage.requests_per_minute > 0 ? usage.requests_per_minute : '<0.01';
+      return `${cost} · ${rpm} rpm`;
     },
 
     openErrorLogs(row) {
@@ -386,6 +387,8 @@ function overviewPage() {
     },
 
     formatCost,
+    observedCost,
+    costCoverage,
     countOf,
     formatDuration,
     formatTime,

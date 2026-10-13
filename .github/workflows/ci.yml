@@ -40,6 +40,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Check identity exports
+        run: npm run brand:check
+
       - name: Lint the OpenAPI spec
         run: npm run docs:lint
 

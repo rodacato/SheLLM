@@ -91,7 +91,7 @@
                     <span class="text-[11px] font-mono text-on-surface truncate min-w-0" x-text="image.name"></span>
                     <span class="text-[10px] font-mono text-outline shrink-0"
                       x-text="image.width + '×' + image.height + ' · ' + (image.resized ? formatBytes(image.originalBytes) + ' → ' : '') + formatBytes(image.bytes)"></span>
-                    <button @click="removeImage(index)" class="ml-auto text-[10px] font-mono text-outline hover:text-status-fail shrink-0">remove</button>
+                    <button @click="removeImage(index)" class="ml-auto text-[10px] font-mono text-outline hover:text-error shrink-0">remove</button>
                   </li>
                 </template>
               </ul>
@@ -114,7 +114,7 @@
             <div x-show="running" class="flex items-baseline gap-3">
               <p class="text-xs font-mono text-outline">Waiting for the CLI…
                 <span class="text-on-surface-variant" x-text="formatAge(waitingMs)"></span></p>
-              <button @click="stopWaiting()" class="text-[10px] font-mono text-outline hover:text-status-fail underline">stop waiting</button>
+              <button @click="stopWaiting()" class="text-[10px] font-mono text-outline hover:text-error underline">stop waiting</button>
             </div>
 
             <template x-if="result">

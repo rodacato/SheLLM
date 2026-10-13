@@ -1,0 +1,40 @@
+:root {
+  --surface:                   #101417;
+  --surface-container-low:     #181c1f;
+  --surface-container:         #1c2023;
+  --surface-container-high:    #262a2e;
+  --surface-container-highest: #313538;
+  --surface-container-lowest:  #0b0f12;
+  --surface-shell:             #1a1e21;
+  --nav-selected:              #2e3b44;
+  --primary-container:         #03e3ff;
+  --primary-container-hover:   #39eeff;
+  --primary-on-light:          #006978;
+  --on-primary:                #00363e;
+  --on-surface:                #e0e3e7;
+  --on-surface-variant:        #bac9cd;
+  --outline:                   #849397;
+  --outline-variant:           #3b494c;
+  --error:                     #ffb4ab;
+  --error-container:           #3a1d1d;
+  --danger-surface:            #3b1a1a;
+  --danger-surface-hover:      #4a2020;
+
+  --status-ok:                #22c55e;
+  --status-warn:              #ffb800;
+  --status-fail:              #ef4444;
+  --status-ok-fill:           rgba(34, 197, 94, 0.12);
+  --badge-2xx-bg:             #052e16;
+  --badge-4xx-bg:             #3b2800;
+  --badge-5xx-bg:             #3b0a0a;
+
+  /* Two durations and one curve. Nothing in the admin leaves the screen, so there is no exit
+     curve until something does — arriving is all this product has to say. */
+  --dur-fast:   100ms;
+  --dur-move:   200ms;
+  --ease-enter: cubic-bezier(0, 0, 0.2, 1);
+
+  /* Lighter, not darker: these surfaces are near-black, and a transparent target has nothing
+     to darken. One veil works on cyan, on red and on nothing at all. */
+  --press-veil: rgba(255, 255, 255, 0.08);
+}
