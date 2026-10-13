@@ -214,6 +214,22 @@ describe('admin /admin/logs', () => {
     assert.ok(firstDataRow.includes("'+danger"), 'should escape + prefix');
   });
 
+  it('filters by an ISO 8601 date-time, the format the spec documents', async () => {
+    const { getDb } = require('../../src/db');
+    const setTime = getDb().prepare('UPDATE request_logs SET created_at = ? WHERE request_id = ?');
+    setTime.run('2026-01-05 09:00:00', 'req-1');
+    setTime.run('2026-01-05 20:00:00', 'req-2');
+    const ids = async (query) => {
+      const res = await request(app).get(`/admin/logs?${query}`).set('Authorization', `Basic ${adminCreds}`);
+      return res.body.logs.map((l) => l.request_id).sort();
+    };
+
+    assert.deepEqual(await ids('from=2026-01-05T08:00:00Z&to=2026-01-05T23:00:00Z'), ['req-1', 'req-2']);
+    assert.deepEqual(await ids('from=2026-01-05T10:00:00Z&to=2026-01-05T22:00:00Z'), ['req-2']);
+    assert.deepEqual(await ids('from=2026-01-05T10:00:00%2B02:00&to=2026-01-05T12:00:00%2B02:00'), ['req-1']);
+    assert.deepEqual(await ids('from=2026-01-05 10:00:00&to=2026-01-05 22:00:00'), ['req-2']);
+  });
+
   it('export rejects unauthenticated request', async () => {
     const res = await request(app).get('/admin/logs/export');
     assert.strictEqual(res.status, 401);

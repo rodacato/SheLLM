@@ -40,12 +40,13 @@ function buildWhereClause(query) {
       params.push(parseInt(s, 10));
     }
   }
+  // created_at is SQLite's 'YYYY-MM-DD HH:MM:SS' in UTC; datetime() brings ISO 8601 input to it.
   if (query.from) {
-    conditions.push('created_at >= ?');
+    conditions.push('created_at >= datetime(?)');
     params.push(query.from);
   }
   if (query.to) {
-    conditions.push('created_at <= ?');
+    conditions.push('created_at <= datetime(?)');
     params.push(query.to);
   }
 
