@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking Changes
 
-- **cli:** drop the daemon mode, systemd owns the process
+- **cli:** drop the daemon mode, systemd owns the process. `shellm start` runs in the foreground only, and `shellm stop`, `shellm restart` and `shellm logs` are gone: on a server use `systemctl` and `journalctl -u shellm`, elsewhere Ctrl+C and `shellm start` again. Updating from the dashboard is unaffected; it restarts the service through systemd.
 
 ### Added
 
@@ -35,7 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **cli:** drop the daemon mode, systemd owns the process
 - **infra:** share the hand-kept YAML manifest reader
 
 ### Documentation
