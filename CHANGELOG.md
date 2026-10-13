@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.20.0] - 2026-10-13
+
+### Breaking Changes
+
+- **cli:** drop the daemon mode, systemd owns the process
+
+### Added
+
+- **admin:** show the period's errors like Latency, open and split
+- **admin:** state the period's outcome once, and judge it
+- **backup:** keep claude's state file in each snapshot
+- **cli:** treat the env token as how claude authenticates
+- **admin:** show cost estimates marked as such, beside reported cost
+- **api:** estimate codex cost at API list price, apart from reported cost
+
+### Fixed
+
+- **admin:** finish the English-only pass on the Overview
+- **admin:** name the dashboard by what SheLLM is
+- **cli:** make shellm config read the config file it reports on
+- **providers:** stop waiting for codex app-server once it has exited
+- **site:** letter the social card in English
+- **api:** keep a provider's usage limit on a streamed request
+- **api:** answer errors passed to next() as JSON, never HTML
+- **admin,site:** write product copy in English only
+
+### Changed
+
+- **cli:** drop the daemon mode, systemd owns the process
+- **infra:** share the hand-kept YAML manifest reader
+
+### Documentation
+
+- **design:** record D74, the cost estimate drawn in code before the boards
+- **design:** record D32 and D34 as landed
+
+### Maintenance
+
+- **deps-dev:** bump @redocly/cli from 2.54.2 to 2.59.0
+- **deps:** bump sonarsource/sonarqube-scan-action from 8.2.2 to 8.3.0
+- **deps-dev:** bump openai from 7.23.0 to 7.28.0
+- **deps-dev:** bump @anthropic-ai/sdk from 0.128.0 to 0.131.0
+
+
 ## [1.19.0] - 2026-10-13
 
 ### Added
@@ -1091,7 +1135,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.19.0...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.20.0...HEAD
+[1.20.0]: https://github.com/rodacato/SheLLM/compare/v1.19.0...v1.20.0
 [1.19.0]: https://github.com/rodacato/SheLLM/compare/v1.18.0...v1.19.0
 [1.18.0]: https://github.com/rodacato/SheLLM/compare/v1.17.1...v1.18.0
 [1.17.1]: https://github.com/rodacato/SheLLM/compare/v1.17.0...v1.17.1
