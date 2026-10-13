@@ -210,9 +210,10 @@ corrected in its row; the decision stays open. D21's width ramp was reviewed and
 | # | Decision | Status |
 |---|---|---|
 | **D70** ⏳ | Sample version on the artboards. Overview's header had to stop naming a real release (LP-02), so every board now runs `1.2.3 · a1b2c3d` — and System's settings table, whose `since` column comes from `src/config/schema.js`, had five values moved to fit (`v1.10.0 → v1.2.3`, `v1.6.0 → v1.2.0`, `v1.5.0 → v1.1.0`). That breaks "every value derivable from the code" on purpose; the happy-path brief says so. | Open — Adrian's call: keep the substitution, or let System show a real version and accept that the two boards disagree |
+| **D74** ⏳ | Codex cost estimates (ADR-0012), and the English-only copy pass, landed in code first. Usage cards, the provider/model/client tables and log rows show an estimate as `~$… est.` beside a reported cost, the coverage line reads `N reported, N estimated from API list prices, N not priced`, and the API-equivalent explanations on Overview and Logs mention the estimate. The boards still draw the earlier copy. | Open — redraw the cost cells and the two explanations in the next design session |
 | **D73** ⏳ | System gained a *Run all checks* button in the Providers header and two cells per provider card, *Checked* and *Last passed* (amber when the last check did not pass). The code landed first: no Pencil session had `admin.pen` open. | Open — draw both on the System artboards in the next design session |
 | **D72** ⏳ | `admin.pen` draws no phone. The dashboard became responsive on 2026-09-27 by code alone; the canvas mirrors only the desktop width. | Open — Adrian's call whether a phone column earns its upkeep |
 | **D71** ⏳ | States no artboard hosts: a not-ready Overview provider row (dot, label, `→`), Logs' filter chips, charts with fewer than two points, the update-in-progress dot. Each is listed with its copy under the briefs' *states not drawn*. | Open — draw when a board needs them |
 
-**Next free number: D74.** D15–D20, D43–D49 and D61–D67 are this file's own and are above; D50–D60
-are spent by the landing audit; D70–D72 by the 2026-09-27 UI audit and the mobile pass after it; D73 by the Run all checks change.
+**Next free number: D75.** D15–D20, D43–D49 and D61–D67 are this file's own and are above; D50–D60
+are spent by the landing audit; D70–D72 by the 2026-09-27 UI audit and the mobile pass after it; D73 by the Run all checks change; D74 by the cost-estimate change.
