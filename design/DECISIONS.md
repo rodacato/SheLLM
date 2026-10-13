@@ -135,9 +135,9 @@ is what the next decision needs.
 |---|---|---|---|
 | D30 | vice | One label treatment, five jobs | Landed |
 | D31 | vice | Errors leads on `length > 0` | Landed |
-| D32 | vice | The Logs summary band never joined the system | **Open** — carded 2026-09-21 |
+| D32 | vice | The Logs summary band never joined the system | Landed — `617bd30`, found by the 2026-10-13 board triage. Naming the recipe once is D42 |
 | D33 | drift | The kit export is three versions at once | **Open** — on the project board |
-| D34 | drift | The Playground artboard draws a card the CSS stretches | **Open** — carded 2026-09-21 |
+| D34 | drift | The Playground artboard draws a card the CSS stretches | Landed — `1026ea6` stacked the Playground, so nothing stretches; boards redrawn in `0ec6e31` |
 | D35 | vice | Fifteen type sizes, three spellings of one step | Landed — kit 0.3.0 |
 | D36 | drift | `Last 7d` over eighteen hours of data | **Open** — on the project board |
 | D37 | gap | The fold is not drawn | **Open** — on the project board |
