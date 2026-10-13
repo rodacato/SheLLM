@@ -54,7 +54,8 @@ module.exports = {
   // --- Providers ---
   CLAUDE_CODE_OAUTH_TOKEN: {
     section: 'Providers', type: 'string', default: null, since: 'v1.0.0', reload: 'restart', secret: true,
-    describe: 'Long-lived Claude token from `claude setup-token`. Optional when the CLI is logged in for this user.',
+    describe: `Long-lived Claude token from \`claude setup-token\`: how the service authenticates. A file
+      login for this user also works until it expires, and \`shellm doctor\` warns when it is in use.`,
   },
   TIMEOUT_MS: {
     section: 'Providers', type: 'int', default: 300000, since: 'v0.1.0', reload: 'live', prominent: true,

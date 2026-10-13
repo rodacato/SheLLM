@@ -26,7 +26,7 @@ async function askToken() {
   console.log('Run `claude setup-token` in another terminal and paste the token here.');
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   try {
-    return (await rl.question('Token (Enter to skip if claude is already logged in for this user): ')).trim();
+    return (await rl.question('Token (Enter to skip and rely on this user\'s claude login, which expires): ')).trim();
   } finally {
     rl.close();
   }

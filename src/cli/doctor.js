@@ -57,7 +57,8 @@ async function checkClaude() {
   if (!auth.loggedIn) return [installed, fail('Claude login', 'not logged in', `claude setup-token, then add CLAUDE_CODE_OAUTH_TOKEN to ${CONFIG_FILE}`)];
   // auth status accepts any token string, so only --live proves the token works.
   if (auth.authMethod === 'oauth_token') return [installed, pass('Claude login', 'CLAUDE_CODE_OAUTH_TOKEN set (validity checked only with --live)')];
-  return [installed, pass('Claude login', auth.authMethod)];
+  // A file session expires on its own and nothing renews it for a service, so the token is the path.
+  return [installed, warn('Claude login', `${auth.authMethod} session, which expires; the service is meant to run on CLAUDE_CODE_OAUTH_TOKEN`, `claude setup-token, then add CLAUDE_CODE_OAUTH_TOKEN to ${CONFIG_FILE}`)];
 }
 
 function checkApiKeys() {
