@@ -187,9 +187,19 @@ function errorBreakdown(interval, limit = 20) {
     FROM request_logs
     WHERE ${LOGGED} AND status >= 400
     GROUP BY status, error_code, client_name, model, path
-    ORDER BY count DESC, last_seen_at DESC
+    ORDER BY last_seen_at DESC, count DESC
     LIMIT ?
   `).all(interval, limit);
+}
+
+// Counted apart from the breakdown, which is cut at its limit: a failure with no client is a
+// request without a valid key, which on a public URL is mostly not one of the operator's apps.
+function unauthenticatedErrors(interval) {
+  return db().prepare(`
+    SELECT COUNT(*) AS count
+    FROM request_logs
+    WHERE ${LOGGED} AND status >= 400 AND client_name IS NULL
+  `).get(interval).count;
 }
 
 // Only a 429 that came from a provider counts: the gateway's own (client rate limit, full queue,
@@ -288,6 +298,7 @@ module.exports = {
   usageByKey,
   byStatusCode,
   errorBreakdown,
+  unauthenticatedErrors,
   limitState,
   timeline,
   recentRequests,

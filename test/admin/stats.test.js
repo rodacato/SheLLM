@@ -163,6 +163,7 @@ describe('admin /admin/stats', () => {
 
     const unauthenticated = rows.find((r) => r.error_code === 'auth_required');
     assert.strictEqual(unauthenticated.client_name, '(unauthenticated)');
+    assert.ok(res.body.error_rate.unauthenticated >= 1, 'the unauthenticated total must reach the page');
 
     assert.ok(!rows.some((r) => r.status < 400), 'successful requests are not errors');
   });
