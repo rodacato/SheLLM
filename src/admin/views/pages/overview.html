@@ -224,7 +224,7 @@
             <summary class="flex items-baseline gap-3 mb-3 cursor-pointer">
               <span class="material-symbols-outlined text-[16px]" aria-hidden="true">history</span>
               <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Errors</span>
-              <span class="text-[10px] font-mono text-outline" x-text="stats.error_rate.success_pct + '% ok'"></span>
+              <span class="text-[10px] font-mono" :class="outcomeTone(stats.error_rate)" x-text="outcomeSummary(stats.error_rate)"></span>
               <span class="text-[10px] text-outline">Period history · open details</span>
             </summary>
             <div class="bg-surface-container p-5">
@@ -396,7 +396,7 @@
             <div class="bg-surface-container p-5">
               <div class="flex items-baseline justify-between mb-4">
                 <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant">Traffic</p>
-                <span class="text-[10px] font-mono text-outline" x-text="stats.error_rate.success_pct + '% ok'"></span>
+                <span class="text-[10px] font-mono" :class="outcomeTone(stats.error_rate)" x-text="outcomeSummary(stats.error_rate)"></span>
               </div>
               <div x-show="stats.timeline && stats.timeline.length > 1" class="h-[180px]"><canvas x-ref="timeline"></canvas></div>
               <p x-show="!(stats.timeline && stats.timeline.length > 1)" class="text-outline text-xs font-mono" x-text="sparseCaption()"></p>

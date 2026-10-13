@@ -388,6 +388,8 @@ function overviewPage() {
 
     formatCost,
     observedCost,
+    outcomeSummary,
+    outcomeTone,
     costCoverage,
     countOf,
     formatDuration,

@@ -79,7 +79,7 @@ describe('the logs panels do not name a period they do not measure', () => {
     assert.ok(!page.includes('Last 60m'),
       'the panel reads /admin/stats, which is the whole retained window, not an hour');
     assert.ok(!page.includes('Total Tokens (Today)'), 'same figure, same window, not today');
-    assert.ok(page.includes('Error Rate') && page.includes('Total Tokens'),
+    assert.ok(page.includes('Outcome') && page.includes('Total Tokens'),
       'the panels are still there — otherwise the two checks above prove nothing');
   });
 

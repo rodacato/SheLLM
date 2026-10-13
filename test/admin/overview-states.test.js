@@ -304,6 +304,22 @@ describe('the Overview frame', () => {
   });
 });
 
+describe('the period\'s outcome reads the same on every page and is judged by what SheLLM owns', () => {
+  const { page } = loadOverview();
+  const rate = (by_class, server_error_pct) => ({ success_pct: 98.2, server_error_pct, by_class });
+
+  it('states the share that succeeded and how many did not, once', () => {
+    assert.strictEqual(page.outcomeSummary(rate({ '2xx': 540, '4xx': 9, '5xx': 1 }, 0.2)), '98.2% ok · 10 errors');
+    assert.strictEqual(page.outcomeSummary(rate({ '2xx': 5, '4xx': 1 }, 0)), '98.2% ok · 1 error');
+  });
+
+  it('never colours a caller\'s 4xx, and escalates SheLLM\'s 5xx', () => {
+    assert.strictEqual(page.outcomeTone(rate({ '4xx': 40 }, 0)), 'text-outline');
+    assert.strictEqual(page.outcomeTone(rate({ '5xx': 1 }, 0.2)), 'text-status-warn');
+    assert.strictEqual(page.outcomeTone(rate({ '5xx': 30 }, 5)), 'text-error');
+  });
+});
+
 describe('observed usage keeps unknown prices apart from zero', () => {
   const { page } = loadOverview();
 
