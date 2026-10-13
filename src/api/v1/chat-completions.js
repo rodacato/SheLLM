@@ -7,6 +7,7 @@ const { invalidRequest, isClientError, fromCatchable, keepProviderLimit, recordE
 const { recordSuccess, recordFailure, holdsProbe, releaseProbe } = require('../../infra/circuit-breaker');
 const { initSSE, announceQueued, keepAlive, sendSSEChunk, sendSSEDone, sendSSEError } = require('../../lib/sse');
 const { shellmMeta } = require('../../lib/shellm-meta');
+const { estimateFor } = require('../../infra/model-prices');
 const { imagePart, renderParts, maxImages } = require('./image-parts');
 const { refuseOpenAITools } = require('./function-calling');
 
@@ -286,6 +287,7 @@ async function chatCompletionsHandler(req, res) {
     res.locals.cost_usd = result.cost_usd ?? null;
     res.locals.usage = result.usage ?? null;
     res.locals.metrics = result.metrics ?? null;
+    res.locals.cost_estimate_usd = estimateFor(res.locals);
 
     res.set('X-Powered-By', 'SheLLM');
     res.set('X-Queue-Depth', String(queue.stats.pending));
@@ -310,6 +312,7 @@ async function chatCompletionsHandler(req, res) {
       usage: openAIUsage(result.usage),
       x_shellm: shellmMeta({
         cost_usd: result.cost_usd ?? null,
+        cost_estimate_usd: res.locals.cost_estimate_usd,
         queue_ms: result.queued_ms ?? null,
         cli_ms: result.duration_ms != null ? result.duration_ms - (result.queued_ms ?? 0) : null,
       }),
@@ -415,6 +418,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
             res.locals.usage = event.usage ?? null;
             res.locals.cost_usd = event.cost_usd ?? null;
             res.locals.metrics = event.metrics ?? null;
+            res.locals.cost_estimate_usd = estimateFor(res.locals);
           }
         }
         logger.debug({ event: 'stream_generator_done', chunkCount, request_id: req.requestId });
@@ -430,6 +434,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
         recordSuccess(provider.name);
         const meta = shellmMeta({
           cost_usd: res.locals.cost_usd ?? null,
+          cost_estimate_usd: res.locals.cost_estimate_usd ?? null,
           queue_ms: queuedMs,
           cli_ms: cliStart == null ? null : Date.now() - cliStart,
           ttft_ms: ttftMs,

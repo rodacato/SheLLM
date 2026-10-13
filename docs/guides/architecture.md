@@ -27,6 +27,8 @@ src/
 │   ├── health.js          # Provider health checks, caching, background polling, alerts
 │   ├── model-catalog.js   # Live model list from the CLIs, cached (ADR-0005)
 │   ├── model-limits.js    # Per-model limits: CLI > config/model-limits.yaml > 200k default (ADR-0009)
+│   ├── model-prices.js    # List-price estimate for a request the CLI did not price (ADR-0012)
+│   ├── yaml-manifest.js   # Hand-kept YAML under config/, re-read when the file changes
 │   ├── build-info.js      # Version and commit the running process reports
 │   ├── provider-lock.js   # Serializes operations that must not overlap per provider
 │   └── updater.js         # `shellm update` orchestration behind /admin/update

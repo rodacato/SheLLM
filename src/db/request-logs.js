@@ -6,7 +6,7 @@ const RETENTION_DAYS = 30;
 
 const LOG_FIELDS = [
   'request_id', 'client_name', 'provider', 'model', 'status', 'duration_ms', 'queued_ms',
-  'tokens', 'cost_usd', 'tokens_in', 'tokens_out', 'cache_write_tokens', 'cache_read_tokens',
+  'tokens', 'cost_usd', 'cost_estimate_usd', 'tokens_in', 'tokens_out', 'cache_write_tokens', 'cache_read_tokens',
   'ttft_ms', 'api_ms', 'upstream_model', 'streamed', 'api_error_status',
   'method', 'path', 'error_code', 'client_id',
 ];

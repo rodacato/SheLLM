@@ -100,13 +100,14 @@ describe('what a benchmark can read back', () => {
     return request(app).post('/v1/messages').set('Authorization', authHeader).send(body);
   }
 
-  const META_KEYS = ['cost_usd', 'queue_ms', 'cli_ms', 'ttft_ms'];
+  const META_KEYS = ['cost_usd', 'cost_estimate_usd', 'queue_ms', 'cli_ms', 'ttft_ms'];
 
-  it('puts the four numbers on a buffered OpenAI response', async () => {
+  it('puts the same numbers on a buffered OpenAI response', async () => {
     const res = await chat({ model: 'claude', messages: [{ role: 'user', content: 'hi' }] }).expect(200);
 
     assert.deepEqual(Object.keys(res.body.x_shellm).sort(), [...META_KEYS].sort());
     assert.equal(res.body.x_shellm.cost_usd, 0.0042);
+    assert.equal(res.body.x_shellm.cost_estimate_usd, null, 'a reported cost is never also estimated');
     assert.equal(typeof res.body.x_shellm.queue_ms, 'number');
     assert.equal(typeof res.body.x_shellm.cli_ms, 'number');
     assert.ok(res.body.x_shellm.cli_ms >= 0);
@@ -140,6 +141,7 @@ describe('what a benchmark can read back', () => {
 
     assert.deepEqual(Object.keys(res.body.x_shellm).sort(), [...META_KEYS].sort());
     assert.equal(res.body.x_shellm.cost_usd, 0.0042);
+    assert.equal(res.body.x_shellm.cost_estimate_usd, null, 'a reported cost is never also estimated');
   });
 
   it('sends no usage chunk unless stream_options asks for one', async () => {
