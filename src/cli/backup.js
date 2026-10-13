@@ -2,11 +2,12 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { DB_FILE, CONFIG_FILE, BACKUP_DIR } = require('./paths');
+const { DB_FILE, CONFIG_FILE, BACKUP_DIR, CLAUDE_STATE_FILE } = require('./paths');
 
 const DEFAULT_KEEP = 7;
 const DB_NAME = 'shellm.db';
 const CONFIG_NAME = 'config.env';
+const CLAUDE_STATE_NAME = 'claude.json';
 // Exactly what this command writes. Pruning matches this and nothing else, so it can never
 // delete a file it did not create, and a `.partial-` directory left by a killed run is never
 // mistaken for a snapshot.
@@ -103,6 +104,10 @@ async function snapshot({ dir }) {
     fs.chmodSync(path.join(partial, DB_NAME), 0o600);
     verify(path.join(partial, DB_NAME));
     fs.writeFileSync(path.join(partial, CONFIG_NAME), fs.readFileSync(CONFIG_FILE), { mode: 0o600 });
+    // Every claude spawn rewrites it; the copy is the way back if concurrent writes ever corrupt it.
+    if (fs.existsSync(CLAUDE_STATE_FILE)) {
+      fs.writeFileSync(path.join(partial, CLAUDE_STATE_NAME), fs.readFileSync(CLAUDE_STATE_FILE), { mode: 0o600 });
+    }
     fs.renameSync(partial, target);
   } catch (err) {
     fs.rmSync(partial, { recursive: true, force: true });
@@ -132,4 +137,4 @@ async function run(args = []) {
   }
 }
 
-module.exports = { run, assertNotRoot, parseArgs, SNAPSHOT_NAME, DB_NAME, CONFIG_NAME };
+module.exports = { run, assertNotRoot, parseArgs, SNAPSHOT_NAME, DB_NAME, CONFIG_NAME, CLAUDE_STATE_NAME };
