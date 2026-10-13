@@ -58,6 +58,7 @@ function newOnly() {
 }
 
 function run(args) {
+  require('dotenv').config({ path: CONFIG_FILE, quiet: true });
   if (args.includes('--new')) return newOnly();
   return table();
 }
