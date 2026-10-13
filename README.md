@@ -118,8 +118,9 @@ shellm init                # config file, Claude token, first API key, checks
 shellm start
 ```
 
-`shellm init` asks for the token from `claude setup-token` — press Enter to skip it if `claude` is
-already logged in for your user — writes `~/.config/shellm/env` with mode 600, prints your first
+`shellm init` asks for the token from `claude setup-token`, which is how the service
+authenticates. Pressing Enter falls back to your user's own `claude` login, which works until it
+expires; `shellm doctor` warns while it is in use. `shellm init` then writes `~/.config/shellm/env` with mode 600, prints your first
 API key once, writes the load limits so they are values you can see rather than defaults you have
 to read the source for, and runs the checks. `shellm doctor` repeats them later; `shellm doctor --live`
 sends one real request.

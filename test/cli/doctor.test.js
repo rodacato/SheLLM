@@ -81,6 +81,15 @@ process.exit(2);
     assert.match(result.stdout, /✗ API keys: no active key/);
   });
 
+  it('warns, without failing, when claude runs on a file session instead of the token', async () => {
+    installFakeClaude({ loggedIn: true, authMethod: 'claude.ai' });
+    await createKey();
+    const result = await shellm(['doctor'], { home, bin });
+    assert.strictEqual(result.code, 0, result.stdout);
+    assert.match(result.stdout, /! Claude login: claude\.ai session, which expires/);
+    assert.match(result.stdout, /fix: claude setup-token/);
+  });
+
   it('does not claim an env token is valid without --live', async () => {
     installFakeClaude({ loggedIn: true, authMethod: 'oauth_token' });
     await createKey();
