@@ -106,10 +106,13 @@
             x-text="'Could not read the stats — ' + statsError"></p>
           <div class="md:col-span-2 bg-surface-container p-5">
             <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-2">
-              Error Rate <span class="text-outline normal-case tracking-normal font-mono" x-text="windowSpan()"></span>
+              Outcome <span class="text-outline normal-case tracking-normal font-mono" x-text="windowSpan()"></span>
             </p>
             <div class="flex items-end gap-4">
-              <p class="text-2xl font-headline font-black text-white" x-text="stats ? (stats.error_rate.client_error_pct + stats.error_rate.server_error_pct).toFixed(1) + '%' : '-'"></p>
+              <div>
+                <p class="text-2xl font-headline font-black text-white" x-text="stats ? stats.error_rate.success_pct + '% ok' : '-'"></p>
+                <p x-show="stats" class="text-[10px] font-mono" :class="stats && outcomeTone(stats.error_rate)" x-text="stats ? countOf(errorCount(stats.error_rate), 'error') : ''"></p>
+              </div>
               <div class="flex-1 h-12 bg-surface-container-lowest relative overflow-hidden">
                 <div class="absolute inset-0 flex items-end gap-0.5 px-1" x-show="stats && stats.timeline">
                   <template x-for="(bar, i) in sparkBuckets" :key="i">

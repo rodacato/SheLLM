@@ -340,6 +340,9 @@ function logsPage() {
     formatCost,
     rowCost,
     observedCost,
+    outcomeTone,
+    errorCount,
+    countOf,
     costCoverage,
     get usageSummary() {
       const providers = this.stats?.quota?.by_provider || [];

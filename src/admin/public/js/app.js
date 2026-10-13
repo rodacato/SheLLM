@@ -222,6 +222,22 @@ function countOf(n, noun) {
   return `${n.toLocaleString()} ${noun}${n === 1 ? '' : 's'}`;
 }
 
+// One wording of the period's outcome on every page (D40), judged only by what SheLLM answers
+// for (D41): a caller's 4xx is the caller's, a 5xx is a provider or SheLLM failing.
+function errorCount(rate) {
+  return (rate.by_class?.['4xx'] || 0) + (rate.by_class?.['5xx'] || 0);
+}
+
+function outcomeSummary(rate) {
+  return `${rate.success_pct}% ok · ${countOf(errorCount(rate), 'error')}`;
+}
+
+function outcomeTone(rate) {
+  if (rate.server_error_pct >= 5) return 'text-error';
+  if (rate.server_error_pct > 0) return 'text-status-warn';
+  return 'text-outline';
+}
+
 // Free and unpriced are different answers: a zero is a price, a missing value is not one.
 function formatCost(usd) {
   if (usd == null) return 'not priced';

@@ -143,8 +143,8 @@ is what the next decision needs.
 | D37 | gap | The fold is not drawn | **Open** — on the project board |
 | D38 | gap | The freshness stamp is the least visible thing on the page | **Open** — carded 2026-09-21. Its premise changed: `text-outline/60` emitted no CSS until the alpha-modifier fix |
 | D39 | gap | No spacing scale in the kit | Landed — kit 0.3.0 |
-| D40 | gap | Logs buries the aggregate the Overview promotes | **Open, half landed** — carded 2026-09-21. The stats band moved above the table; the `% ok` vs `% error` polarity did not |
-| D41 | lift | The page's headline number never gets a verdict | **Open** — on the project board |
+| D40 | gap | Logs buries the aggregate the Overview promotes | Landed in code 2026-10-13 — both pages say `98.2% ok · 12 errors` from one helper (`outcomeSummary`); Logs' panel is now *Outcome*. Boards not redrawn (D74) |
+| D41 | lift | The page's headline number never gets a verdict | Landed in code 2026-10-13 — `outcomeTone` judges only what SheLLM answers for: a caller's 4xx never colours it, any 5xx is amber, 5% or more is red. Boards not redrawn (D74) |
 | D42 | lift | The card is not a component | Recorded above |
 
 ### Motion audit
