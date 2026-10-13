@@ -72,6 +72,13 @@ function fromCatchable(err, provider) {
   return cliFailed(provider, err.stderr || err.message || 'Unknown error');
 }
 
+// A stream already answered 200, so a provider's 429 is kept where the usage-limit banner reads
+// it. cliStart is null when the refusal was the gateway's (a full queue): that is not a usage limit.
+function keepProviderLimit(res, failure, cliStart) {
+  if (failure.status !== 429 || cliStart == null || !res.locals) return;
+  res.locals.metrics = { ...res.locals.metrics, api_error_status: 429 };
+}
+
 // The request log needs the code the caller actually received, and every sender passes here.
 function recordErrorCode(res, err) {
   if (res.locals) res.locals.error_code = err.code || 'internal_error';
@@ -171,6 +178,7 @@ module.exports = {
   recordErrorCode,
   isClientError,
   blame,
+  keepProviderLimit,
   sendError,
   sendApiError,
   sendOpenAIError,

@@ -54,14 +54,14 @@ setTimeout(() => process.stdout.write(fs.readFileSync(${JSON.stringify(FIXTURES)
 
   beforeEach(() => db.getDb().prepare('DELETE FROM request_logs').run());
 
-  const send = (url) => {
+  const send = (url, { stream = false } = {}) => {
     const messages = [{ role: 'user', content: 'x' }];
-    const body = url === '/v1/messages' ? { model: 'codex', max_tokens: 10, messages } : { model: 'codex', messages };
+    const body = url === '/v1/messages' ? { model: 'codex', max_tokens: 10, messages, stream } : { model: 'codex', messages, stream };
     return request(app).post(url).set('Authorization', `Bearer ${testKey}`).send(body);
   };
 
   async function loggedRows(count) {
-    const read = () => db.getDb().prepare('SELECT status, provider FROM request_logs ORDER BY id').all();
+    const read = () => db.getDb().prepare('SELECT status, provider, api_error_status FROM request_logs ORDER BY id').all();
     for (let i = 0; i < 50 && read().length < count; i++) await sleep(10);
     return read();
   }
@@ -73,7 +73,18 @@ setTimeout(() => process.stdout.write(fs.readFileSync(${JSON.stringify(FIXTURES)
       const res = await send(url);
 
       assert.equal(res.status, 429);
-      assert.deepEqual(await loggedRows(1), [{ status: 429, provider: 'codex' }]);
+      assert.deepEqual(await loggedRows(1), [{ status: 429, provider: 'codex', api_error_status: null }]);
+      assert.equal(stats.limitState('-1 hours')?.provider, 'codex');
+    });
+
+    it(`keeps a provider usage limit on a stream to ${url}, which already answered 200`, async () => {
+      fs.writeFileSync(modeFile, 'limit');
+
+      const res = await send(url, { stream: true });
+
+      assert.equal(res.status, 200);
+      assert.match(res.text, /rate_limit/);
+      assert.deepEqual(await loggedRows(1), [{ status: 200, provider: 'codex', api_error_status: 429 }]);
       assert.equal(stats.limitState('-1 hours')?.provider, 'codex');
     });
   }
@@ -86,7 +97,18 @@ setTimeout(() => process.stdout.write(fs.readFileSync(${JSON.stringify(FIXTURES)
 
     assert.deepEqual([running.status, waiting.status, refused.status], [200, 200, 429]);
     const rows = await loggedRows(3);
-    assert.deepEqual(rows.find((r) => r.status === 429), { status: 429, provider: null });
+    assert.deepEqual(rows.find((r) => r.status === 429), { status: 429, provider: null, api_error_status: null });
+    assert.equal(stats.limitState('-1 hours'), null);
+  });
+
+  it('never reads a stream refused by a full queue as a usage limit', async () => {
+    fs.writeFileSync(modeFile, 'slow');
+
+    const later = (ms, opts) => sleep(ms).then(() => send('/v1/chat/completions', opts));
+    const [, , refused] = await Promise.all([send('/v1/chat/completions'), later(30), later(60, { stream: true })]);
+
+    assert.match(refused.text, /Queue is full/);
+    await loggedRows(3);
     assert.equal(stats.limitState('-1 hours'), null);
   });
 });
