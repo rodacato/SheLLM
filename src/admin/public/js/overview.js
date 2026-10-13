@@ -146,6 +146,24 @@ function overviewPage() {
       return this.stats?.error_breakdown || [];
     },
 
+    // Who each request's outcome belongs to. The three failure parts add up to errorCount, so the
+    // cards and the bar never disagree with the headline.
+    get outcomeParts() {
+      const rate = this.stats?.error_rate;
+      if (!rate) return [];
+      const total = this.stats.total_requests || 0;
+      const unauthenticated = rate.unauthenticated || 0;
+      const part = (key, label, count, fill) => ({
+        key, label, count, fill, pct: total ? Math.round((count / total) * 1000) / 10 : 0,
+      });
+      return [
+        part('ok', 'Succeeded', rate.by_class?.['2xx'] || 0, 'bg-status-ok'),
+        part('server', 'Server · 5xx', rate.by_class?.['5xx'] || 0, 'bg-status-fail'),
+        part('caller', 'Callers · 4xx', Math.max((rate.by_class?.['4xx'] || 0) - unauthenticated, 0), 'bg-status-warn'),
+        part('unauthenticated', 'Unauthenticated', unauthenticated, 'bg-outline'),
+      ];
+    },
+
     usageRate(usage) {
       if (!usage.requests) return 'No activity';
       const cost = usage.priced_requests > 0 ? `${formatCost(usage.cost_per_hour)}/h API equivalent` : 'Price unknown';
@@ -388,6 +406,7 @@ function overviewPage() {
 
     formatCost,
     observedCost,
+    errorCount,
     outcomeSummary,
     outcomeTone,
     costCoverage,

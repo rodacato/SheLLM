@@ -220,14 +220,53 @@
         </template>
 
         <template x-if="stats && errorRows.length > 0">
-          <details class="mb-8 order-3">
-            <summary class="flex items-baseline gap-3 mb-3 cursor-pointer">
-              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">history</span>
+          <section class="mb-8 order-3">
+            <div class="flex items-baseline gap-3 mb-3">
               <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Errors</span>
               <span class="text-[10px] font-mono" :class="outcomeTone(stats.error_rate)" x-text="outcomeSummary(stats.error_rate)"></span>
-              <span class="text-[10px] text-outline">Period history · open details</span>
-            </summary>
+            </div>
+            <p class="text-xs text-on-surface-variant mb-4">Requests that did not succeed in the period. A 5xx is a provider or SheLLM failing; a 4xx is the caller's, and an unauthenticated one carried no valid API key.</p>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div class="bg-surface-container p-5">
+                <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-2">Failed</p>
+                <p class="text-2xl font-headline font-black text-white" x-text="errorCount(stats.error_rate).toLocaleString()"></p>
+                <p class="text-[10px] font-mono text-outline mt-1" x-text="(100 - stats.error_rate.success_pct).toFixed(1) + '% of ' + (stats.total_requests || 0).toLocaleString()"></p>
+              </div>
+              <template x-for="part in outcomeParts.slice(1)" :key="part.key">
+                <div class="bg-surface-container p-5">
+                  <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-2" x-text="part.label"></p>
+                  <p class="text-2xl font-headline font-black"
+                    :class="part.key === 'server' && part.count > 0 ? 'text-error' : 'text-white'"
+                    x-text="part.count.toLocaleString()"></p>
+                  <p class="text-[10px] font-mono text-outline mt-1" x-text="part.pct + '%'"></p>
+                </div>
+              </template>
+            </div>
+
+            <div class="bg-surface-container p-5 mb-4">
+              <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant mb-4">Every request, by outcome</p>
+              <div class="flex h-6 mb-2" aria-hidden="true">
+                <template x-for="part in outcomeParts" :key="part.key">
+                  <div :class="part.fill" :style="'width:' + part.pct + '%'"></div>
+                </template>
+              </div>
+              <div class="flex flex-wrap gap-x-6 gap-y-1 text-[10px] font-mono text-outline">
+                <template x-for="part in outcomeParts" :key="part.key">
+                  <span class="flex items-center gap-1.5">
+                    <span class="inline-block w-2 h-2" :class="part.fill" aria-hidden="true"></span>
+                    <span x-text="part.label.toLowerCase()"></span>
+                    <span class="text-on-surface-variant" x-text="part.pct + '%'"></span>
+                  </span>
+                </template>
+              </div>
+            </div>
+
             <div class="bg-surface-container p-5">
+            <div class="flex items-baseline justify-between mb-3">
+              <p class="text-[10px] font-headline font-bold uppercase text-on-surface-variant">Most recent</p>
+              <span class="text-[10px] font-mono text-outline">Same status, error, client and model on one row · open it for its requests</span>
+            </div>
             <div class="overflow-x-auto">
             <table class="w-full text-xs font-mono">
               <thead>
@@ -262,7 +301,7 @@
             </table>
             </div>
             </div>
-          </details>
+          </section>
         </template>
 
         </div>

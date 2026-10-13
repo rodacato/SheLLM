@@ -34,6 +34,7 @@ function noData() {
     byStatusCode: [],
     providerRows: [],
     errorBreakdown: [],
+    unauthenticatedErrors: 0,
     latency: null,
     quota: null,
     byModel: [],
@@ -60,7 +61,7 @@ function describeWindow(bounds) {
   };
 }
 
-function errorRate(byStatusCode, total) {
+function errorRate(byStatusCode, total, unauthenticated) {
   const classOf = (status) => (status >= 200 && status < 400 ? '2xx' : status < 500 ? '4xx' : '5xx');
   const by_class = {};
   for (const { status, count } of byStatusCode) {
@@ -73,6 +74,7 @@ function errorRate(byStatusCode, total) {
     client_error_pct: pct(by_class['4xx']),
     server_error_pct: pct(by_class['5xx']),
     by_class,
+    unauthenticated,
   };
 }
 
@@ -95,7 +97,7 @@ function latencySection(interval) {
 // The only place the response shape is written down, so a database-less answer cannot lose a key.
 function payload(source) {
   const {
-    window, agg, byStatusCode, providerRows, errorBreakdown,
+    window, agg, byStatusCode, providerRows, errorBreakdown, unauthenticatedErrors,
     latency, quota, byModel, byClient, timeline, recentRequests, recentRequestsTotal, activeClients,
   } = source;
 
@@ -106,7 +108,7 @@ function payload(source) {
     by_status: Object.fromEntries(byStatusCode.map((r) => [String(r.status), r.count])),
     by_status_code: byStatusCode,
     error_breakdown: errorBreakdown,
-    error_rate: errorRate(byStatusCode, agg.total_requests),
+    error_rate: errorRate(byStatusCode, agg.total_requests, unauthenticatedErrors),
     cost_by_provider: Object.fromEntries(providerRows.map((r) => [r.provider, r.cost_usd])),
     cost_burn_rate: window.hours ? Math.round((agg.total_cost_usd / window.hours) * 10000) / 10000 : 0,
     latency,
@@ -149,6 +151,7 @@ router.get('/stats', (req, res) => {
     byStatusCode: stats.byStatusCode(interval),
     providerRows: stats.usageByProvider(interval),
     errorBreakdown: stats.errorBreakdown(interval),
+    unauthenticatedErrors: stats.unauthenticatedErrors(interval),
     latency: latencySection(interval),
     quota: quotaSection(interval, window.hours),
     byModel: stats.byModel(interval),
