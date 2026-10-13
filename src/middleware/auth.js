@@ -21,7 +21,9 @@ const globalTimestamps = [];
 // Per-client rate limit timestamps (keyed by client name, shared across DB clients)
 const clientTimestamps = new Map();
 
-function checkRateLimit(timestamps, maxRpm) {
+// Seconds until the window has room, or 0. Only an admitted request is recorded: a refused one
+// must not spend another window's budget.
+function retryAfter(timestamps, maxRpm) {
   const now = Date.now();
   const cutoff = now - WINDOW_MS;
 
@@ -32,11 +34,9 @@ function checkRateLimit(timestamps, maxRpm) {
 
   if (timestamps.length >= maxRpm) {
     const oldestInWindow = timestamps[0];
-    const retryAfter = Math.ceil((oldestInWindow + WINDOW_MS - now) / 1000);
-    return retryAfter;
+    return Math.ceil((oldestInWindow + WINDOW_MS - now) / 1000);
   }
 
-  timestamps.push(now);
   return 0;
 }
 
@@ -130,7 +130,7 @@ function createAuthMiddleware() {
     const clientRpm = dbClient.rpm;
 
     // Check global rate limit
-    const globalRetry = checkRateLimit(globalTimestamps, getGlobalRpm());
+    const globalRetry = retryAfter(globalTimestamps, getGlobalRpm());
     if (globalRetry > 0) {
       return sendApiError(
         req,
@@ -142,7 +142,7 @@ function createAuthMiddleware() {
 
     // Check per-client rate limit
     const timestamps = getOrCreateTimestamps(clientName);
-    const clientRetry = checkRateLimit(timestamps, clientRpm);
+    const clientRetry = retryAfter(timestamps, clientRpm);
     if (clientRetry > 0) {
       return sendApiError(
         req,
@@ -151,6 +151,9 @@ function createAuthMiddleware() {
         req.requestId,
       );
     }
+    const admittedAt = Date.now();
+    globalTimestamps.push(admittedAt);
+    timestamps.push(admittedAt);
 
     req.clientName = clientName;
     req.clientId = dbClient.id;
