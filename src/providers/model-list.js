@@ -28,6 +28,8 @@ function appServerCall(method, { env, timeout = LIST_TIMEOUT_MS } = {}) {
     const timer = setTimeout(() => finish(null), timeout);
 
     child.on('error', () => finish(null));
+    child.on('close', () => finish(null));
+    child.stdin.on('error', () => finish(null));
     child.stdout.on('data', (chunk) => {
       buffer += chunk;
       const lines = buffer.split('\n');
