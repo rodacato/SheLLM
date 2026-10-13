@@ -1061,7 +1061,7 @@
                       "type": "string",
                       "description": "What applies a config change on this host. The file is read once, at startup, so\nevery edit needs it — and it is not the same command under systemd as it is on a\nlaptop.\n",
                       "enum": [
-                        "shellm restart",
+                        "Ctrl+C, then shellm start",
                         "sudo systemctl restart shellm"
                       ]
                     },

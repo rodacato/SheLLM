@@ -190,7 +190,7 @@ module.exports = {
   NODE_ENV: {
     section: 'Process', type: 'string', default: null, since: 'v0.4.0', reload: 'restart', example: 'production',
     describe: `\`production\` is what arms the guards: a weak admin password refuses to start and a
-      run with no API keys logs CRITICAL. The systemd unit sets it; \`shellm start -d\` on a server
+      run with no API keys logs CRITICAL. The systemd unit sets it; \`shellm start\` on a server
       does not.`,
   },
   SHELLM_REF: {

@@ -90,7 +90,7 @@ describe('admin /admin/config', () => {
 
     assert.strictEqual(res.body.config_file, configFile);
     assert.strictEqual(res.body.running, `v${require('../../package.json').version}`);
-    assert.match(res.body.restart_command, /^(shellm restart|sudo systemctl restart shellm)$/);
+    assert.match(res.body.restart_command, /^(Ctrl\+C, then shellm start|sudo systemctl restart shellm)$/);
   });
 
   it('masks a secret and never sends its value', async () => {

@@ -625,7 +625,7 @@ await stream.finalMessage();</pre>
   <div class="wrap reveal">
     <h2>When it does not work</h2>
     <div class="fixes">
-      <div><strong>A setting you changed did nothing.</strong><span>The config file is read once, when the service starts. Restart it: <code>sudo systemctl restart shellm</code> on a server, <code>shellm restart</code> on your machine.</span></div>
+      <div><strong>A setting you changed did nothing.</strong><span>The config file is read once, when the service starts. Restart it: <code>sudo systemctl restart shellm</code> on a server, Ctrl+C and <code>shellm start</code> again on your machine.</span></div>
       <div><strong>A browser page is blocked by CORS.</strong><span>Calling <code>/v1</code> from a page is off until <code>SHELLM_CORS_ORIGINS</code> names that exact origin — scheme, host and port, no trailing slash, and no wildcard.</span></div>
       <div><strong>curl works and your app gets 403.</strong><span>That key is scoped to browser origins, and yours is not on its list. A request with no <code>Origin</code> is accepted, which is why curl still works.</span></div>
       <div><strong>Anything else.</strong><span><code>shellm doctor</code> checks the install and prints the fix beside whatever failed. <code>shellm doctor --live</code> spends one real request to prove the whole path.</span></div>

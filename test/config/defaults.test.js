@@ -113,7 +113,7 @@ describe('config defaults', () => {
     const invocation = process.env.INVOCATION_ID;
     try {
       delete process.env.INVOCATION_ID;
-      assert.equal(config.restartCommand(), 'shellm restart');
+      assert.equal(config.restartCommand(), 'Ctrl+C, then shellm start');
       process.env.INVOCATION_ID = 'c0ffee';
       assert.equal(config.restartCommand(), 'sudo systemctl restart shellm');
     } finally {

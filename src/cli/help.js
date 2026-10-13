@@ -10,12 +10,9 @@ Usage: shellm <command> [options]
 
 Commands:
   init                                    Create the config file and a first API key
-  start [-d|--daemon] [-p|--port PORT]   Start the server
-  stop                                    Stop the daemon
-  restart                                 Restart the daemon
+  start [-p|--port PORT]                  Start the server in the foreground (Ctrl+C to stop)
   status                                  Show whether the server answers
   doctor [--live]                         Check the setup; --live sends one request to Claude
-  logs [-f|--follow] [-n|--lines N]       View daemon logs
   backup [--dir DIR] [--keep N]           Snapshot the database and config file
   config [--new]                          Show every setting and where its value came from
   update                                  Move to the newest published release
@@ -23,15 +20,13 @@ Commands:
   help                                    Show this help
 
 Examples:
-  shellm start              Start in foreground (Ctrl+C to stop)
-  shellm start -d           Start as background daemon
-  shellm start -d -p 8080   Start daemon on port 8080
-  shellm stop               Stop background daemon
+  shellm start              Start in the foreground (Ctrl+C to stop)
+  shellm start -p 8080      Start on port 8080
   shellm status             Check if server is running
-  shellm logs -f            Follow daemon log output
 
 systemd (production):
   sudo systemctl start shellm
+  sudo systemctl restart shellm
   sudo systemctl status shellm
   journalctl -u shellm -f
 

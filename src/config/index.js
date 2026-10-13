@@ -106,7 +106,7 @@ function isInConfigFile(name) {
 // systemd sets INVOCATION_ID for every service it starts, so a host running under the unit is told
 // the command that actually applies there instead of the one that only works on a laptop.
 function restartCommand() {
-  return process.env.INVOCATION_ID ? 'sudo systemctl restart shellm' : 'shellm restart';
+  return process.env.INVOCATION_ID ? 'sudo systemctl restart shellm' : 'Ctrl+C, then shellm start';
 }
 
 function names() {
