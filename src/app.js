@@ -49,7 +49,8 @@ const chatJson = express.json({ limit: chatBodyLimit });
 // the small limit, which fails safe.
 function parseChatBody(req, res, next) {
   chatJson(req, res, (err) => {
-    if (err?.type !== 'entity.too.large') return next(err);
+    if (!err) return requestId(req, res, next);
+    if (err.type !== 'entity.too.large') return next(err);
     sendApiError(req, res, payloadTooLarge(
       `Request body exceeds ${chatBodyLimit} bytes; send fewer or smaller images`,
     ), req.requestId);
