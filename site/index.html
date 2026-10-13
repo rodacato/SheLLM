@@ -7,11 +7,18 @@
 <meta name="description" content="SheLLM runs the official Claude Code or Codex CLI you already pay for behind one HTTP endpoint that speaks both the OpenAI and the Anthropic formats.">
 <meta name="theme-color" content="#101417">
 <meta property="og:title" content="SheLLM">
-<meta property="og:description" content="Your LLM subscription — as a REST API for your own apps.">
+<meta property="og:description" content="Tus suscripciones de LLM, conectadas a tus propias apps con los CLI oficiales y formatos OpenAI y Anthropic.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://rodacato.github.io/SheLLM/">
-<meta property="og:image" content="https://rodacato.github.io/SheLLM/img/overview.png">
+<meta property="og:image" content="https://rodacato.github.io/SheLLM/assets/brand/social.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="SheLLM: tus suscripciones de LLM, una API para tus propias apps. Tus apps → SheLLM → CLI oficial.">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SheLLM">
+<meta name="twitter:description" content="Tus suscripciones de LLM. Una API para tus propias apps.">
+<meta name="twitter:image" content="https://rodacato.github.io/SheLLM/assets/brand/social.png">
+<meta name="twitter:image:alt" content="SheLLM conecta tus apps con los CLI oficiales en formatos OpenAI y Anthropic.">
 <link rel="icon" type="image/svg+xml" href="assets/favicon/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/favicon-180.png">
@@ -44,10 +51,11 @@
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
-  body { margin:0; background:var(--surface); color:var(--text); font:300 1rem/1.7 Inter, system-ui, sans-serif; }
+  body { margin:0; background:var(--surface); color:var(--text); font:400 1rem/1.7 Inter, system-ui, sans-serif; }
   h1, h2, h3 { font-family:"Space Grotesk", system-ui, sans-serif; font-weight:700; letter-spacing:-.02em; line-height:1.15; }
   a { color:var(--accent); text-decoration:none; }
   a:hover { text-decoration:underline; }
+  :is(a, button, summary):focus-visible { outline:2px solid var(--accent); outline-offset:4px; }
   code, pre { font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
   img { max-width:100%; }
   figure { margin:0; }
@@ -88,14 +96,14 @@
 
   header { position:relative; isolation:isolate; min-height:64vh; display:grid; place-items:center; text-align:center;
            background:var(--surface-low); overflow:hidden; }
-  header .inner { position:relative; z-index:1; padding:3rem 1.5rem; }
+  header .inner { position:relative; z-index:1; width:100%; min-width:0; padding:3rem 1.5rem; }
   header h1 { margin:0; }
   header img { width:min(22rem, 78vw); height:auto; }
   header p { color:var(--muted); font-size:1.15rem; margin:1.75rem auto 2.5rem; max-width:34rem; }
   header p.cursor { margin-bottom:1rem; }
   header p.aside { font-size:.9rem; margin-top:0; }
   .actions { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
-  .swap { margin:2.5rem auto 0; max-width:34rem; text-align:left; font-size:.72rem; line-height:2.1;
+  .swap { margin:2.5rem auto 0; width:min(34rem, 100%); min-width:0; text-align:left; font-size:.72rem; line-height:2.1;
           color:var(--muted); border:1px solid color-mix(in srgb, var(--line) 50%, transparent);
           background:color-mix(in srgb, #000 25%, transparent); padding:.9rem 1.1rem; overflow-x:auto; }
   .swap b { color:var(--accent); font-weight:400; }
@@ -192,16 +200,16 @@
   .ins-picker [role=tab]:hover { color:var(--text); }
   .ins-picker [role=tab][aria-selected=true] { color:var(--accent); border-color:var(--accent); }
   .ins-picker :focus-visible, .ins-replay:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
-  .rig { position:relative; display:grid; grid-template-columns:1fr 1.25fr 1fr; gap:4rem; align-items:center;
+  .rig { position:relative; display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr); gap:4rem; align-items:center;
          padding:1.75rem; background:var(--surface-low); border:1px solid color-mix(in srgb, var(--line) 50%, transparent); }
   .rig svg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
   .rig path { fill:none; stroke:color-mix(in srgb, var(--line) 70%, transparent); stroke-width:1; }
   .rig path.hot { stroke:var(--accent); stroke-dasharray:4 6; animation:flow-dash .6s linear infinite; }
   .rig path.hot.fail { stroke:var(--fail); }
   @keyframes flow-dash { to { stroke-dashoffset:-10; } }
-  .rig .col { position:relative; z-index:1; display:grid; gap:.75rem; }
+  .rig .col { position:relative; z-index:1; display:grid; min-width:0; gap:.75rem; }
   .rig .col > span { color:var(--muted); font:500 .65rem "Space Grotesk", sans-serif; letter-spacing:.18em; text-transform:uppercase; }
-  .node { padding:.7rem .85rem; background:var(--surface); border:1px solid color-mix(in srgb, var(--line) 60%, transparent);
+  .node { min-width:0; overflow-wrap:anywhere; padding:.7rem .85rem; background:var(--surface); border:1px solid color-mix(in srgb, var(--line) 60%, transparent);
           font:400 .78rem ui-monospace, Menlo, monospace; color:var(--muted);
           transition:border-color var(--dur-fast) var(--ease-enter), color var(--dur-fast) var(--ease-enter), box-shadow .3s var(--ease-enter); }
   .node b { display:block; color:var(--text); font:700 .9rem "Space Grotesk", sans-serif; }
@@ -257,14 +265,14 @@
                 font:500 .75rem "Space Grotesk", sans-serif; letter-spacing:.08em; text-transform:uppercase; }
   .ins-replay:hover { text-decoration:underline; }
   @media (max-width: 56rem) {
-    .rig { grid-template-columns:1fr; gap:1.25rem; padding:1.25rem; }
+    .rig { grid-template-columns:minmax(0, 1fr); gap:1.25rem; padding:1.25rem; }
     .rig svg, .packet { display:none; }
-    .rig .col.api, .rig .col.engines { grid-template-columns:1fr 1fr; }
+    .rig .col.api, .rig .col.engines { grid-template-columns:repeat(2, minmax(0, 1fr)); }
     .rig .col.api > span, .rig .col.engines > span { grid-column:1 / -1; }
     .panes { grid-template-columns:1fr; }
     .logrow { grid-template-columns:1fr 1fr; }
   }
-  .nots, .fixes { display:grid; gap:1px; grid-template-columns:repeat(auto-fit, minmax(16rem, 1fr));
+  .nots, .fixes { display:grid; gap:1px; grid-template-columns:repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
           background:color-mix(in srgb, var(--line) 30%, transparent);
           border:1px solid color-mix(in srgb, var(--line) 30%, transparent); }
   .nots div, .fixes div { background:var(--surface); padding:1.5rem; }
@@ -713,10 +721,11 @@ await stream.finalMessage();</pre>
 
 </main>
 
-<footer class="wrap">
+  <footer class="wrap">
   <span>MIT · __VERSION__</span>
   <nav>
     <a href="api/">API Docs</a>
+    <a href="brand/">Identidad</a>
     <a href="https://github.com/rodacato/SheLLM">GitHub</a>
     <a href="https://github.com/rodacato/SheLLM/blob/master/CHANGELOG.md">Changelog</a>
   </nav>

@@ -21,6 +21,7 @@
   --nav-selected:              #2e3b44;
   --primary-container:         #03e3ff;
   --primary-container-hover:   #39eeff;
+  --primary-on-light:          #006978;
   --on-primary:                #00363e;
   --on-surface:                #e0e3e7;
   --on-surface-variant:        #bac9cd;
@@ -62,7 +63,7 @@ a:active,
 /* Status badges */
 .badge-2xx { background-color: var(--badge-2xx-bg); color: var(--status-ok); }
 .badge-4xx { background-color: var(--badge-4xx-bg); color: var(--status-warn); }
-.badge-5xx { background-color: var(--badge-5xx-bg); color: var(--status-fail); }
+.badge-5xx { background-color: var(--badge-5xx-bg); color: var(--error); }
 
 /* Provider health dots */
 .dot-green { background-color: var(--status-ok); }
@@ -84,6 +85,20 @@ a:active,
 
 /* Hide x-cloak elements until Alpine initializes */
 [x-cloak] { display: none !important; }
+
+:is(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--primary-container) !important;
+  outline-offset: 3px;
+}
+
+.error-log-link { display: block; min-height: 32px; padding-block: 8px; }
+.sidebar-action { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; }
+@media (max-width: 767px) {
+  .error-log-link { min-height: 44px; padding-block: 14px; }
+  .sidebar-action { width: 44px; height: 44px; }
+}
+
+.font-mono, table, canvas + p { font-variant-numeric: tabular-nums; }
 
 /* Modal overlay */
 .modal-overlay {

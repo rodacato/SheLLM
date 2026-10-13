@@ -338,6 +338,15 @@ function logsPage() {
     formatTime,
     formatDuration,
     formatCost,
+    observedCost,
+    costCoverage,
+    get usageSummary() {
+      return {
+        requests: this.stats?.total_requests || 0,
+        priced_requests: (this.stats?.quota?.by_provider || []).reduce((sum, p) => sum + (p.priced_requests || 0), 0),
+        cost_usd: this.stats?.total_cost_usd,
+      };
+    },
     formatCompactNumber,
     statusBadgeClass,
   };

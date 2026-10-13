@@ -303,3 +303,26 @@ describe('the Overview frame', () => {
     for (const [tag] of icons) assert.match(tag, /aria-hidden="true"/, tag);
   });
 });
+
+describe('observed usage keeps unknown prices apart from zero', () => {
+  const { page } = loadOverview();
+
+  it('distinguishes an empty window, an unpriced window, and a reported zero', () => {
+    assert.strictEqual(page.observedCost({ requests: 0, priced_requests: 0, cost_usd: 0 }), 'Sin actividad');
+    assert.strictEqual(page.observedCost({ requests: 2, priced_requests: 0, cost_usd: 0 }), 'Sin precio');
+    assert.strictEqual(page.observedCost({ requests: 2, priced_requests: 2, cost_usd: 0 }), '$0.0000');
+  });
+
+  it('discloses a partial price instead of implying that unpriced requests were free', () => {
+    const partial = { requests: 4, priced_requests: 2, cost_usd: 1.25 };
+    assert.strictEqual(page.observedCost(partial), '$1.2500');
+    assert.match(page.costCoverage(partial), /^2\/4 requests con precio/);
+    assert.strictEqual(page.costCoverage({ requests: 2, priced_requests: 2 }), '');
+  });
+
+  it('does not draw an unknown hourly price as zero, or rounded traffic as no activity', () => {
+    assert.strictEqual(page.usageRate({ requests: 0 }), 'Sin actividad');
+    assert.strictEqual(page.usageRate({ requests: 2, priced_requests: 0, requests_per_minute: 0 }), 'Precio desconocido · <0.01 rpm');
+    assert.strictEqual(page.usageRate({ requests: 2, priced_requests: 2, cost_per_hour: 0, requests_per_minute: 1 }), '$0.0000/h en API · 1 rpm');
+  });
+});

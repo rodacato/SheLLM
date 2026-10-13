@@ -83,6 +83,8 @@ module.exports = [
         formatUptime: 'readonly',
         formatDuration: 'readonly',
         formatCost: 'readonly',
+        observedCost: 'readonly',
+        costCoverage: 'readonly',
         countOf: 'readonly',
         formatTime: 'readonly',
         formatHourMinute: 'readonly',

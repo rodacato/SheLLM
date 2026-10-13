@@ -13,8 +13,6 @@ const JS_DIR = path.join(__dirname, '../../src/admin/public/js');
 const OVERVIEW_HTML = path.join(__dirname, '../../src/admin/views/pages/overview.html');
 const WINDOW = '-30 days';
 
-// The page's own files, loaded the way the browser loads them. hasServerErrors reads the rows the
-// server really sends, so nothing needs stubbing past the browser globals.
 function overviewPage(stats) {
   const context = vm.createContext({
     AbortSignal,
@@ -43,24 +41,23 @@ function statsWith(rows) {
   return { error_breakdown: dbStats.errorBreakdown(WINDOW) };
 }
 
-describe('Errors leads the page only when the gateway is what failed', () => {
+describe('the Overview keeps historical failures available', () => {
   after(() => { try { closeDb(); } catch { /* not open */ } });
 
-  it('does not promote a period of refused callers', () => {
+  it('retains refused callers in the history', () => {
     const page = overviewPage(statsWith([200, 401, 404, 400]));
     assert.ok(page.errorRows.length > 0, 'the fixture must produce error rows, or this proves nothing');
-    assert.strictEqual(page.hasServerErrors, false);
+    assert.ok(page.errorRows.every((row) => row.status < 500));
   });
 
-  it('promotes as soon as one request failed upstream', () => {
+  it('retains upstream failures alongside refused callers', () => {
     const page = overviewPage(statsWith([200, 401, 502]));
-    assert.strictEqual(page.hasServerErrors, true);
+    assert.ok(page.errorRows.some((row) => row.status === 502));
   });
 
   it('says nothing either way when the period is clean', () => {
     const page = overviewPage(statsWith([200, 200]));
     assert.deepStrictEqual(page.errorRows, []);
-    assert.strictEqual(page.hasServerErrors, false);
   });
 });
 
@@ -76,8 +73,17 @@ describe('the Errors table spends its columns on facts it has', () => {
     assert.match(html, /x-text="row\.model"/);
   });
 
-  it('orders the block by severity rather than by presence', () => {
-    assert.match(html, /hasServerErrors \? 'order-1' : 'order-3'/);
-    assert.doesNotMatch(html, /x-if="stats && errorRows\.length > 0"[^]{0,120}order-1"/);
+  it('keeps history collapsed below current status even when it contains a 5xx', () => {
+    assert.match(html, /<details class="mb-8 order-3">/);
+    assert.doesNotMatch(html, /hasServerErrors|<details[^>]+\bopen\b/);
+    assert.match(html, /<div class="order-1">/);
+    assert.ok(html.indexOf('<div class="order-1">') < html.indexOf('<details class="mb-8 order-3">'), 'screen readers must encounter current status before history');
+  });
+
+  it('provides a real link for keyboard navigation to the error requests', () => {
+    const link = /<a href="#logs"[^>]*@click="openErrorLogs\(row\)"[^>]*>/.exec(html);
+    assert.ok(link, 'error navigation has no focusable link');
+    assert.match(link[0], /:aria-label=/);
+    assert.doesNotMatch(html, /<tr @click=/);
   });
 });

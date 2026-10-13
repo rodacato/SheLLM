@@ -92,7 +92,7 @@ function systemPage() {
 
     circuitClass(prov) {
       const state = prov.circuit?.state;
-      if (state === 'open') return 'text-status-fail font-bold';
+      if (state === 'open') return 'text-error font-bold';
       if (state === 'half_open') return 'text-status-warn font-bold';
       return 'text-on-surface-variant';
     },
