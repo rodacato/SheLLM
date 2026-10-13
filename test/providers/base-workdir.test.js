@@ -1,6 +1,7 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const { setTimeout: sleep } = require('node:timers/promises');
 const { execute, executeStream } = require('../../src/providers/base');
@@ -116,6 +117,29 @@ describe('a stream that did not finish on its own', () => {
     for await (const event of executeStream('node', HANG, { signal: ac.signal })) {
       if (event.type === 'chunk') ac.abort();
     }
+  });
+
+  it('never starts the CLI when the caller aborted while it was queued', async () => {
+    const marker = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'shellm-')), 'ran');
+    const ac = new AbortController();
+    ac.abort();
+    for await (const _event of executeStream('node', ['-e', `require("fs").writeFileSync(${JSON.stringify(marker)}, "")`], { signal: ac.signal })) { /* drain */ }
+    await sleep(200);
+    assert.ok(!fs.existsSync(marker), 'the CLI ran for a caller that had already left');
+  });
+
+  it('stops the CLI when the caller stops reading', async () => {
+    let pid = '';
+    for await (const event of executeStream('node', ['-e', 'process.stdout.write(String(process.pid)); setInterval(() => {}, 1000)'])) {
+      if (event.type !== 'chunk') continue;
+      pid = event.data;
+      break;
+    }
+    const alive = () => { try { process.kill(Number(pid), 0); return true; } catch { return false; } };
+    for (let i = 0; i < 50 && alive(); i++) await sleep(10);
+    const leaked = alive();
+    if (leaked) process.kill(Number(pid), 'SIGKILL');
+    assert.ok(!leaked, `CLI ${pid} kept running after the caller stopped reading`);
   });
 });
 

@@ -156,6 +156,8 @@ function execute(command, args, { timeout = getTimeoutMs(), env, files, input } 
  * Accepts an AbortSignal for client disconnect cleanup.
  */
 async function* executeStream(command, args, { timeout = getTimeoutMs(), env, signal, files, input } = {}) {
+  // A client that left while queued aborts before the CLI exists, so the listener below never fires.
+  if (signal?.aborted) return;
   const proc = spawnInWorkdir(command, args, env, { files, input });
 
   function killGroup(sig) {
@@ -210,12 +212,17 @@ async function* executeStream(command, args, { timeout = getTimeoutMs(), env, si
     if (resolve) { resolve(); resolve = null; }
   });
 
-  while (true) {
-    while (chunks.length > 0) {
-      yield { type: 'chunk', data: chunks.shift() };
+  // A consumer that stops reading (break, return) ends the generator here, not the CLI.
+  try {
+    while (true) {
+      while (chunks.length > 0) {
+        yield { type: 'chunk', data: chunks.shift() };
+      }
+      if (done) break;
+      await new Promise((r) => { resolve = r; });
     }
-    if (done) break;
-    await new Promise((r) => { resolve = r; });
+  } finally {
+    if (!done) killGroup('SIGTERM');
   }
 
   // Drain any remaining chunks
