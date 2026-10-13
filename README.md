@@ -324,10 +324,8 @@ tell a queued request from a wedged one, and so intermediaries see traffic.
 ```
 shellm init                    Create the config file and a first API key
 shellm doctor [--live]         Check the setup; --live sends one real request
-shellm start [-d] [-p PORT]    Start the server (foreground or daemon)
-shellm stop | restart          Control the daemon
+shellm start [-p PORT]         Start the server in the foreground (Ctrl+C to stop)
 shellm status                  Report whether the server answers
-shellm logs [-f] [-n N]        View daemon logs
 shellm config [--new]          Show every setting and where its value came from
 shellm backup [--dir DIR]      Snapshot the database and config file into one directory
 shellm update | version        Update the install, print the version
@@ -360,11 +358,11 @@ which nothing does yet, and it is why `PORT` can never be one of them: the socke
 
 ### Changing a setting
 
-Locally, append it and restart:
+Locally, append it, stop the running `shellm start` with Ctrl+C and start it again:
 
 ```bash
 echo 'MAX_CONCURRENT=8' >> ~/.config/shellm/env
-shellm restart
+shellm start
 ```
 
 On a server the file belongs to the service user, and systemd owns the restart:

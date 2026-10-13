@@ -3,12 +3,9 @@
 
 const commands = {
   start: './cli/start',
-  stop: './cli/stop',
-  restart: './cli/restart',
   status: './cli/status',
   doctor: './cli/doctor',
   init: './cli/init',
-  logs: './cli/logs',
   update: './cli/update',
   backup: './cli/backup',
   config: './cli/config',

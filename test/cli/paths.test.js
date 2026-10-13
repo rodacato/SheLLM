@@ -5,11 +5,11 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const fs = require('node:fs');
 const os = require('node:os');
-const { SHELLM_DIR, DB_FILE, PID_FILE, LOG_DIR, LOG_FILE, BACKUP_DIR, PROJECT_ROOT, SERVER_SCRIPT, CLI_SCRIPT } = require('../../src/cli/paths');
+const { SHELLM_DIR, DB_FILE, BACKUP_DIR, PROJECT_ROOT, SERVER_SCRIPT, CLI_SCRIPT } = require('../../src/cli/paths');
 
 describe('cli paths', () => {
   it('all paths are absolute', () => {
-    for (const p of [SHELLM_DIR, DB_FILE, PID_FILE, LOG_DIR, LOG_FILE, BACKUP_DIR, PROJECT_ROOT, SERVER_SCRIPT, CLI_SCRIPT]) {
+    for (const p of [SHELLM_DIR, DB_FILE, BACKUP_DIR, PROJECT_ROOT, SERVER_SCRIPT, CLI_SCRIPT]) {
       assert.ok(path.isAbsolute(p), `expected absolute path: ${p}`);
     }
   });
@@ -18,13 +18,8 @@ describe('cli paths', () => {
     assert.strictEqual(SHELLM_DIR, path.join(os.homedir(), '.shellm'));
   });
 
-  it('DB_FILE, PID_FILE, LOG_DIR, and LOG_FILE are under SHELLM_DIR', () => {
+  it('DB_FILE is under SHELLM_DIR', () => {
     assert.ok(DB_FILE.startsWith(SHELLM_DIR));
-    assert.ok(PID_FILE.startsWith(SHELLM_DIR));
-    assert.ok(LOG_DIR.startsWith(SHELLM_DIR));
-    assert.ok(LOG_FILE.startsWith(LOG_DIR));
-    assert.match(PID_FILE, /\.pid$/);
-    assert.match(LOG_FILE, /\.log$/);
   });
 
   it('PROJECT_ROOT, SERVER_SCRIPT and CLI_SCRIPT resolve to existing paths', () => {
