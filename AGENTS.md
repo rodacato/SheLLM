@@ -47,6 +47,8 @@ source of truth, copy is never invented, and disagreements between design and co
 
 ## Project conventions
 
+- **English only, everywhere in the repo**: product copy (dashboard, landing, brand page, social
+  card), code, comments, docs, commits and the `.pen` designs. One locale, never a mix.
 - CommonJS, no TypeScript, no ESM, no build step.
 - Semicolons, single quotes, 2-space indentation, trailing commas in multi-line literals.
 - Comments only where the *why* isn't self-evident.
