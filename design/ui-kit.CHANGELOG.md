@@ -13,6 +13,13 @@ diverging is not. A changed token VALUE forces every consumer.
 
 ---
 
+## Unreleased — open kit gap, 2026-10-14
+
+`custom.css` declares `--primary-on-light` (`#006978`), the cyan that keeps contrast on a light
+background. Only the brand exports read it (`scripts/build-brand-assets.js`, `logo-light.svg`);
+nothing in the dashboard renders it, so no flow needs it. The kit mirrors `custom.css` 1:1, so it
+belongs in the next bump. Logged, not added: a kit change is a reviewed batch.
+
 ## 0.3.0 — 2026-09-20 · size and space finally have names
 
 Twenty-one tokens, and not one of them changes a pixel: seven type steps, three icon sizes and
