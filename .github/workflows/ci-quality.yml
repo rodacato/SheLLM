@@ -80,6 +80,36 @@ jobs:
           # Free for personal accounts; a repo under an organization needs this secret.
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Lint the workflows
+        run: docker run --rm -v "$PWD:/repo" --workdir /repo rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 -color
+
+  zizmor:
+    name: zizmor
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # advanced-security: false fails the job on findings instead of uploading SARIF and passing,
+      # so a red check means "don't merge" like every other CI job. Ignores live in .github/zizmor.yml.
+      - name: Audit the workflows
+        uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          advanced-security: false
+
   sonar:
     # Manual, and skipped where no SonarQube server is configured (a fork, for one).
     if: ${{ github.event_name == 'workflow_dispatch' && vars.SONAR_HOST_URL != '' }}
