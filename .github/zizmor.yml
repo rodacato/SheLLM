@@ -1,0 +1,9 @@
+rules:
+  # Testing against the latest published CLIs is the point of the contract run.
+  adhoc-packages:
+    ignore:
+      - ci-cli-contract.yml
+  # Both release jobs push (the release branch, then the tag) with the checkout's credentials.
+  artipacked:
+    ignore:
+      - release.yml
