@@ -11,7 +11,7 @@ anything yet.
 
 | Crop | Cut from | Region `x, y, w, h` | Shows |
 |---|---|---|---|
-| `overview.png` | `admin-overview-default.png` | `0, 0, 2880, 1440` | The whole top band, sidebar included. Exactly 2:1; social metadata uses the separate generated card in `assets/brand/`. |
+| `overview.png` | `admin-overview-default.png` | `0, 0, 2880, 1440` | The whole top band, sidebar included. Exactly 2:1; social metadata uses the separate generated card in `design/brand/social/`. |
 | `request-logs.png` | `admin-request-logs-default.png` | `511, 354, 2369, 845` | Error rate, tokens and cost, then three rows and one expanded detail row. |
 | `api-keys.png` | `admin-api-keys-default.png` | `511, 140, 2369, 1042` | The connection row with the base URL, then the three keys with limits, usage and expiry — the middle one scoped to a browser origin, the last one Expired — and that last key open in edit, every field holding its own row's values. |
 | `playground.png` | `admin-playground-answered.png` | `511, 140, 2369, 1384` | The whole exchange: key, format and model across one row, the prompt and its IMAGES line, and the answer below it with its status, round trip, tokens and request id. |

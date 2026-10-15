@@ -28,6 +28,7 @@ ahead of the last tag for most of a cycle.
 | `DECISIONS.md` | The numbered findings registry the `.pen` briefs cite |
 | `CODE_CHANGES.md` | Work order for design-decided consolidations pending in code |
 | `exports/` | Canvas PNGs for PR review — **committed** (they must travel) |
+| `brand/` | **Brand sources and guide** — logo, favicon, social card, tokens ([`brand/README.md`](brand/README.md)); `brand/dist/` is generated and gitignored |
 | `references/` | Local-only device captures — **never commit: real user data** (gitignored) |
 
 ### The flows

@@ -45,6 +45,9 @@ Visual design follows the Pencil method in [`design/README.md`](design/README.md
 source of truth, copy is never invented, and disagreements between design and code are logged in
 `design/DECISIONS.md` instead of silently fixed.
 
+Brand sources and the brand guide live in [`design/brand/`](design/brand/README.md). Edit the
+sources there and run `npm run brand:build`; never hand-edit the exports or their runtime copies.
+
 ## Project conventions
 
 - **English only, everywhere in the repo**: product copy (dashboard, landing, brand page, social

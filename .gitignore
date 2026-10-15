@@ -78,6 +78,9 @@ docs/screens
 # Design: local-only device captures, never committed (may hold real data)
 design/references/
 
+# Brand: the portable kit and its ZIP, generated on demand by npm run brand:pack
+design/brand/dist/
+
 # Site: what the Pages workflow assembles into site/ at build time
 site/assets/
 site/img/

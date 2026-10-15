@@ -6,6 +6,7 @@ on:
     paths:
       - 'site/**'
       - 'assets/**'
+      - 'design/brand/**'
       - 'docs/api/**'
       - '.github/workflows/site-pages.yml'
   workflow_dispatch:
@@ -41,10 +42,10 @@ jobs:
 
       - name: Assemble the site
         run: |
-          mkdir -p site/assets site/img
-          cp -r assets/favicon site/assets/favicon
-          cp -r assets/logo site/assets/logo
-          cp -r assets/brand site/assets/brand
+          mkdir -p site/assets/brand site/img
+          cp -r design/brand/favicon site/assets/favicon
+          cp -r design/brand/logo site/assets/logo
+          cp design/brand/social/* design/brand/tokens.css site/assets/brand/
           cp assets/site/overview.png site/img/overview.png
           cp assets/site/request-logs.png site/img/request-logs.png
           cp assets/site/api-keys.png site/img/api-keys.png

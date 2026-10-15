@@ -21,6 +21,7 @@
     "config:build": "node scripts/build-env-example.js",
     "brand:build": "node scripts/build-brand-assets.js",
     "brand:check": "node scripts/build-brand-assets.js --check",
+    "brand:pack": "npm run brand:check && node scripts/build-brand-assets.js --kit && cd design/brand/dist && rm -f brand-kit.zip && zip -qr brand-kit.zip brand-kit",
     "migrate": "node -e \"require('./src/db').initDb()\"",
     "lint": "eslint src/ test/ scripts/",
     "lint:fix": "eslint --fix src/ test/ scripts/",

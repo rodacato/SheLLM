@@ -1,8 +1,8 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/logo/logo-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="assets/logo/logo-light.svg">
-    <img alt="SheLLM" src="assets/logo/logo-dark.svg" width="400">
+    <source media="(prefers-color-scheme: dark)" srcset="design/brand/logo/logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="design/brand/logo/logo-light.svg">
+    <img alt="SheLLM" src="design/brand/logo/logo-dark.svg" width="400">
   </picture>
 </p>
 
@@ -428,7 +428,7 @@ Found a security problem? Do not open an issue — report it through
 [SECURITY.md](SECURITY.md) has the scope, the threat model and the disclosure timeline.
 
 The [brand guide](https://rodacato.github.io/SheLLM/brand/) provides the logo and social assets.
-[Identity sources and regeneration](docs/guides/branding.md) explains how to update them.
+[`design/brand/`](design/brand/README.md) holds the identity sources, usage and regeneration steps.
 
 ## License
 
