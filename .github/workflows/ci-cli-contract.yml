@@ -1,4 +1,4 @@
-name: CLI contract
+name: CI · CLI Contract
 
 # vps.sh pins both CLIs, so an upstream release can drop a flag the providers pass long before
 # the pin moves. This runs against the latest of each, weekly, to catch it before the bump.
@@ -11,7 +11,7 @@ on:
     paths:
       - "src/providers/**"
       - "test/cli/**"
-      - ".github/workflows/cli-contract.yml"
+      - ".github/workflows/ci-cli-contract.yml"
 
 jobs:
   contract:

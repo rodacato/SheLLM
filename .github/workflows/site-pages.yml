@@ -1,4 +1,4 @@
-name: Pages
+name: Site · Pages
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
       - 'site/**'
       - 'assets/**'
       - 'docs/api/**'
-      - '.github/workflows/pages.yml'
+      - '.github/workflows/site-pages.yml'
   workflow_dispatch:
 
 permissions:

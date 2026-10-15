@@ -85,7 +85,7 @@ Points are absolutely positioned inside the plot frame and the lines are `path` 
 
 The admin is the only surface with a `.pen` flow. The public surface is not drawn in Pencil but it
 does exist: the landing page (`site/index.html`) and the hosted API reference
-(`site/api/index.html`) are hand-written and deployed by `.github/workflows/pages.yml`. They are
+(`site/api/index.html`) are hand-written and deployed by `.github/workflows/site-pages.yml`. They are
 reviewed as code, and the findings that pass produced are in the ledger in
 [`DECISIONS.md`](DECISIONS.md). `docs/index.html` is
 the one that was removed and never came back.

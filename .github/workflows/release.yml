@@ -1,4 +1,4 @@
-name: Release
+name: Release · Cut
 
 # Cutting a release is a decision, not seven steps. `prepare` pushes a release/vX.Y.Z branch with
 # the version bump and the generated CHANGELOG entry, and stops: a person opens the pull request.
