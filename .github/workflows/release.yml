@@ -15,13 +15,20 @@ on:
     branches: [master]
     paths: [package.json]   # the only push that can carry a new version
 
-permissions:
-  contents: write
+permissions: {}
+
+# A second run must never start before the first has pushed its branch or its tag.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 
 jobs:
   prepare:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -51,8 +58,9 @@ jobs:
       # than this needs — and a token-authored pull request runs no CI, so opening it by hand is
       # what gives the release branch its checks.
       - name: Push the release branch
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
         run: |
-          VERSION="${{ steps.bump.outputs.version }}"
           BRANCH="release/v$VERSION"
           git checkout -b "$BRANCH"
           git add package.json package-lock.json CHANGELOG.md
@@ -60,12 +68,13 @@ jobs:
           git push origin "$BRANCH:$BRANCH"
 
       - name: Say what to do next
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
         run: |
-          VERSION="${{ steps.bump.outputs.version }}"
           {
             echo "## Release v$VERSION is ready for review"
             echo
-            echo "[Open the pull request](${{ github.server_url }}/${{ github.repository }}/compare/master...release/v$VERSION?expand=1)"
+            echo "[Open the pull request]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/compare/master...release/v$VERSION?expand=1)"
             echo
             echo "Read the changelog entry before merging: anything that breaks an existing"
             echo "install belongs under **Breaking Changes**, and it only lands there when the"
@@ -77,6 +86,9 @@ jobs:
     # a release to cut: a version in the manifest that has no tag yet.
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -109,8 +121,8 @@ jobs:
         if: steps.check.outputs.publish == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.check.outputs.version }}
         run: |
-          VERSION="${{ steps.check.outputs.version }}"
           NOTES=$(awk "/^## \[${VERSION}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
           if [ -z "$NOTES" ]; then
             NOTES="See [CHANGELOG.md](https://github.com/rodacato/SheLLM/blob/master/CHANGELOG.md) for details."
