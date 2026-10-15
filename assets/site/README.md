@@ -1,6 +1,6 @@
 # Landing page images
 
-What `.github/workflows/pages.yml` copies into `site/img/`. The admin images are **crops of the
+What `.github/workflows/site-pages.yml` copies into `site/img/`. The admin images are **crops of the
 committed admin captures in [`design/exports/`](../../design/exports/)**, not separate screenshots —
 so when a capture is retaken, the crop is recut from it rather than captured again. The two
 `example-*.jpg` are the exception, below.
