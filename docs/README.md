@@ -16,6 +16,7 @@
 |---|---|
 | [`guides/architecture.md`](guides/architecture.md) | Module layout, request flow, the provider and error contracts |
 | [`guides/releasing.md`](guides/releasing.md) | How a release is cut |
+| [`../design/brand/`](../design/brand/README.md) | Brand identity: logo, color, type, voice, asset sources and regeneration |
 | [`adr/`](adr/) | Decisions already taken. [ADR-0001](adr/0001-baseline.md) is the baseline; each later one says what it supersedes |
 | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | Setup, conventions, tests, adding a provider |
 

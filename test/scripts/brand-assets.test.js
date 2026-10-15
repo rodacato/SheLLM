@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { Resvg } = require('@resvg/resvg-js');
-const { assets, build } = require('../../scripts/build-brand-assets');
+const { BRAND, KIT, assets, kitAssets, buildKit, build } = require('../../scripts/build-brand-assets');
 
 const ROOT = path.join(__dirname, '../..');
 
@@ -27,13 +27,13 @@ describe('portable identity exports', () => {
       assert.strictEqual(bytes.readUInt32BE(16), size, file);
       assert.strictEqual(bytes.readUInt32BE(20), file.includes('social') ? 640 : size, file);
     }
-    assert.ok(exports.get('assets/brand/social.png').length < 1000000);
-    const pixels = new Resvg(exports.get('assets/brand/social.svg')).render().pixels;
+    assert.ok(exports.get(`${BRAND}/social/social.png`).length < 1000000);
+    const pixels = new Resvg(exports.get(`${BRAND}/social/social.svg`)).render().pixels;
     for (let i = 3; i < pixels.length; i += 4) assert.strictEqual(pixels[i], 255);
   });
 
   it('keeps every rendered mark pixel within the maskable safe circle', () => {
-    const image = new Resvg(exports.get('assets/logo/icon-maskable.svg')).render();
+    const image = new Resvg(exports.get(`${BRAND}/logo/icon-maskable.svg`)).render();
     const pixels = image.pixels;
     const background = [...pixels.slice(0, 3)];
     let markPixels = 0;
@@ -48,17 +48,60 @@ describe('portable identity exports', () => {
     assert.ok(markPixels > 1000, 'the safe-area check did not inspect a mark');
   });
 
+  it('packs a portable kit whose pages resolve every local dependency inside the kit', () => {
+    const kit = kitAssets(ROOT, exports);
+    for (const [file, bytes] of kit) {
+      if (!file.endsWith('.html')) continue;
+      for (const [, target] of bytes.toString().matchAll(/(?:href|src)="([^"]+)"/g)) {
+        if (/^(?:https?:|#)/.test(target)) continue;
+        const resolved = path.posix.normalize(path.posix.join(path.posix.dirname(file), target.split('#')[0]));
+        assert.ok(!resolved.startsWith('..'), `${file} escapes the kit: ${target}`);
+        assert.ok(kit.has(resolved) || kit.has(`${resolved.replace(/\/$/, '')}/index.html`), `${file} has a missing dependency: ${target}`);
+      }
+    }
+    for (const [file, bytes] of kit) {
+      if (!file.endsWith('.md')) continue;
+      for (const [, target] of bytes.toString().matchAll(/\]\(([^)]+)\)/g)) {
+        if (/^(?:https?:|#)/.test(target)) continue;
+        const resolved = path.posix.normalize(path.posix.join(path.posix.dirname(file), target)).replace(/\/$/, '');
+        assert.ok(kit.has(resolved) || [...kit.keys()].some((k) => k.startsWith(`${resolved}/`)), `${file} links to a missing file: ${target}`);
+      }
+    }
+    assert.doesNotMatch(kit.get('marketing/index.html').toString(), /__VERSION__/);
+    assert.doesNotThrow(() => JSON.parse(kit.get('marketing/inspector.json')));
+  });
+
+  it('writes the kit only under the gitignored dist folder, replacing a previous kit', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'shellm-kit-'));
+    try {
+      for (const file of ['src/admin/public/css/custom.css', 'LICENSE', 'site/index.html', 'site/inspector.js', 'site/inspector.json']) {
+        fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+        fs.copyFileSync(path.join(ROOT, file), path.join(root, file));
+      }
+      for (const dir of [BRAND, 'assets/site', 'site/brand']) fs.cpSync(path.join(ROOT, dir), path.join(root, dir), { recursive: true });
+      fs.rmSync(path.join(root, KIT), { recursive: true, force: true });
+      fs.mkdirSync(path.join(root, KIT), { recursive: true });
+      fs.writeFileSync(path.join(root, KIT, 'leftover.txt'), 'stale');
+      buildKit({ root });
+      assert.ok(!fs.existsSync(path.join(root, KIT, 'leftover.txt')));
+      for (const file of kitAssets(root).keys()) assert.ok(fs.existsSync(path.join(root, KIT, file)), file);
+      assert.ok(fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8').includes(`${path.posix.dirname(KIT)}/`));
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('fails the freshness check after an export is edited, without overwriting it', () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'shellm-brand-'));
     try {
-      for (const file of ['src/admin/public/css/custom.css', 'assets/logo/mark.svg', 'assets/logo/wordmark.svg', 'assets/brand/social-source.svg']) {
+      for (const file of ['src/admin/public/css/custom.css', `${BRAND}/logo/mark.svg`, `${BRAND}/logo/wordmark.svg`, `${BRAND}/social/social-source.svg`]) {
         const destination = path.join(root, file);
         fs.mkdirSync(path.dirname(destination), { recursive: true });
         fs.copyFileSync(path.join(ROOT, file), destination);
       }
       build({ root });
       build({ root, check: true });
-      const target = path.join(root, 'assets/logo/logo-dark.svg');
+      const target = path.join(root, `${BRAND}/logo/logo-dark.svg`);
       fs.appendFileSync(target, 'changed');
       assert.throws(() => build({ root, check: true }), /logo-dark\.svg/);
       assert.ok(fs.readFileSync(target, 'utf8').endsWith('changed'));

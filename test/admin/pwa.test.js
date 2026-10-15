@@ -218,7 +218,7 @@ describe('installable dashboard', () => {
 
   // Two icon sets shipped side by side for months: the PNG favicons were an older gradient
   // render while the SVG and every PWA icon were the flat mark. Same app, two logos.
-  it('serves the icons assets/favicon/ holds, byte for byte', () => {
+  it('serves the icons design/brand/favicon/ holds, byte for byte', () => {
     const fs = require('node:fs');
     const path = require('node:path');
     const root = path.join(__dirname, '../..');
@@ -233,8 +233,8 @@ describe('installable dashboard', () => {
 
     for (const [served, canonical] of Object.entries(copies)) {
       const a = fs.readFileSync(path.join(root, 'src/admin/public/img', served));
-      const b = fs.readFileSync(path.join(root, 'assets/favicon', canonical));
-      assert.ok(a.equals(b), `img/${served} has drifted from assets/favicon/${canonical}`);
+      const b = fs.readFileSync(path.join(root, 'design/brand/favicon', canonical));
+      assert.ok(a.equals(b), `img/${served} has drifted from design/brand/favicon/${canonical}`);
     }
   });
 
