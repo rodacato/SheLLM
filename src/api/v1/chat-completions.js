@@ -465,7 +465,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
   } catch (err) {
     logger.debug({ event: 'stream_error', error: err.message, request_id: req.requestId });
     const failure = fromCatchable(err, provider.name);
-    if (!ac.signal.aborted && !isClientError(failure)) recordFailure(provider.name);
+    if (!ac.signal.aborted && !isClientError(failure)) recordFailure(provider.name, failure);
     keepProviderLimit(res, failure, cliStart);
     if (!ac.signal.aborted && !res.writableEnded) {
       // The headers went out as 200, so the log learns what failed from error_code alone.

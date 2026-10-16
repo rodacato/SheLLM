@@ -3,6 +3,7 @@ const { getBuildInfo } = require('./build-info');
 const { queue } = require('./queue');
 const { getAllCircuitStates, resetCircuit } = require('./circuit-breaker');
 const logger = require('../lib/logger');
+const { redactTokens } = require('../lib/redact');
 const { getTimezone } = require('../lib/time');
 const config = require('../config');
 
@@ -127,11 +128,7 @@ const AUTH_FAILURE = /not authenticated|please login|please log ?out|auth requir
 function parseCheckError(err, secrets = []) {
   const stderr = secrets.reduce((text, secret) => text.split(secret).join('[REDACTED]'), err.stderr || '');
   const lower = stderr.toLowerCase();
-  const error = stderr
-    .replace(/(sk-|csk-|key-|shellm-)[A-Za-z0-9_-]{10,}/gi, '[REDACTED]')
-    .replace(/Bearer\s+[A-Za-z0-9._-]+/gi, 'Bearer [REDACTED]')
-    .replace(/[A-Za-z0-9_-]{32,}/g, '[REDACTED]')
-    .slice(0, 200);
+  const error = redactTokens(stderr).slice(0, 200);
 
   // Keychain fallback with cached credentials means auth works — check first
   // because the message may contain "not found" for libsecret

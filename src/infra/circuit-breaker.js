@@ -1,10 +1,12 @@
 const logger = require('../lib/logger');
+const { redactTokens } = require('../lib/redact');
+const { fromCatchable } = require('../errors');
 const config = require('../config');
 
 const THRESHOLD = config.get('CIRCUIT_BREAKER_THRESHOLD');
 const RESET_MS = config.get('CIRCUIT_BREAKER_RESET_MS');
 
-// Per-provider state: { state, failures, lastFailureAt, lastTransitionAt, probing }
+// Per-provider state: { state, failures, lastFailureAt, lastError, lastTransitionAt, probing }
 const circuits = {};
 
 function getOrCreate(name) {
@@ -13,6 +15,7 @@ function getOrCreate(name) {
       state: 'closed',
       failures: 0,
       lastFailureAt: null,
+      lastError: null,
       lastTransitionAt: Date.now(),
       probing: false,
     };
@@ -36,10 +39,14 @@ function recordSuccess(name) {
   circuit.failures = 0;
 }
 
-function recordFailure(name) {
+// The failure is kept so the dashboard can say why traffic stopped, not only that it did.
+function recordFailure(name, error) {
   const circuit = getOrCreate(name);
   circuit.failures++;
   circuit.lastFailureAt = Date.now();
+  const failure = fromCatchable(error || {}, name);
+  circuit.lastError = { code: failure.code, message: redactTokens(failure.message).slice(0, 300) };
+  logger.warn({ event: 'provider_failure', provider: name, ...circuit.lastError, failures: circuit.failures });
 
   if (circuit.state === 'half_open') {
     circuit.probing = false;
@@ -103,6 +110,7 @@ function getCircuitState(name) {
     failures: circuit.failures,
     threshold: THRESHOLD,
     lastFailureAt: circuit.lastFailureAt,
+    lastError: circuit.lastError,
     lastTransitionAt: circuit.lastTransitionAt,
     retry_at: circuit.state === 'open' ? new Date(circuit.lastTransitionAt + RESET_MS).toISOString() : null,
   };
