@@ -1,5 +1,5 @@
 const { execute, executeStream, stripNonPrintable } = require('./base');
-const { modelNotFound, cliFailed, contextLengthExceeded } = require('../errors');
+const { modelNotFound, cliFailed, contextLengthExceeded, rateLimited } = require('../errors');
 const config = require('../config');
 
 const MODEL_ALIASES = { 'claude-haiku': 'haiku', 'claude-sonnet': 'sonnet', 'claude-opus': 'opus' };
@@ -244,11 +244,19 @@ function isPromptTooLong(result) {
   return result?.terminal_reason === 'prompt_too_long';
 }
 
-function toProviderError(err, model) {
-  const result = resultOf(err.stdout);
-  if (result?.api_error_status === 404) return modelNotFound(model);
+// On an API failure the CLI exits 1 with stderr empty: the cause is the result event on stdout.
+function failureFrom(result, model) {
+  if (result?.type !== 'result' || !result.is_error) return null;
   if (isPromptTooLong(result)) return contextLengthExceeded(model, result.result);
-  return err;
+  if (result.api_error_status === 404) return modelNotFound(model);
+  if (result.api_error_status === 429 || /usage limit|rate limit/i.test(result.result || '')) {
+    return rateLimited(`claude: ${result.result}`);
+  }
+  return cliFailed('claude', result.result || `API error ${result.api_error_status}`);
+}
+
+function toProviderError(err, model) {
+  return failureFrom(resultOf(err.stdout), model) || err;
 }
 
 // A prose answer where JSON was promised is a failure, not a success with the wrong content.
@@ -276,8 +284,8 @@ async function* chatStream({ prompt, parts, system, response_format, model, effo
   let streamed = false;
 
   function* emit(line) {
-    const result = resultOf(line);
-    if (isPromptTooLong(result)) throw contextLengthExceeded(model, result.result);
+    const failure = failureFrom(resultOf(line), model);
+    if (failure) throw failure;
     const parsed = parseStreamLine(line, { structured });
     if (!parsed) return;
     // A schema answer is sent whole, once validated: when the model's first attempt fails the
