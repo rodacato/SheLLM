@@ -373,7 +373,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
   } catch (err) {
     logger.debug({ event: 'stream_error', format: 'anthropic', error: err.message, request_id: req.requestId });
     const failure = fromCatchable(err, provider.name);
-    if (!ac.signal.aborted && !isClientError(failure)) recordFailure(provider.name);
+    if (!ac.signal.aborted && !isClientError(failure)) recordFailure(provider.name, failure);
     keepProviderLimit(res, failure, cliStart);
     if (!ac.signal.aborted && !res.writableEnded) {
       recordErrorCode(res, failure);

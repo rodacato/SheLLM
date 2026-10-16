@@ -27,7 +27,7 @@ async function route({ model, prompt, parts, system, max_tokens, temperature, to
     }, { ...job, provider: provider.name, model: model || provider.name });
     recordSuccess(provider.name);
   } catch (err) {
-    if (!isClientError(err)) recordFailure(provider.name);
+    if (!isClientError(err)) recordFailure(provider.name, err);
     throw err;
   } finally {
     if (probe) releaseProbe(provider.name);

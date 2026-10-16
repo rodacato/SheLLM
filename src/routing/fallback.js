@@ -69,7 +69,7 @@ async function routeWithFallback({ model, prompt, parts, system, max_tokens, tem
         ...(isFallback && { original_provider: primary.name }),
       };
     } catch (err) {
-      if (!isClientError(err)) recordFailure(candidate.name);
+      if (!isClientError(err)) recordFailure(candidate.name, err);
       errors.push({ provider: candidate.name, error: err.message });
       logger.warn({ event: 'fallback_attempt', provider: candidate.name, error: err.message, request_id });
 

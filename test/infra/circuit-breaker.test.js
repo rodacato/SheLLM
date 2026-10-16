@@ -155,3 +155,29 @@ describe('circuit-breaker', () => {
     });
   });
 });
+
+describe('circuit-breaker last error', () => {
+  it('keeps the cause of the latest failure, credentials redacted', () => {
+    const cb = loadCircuitBreaker();
+    cb.recordFailure('claude', { status: 502, code: 'cli_failed', message: 'claude: API Error: 529 Overloaded' });
+    const token = ['sk', 'ant', 'oat01', 'abcdefghijklmnopqrstuvwxyz'].join('-');
+    cb.recordFailure('claude', { status: 502, code: 'cli_failed', message: `claude: Bearer ${token} rejected` });
+    const { lastError } = cb.getCircuitState('claude');
+    assert.equal(lastError.code, 'cli_failed');
+    assert.match(lastError.message, /rejected/);
+    assert.doesNotMatch(lastError.message, /abcdefghij/);
+  });
+
+  it('names a raw CLI failure by its gateway code, not the process exit code', () => {
+    const cb = loadCircuitBreaker();
+    const err = new Error('Process exited with code 1');
+    err.code = 1;
+    err.stderr = 'segfault';
+    cb.recordFailure('claude', err);
+    assert.equal(cb.getCircuitState('claude').lastError.code, 'cli_failed');
+  });
+
+  it('has no cause before anything failed', () => {
+    assert.equal(loadCircuitBreaker().getCircuitState('codex').lastError, null);
+  });
+});
