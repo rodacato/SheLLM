@@ -40,6 +40,15 @@ properties:
         type: integer
       lastFailureAt:
         type: [integer, "null"]
+      lastError:
+        description: The latest failure counted against the circuit, credentials redacted. Kept after the circuit closes.
+        type: [object, "null"]
+        properties:
+          code:
+            type: string
+            example: cli_failed
+          message:
+            type: string
       lastTransitionAt:
         type: [integer, "null"]
   models:

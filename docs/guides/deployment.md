@@ -379,7 +379,7 @@ ssh root@your-server 'bash -s -- --purge' < scripts/setup/vps-uninstall.sh # rem
 |---|---|
 | `doctor` says the config is readable by other users | `chmod 600 /home/shellmer/.config/shellm/env` |
 | `Claude login: not logged in` | The token expired or was never set. Repeat step 2 and put it in `CLAUDE_CODE_OAUTH_TOKEN` |
-| `503 provider_unavailable` | The provider is disabled, unauthenticated, or its circuit is open after repeated failures. `shellm doctor --live` says which |
+| `503 provider_unavailable` | The provider is disabled, unauthenticated, or its circuit is open after repeated failures. `shellm doctor --live` says which; for an open circuit, the System page's Failures section shows the last failure's message, and its Retry now routes to the provider again once the cause is fixed |
 | `504 timeout` | The CLI outlived `TIMEOUT_MS` (default 300 s). Cold starts are 2–4 s, so a timeout usually means the provider is degraded |
 | `429 rate_limited` | Your own limit (`SHELLM_GLOBAL_RPM`, or the key's `rpm`), not the provider's |
 | The service starts and exits immediately | `journalctl -u shellm -n 50`. A missing config file is the common cause: run `shellm init` as `shellmer` |

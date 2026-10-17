@@ -103,6 +103,8 @@ paths:
     $ref: "./paths/admin_providers_check.yaml"
   /admin/providers/{name}:
     $ref: "./paths/admin_providers_{name}.yaml"
+  /admin/providers/{name}/circuit/reset:
+    $ref: "./paths/admin_providers_{name}_circuit_reset.yaml"
   /admin/config:
     $ref: "./paths/admin_config.yaml"
   /admin/update:

@@ -258,6 +258,45 @@
         <p x-show="providersLoaded && !providersError && providers.length === 0"
           class="text-outline text-sm font-mono">No providers configured.</p>
 
+        <!-- ================= FAILURES ================= -->
+        <template x-if="providersLoaded && !providersError && failingProviders.length > 0">
+          <div class="mt-8">
+            <div class="flex items-baseline gap-3 mb-3">
+              <span class="text-[10px] font-headline font-bold tracking-[0.2em] text-outline uppercase">Failures</span>
+              <span class="text-[10px] text-outline">Why a provider stopped answering, and what ends it.</span>
+            </div>
+            <div class="space-y-4">
+              <template x-for="prov in failingProviders" :key="'failure-' + prov.name">
+                <div class="bg-surface-container p-5">
+                  <div class="flex items-start justify-between gap-4 mb-4">
+                    <div>
+                      <span class="font-headline font-bold text-white text-sm" x-text="prov.name"></span>
+                      <span class="text-[10px] font-mono ml-2" :class="circuitClass(prov)" x-text="circuitLabel(prov)"></span>
+                      <span class="text-[10px] font-mono text-outline block mt-1" x-text="circuitVerdict(prov)"></span>
+                    </div>
+                    <button x-show="prov.circuit.state !== 'closed'" @click="retryCircuit(prov)" :disabled="busy === prov.name"
+                      class="shrink-0 px-4 py-1.5 text-xs font-headline font-bold uppercase tracking-wide btn-brand transition-colors duration-fast disabled:opacity-40"
+                      x-text="busy === prov.name ? '···' : 'Retry now'"></button>
+                  </div>
+
+                  <div x-show="prov.circuit.lastError" class="bg-surface-container-lowest p-3 mb-3 font-mono">
+                    <span class="text-outline uppercase block text-[10px]">
+                      Last failure · <span x-text="failureTime(prov)"></span> · <span class="text-error" x-text="prov.circuit.lastError?.code"></span>
+                    </span>
+                    <p class="text-[11px] text-on-surface-variant break-all mt-1" x-text="prov.circuit.lastError?.message"></p>
+                  </div>
+
+                  <p class="text-[11px] text-on-surface-variant" x-text="failureHint(prov)"></p>
+                  <a href="https://github.com/rodacato/SheLLM/blob/master/docs/guides/deployment.md#troubleshooting"
+                    target="_blank" rel="noopener" class="text-[11px] text-outline hover:text-white underline mt-2 inline-block">Troubleshooting guide</a>
+                  <p x-show="retryErrors[prov.name]" x-cloak class="text-error text-sm font-mono mt-3"
+                    x-text="retryErrors[prov.name]"></p>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+
         <!-- ================= SETTINGS ================= -->
         <!-- mt-8 rather than the spacing the other sections inherit: providers ends in its error
              and empty paragraphs, not in a card carrying mb-8. -->
