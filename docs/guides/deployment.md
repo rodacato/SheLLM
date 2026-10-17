@@ -24,6 +24,12 @@ a tunnel.
 Both CLIs are installed as `shellmer`, not system-wide: Claude Code under `~/.local/bin` and Codex
 under `~/.npm-global/bin`, the two paths the systemd unit puts on `PATH`.
 
+**The pin holds only for what the service runs.** SheLLM starts Claude Code with
+`DISABLE_AUTOUPDATER=1`, but a `claude` you open by hand as `shellmer` updates itself as usual and
+the service picks the new binary up on its next spawn. Open it as
+`DISABLE_AUTOUPDATER=1 claude …`, and re-run `vps.sh` to go back to the pin; the System page's CLI
+version says which one the host is on.
+
 **It installs the newest published release**, not the tip of the default branch, so the host runs
 something with a version number and release notes. A repository with no tags yet falls back to the
 default branch.

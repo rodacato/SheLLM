@@ -94,4 +94,8 @@ process.stdout.write(JSON.stringify({ result: 'ok', response: 'ok' }));
       assert.deepEqual(second.files, [], `${cli} found ${second.files.join(', ')}`);
     }
   });
+
+  it('tells claude not to update itself, so the host keeps the version vps.sh pinned', async () => {
+    assert.equal((await serve('claude')).env.DISABLE_AUTOUPDATER, '1');
+  });
 });

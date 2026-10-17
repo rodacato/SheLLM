@@ -228,6 +228,9 @@ const CLAUDE_ENV = {
   XDG_DATA_HOME: process.env.XDG_DATA_HOME,
   // An unset value has to stay undefined: spawn() renders a null as the literal string "null".
   CLAUDE_CODE_OAUTH_TOKEN: config.get('CLAUDE_CODE_OAUTH_TOKEN') ?? undefined,
+  // A served request must not replace the binary under every other one: the version moves only
+  // when vps.sh installs the pin.
+  DISABLE_AUTOUPDATER: '1',
 };
 
 // `auth status` reads the stored credentials and prints JSON. It spends no quota, which is the
