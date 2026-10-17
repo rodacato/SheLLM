@@ -1,5 +1,5 @@
 const { execute, executeStream, stripNonPrintable } = require('./base');
-const { modelNotFound, cliFailed, contextLengthExceeded, rateLimited } = require('../errors');
+const { modelNotFound, cliFailed, contextLengthExceeded, rateLimited, invalidRequest } = require('../errors');
 const config = require('../config');
 
 const MODEL_ALIASES = { 'claude-haiku': 'haiku', 'claude-sonnet': 'sonnet', 'claude-opus': 'opus' };
@@ -51,6 +51,12 @@ function wantsSchema(response_format) {
   return response_format?.type === 'json_schema';
 }
 
+// The CLI validates only under its default draft and refuses a schema that names any other, which
+// is every schema Zod 4 emits (draft 2020-12). Without the tag it validates under its own.
+function cliSchema({ $schema: _dialect, ...schema }) {
+  return schema;
+}
+
 // The claude CLI has no temperature flag, so temperature is ignored.
 // The CLI's `<alias>[1m]` is the 1M-context variant, used by default or when the caller sends the
 // context-1m beta, and only where the catalog says the account has one (ADR-0009).
@@ -70,7 +76,7 @@ function buildBaseArgs({ system, response_format, model, effort, longContext }) 
   if (effortFor(effort)) args.push('--effort', effortFor(effort));
   if (systemPromptFor({ system, response_format })) args.push('--system-prompt-file', SYSTEM_FILE);
   // The flag takes the schema inline only; a path is refused as invalid JSON.
-  if (wantsSchema(response_format)) args.push('--json-schema', JSON.stringify(response_format.json_schema.schema));
+  if (wantsSchema(response_format)) args.push('--json-schema', JSON.stringify(cliSchema(response_format.json_schema.schema)));
   return args;
 }
 
@@ -255,8 +261,14 @@ function failureFrom(result, model) {
   return cliFailed('claude', result.result || `API error ${result.api_error_status}`);
 }
 
+// A schema the CLI refuses is the caller's to fix, and must not count against the circuit.
+function schemaRefusal(err) {
+  const stderr = err.stderr || '';
+  return stderr.includes('--json-schema is not a valid JSON Schema') ? invalidRequest(`response_format json_schema: ${stderr}`) : null;
+}
+
 function toProviderError(err, model) {
-  return failureFrom(resultOf(err.stdout), model) || err;
+  return failureFrom(resultOf(err.stdout), model) || schemaRefusal(err) || err;
 }
 
 // A prose answer where JSON was promised is a failure, not a success with the wrong content.
@@ -301,12 +313,16 @@ async function* chatStream({ prompt, parts, system, response_format, model, effo
     yield event;
   }
 
-  for await (const event of executeStream('claude', args, { env: CLAUDE_ENV, signal, input: buildInput(params), files: buildFiles(params) })) {
-    if (event.type !== 'chunk') continue;
-    pending += event.data;
-    const lines = pending.split('\n');
-    pending = lines.pop();
-    for (const line of lines) yield* emit(line);
+  try {
+    for await (const event of executeStream('claude', args, { env: CLAUDE_ENV, signal, input: buildInput(params), files: buildFiles(params) })) {
+      if (event.type !== 'chunk') continue;
+      pending += event.data;
+      const lines = pending.split('\n');
+      pending = lines.pop();
+      for (const line of lines) yield* emit(line);
+    }
+  } catch (err) {
+    throw err.status ? err : toProviderError(err, model);
   }
 
   yield* emit(pending);
