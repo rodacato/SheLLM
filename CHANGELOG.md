@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.21.0] - 2026-10-17
+
+### Added
+
+- **admin:** show why a provider failed, with Retry now, on System
+- **circuit:** keep and log the cause of the last provider failure
+
+### Fixed
+
+- **claude:** stop served requests from updating the CLI
+- **claude:** accept Zod 4 JSON schemas and refuse bad ones as 400
+- **claude:** read the API failure from the CLI's result event
+
+### Documentation
+
+- **api:** note that claude drops a schema's $schema and refuses a bad one as 400
+- **agents:** require English everywhere in the repo, designs included
+
+### Maintenance
+
+- **deps-dev:** bump supertest from 7.3.0 to 7.3.1
+- **deps-dev:** bump @redocly/cli from 2.59.0 to 2.62.1
+- **deps:** bump dotenv from 18.0.4 to 18.0.6
+- **deps-dev:** bump @anthropic-ai/sdk from 0.131.0 to 0.132.1
+- **deps-dev:** bump eslint from 10.11.0 to 10.12.0
+- **deps:** bump ghcr.io/devcontainers/features/node
+- **deps:** bump actions/setup-node from 7.0.0 to 7.1.0
+- **brand:** move brand sources and guide into design/brand
+
+### CI
+
+- **quality:** lint and audit the workflows with actionlint and zizmor
+- **workflows:** least privilege, timeouts and no persisted credentials
+- **workflows:** name every workflow Category · Name
+
+
 ## [1.20.0] - 2026-10-13
 
 ### Breaking Changes
@@ -1134,7 +1170,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.20.0...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.21.0...HEAD
+[1.21.0]: https://github.com/rodacato/SheLLM/compare/v1.20.0...v1.21.0
 [1.20.0]: https://github.com/rodacato/SheLLM/compare/v1.19.0...v1.20.0
 [1.19.0]: https://github.com/rodacato/SheLLM/compare/v1.18.0...v1.19.0
 [1.18.0]: https://github.com/rodacato/SheLLM/compare/v1.17.1...v1.18.0
