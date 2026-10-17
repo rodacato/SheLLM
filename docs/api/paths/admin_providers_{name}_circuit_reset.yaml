@@ -1,0 +1,36 @@
+post:
+  operationId: resetProviderCircuit
+  tags: [Providers]
+  summary: Route to a provider again now
+  description: |
+    Closes the provider's circuit and clears its failure count, for an operator who has fixed the
+    cause and does not want to wait for a request to probe it. The last failure stays readable in
+    `circuit.lastError`.
+  security:
+    - BasicAuth: []
+  parameters:
+    - name: name
+      in: path
+      required: true
+      schema:
+        type: string
+      example: claude
+  responses:
+    '200':
+      description: The circuit after the reset
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [circuit]
+            properties:
+              circuit:
+                type: object
+    '400':
+      description: No provider has that name. `code` is `invalid_request`.
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/Error.yaml"
+    '401':
+      $ref: "../responses/Unauthorized.yaml"

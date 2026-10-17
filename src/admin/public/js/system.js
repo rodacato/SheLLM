@@ -22,6 +22,7 @@ function systemPage() {
     providersError: null,
     // Keyed by provider name, so a refusal is shown on the card that was pressed.
     toggleErrors: {},
+    retryErrors: {},
     providersLoaded: false,
     busy: null,
     checking: false,
@@ -48,6 +49,36 @@ function systemPage() {
     settingsOpen: null,
     configError: null,
     configLoaded: false,
+
+    get failingProviders() {
+      return this.providers.filter((p) => p.circuit && (p.circuit.state !== 'closed' || p.circuit.failures > 0));
+    },
+
+    // What the code means to someone holding a terminal: the message says what failed, this says
+    // where to look next.
+    failureHint(prov) {
+      const code = prov.circuit?.lastError?.code;
+      if (code === 'cli_failed') return 'The CLI refused the request or crashed. If its words name a flag or a schema, the caller sent something it cannot run; otherwise check the CLI on the host.';
+      if (code === 'timeout') return 'The CLI did not finish in time. Long prompts and an overloaded API both do this, and it usually passes on its own.';
+      return 'The journal has every failure: journalctl -u shellm -n 200';
+    },
+
+    failureTime(prov) {
+      const at = prov.circuit?.lastFailureAt;
+      return at ? formatTime(new Date(at)) : '—';
+    },
+
+    async retryCircuit(prov) {
+      this.busy = prov.name;
+      this.retryErrors = { ...this.retryErrors, [prov.name]: null };
+      try {
+        await apiWrite(`${API_BASE}/providers/${prov.name}/circuit/reset`, { method: 'POST' });
+        await this.fetchProviders();
+      } catch (err) {
+        this.retryErrors = { ...this.retryErrors, [prov.name]: `${prov.name} is still stopped — ${err.message}.` };
+      }
+      this.busy = null;
+    },
 
     get openCircuits() {
       return this.providers.filter((p) => p.circuit && p.circuit.state !== 'closed').map((p) => p.name);

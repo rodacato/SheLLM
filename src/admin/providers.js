@@ -11,7 +11,7 @@ const {
 const { engines } = require('../routing');
 const { getHealthStatus, runAllChecks } = require('../infra/health');
 const { readCatalog } = require('../infra/model-catalog');
-const { getCircuitState } = require('../infra/circuit-breaker');
+const { getCircuitState, resetCircuit } = require('../infra/circuit-breaker');
 const logger = require('../lib/logger');
 
 const router = Router();
@@ -66,6 +66,19 @@ router.post('/providers/check', async (req, res) => {
   insertAuditLog({ action: 'check', resource: 'provider', resource_id: '*', details: null });
   logger.info({ event: 'provider_checks_run' });
   res.json({ checked_at: new Date().toISOString() });
+});
+
+// POST /admin/providers/:name/circuit/reset — route to the provider now, for an operator who has
+// fixed the cause, instead of waiting for a request to probe it.
+router.post('/providers/:name/circuit/reset', (req, res) => {
+  const { name } = req.params;
+  if (!getProvider(name)) {
+    return sendError(res, invalidRequest(`Unknown provider: ${name}`), req.requestId);
+  }
+  resetCircuit(name);
+  insertAuditLog({ action: 'reset_circuit', resource: 'provider', resource_id: name, details: null });
+  logger.info({ event: 'circuit_reset', provider: name });
+  res.json({ circuit: getCircuitState(name) });
 });
 
 // PATCH /admin/providers/:name — update provider (enabled, capabilities, priority)
