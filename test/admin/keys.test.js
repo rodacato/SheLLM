@@ -170,6 +170,13 @@ describe('admin /admin/keys', () => {
     assert.strictEqual(res.status, 200);
     assert.ok(res.body.key.raw_key.startsWith('shellm-'));
     assert.strictEqual(res.body.key.id, id);
+    assert.strictEqual(res.body.key.key_suffix, res.body.key.raw_key.slice(-4));
+
+    const after = await request(app)
+      .get('/admin/keys')
+      .set('Authorization', `Basic ${adminCreds}`);
+    assert.strictEqual(after.body.keys.find((k) => k.id === id).key_suffix, res.body.key.key_suffix,
+      'the list identifies the key by the end of one that no longer works');
   });
 
   it('POST /admin/keys/:id/rotate returns 404 for unknown id', async () => {

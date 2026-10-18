@@ -68,6 +68,7 @@ router.post('/keys', (req, res) => {
         name: client.name,
         raw_key: client.rawKey,
         key_prefix: client.key_prefix,
+        key_suffix: client.key_suffix,
         rpm: client.rpm,
         models: client.models,
         origins: client.origins,
@@ -177,6 +178,7 @@ router.post('/keys/:id/rotate', (req, res) => {
       id,
       raw_key: rotated.rawKey,
       key_prefix: rotated.key_prefix,
+      key_suffix: rotated.key_suffix,
     },
   });
 });

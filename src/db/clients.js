@@ -5,6 +5,7 @@ const config = require('../config');
 const { parseInstant } = require('../lib/time');
 
 const KEY_PREFIX_LEN = 8;
+const KEY_SUFFIX_LEN = 4;
 let _hmacSecret = null;
 
 function hashKeyLegacy(rawKey) {
@@ -50,7 +51,7 @@ function generateKey() {
 
 // --- Client CRUD ---
 
-const CLIENT_COLUMNS = 'id, name, key_prefix, rpm, models, origins, active, expires_at, description, created_at';
+const CLIENT_COLUMNS = 'id, name, key_prefix, key_suffix, rpm, models, origins, active, expires_at, description, created_at';
 
 // models and origins are both JSON arrays or NULL; a row is only usable once both are decoded.
 function decodeClient(row) {
@@ -73,12 +74,13 @@ function createClient({ name, rpm = 10, models = null, origins = null, expires_a
   const secret = getHmacSecret();
   const key_hash = hashKey(rawKey, secret);
   const key_prefix = rawKey.slice(0, KEY_PREFIX_LEN);
+  const key_suffix = rawKey.slice(-KEY_SUFFIX_LEN);
 
   const stmt = db.prepare(`
-    INSERT INTO clients (name, key_hash, key_prefix, rpm, models, origins, expires_at, description)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO clients (name, key_hash, key_prefix, key_suffix, rpm, models, origins, expires_at, description)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  const info = stmt.run(name, key_hash, key_prefix, rpm, encodeList(models), encodeList(origins), expires_at, description);
+  const info = stmt.run(name, key_hash, key_prefix, key_suffix, rpm, encodeList(models), encodeList(origins), expires_at, description);
 
   const row = db.prepare(`SELECT ${CLIENT_COLUMNS} FROM clients WHERE id = ?`).get(info.lastInsertRowid);
   return { ...decodeClient(row), rawKey };
@@ -136,10 +138,11 @@ function rotateClientKey(id) {
   const secret = getHmacSecret();
   const key_hash = hashKey(rawKey, secret);
   const key_prefix = rawKey.slice(0, KEY_PREFIX_LEN);
+  const key_suffix = rawKey.slice(-KEY_SUFFIX_LEN);
 
-  db.prepare('UPDATE clients SET key_hash = ?, key_prefix = ? WHERE id = ?').run(key_hash, key_prefix, id);
+  db.prepare('UPDATE clients SET key_hash = ?, key_prefix = ?, key_suffix = ? WHERE id = ?').run(key_hash, key_prefix, key_suffix, id);
 
-  return { rawKey, key_prefix };
+  return { rawKey, key_prefix, key_suffix };
 }
 
 function findClientByKey(rawKey) {

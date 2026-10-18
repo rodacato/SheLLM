@@ -101,7 +101,7 @@
             <thead class="bg-surface-container-lowest">
               <tr class="whitespace-nowrap">
                 <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Name</th>
-                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Key Prefix</th>
+                <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Key</th>
                 <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline min-w-[15rem]">Limits</th>
                 <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline"><span x-text="'Usage (' + usagePeriod + ')'"></span></th>
                 <th class="px-4 py-3 text-left text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline">Last used</th>
@@ -131,7 +131,7 @@
                     <a :href="keyLogsHref(key)" class="font-headline font-bold text-white hover:text-primary-container text-sm block transition-colors duration-fast" :title="'Requests made with ' + key.name" x-text="key.name"></a>
                     <span x-show="key.description" class="text-outline text-xs block mt-0.5" x-text="key.description"></span>
                   </td>
-                  <td class="px-4 py-3 font-mono text-outline text-xs" x-text="key.key_prefix + '...'"></td>
+                  <td class="px-4 py-3 font-mono text-outline text-xs" x-text="keyHint(key)"></td>
                   <td class="px-4 py-3 font-mono text-xs">
                     <span class="text-on-surface" x-text="key.rpm + ' rpm'"></span>
                     <span class="text-outline block mt-0.5" x-text="key.models ? key.models.join(', ') : 'all models'"></span>
