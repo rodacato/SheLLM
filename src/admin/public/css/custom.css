@@ -83,6 +83,9 @@ a:active,
 ::-webkit-scrollbar-thumb { background: var(--surface-container-high); border-radius: 0; }
 ::-webkit-scrollbar-thumb:hover { background: var(--surface-container-highest); }
 
+/* A table swiped past its edge would otherwise hand the gesture to the browser as back. */
+.overflow-x-auto { overscroll-behavior-x: contain; }
+
 /* Hide x-cloak elements until Alpine initializes */
 [x-cloak] { display: none !important; }
 
