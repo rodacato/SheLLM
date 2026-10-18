@@ -68,30 +68,40 @@ function keysPage() {
 
     get snippets() {
       const key = this.newKeyResult?.raw_key;
-      return key ? this.snippetsFor(key) : [];
+      return key ? this.snippetsFor(key, { realKey: true }) : [];
     },
 
     // The same two lines answer "how do I use this?" for a key created long ago, whose own value
     // is unrecoverable — so the page states them with a placeholder instead of only at creation.
     get sampleSnippets() {
-      return this.snippetsFor('$SHELLM_KEY');
+      return this.snippetsFor('$SHELLM_KEY', { realKey: false });
     },
 
-    snippetsFor(key) {
+    snippetsFor(key, { realKey }) {
       return [
         {
           id: 'openai',
           label: 'OpenAI SDKs',
           help: 'Read the base URL as given, so it carries /v1.',
-          command: `export OPENAI_BASE_URL=${this.baseUrl}/v1 OPENAI_API_KEY=${key}`,
+          vars: [
+            { name: 'OPENAI_BASE_URL', value: `${this.baseUrl}/v1`, copyable: true },
+            { name: 'OPENAI_API_KEY', value: key, copyable: realKey },
+          ],
         },
         {
           id: 'anthropic',
           label: 'Anthropic SDKs',
           help: 'Append /v1 themselves, so the base URL must not carry it.',
-          command: `export ANTHROPIC_BASE_URL=${this.baseUrl} ANTHROPIC_API_KEY=${key}`,
+          vars: [
+            { name: 'ANTHROPIC_BASE_URL', value: this.baseUrl, copyable: true },
+            { name: 'ANTHROPIC_API_KEY', value: key, copyable: realKey },
+          ],
         },
-      ];
+      ].map((snippet) => ({
+        ...snippet,
+        command: `export ${snippet.vars.map((v) => `${v.name}=${v.value}`).join(' ')}`,
+        env: snippet.vars.map((v) => `${v.name}=${v.value}`).join('\n'),
+      }));
     },
 
     // The key is legible exactly once and the banner renders at the top of the page, so a key
@@ -109,7 +119,7 @@ function keysPage() {
 
     async copy(id, text) {
       if (await copyToClipboard(text)) {
-        if (id === 'key') this.keyCopied = true;
+        if (text === this.newKeyResult?.raw_key) this.keyCopied = true;
         this.copied = id;
         this.copyError = null;
         setTimeout(() => { if (this.copied === id) this.copied = null; }, 1500);
