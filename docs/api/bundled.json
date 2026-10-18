@@ -2119,6 +2119,41 @@
             "type": "boolean",
             "default": false,
             "description": "`true` answers `text/event-stream` with Anthropic's named events. `message_start` is sent\nbefore the CLI has produced anything, so wait for `content_block_delta` to call it the first\ntoken. Streaming is capped separately by `MAX_STREAM_CONCURRENT`.\n"
+          },
+          "output_config": {
+            "type": "object",
+            "description": "`format` makes the answer JSON valid against `schema`, validated by the Claude CLI\n(`--json-schema`) or Codex (`--output-schema`); the text block carries it whole, and a\nstreamed answer arrives in one delta once validated. `effort` sets how hard the model thinks.\n",
+            "properties": {
+              "effort": {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh",
+                  "max"
+                ]
+              },
+              "format": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "schema"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "json_schema"
+                    ]
+                  },
+                  "schema": {
+                    "type": "object",
+                    "description": "A JSON Schema of at most 100 KiB"
+                  }
+                }
+              }
+            }
           }
         }
       },

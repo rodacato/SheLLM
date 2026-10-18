@@ -91,6 +91,8 @@ message = client.messages.create(
 | `top_p` | **Accepted** | Number 0-1 |
 | `stream` | **Supported** | `true` enables Anthropic SSE streaming |
 | `stop_sequences` | **Validated** | Array of strings. Validated but not passed to providers |
+| `output_config.format` | **Supported** | `{ type: "json_schema", schema }`. The answer is the JSON as the text block, validated by the CLI the way `response_format` is on `/v1/chat/completions` (see the capability matrix); streamed, it arrives whole in one delta. The schema is at most 100 KiB |
+| `output_config.effort` | **Supported** | `low`, `medium`, `high`, `xhigh` or `max`, passed to the CLI. Omitted, Claude uses `SHELLM_CLAUDE_EFFORT` |
 | `metadata` | **Ignored** | |
 | `top_k` | **Ignored** | |
 | `tools` | **Rejected** | A non-empty list is a 400 `invalid_request_error` saying function calling is not supported yet. An empty list is accepted |
