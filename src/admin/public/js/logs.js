@@ -28,19 +28,36 @@ function logsPage() {
     _inFlightSnapshot: null,
     _liveInFlightIds: null,
 
-    applyPendingFilter() {
-      const nav = Alpine.store('nav');
-      if (!nav.pendingLogFilter) return false;
-      const wanted = nav.pendingLogFilter;
-      this.filterProvider = '';
+    get currentFilter() {
+      return {
+        provider: this.filterProvider,
+        status: this.filterStatus,
+        client: this.filterClient,
+        model: this.filterModel,
+        error_code: this.filterErrorCode,
+      };
+    },
+
+    applyRouteFilter() {
+      const wanted = logFilterFromQuery(Alpine.store('nav').query);
+      if (logsHref(wanted) === logsHref(this.currentFilter)) return false;
+      this.filterProvider = wanted.provider || '';
       this.filterStatus = wanted.status || '';
       this.filterClient = wanted.client || '';
       this.filterModel = wanted.model || '';
       this.filterErrorCode = wanted.error_code || '';
       this.offset = 0;
       this.expandedId = null;
-      nav.pendingLogFilter = null;
+      // Arriving from another page, starting the poller reads; already here, nothing else will.
+      if (this._poller?.running) this.fetchLogs();
       return true;
+    },
+
+    // Replaced, not pushed: back leaves Logs instead of stepping through every filter tried.
+    writeRoute() {
+      const href = logsHref(this.currentFilter);
+      Alpine.store('nav').query = href.split('?')[1] || '';
+      if (location.hash !== href) history.replaceState(null, '', href);
     },
 
     toggleRow(id) {
@@ -276,6 +293,7 @@ function logsPage() {
 
     async applyFilters() {
       this.offset = 0;
+      this.writeRoute();
       await this.fetchLogs();
     },
 

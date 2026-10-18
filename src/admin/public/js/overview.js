@@ -171,13 +171,12 @@ function overviewPage() {
       return `${cost} · ${rpm} rpm`;
     },
 
-    openErrorLogs(row) {
-      Alpine.store('nav').pendingLogFilter = {
+    errorLogsHref(row) {
+      return logsHref({
         status: String(row.status),
         error_code: row.error_code === '(none)' ? '' : row.error_code,
         client: row.client_name === '(unauthenticated)' ? '' : row.client_name,
-      };
-      location.hash = 'logs';
+      });
     },
 
     renderTimeline() {

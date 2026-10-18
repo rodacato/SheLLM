@@ -17,7 +17,9 @@ const LOGS_HTML = fs.readFileSync(path.join(__dirname, '../../src/admin/views/pa
 function logsScreen({ stored = null, deleteAnswer = { status: 200, body: { deleted: 3 } } } = {}) {
   const requests = [];
   const timeouts = [];
-  const stores = { nav: { pendingLogFilter: null }, connection: {} };
+  const location = { pathname: '/admin/dashboard', hash: '', replace() {} };
+  const stores = { nav: { query: '' }, connection: {} };
+  const history = { replaced: [], replaceState(_state, _title, url) { this.replaced.push(url); location.hash = url; } };
   const clipboard = { written: [], works: true };
 
   const context = vm.createContext({
@@ -50,7 +52,8 @@ function logsScreen({ stored = null, deleteAnswer = { status: 200, body: { delet
       }
       return { ok: true, status: 200, json: async () => ({ logs: [], total: 0 }) };
     },
-    location: { pathname: '/admin/dashboard', hash: '', replace() {} },
+    location,
+    history,
     window: { addEventListener() {} },
     localStorage: { getItem: () => stored, setItem: () => {} },
   });
@@ -70,6 +73,8 @@ function logsScreen({ stored = null, deleteAnswer = { status: 200, body: { delet
     timeouts,
     stores,
     clipboard,
+    history,
+    context,
     reads: () => requests.filter((r) => r.startsWith('GET /admin/logs')).length,
     queue(jobs, readAt = Date.now()) {
       merged.health = { ...merged.health, queue: { in_flight: jobs, timeout_ms: 600000 }, readAt };
@@ -202,12 +207,53 @@ describe('filters that arrive from another page', () => {
     const { page, stores } = logsScreen();
     page.filterProvider = 'codex';
     page.expandedId = 4;
-    stores.nav.pendingLogFilter = { status: '429', error_code: 'rate_limited' };
+    stores.nav.query = 'status=429&error_code=rate_limited';
 
-    assert.strictEqual(page.applyPendingFilter(), true);
+    assert.strictEqual(page.applyRouteFilter(), true);
     assert.strictEqual(page.filterProvider, '', 'a stale provider narrowed the arriving filter');
     assert.strictEqual(page.expandedId, null, 'an open row would hold the read the new filter needs');
     assert.deepStrictEqual(Array.from(page.hiddenFilters, (f) => `${f.label} ${f.value}`), ['Status 429', 'Error rate_limited']);
+  });
+
+  it('leaves the filter alone when the route already says it', () => {
+    const { page, stores } = logsScreen();
+    page.filterClient = 'my-app';
+    page.offset = 50;
+    stores.nav.query = 'client=my-app';
+
+    assert.strictEqual(page.applyRouteFilter(), false);
+    assert.strictEqual(page.offset, 50, 'a re-run effect sent the operator back to page 1');
+  });
+
+  it('reads a filter that changes while Logs is already open', () => {
+    const { page, stores, reads } = logsScreen();
+    page.startAutoRefresh();
+    const before = reads();
+    stores.nav.query = 'client=my-app';
+
+    page.applyRouteFilter();
+    assert.strictEqual(reads(), before + 1, 'the new filter showed the old rows');
+  });
+
+  it('shows unfiltered Logs for a link with a parameter it does not know', () => {
+    const { page, stores } = logsScreen();
+    page.filterStatus = '5';
+    stores.nav.query = 'client=my-app&foo=1';
+
+    page.applyRouteFilter();
+    assert.ok(!page.hasFilters, 'part of a link it cannot honour was applied');
+  });
+
+  it('keeps the filter in the hash, replacing the entry rather than adding one', async () => {
+    const { page, history, stores } = logsScreen();
+    page.filterClient = 'my-app';
+    page.filterStatus = '5';
+    await page.applyFilters();
+    assert.deepStrictEqual(history.replaced, ['#logs?status=5&client=my-app']);
+    assert.strictEqual(stores.nav.query, 'status=5&client=my-app', 'a re-run effect would re-apply the old route');
+
+    await page.clearFilters();
+    assert.strictEqual(history.replaced.at(-1), '#logs');
   });
 
   it('does not list a status class the select already shows', () => {
@@ -349,5 +395,21 @@ describe('the Logs markup', () => {
   it('titles the page with its one h1', () => {
     assert.strictEqual((LOGS_HTML.match(/<h1\b/g) || []).length, 1);
     assert.strictEqual((LOGS_HTML.match(/<h2\b/g) || []).length, 0);
+  });
+});
+
+describe('the Logs route', () => {
+  const { context } = logsScreen();
+  const run = (code) => vm.runInContext(code, context);
+
+  it('routes a filtered hash to its page', () => {
+    assert.deepStrictEqual({ ...run("parseRoute('#logs?client=my-app')") }, { page: 'logs', query: 'client=my-app' });
+    assert.strictEqual(run("parseRoute('#settings?x=1')").page, null);
+  });
+
+  it('round-trips a client name the hash has to escape', () => {
+    const href = run("logsHref({ client: 'team a&b', status: '' })");
+    assert.strictEqual(href, '#logs?client=team+a%26b');
+    assert.strictEqual(run(`logFilterFromQuery(${JSON.stringify(href.split('?')[1])})`).client, 'team a&b');
   });
 });
