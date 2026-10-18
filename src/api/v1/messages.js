@@ -3,6 +3,7 @@ const { jobFor } = require('../../infra/queue');
 const { anthropicCacheUsage, anthropicUsage } = require('./usage');
 const { wantsLongContext } = require('./betas');
 const { refuseAnthropicTools } = require('./function-calling');
+const { MAX_SCHEMA_BYTES } = require('./chat-completions');
 const { sanitize } = require('../../middleware/sanitize');
 const { invalidRequest, rateLimited, isClientError, fromCatchable, keepProviderLimit, recordErrorCode, sendAnthropicError } = require('../../errors');
 const { recordSuccess, recordFailure, holdsProbe, releaseProbe } = require('../../infra/circuit-breaker');
@@ -66,6 +67,35 @@ function extractPrompt(messages, system) {
   }
 
   return { prompt, system: system || null };
+}
+
+const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
+
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function validateOutputConfig(outputConfig) {
+  if (!isPlainObject(outputConfig)) return invalidRequest('Field "output_config" must be an object');
+  const { effort, format } = outputConfig;
+  if (effort !== undefined && !EFFORTS.includes(effort)) {
+    return invalidRequest(`Field "output_config.effort" must be one of: ${EFFORTS.join(', ')}`);
+  }
+  if (format === undefined || format === null) return null;
+  if (!isPlainObject(format) || format.type !== 'json_schema' || !isPlainObject(format.schema)) {
+    return invalidRequest('Field "output_config.format" must be an object with type "json_schema" and a "schema" object');
+  }
+  const size = Buffer.byteLength(JSON.stringify(format.schema));
+  if (size > MAX_SCHEMA_BYTES) {
+    return invalidRequest(`Field "output_config.format.schema" exceeds ${MAX_SCHEMA_BYTES} bytes (got ${size})`);
+  }
+  return null;
+}
+
+// The providers already speak OpenAI's response_format, which /v1/chat/completions hands them.
+function responseFormatFor(outputConfig) {
+  const format = outputConfig?.format;
+  return format ? { type: 'json_schema', json_schema: { name: 'output', schema: format.schema } } : undefined;
 }
 
 function isEmptyContent(content) {
@@ -138,6 +168,11 @@ function validate(body) {
     }
   }
 
+  if (body.output_config !== undefined) {
+    const outputConfigError = validateOutputConfig(body.output_config);
+    if (outputConfigError) return outputConfigError;
+  }
+
   if (body.stop_sequences !== undefined) {
     if (!Array.isArray(body.stop_sequences)) {
       return invalidRequest('Field "stop_sequences" must be an array of strings');
@@ -207,7 +242,9 @@ function preflight(req, res) {
   prompt = sanitize(prompt);
   if (system) system = sanitize(system);
 
-  return { model, max_tokens, temperature, top_p, longContext: wantsLongContext(req), prompt, system };
+  const response_format = responseFormatFor(req.body.output_config);
+  const effort = req.body.output_config?.effort;
+  return { model, max_tokens, temperature, top_p, response_format, effort, longContext: wantsLongContext(req), prompt, system };
 }
 
 async function messagesHandler(req, res) {
@@ -218,14 +255,14 @@ async function messagesHandler(req, res) {
     return handleAnthropicStream(req, res, params);
   }
 
-  const { model, max_tokens, temperature, top_p, longContext, prompt, system } = params;
+  const { model, max_tokens, temperature, top_p, response_format, effort, longContext, prompt, system } = params;
   const startTime = Date.now();
   res.locals.provider = null;
   res.locals.model = model;
 
   try {
     const allowFallback = req.headers['x-shellm-allow-fallback'] === 'true' || undefined;
-    const result = await route({ model, prompt, system, max_tokens, temperature, top_p, longContext, request_id: req.requestId, allowFallback, job: jobFor(req) });
+    const result = await route({ model, prompt, system, max_tokens, temperature, top_p, response_format, effort, longContext, request_id: req.requestId, allowFallback, job: jobFor(req) });
     res.locals.provider = result.provider;
     res.locals.queued_ms = result.queued_ms ?? null;
     res.locals.cost_usd = result.cost_usd ?? null;
@@ -272,7 +309,7 @@ async function messagesHandler(req, res) {
 /**
  * Handle streaming response for /v1/messages (Anthropic SSE format).
  */
-async function handleAnthropicStream(req, res, { model, max_tokens, temperature, top_p, longContext, prompt, system }) {
+async function handleAnthropicStream(req, res, { model, max_tokens, temperature, top_p, response_format, effort, longContext, prompt, system }) {
   const logger = require('../../lib/logger');
 
   let provider;
@@ -342,7 +379,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
 
       if (streamFn) {
         logger.debug({ event: 'stream_calling_provider', format: 'anthropic', provider: provider.name, hasChatStream: true });
-        for await (const event of streamFn({ prompt, system, max_tokens, temperature, top_p, longContext, model, signal: ac.signal })) {
+        for await (const event of streamFn({ prompt, system, max_tokens, temperature, top_p, response_format, effort, longContext, model, signal: ac.signal })) {
           if (ac.signal.aborted) { logger.debug({ event: 'stream_aborted', chunkCount }); break; }
           if (event.type === 'usage') {
             reportedUsage = event.usage;
@@ -363,7 +400,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
         }
       } else {
         logger.debug({ event: 'stream_fallback', format: 'anthropic', provider: provider.name });
-        const result = await provider.chat({ prompt, system, max_tokens, temperature, top_p, longContext, model });
+        const result = await provider.chat({ prompt, system, max_tokens, temperature, top_p, response_format, effort, longContext, model });
         totalChars += result.content.length;
         sendContentBlockDelta(res, 0, result.content);
       }

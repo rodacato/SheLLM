@@ -480,4 +480,4 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
   }
 }
 
-module.exports = { chatCompletionsHandler, extractMessages, validate };
+module.exports = { chatCompletionsHandler, extractMessages, validate, MAX_SCHEMA_BYTES };

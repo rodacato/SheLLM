@@ -6,17 +6,18 @@ describe('/v1/messages', () => {
   let request;
   let app;
   let testKey;
+  const execute = mock.fn(async (cmd) => ({
+    stdout: cmd === 'claude'
+      ? JSON.stringify({ result: 'test reply', cost_usd: 0.001 })
+      : 'test reply',
+    stderr: '',
+    duration_ms: 10,
+  }));
 
   before(() => {
     mock.module(path.resolve(__dirname, '../../../src/providers/base.js'), {
       namedExports: {
-        execute: mock.fn(async (cmd) => ({
-          stdout: cmd === 'claude'
-            ? JSON.stringify({ result: 'test reply', cost_usd: 0.001 })
-            : 'test reply',
-          stderr: '',
-          duration_ms: 10,
-        })),
+        execute,
         stripNonPrintable: (t) => t,
       },
     });
@@ -262,6 +263,61 @@ describe('/v1/messages', () => {
       .send({ model: 'claude', max_tokens: 1024, messages: [{ role: 'user', content: 'hi' }, { role: 'assistant', content: '' }, { role: 'user', content: 'hello?' }] });
 
     assert.strictEqual(res.status, 200);
+  });
+
+  describe('output_config', () => {
+    const SCHEMA = { type: 'object', properties: { color: { type: 'string' } }, required: ['color'], additionalProperties: false };
+    const send = (output_config) => request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({ model: 'claude', max_tokens: 1024, messages: [{ role: 'user', content: 'One primary color.' }], output_config });
+    const lastArgs = () => execute.mock.calls.at(-1).arguments[1];
+
+    it('answers format with the structured output the CLI validated, as the text block', async () => {
+      execute.mock.mockImplementationOnce(async () => ({
+        stdout: JSON.stringify({ result: '', structured_output: { color: 'red' } }),
+        stderr: '',
+        duration_ms: 10,
+      }));
+
+      const res = await send({ format: { type: 'json_schema', schema: SCHEMA } });
+
+      assert.strictEqual(res.status, 200);
+      assert.deepStrictEqual(JSON.parse(res.body.content[0].text), { color: 'red' });
+      const args = lastArgs();
+      assert.deepStrictEqual(JSON.parse(args[args.indexOf('--json-schema') + 1]), SCHEMA);
+    });
+
+    it('fails a format the CLI answered without structured output, instead of passing prose off as JSON', async () => {
+      const res = await send({ format: { type: 'json_schema', schema: SCHEMA } });
+      assert.strictEqual(res.status, 502);
+    });
+
+    it('passes effort to the CLI', async () => {
+      const res = await send({ effort: 'xhigh' });
+
+      assert.strictEqual(res.status, 200);
+      const args = lastArgs();
+      assert.strictEqual(args[args.indexOf('--effort') + 1], 'xhigh');
+      assert.ok(!args.includes('--json-schema'), 'effort alone asks for no schema');
+    });
+
+    for (const [label, outputConfig, field] of [
+      ['an effort the API does not have', { effort: 'minimal' }, 'output_config.effort'],
+      ['a format that is not json_schema', { format: { type: 'json_object' } }, 'output_config.format'],
+      ['a format without a schema', { format: { type: 'json_schema' } }, 'output_config.format'],
+      ['a schema past the argv limit', { format: { type: 'json_schema', schema: { type: 'object', description: 'x'.repeat(101 * 1024) } } }, 'output_config.format.schema'],
+      ['a value that is not an object', 'json', 'output_config'],
+    ]) {
+      it(`rejects ${label} before any CLI runs`, async () => {
+        const calls = execute.mock.callCount();
+        const res = await send(outputConfig);
+
+        assert.strictEqual(res.status, 400);
+        assert.ok(res.body.error.message.includes(`"${field}"`), res.body.error.message);
+        assert.strictEqual(execute.mock.callCount(), calls);
+      });
+    }
   });
 
   it('rejects unknown model', async () => {
