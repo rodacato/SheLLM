@@ -6,7 +6,13 @@ properties:
     type: string
   key_prefix:
     type: string
-    example: shellm-a1
+    example: shellm-a
+  key_suffix:
+    type: [string, 'null']
+    description: >
+      The key's last 4 characters, so it can be matched against the key an app holds. null for a
+      key created before v1.23.0 and not rotated since.
+    example: 9f0e
   rpm:
     type: integer
   models:

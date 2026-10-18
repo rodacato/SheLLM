@@ -1,6 +1,6 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
-const { mkdtempSync, mkdirSync, rmSync, writeFileSync } = require('node:fs');
+const { mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const Database = require('better-sqlite3');
@@ -137,5 +137,25 @@ describe('splitStatements', () => {
 
   it('returns a trailing statement without its semicolon', () => {
     assert.deepEqual(splitStatements('SELECT 1').map(s => s.trim()), ['SELECT 1']);
+  });
+});
+
+describe('019: the key suffix on a database that already has keys', () => {
+  const REAL = path.join(__dirname, '../../src/db/migrations');
+  const SUFFIX = '019_add_client_key_suffix.sql';
+
+  it('adds the column and leaves every existing key as it was', (t) => {
+    const before = Object.fromEntries(readdirSync(REAL)
+      .filter((name) => name.endsWith('.sql') && name < SUFFIX)
+      .map((name) => [name, readFileSync(path.join(REAL, name), 'utf8')]));
+    const { db, migrationsDir } = setup(t, before);
+    runMigrations(db, migrationsDir);
+    db.prepare('INSERT INTO clients (name, key_hash, key_prefix, rpm) VALUES (?, ?, ?, ?)').run('old', 'hash-1', 'shellm-a', 10);
+
+    writeFileSync(path.join(migrationsDir, SUFFIX), readFileSync(path.join(REAL, SUFFIX), 'utf8'));
+    runMigrations(db, migrationsDir);
+
+    const row = db.prepare("SELECT key_hash, key_prefix, key_suffix FROM clients WHERE name = 'old'").get();
+    assert.deepStrictEqual({ ...row }, { key_hash: 'hash-1', key_prefix: 'shellm-a', key_suffix: null });
   });
 });

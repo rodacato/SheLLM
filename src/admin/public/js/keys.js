@@ -247,6 +247,10 @@ function keysPage() {
       return Math.round((usage.errors / usage.requests) * 100);
     },
 
+    keyHint(key) {
+      return key.key_suffix ? `${key.key_prefix}…${key.key_suffix}` : `${key.key_prefix}...`;
+    },
+
     keyLogsHref(key) {
       return logsHref({ client: key.name });
     },

@@ -132,6 +132,7 @@ describe('db layer', () => {
       assert.strictEqual(client.name, 'test-app');
       assert.ok(client.rawKey.startsWith('shellm-'));
       assert.strictEqual(client.key_prefix, client.rawKey.slice(0, 8));
+      assert.strictEqual(client.key_suffix, client.rawKey.slice(-4));
       assert.strictEqual(client.rpm, 10);
       assert.strictEqual(client.models, null);
       assert.strictEqual(client.active, 1);
@@ -240,6 +241,23 @@ describe('db layer', () => {
     });
   });
 
+  describe('what a key leaves behind', () => {
+    it('stores no more of the key than its first 8 and last 4 characters', () => {
+      const client = createClient({ name: 'leaves-little' });
+      const middle = client.rawKey.slice(8, -4);
+      const row = getDb().prepare('SELECT * FROM clients WHERE id = ?').get(client.id);
+      for (const [column, value] of Object.entries(row)) {
+        assert.ok(!String(value).includes(middle.slice(0, 10)), `${column} holds part of the secret`);
+      }
+    });
+
+    it('lists a key from before the suffix without one', () => {
+      getDb().prepare('INSERT INTO clients (name, key_hash, key_prefix, rpm) VALUES (?, ?, ?, ?)')
+        .run('from-before', 'not-a-real-hash', 'shellm-a', 10);
+      assert.strictEqual(listClients().find((c) => c.name === 'from-before').key_suffix, null);
+    });
+  });
+
   describe('rotateClientKey', () => {
     it('rotates key and returns new rawKey', () => {
       const client = createClient({ name: 'rotate-me' });
@@ -249,6 +267,9 @@ describe('db layer', () => {
       assert.ok(rotated.rawKey.startsWith('shellm-'));
       assert.notStrictEqual(rotated.rawKey, oldKey);
       assert.strictEqual(rotated.key_prefix, rotated.rawKey.slice(0, 8));
+      assert.strictEqual(rotated.key_suffix, rotated.rawKey.slice(-4));
+      assert.strictEqual(listClients().find((c) => c.id === client.id).key_suffix, rotated.key_suffix,
+        'the list kept the suffix of the key that no longer works');
 
       // Old key no longer works
       assert.strictEqual(findClientByKey(oldKey), null);

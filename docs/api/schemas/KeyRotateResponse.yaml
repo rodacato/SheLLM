@@ -9,3 +9,5 @@ properties:
         type: string
       key_prefix:
         type: string
+      key_suffix:
+        type: string

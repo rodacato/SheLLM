@@ -381,3 +381,16 @@ describe('Keys: markup', () => {
     }
   });
 });
+
+describe('Keys: telling keys apart', () => {
+  it('shows the end of a key next to its prefix', () => {
+    const { page } = loadPage();
+    assert.strictEqual(page.keyHint({ key_prefix: 'shellm-a', key_suffix: '9f0e' }), 'shellm-a…9f0e');
+  });
+
+  // Its end was never stored; anything after the prefix would be invented.
+  it('shows only the prefix of a key from before the suffix', () => {
+    const { page } = loadPage();
+    assert.strictEqual(page.keyHint({ key_prefix: 'shellm-a', key_suffix: null }), 'shellm-a...');
+  });
+});
