@@ -1,6 +1,6 @@
 'use strict';
 
-const { PNG_1PX, UNKNOWN_MODEL } = require('./shared');
+const { PNG_1PX, UNKNOWN_MODEL, answerIsJsonObject } = require('./shared');
 
 const CHAT = '/v1/chat/completions';
 const SAY_OK = [{ role: 'user', content: 'Reply with the single word OK.' }];
@@ -52,10 +52,15 @@ const CASES = [
     body: { model: '$MODEL', stop: ['3'], messages: COUNT },
   },
   { id: 'P06-n', title: 'n = 2', path: CHAT, body: { model: '$MODEL', n: 2, messages: SAY_OK } },
-  { id: 'P07-json-object', title: 'response_format json_object', path: CHAT, body: { model: '$MODEL', response_format: { type: 'json_object' }, messages: [{ role: 'user', content: 'Give me one primary color as JSON with a "color" key.' }] } },
+  {
+    id: 'P07-json-object', title: 'response_format json_object', path: CHAT,
+    body: { model: '$MODEL', response_format: { type: 'json_object' }, messages: [{ role: 'user', content: 'Give me one primary color as JSON with a "color" key.' }] },
+    expect: answerIsJsonObject,
+  },
   {
     id: 'P08-json-schema', title: 'response_format json_schema, strict', path: CHAT,
     body: { model: '$MODEL', response_format: { type: 'json_schema', json_schema: { name: 'color', strict: true, schema: COLOR_SCHEMA } }, messages: [{ role: 'user', content: 'Give me one primary color.' }] },
+    expect: answerIsJsonObject,
   },
   { id: 'P09-logprobs', title: 'logprobs requested', path: CHAT, body: { model: '$MODEL', logprobs: true, top_logprobs: 2, messages: SAY_OK } },
   { id: 'P10-extras', title: 'seed, user, penalties', path: CHAT, body: { model: '$MODEL', seed: 42, user: 'conformance', frequency_penalty: 0.1, presence_penalty: 0.1, temperature: 0.7, messages: SAY_OK } },
@@ -111,6 +116,7 @@ const CASES = [
   {
     id: 'S03-streaming-json-schema', title: 'Streamed json_schema', path: CHAT,
     body: { model: '$MODEL', stream: true, response_format: { type: 'json_schema', json_schema: { name: 'color', strict: true, schema: COLOR_SCHEMA } }, messages: [{ role: 'user', content: 'Give me one primary color.' }] },
+    expect: answerIsJsonObject,
   },
 
   { id: 'T01-responses-api', title: 'The Responses API, to measure the distance', path: '/v1/responses', body: { model: '$MODEL', input: 'Reply with the single word OK.' } },
