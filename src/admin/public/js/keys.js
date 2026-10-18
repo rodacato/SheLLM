@@ -247,9 +247,8 @@ function keysPage() {
       return Math.round((usage.errors / usage.requests) * 100);
     },
 
-    openKeyLogs(key) {
-      Alpine.store('nav').pendingLogFilter = { client: key.name };
-      location.hash = 'logs';
+    keyLogsHref(key) {
+      return logsHref({ client: key.name });
     },
 
     // One line per row, so a refusal is read next to the key it refused.

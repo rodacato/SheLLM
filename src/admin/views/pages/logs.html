@@ -1,5 +1,5 @@
       <!-- LOGS PAGE -->
-      <div x-show="page === 'logs'" x-data="logsPage()" x-effect="if (page === 'logs') { applyPendingFilter(); startAutoRefresh(); } else { stopAutoRefresh(); }">
+      <div x-show="page === 'logs'" x-data="logsPage()" x-effect="if (page === 'logs') { applyRouteFilter(); startAutoRefresh(); } else { stopAutoRefresh(); }">
         <div x-effect="if (page === 'logs') noticeInFlight()" hidden></div>
 
         <header class="mb-6">

@@ -126,6 +126,7 @@ function poller(read) {
       arm();
     },
     stop() { ms = 0; running = false; clear(); },
+    get running() { return running; },
   };
 }
 
@@ -357,12 +358,36 @@ function statusBadgeClass(status) {
 }
 
 const VALID_PAGES = ['overview', 'logs', 'keys', 'playground', 'system'];
+const LOG_FILTER_PARAMS = ['provider', 'status', 'client', 'model', 'error_code'];
+
+function parseRoute(hash) {
+  const [page, query = ''] = hash.replace(/^#/, '').split('?');
+  return { page: VALID_PAGES.includes(page) ? page : null, query };
+}
+
+// The filter rides in the hash, so back, a reload and a bookmark all keep it.
+function logsHref(filter = {}) {
+  const params = new URLSearchParams();
+  for (const name of LOG_FILTER_PARAMS) {
+    if (filter[name]) params.set(name, filter[name]);
+  }
+  const query = params.toString();
+  return query ? `#logs?${query}` : '#logs';
+}
+
+// A parameter Logs does not know means a link it cannot honour in full; applying the rest would
+// show a narrower filter than the one the link asked for, so none of it applies.
+function logFilterFromQuery(query) {
+  const params = new URLSearchParams(query);
+  if ([...params.keys()].some((name) => !LOG_FILTER_PARAMS.includes(name))) return {};
+  return Object.fromEntries(LOG_FILTER_PARAMS.map((name) => [name, params.get(name) || '']));
+}
 
 // Read-only state crosses component boundaries through Alpine's scope inheritance, but a write
 // from a child would shadow the parent's property instead of changing it. A store is the only
 // shared state here for that reason.
 document.addEventListener('alpine:init', () => {
-  Alpine.store('nav', { pendingLogFilter: null });
+  Alpine.store('nav', { query: parseRoute(location.hash).query });
   Alpine.store('connection', {
     online: navigator.onLine,
     failed: false,
@@ -382,7 +407,7 @@ document.addEventListener('alpine:init', () => {
 
 function app() {
   return {
-    page: VALID_PAGES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview',
+    page: parseRoute(location.hash).page || 'overview',
     sidebarOpen: false,
     health: { uptime: null, providers: {}, queue: {}, readAt: 0 },
     healthRead: 'pending',
@@ -407,10 +432,6 @@ function app() {
       this.page = pageId;
       window.scrollTo(0, 0);
     },
-    openLogsFiltered(filter) {
-      Alpine.store('nav').pendingLogFilter = typeof filter === 'object' ? filter : { status: String(filter) };
-      this.navigate('logs');
-    },
     formatUptime,
     formatClock,
     formatAge,
@@ -424,8 +445,10 @@ function app() {
     get healthStale() { return this.now - this.health.readAt > 2 * this.healthPollMs; },
     async init() {
       window.addEventListener('hashchange', () => {
-        const id = location.hash.slice(1);
-        if (VALID_PAGES.includes(id)) this.show(id);
+        const route = parseRoute(location.hash);
+        if (!route.page) return;
+        Alpine.store('nav').query = route.query;
+        if (route.page !== this.page) this.show(route.page);
       });
       poller(() => { this.now = Date.now(); }).every(1000);
       this._health = poller(() => this.fetchHealth());

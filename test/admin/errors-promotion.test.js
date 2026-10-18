@@ -133,7 +133,7 @@ describe('the Errors table spends its columns on facts it has', () => {
   });
 
   it('provides a real link for keyboard navigation to the error requests', () => {
-    const link = /<a href="#logs"[^>]*@click="openErrorLogs\(row\)"[^>]*>/.exec(html);
+    const link = /<a :href="errorLogsHref\(row\)"[^>]*>/.exec(html);
     assert.ok(link, 'error navigation has no focusable link');
     assert.match(link[0], /:aria-label=/);
     assert.doesNotMatch(html, /<tr @click=/);

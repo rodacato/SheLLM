@@ -128,7 +128,7 @@
                 <tr class="border-t border-outline-variant/20 whitespace-nowrap hover:bg-surface-container-high transition-colors duration-fast"
                   :class="editing === key.id ? 'bg-surface-container-high' : ''">
                   <td class="px-4 py-3">
-                    <span class="font-headline font-bold text-white text-sm block" x-text="key.name"></span>
+                    <a :href="keyLogsHref(key)" class="font-headline font-bold text-white hover:text-primary-container text-sm block transition-colors duration-fast" :title="'Requests made with ' + key.name" x-text="key.name"></a>
                     <span x-show="key.description" class="text-outline text-xs block mt-0.5" x-text="key.description"></span>
                   </td>
                   <td class="px-4 py-3 font-mono text-outline text-xs" x-text="key.key_prefix + '...'"></td>
@@ -140,7 +140,7 @@
                   <td class="px-4 py-3 font-mono text-xs">
                     <template x-if="key.usage && key.usage.requests > 0">
                       <div>
-                        <button @click="openKeyLogs(key)" class="link-brand" x-text="key.usage.requests + ' req'"></button>
+                        <a :href="keyLogsHref(key)" class="link-brand" x-text="key.usage.requests + ' req'"></a>
                         <span x-show="key.usage.errors > 0" class="text-error ml-1" x-text="errorRate(key) + '% err'"></span>
                         <span class="text-outline block mt-0.5">
                           <span x-text="formatCompactNumber(key.usage.tokens)"></span> tok ·

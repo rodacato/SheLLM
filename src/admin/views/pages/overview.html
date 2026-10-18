@@ -283,7 +283,7 @@
                 <template x-for="row in errorRows" :key="row.status + row.error_code + row.client_name + row.model + row.path">
                   <tr class="border-t border-outline-variant/20 hover:bg-surface-container-high transition-colors duration-fast">
                     <td class="max-md:pr-4 text-outline whitespace-nowrap">
-                      <a href="#logs" @click="openErrorLogs(row)" class="error-log-link link-brand"
+                      <a :href="errorLogsHref(row)" class="error-log-link link-brand"
                         :title="formatTime(row.last_seen_at)"
                         :aria-label="'View requests: ' + row.status + ' ' + row.error_code + ', ' + row.client_name"
                         x-text="formatRelative(row.last_seen_at)"></a>
