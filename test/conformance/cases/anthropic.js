@@ -1,6 +1,6 @@
 'use strict';
 
-const { PNG_1PX, UNKNOWN_MODEL } = require('./shared');
+const { PNG_1PX, UNKNOWN_MODEL, answerIsJsonObject } = require('./shared');
 
 const MESSAGES = '/v1/messages';
 const SAY_OK = [{ role: 'user', content: 'Reply with the single word OK.' }];
@@ -123,6 +123,7 @@ const CASES = [
       model: '$MODEL', max_tokens: 256, messages: [{ role: 'user', content: 'Give me one primary color.' }],
       output_config: { format: { type: 'json_schema', schema: { type: 'object', properties: { color: { type: 'string' } }, required: ['color'], additionalProperties: false } } },
     },
+    expect: answerIsJsonObject,
   },
   { id: 'D03-effort', title: 'output_config.effort', path: MESSAGES, body: { model: '$MODEL', max_tokens: 64, output_config: { effort: 'low' }, messages: SAY_OK } },
   {

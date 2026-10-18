@@ -34,9 +34,22 @@ async function startOffline() {
   };
 }
 
+// What shape cannot see: a case's expect() names what must hold of the answer itself. It must
+// hold of the recording too, or the case is the thing that is wrong.
+function meaning(kase, reference, actual) {
+  if (!kase.expect) return [];
+  return [['(case)', reference], ['(meaning)', actual]]
+    .map(([path, recording]) => ({ path, problem: kase.expect(recording.response) }))
+    .filter(({ problem }) => problem)
+    .map(({ path, problem }) => ({ kind: 'expect', path, reference: 'holds', actual: problem, blocking: true }));
+}
+
 async function judge({ api, kase, accepted, reference, actualTarget, actualRecording }) {
   const actual = actualRecording ?? await send(actualTarget, api, kase);
-  const diffs = classify(diff(api, reference.response, actual.response), [...accepted, ...(kase.accepted || [])]);
+  const diffs = [
+    ...classify(diff(api, reference.response, actual.response), [...accepted, ...(kase.accepted || [])]),
+    ...meaning(kase, reference, actual),
+  ];
   return { actual, diffs, blocking: diffs.filter((d) => d.blocking) };
 }
 
