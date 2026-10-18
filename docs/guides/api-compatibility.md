@@ -285,6 +285,11 @@ Known differences, left as they are:
 | `stop_reason` / `finish_reason` | always `end_turn` / `stop` | No CLI has a token cap or a stop-sequence flag, so neither `max_tokens` nor `stop` can end a turn early |
 | `message_start.usage.input_tokens` | an estimate | The real count exists only once the CLI finishes; `message_delta` carries it and the SDK's stream helper adopts it |
 | OpenAI `system_fingerprint`, `service_tier` | absent | Optional in the SDK's types; nothing to report |
+| Anthropic `temperature` on current models | accepted and ignored | The API refuses it on current models; no CLI has the flag, so refusing would only break callers that still send it |
+| Anthropic `max_tokens: 0` | a 400 | It is the API's cache pre-warm, and a CLI turn has no cache of the caller's to warm |
+| Anthropic thinking blocks | never sent | The answer comes back; the CLI's thinking stays in the CLI |
+| A streamed request for an unknown `claude-*` model | a 200 whose stream carries an `error` event | Any `claude-*` name passes to the CLI, the first to know it does not exist, after the stream opened. The API answers 404 before streaming; both SDKs raise either way |
+| `GET /v1/models` with `anthropic-version` | the OpenAI shape | Not supported yet, nor `GET /v1/models/{id}` |
 
 `test/conformance/` closes the gap the SDK tests leave open, since their fixtures are ours: each
 case is sent once to the first-party API and recorded, and CI compares SheLLM's response with

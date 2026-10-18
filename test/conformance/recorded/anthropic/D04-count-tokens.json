@@ -1,0 +1,44 @@
+{
+  "case": "D04-count-tokens",
+  "target": "anthropic",
+  "model": "claude-haiku-5-5",
+  "request": {
+    "method": "POST",
+    "path": "/v1/messages/count_tokens",
+    "body": {
+      "model": "claude-haiku-5-5",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Reply with the single word OK."
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "request-id": "req_011Cg9pHW7FYSoS2n89ZZn2n"
+    },
+    "header_names": [
+      "anthropic-organization-id",
+      "anthropic-workspace-id",
+      "cf-cache-status",
+      "cf-ray",
+      "connection",
+      "content-length",
+      "content-security-policy",
+      "content-type",
+      "date",
+      "request-id",
+      "server",
+      "server-timing",
+      "x-robots-tag"
+    ],
+    "body": {
+      "input_tokens": 18
+    }
+  },
+  "recorded_at": "2026-10-18T13:54:42.681Z"
+}

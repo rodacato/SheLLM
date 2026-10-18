@@ -1,0 +1,56 @@
+{
+  "case": "B09-sampling",
+  "target": "anthropic",
+  "model": "claude-haiku-5-5",
+  "request": {
+    "method": "POST",
+    "path": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-5-5",
+      "max_tokens": 64,
+      "temperature": 0.5,
+      "top_k": 10,
+      "messages": [
+        {
+          "role": "user",
+          "content": "Reply with the single word OK."
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "request-id": "req_011Cg9pGsjV6Ax2CU3ySDd1p"
+    },
+    "header_names": [
+      "anthropic-organization-id",
+      "anthropic-workspace-id",
+      "cf-cache-status",
+      "cf-ray",
+      "connection",
+      "content-encoding",
+      "content-security-policy",
+      "content-type",
+      "date",
+      "request-id",
+      "server",
+      "strict-transport-security",
+      "traceresponse",
+      "transfer-encoding",
+      "vary",
+      "x-robots-tag",
+      "x-should-retry"
+    ],
+    "body": {
+      "type": "error",
+      "error": {
+        "type": "invalid_request_error",
+        "message": "`temperature` is deprecated for this model."
+      },
+      "request_id": "req_011Cg9pGsjV6Ax2CU3ySDd1p"
+    }
+  },
+  "recorded_at": "2026-10-18T13:54:34.201Z"
+}

@@ -1,0 +1,99 @@
+{
+  "case": "B10-mid-conversation-system",
+  "target": "anthropic",
+  "model": "claude-haiku-5-5",
+  "request": {
+    "method": "POST",
+    "path": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-5-5",
+      "max_tokens": 1024,
+      "messages": [
+        {
+          "role": "user",
+          "content": "Reply with the single word OK."
+        },
+        {
+          "role": "system",
+          "content": "Answer in lowercase."
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "request-id": "req_011Cg9q9SHi61GyJ2mm3zwk3"
+    },
+    "header_names": [
+      "anthropic-organization-id",
+      "anthropic-ratelimit-input-tokens-limit",
+      "anthropic-ratelimit-input-tokens-remaining",
+      "anthropic-ratelimit-input-tokens-reset",
+      "anthropic-ratelimit-output-tokens-limit",
+      "anthropic-ratelimit-output-tokens-remaining",
+      "anthropic-ratelimit-output-tokens-reset",
+      "anthropic-ratelimit-requests-limit",
+      "anthropic-ratelimit-requests-remaining",
+      "anthropic-ratelimit-requests-reset",
+      "anthropic-ratelimit-tokens-limit",
+      "anthropic-ratelimit-tokens-remaining",
+      "anthropic-ratelimit-tokens-reset",
+      "anthropic-workspace-id",
+      "cf-cache-status",
+      "cf-ray",
+      "connection",
+      "content-encoding",
+      "content-security-policy",
+      "content-type",
+      "date",
+      "request-id",
+      "server",
+      "strict-transport-security",
+      "traceresponse",
+      "transfer-encoding",
+      "vary",
+      "x-robots-tag"
+    ],
+    "body": {
+      "model": "claude-haiku-5-5",
+      "id": "msg_011Cg9q9TSR4xCn81Mvw3AGH",
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "thinking",
+          "thinking": "",
+          "signature": "CAQSxQcKEAgSGAI4AUIIdGhpbmtpbmcSDIbeRtG+cS3gz+eoOBoMKXd2lN33XcjWrs61IjDqwJwJ8EfGG5lEmytlHevLLb5TbumUFfvZWizky2P/Sei1weJYYAkr4acPocpPbjQq4gaObRaJJmKec1NAfYiV/KkChQPMR3q4FisZMnEyKdy62gAGg1llM55c4FBCsOjBxx7b8OmTK/LfvBYKxOoodUsuQ8VhbFvJhL8S3+x/8omEW+9FUo73+/eK5O2f963Cs8JNos6jWgfI+5Wu4Z+eFY44hCuTLJ/HFLCwOIPAbq/AXRiogMr7DgN8s8tDYUuFGdMrWVpFJ1Ijp12kijqqQtRtHIhIX4F7/kAJCej0W7zsgGh5woLV/RWEB72oGB3x79nrYPxSk9wNZASkr2fqf761rrriCeciwfvThkg/FZFYNbScTaIxtVZ86vQeGW46XQ1+mzP97lLyryws5fUKC9m2acAh3W0EH8gE5D3Lp9fDus6CSU7iO54ZZH9+oAL2TMHZ6QgXVxRppCbt2C2OCBgXnTCJUxwlFIhyJdWkxgQ7woOagNdAZGVKR6C0ZaQzNDGXgP23bdgjYQmblK/yk39l1Lhs2+LqEGqDcMpervAHIJVaIXSDrLJwsUHGbsVZ8uoh9E7ShjJ2hvm5jv9eR6H3w9RdjEnsOVNPvsOk2Oo+WwoFIxSB0iPFDUzszdRw11MTzy45M6M1E/C9xWYZnkONyC10QeVn/hr/toVF6TODSGz7v/aVLGqeMCZv9AsS9ZxGhUA3viEzfaqOUXwBLO3ir2+NLW6MuAUP52NdVr9DlDHpkQdAKLRlwSa/AXehJpjfInwF9fIvApkMbvvV97rkTBQfKKw2SIpCd2RafBkIv5IZWhwURoVCyPBZp1oUL34LFgN9+qvr/73lXnpNdFDDkikeGYtW8Y/qWemQ7es0uUyV66emnNl3WNry4CYRsU4WcxYl377MZbbZZktnUxu3/cT138fmHkQughX5lgzIMB1JfZ9HiTNVoUGp+F6fAOO6KHPUeIHl6ZRE7la9w4icZmD9riRV0O+/ehs2NbNqPtl6+QTMyDUIZ1jq52T+op0pGzbt9Qwf2F+fUKjMiucfCZlG0+1tiLAqADVUSDHJiPSYOmJn0EKB0LxH6/LR9gsNbgMtu2/h2o3GJfjC1gVrnySpoRPj9lcP9JrZkjtL+Aj92ov+cs249nCb1QfSsKUGQr27Jvb5Zh+lkOarZ3cTO/jxF++UFYt3VOnPINS2vqlu0aZDR83MIAQlWW74gy6FMxgB"
+        },
+        {
+          "type": "text",
+          "text": "ok"
+        }
+      ],
+      "container": null,
+      "stop_reason": "end_turn",
+      "stop_sequence": null,
+      "stop_details": null,
+      "usage": {
+        "input_tokens": 28,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 127,
+        "output_tokens_details": {
+          "thinking_tokens": 123
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "diagnostics": null
+    }
+  },
+  "recorded_at": "2026-10-18T14:06:01.357Z"
+}

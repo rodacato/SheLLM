@@ -1,0 +1,107 @@
+{
+  "case": "D02-structured-output",
+  "target": "anthropic",
+  "model": "claude-haiku-5-5",
+  "request": {
+    "method": "POST",
+    "path": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-5-5",
+      "max_tokens": 256,
+      "messages": [
+        {
+          "role": "user",
+          "content": "Give me one primary color."
+        }
+      ],
+      "output_config": {
+        "format": {
+          "type": "json_schema",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "color": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "color"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json",
+      "request-id": "req_011Cg9pHLUZXQQjHjcHyZpcT"
+    },
+    "header_names": [
+      "anthropic-organization-id",
+      "anthropic-ratelimit-input-tokens-limit",
+      "anthropic-ratelimit-input-tokens-remaining",
+      "anthropic-ratelimit-input-tokens-reset",
+      "anthropic-ratelimit-output-tokens-limit",
+      "anthropic-ratelimit-output-tokens-remaining",
+      "anthropic-ratelimit-output-tokens-reset",
+      "anthropic-ratelimit-requests-limit",
+      "anthropic-ratelimit-requests-remaining",
+      "anthropic-ratelimit-requests-reset",
+      "anthropic-ratelimit-tokens-limit",
+      "anthropic-ratelimit-tokens-remaining",
+      "anthropic-ratelimit-tokens-reset",
+      "anthropic-workspace-id",
+      "cf-cache-status",
+      "cf-ray",
+      "connection",
+      "content-encoding",
+      "content-security-policy",
+      "content-type",
+      "date",
+      "request-id",
+      "server",
+      "strict-transport-security",
+      "traceresponse",
+      "transfer-encoding",
+      "vary",
+      "x-robots-tag"
+    ],
+    "body": {
+      "model": "claude-haiku-5-5",
+      "id": "msg_011Cg9pHLpu6pRTE59GXsJ3C",
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"color\": \"red\"}"
+        }
+      ],
+      "container": null,
+      "stop_reason": "end_turn",
+      "stop_sequence": null,
+      "stop_details": null,
+      "usage": {
+        "input_tokens": 200,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 10,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "diagnostics": null
+    }
+  },
+  "recorded_at": "2026-10-18T13:54:41.970Z"
+}
