@@ -85,7 +85,7 @@ message = client.messages.create(
 | `model` | **Required** | Must be a SheLLM model name |
 | `max_tokens` | **Required** | Integer 1-128000. Required per Anthropic spec |
 | `messages` | **Required** | Array of `{ role, content }`. Content can be string or `[{ type: "text", text: "..." }]` |
-| `messages[].role` | **Supported** | `user`, `assistant` (no `system` in messages — use top-level `system`) |
+| `messages[].role` | **Supported** | `user`, `assistant` (no `system` in messages — use top-level `system`). As on the API, a user message with empty content and a conversation ending in an `assistant` message (a prefill, which no current model accepts) are a 400 |
 | `system` | **Accepted** | String or array of `{ type: "text", text: "..." }` blocks |
 | `temperature` | **Accepted** | Number 0-1 (stricter than OpenAI's 0-2) |
 | `top_p` | **Accepted** | Number 0-1 |
