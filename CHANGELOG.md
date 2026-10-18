@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.22.0] - 2026-10-18
+
+### Added
+
+- **messages:** honor output_config.format and output_config.effort
+
+### Fixed
+
+- **messages:** send the fields and events the Anthropic API sends
+- **messages:** refuse empty user content and a trailing assistant message
+
+### Testing
+
+- **conformance:** check meaning where shape cannot see it
+- **conformance:** record the Anthropic API and accept what differs on purpose
+- **conformance:** judge SheLLM against recorded first-party responses
+
+
 ## [1.21.0] - 2026-10-17
 
 ### Added
@@ -1170,7 +1188,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.21.0...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.22.0...HEAD
+[1.22.0]: https://github.com/rodacato/SheLLM/compare/v1.21.0...v1.22.0
 [1.21.0]: https://github.com/rodacato/SheLLM/compare/v1.20.0...v1.21.0
 [1.20.0]: https://github.com/rodacato/SheLLM/compare/v1.19.0...v1.20.0
 [1.19.0]: https://github.com/rodacato/SheLLM/compare/v1.18.0...v1.19.0
