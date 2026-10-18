@@ -24,8 +24,10 @@ function sendMessageStart(res, id, model, inputTokens) {
       stop_sequence: null,
       stop_details: null,
       container: null,
-      // The cache counts are unknown until the CLI reports them; message_delta carries them.
-      usage: { input_tokens: inputTokens ?? 0, cache_creation_input_tokens: null, cache_read_input_tokens: null, output_tokens: 0 },
+      diagnostics: null,
+      // Numbers, as the API sends them: the SDK keeps a start value only until message_delta,
+      // which carries the CLI's real counts, replaces it.
+      usage: { input_tokens: inputTokens ?? 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0, output_tokens: 0 },
     },
   });
 }
@@ -36,6 +38,10 @@ function sendContentBlockStart(res, index) {
     index,
     content_block: { type: 'text', text: '' },
   });
+}
+
+function sendPing(res) {
+  sendEvent(res, 'ping', { type: 'ping' });
 }
 
 function sendContentBlockDelta(res, index, text) {
@@ -56,7 +62,7 @@ function sendContentBlockStop(res, index) {
 function sendMessageDelta(res, stopReason, outputTokens, { ttft_ms, input_tokens, cache, meta } = {}) {
   const data = {
     type: 'message_delta',
-    delta: { stop_reason: stopReason, stop_sequence: null, stop_details: null },
+    delta: { stop_reason: stopReason, stop_sequence: null, stop_details: null, container: null },
     usage: { output_tokens: outputTokens },
   };
   // message_start could only estimate the input, so the real count lands here once the CLI has
@@ -85,6 +91,7 @@ module.exports = {
   sendEvent,
   sendMessageStart,
   sendContentBlockStart,
+  sendPing,
   sendContentBlockDelta,
   sendContentBlockStop,
   sendMessageDelta,

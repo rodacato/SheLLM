@@ -149,14 +149,17 @@ function sendAnthropicError(res, err) {
   const body = {
     type: 'error',
     error: { type, message: err.message || 'Internal server error' },
+    request_id: res.get('request-id') ?? null,
   };
   if (err.available_providers) body.available_providers = err.available_providers;
   res.status(err.status || 500).json(body);
 }
 
 // A /v1 caller parses errors with an OpenAI or Anthropic SDK; anything else gets SheLLM's shape.
+// Off /v1/messages only the anthropic-version header, which the Anthropic SDK always sends, tells
+// the two apart.
 function sendApiError(req, res, err, requestId) {
-  if (req.path === '/v1/messages') return sendAnthropicError(res, err);
+  if (req.path === '/v1/messages' || (req.path?.startsWith('/v1/') && req.headers['anthropic-version'])) return sendAnthropicError(res, err);
   if (req.path?.startsWith('/v1/')) return sendOpenAIError(res, err);
   return sendError(res, err, requestId);
 }
