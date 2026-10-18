@@ -68,6 +68,11 @@ function extractPrompt(messages, system) {
   return { prompt, system: system || null };
 }
 
+function isEmptyContent(content) {
+  if (typeof content === 'string') return content === '';
+  return content.length === 0 || content.every((block) => block?.type === 'text' && block.text === '');
+}
+
 /**
  * Validate Anthropic Messages request body.
  * Returns null if valid, or an error object if invalid.
@@ -104,6 +109,17 @@ function validate(body) {
   const hasUser = messages.some((m) => m.role === 'user');
   if (!hasUser) {
     return invalidRequest('messages must contain at least one message with role "user"');
+  }
+
+  const empty = messages.findIndex((m) => m.role === 'user' && isEmptyContent(m.content));
+  if (empty !== -1) {
+    return invalidRequest(`messages.${empty}: user messages must have non-empty content`);
+  }
+
+  // Every current Claude model refuses a prefill, and flattened into one prompt it would read as
+  // an earlier turn rather than the start of the answer.
+  if (messages[messages.length - 1].role === 'assistant') {
+    return invalidRequest('This model does not support assistant message prefill. The conversation must end with a user message.');
   }
 
   if (!resolveProvider(model)) {

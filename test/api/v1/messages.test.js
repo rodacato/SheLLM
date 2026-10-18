@@ -232,6 +232,38 @@ describe('/v1/messages', () => {
     assert.match(res.body.error.message, /user/);
   });
 
+  for (const [label, content] of [['an empty string', ''], ['no blocks', []], ['only empty text blocks', [{ type: 'text', text: '' }]]]) {
+    it(`rejects a user message with ${label}, before any CLI runs`, async () => {
+      const res = await request(app)
+        .post('/v1/messages')
+        .set('Authorization', `Bearer ${testKey}`)
+        .send({ model: 'claude', max_tokens: 1024, messages: [{ role: 'user', content: 'hi' }, { role: 'assistant', content: 'Hi.' }, { role: 'user', content }] });
+
+      assert.strictEqual(res.status, 400);
+      assert.strictEqual(res.body.error.type, 'invalid_request_error');
+      assert.match(res.body.error.message, /^messages\.2: user messages must have non-empty content/);
+    });
+  }
+
+  it('rejects a conversation ending in an assistant message, as every current model does', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({ model: 'claude', max_tokens: 1024, messages: [{ role: 'user', content: 'List three colors as JSON.' }, { role: 'assistant', content: '[' }] });
+
+    assert.strictEqual(res.status, 400);
+    assert.match(res.body.error.message, /prefill/);
+  });
+
+  it('accepts an empty assistant turn in the middle of a conversation', async () => {
+    const res = await request(app)
+      .post('/v1/messages')
+      .set('Authorization', `Bearer ${testKey}`)
+      .send({ model: 'claude', max_tokens: 1024, messages: [{ role: 'user', content: 'hi' }, { role: 'assistant', content: '' }, { role: 'user', content: 'hello?' }] });
+
+    assert.strictEqual(res.status, 200);
+  });
+
   it('rejects unknown model', async () => {
     const res = await request(app)
       .post('/v1/messages')
