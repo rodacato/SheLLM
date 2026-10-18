@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.23.0] - 2026-10-18
+
+### Added
+
+- **admin:** stack Logs and Keys rows into cards on a phone
+- **keys:** copy a single value, or a snippet as .env or as an export
+- **keys:** show the last characters of a key so it can be told apart
+
+### Fixed
+
+- **admin:** keep the Logs filter in the URL
+- **admin:** keep a sideways table swipe from navigating back
+
+
 ## [1.22.0] - 2026-10-18
 
 ### Added
@@ -1188,7 +1202,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.22.0...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.23.0...HEAD
+[1.23.0]: https://github.com/rodacato/SheLLM/compare/v1.22.0...v1.23.0
 [1.22.0]: https://github.com/rodacato/SheLLM/compare/v1.21.0...v1.22.0
 [1.21.0]: https://github.com/rodacato/SheLLM/compare/v1.20.0...v1.21.0
 [1.20.0]: https://github.com/rodacato/SheLLM/compare/v1.19.0...v1.20.0
