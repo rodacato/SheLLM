@@ -129,7 +129,7 @@ The claude and codex CLIs have no temperature flag, so SheLLM validates the valu
 ### 5. Token Usage
 
 - **Non-streaming**: Both endpoints return the token counts the CLI reports, each in its API's own terms. On `/v1/chat/completions`, `prompt_tokens` counts every input token and `prompt_tokens_details.cached_tokens` says how many came from the cache; `completion_tokens` includes the reasoning, broken out in `completion_tokens_details.reasoning_tokens`. On `/v1/messages`, `input_tokens` is only the uncached part, with `cache_creation_input_tokens` and `cache_read_input_tokens` beside it, as Anthropic reports them; both keys are always present, `null` when the provider does not report that counter (Codex reports no cache writes).
-- **Streaming (Anthropic)**: `message_start` carries an *estimated* `input_tokens` (~4 chars per token) and `null` cache counts, because nothing is known when the stream opens. `message_delta` carries the CLI's own `output_tokens`, `input_tokens` and cache counts, and falls back to the same estimate only if the provider reports none. The official SDKs overwrite the start values with the delta's, so `finalMessage().usage` holds the real counts.
+- **Streaming (Anthropic)**: `message_start` carries an *estimated* `input_tokens` (~4 chars per token) and cache counts of `0`, because nothing is known when the stream opens. `message_delta` carries the CLI's own `output_tokens`, `input_tokens` and cache counts, and falls back to the same estimate only if the provider reports none. The official SDKs overwrite the start values with the delta's, so `finalMessage().usage` holds the real counts.
 - **Streaming (OpenAI)**: with `stream_options: { include_usage: true }` the last chunk carries the same `usage` as a buffered response, `prompt_tokens_details.cached_tokens` included.
 
 ### 6. Content Format
@@ -198,16 +198,20 @@ A prompt past the model's context window is a 400 `context_length_exceeded` carr
 count, for example `limit 200000`. There is no separate character cap: the body limit and the
 model's window are the bounds.
 
-**Anthropic errors** (`/v1/messages`):
+**Anthropic errors** (`/v1/messages`, and any other `/v1` path when the request carries
+`anthropic-version`, which the Anthropic SDK always sends):
 ```json
 {
   "type": "error",
   "error": {
     "type": "invalid_request_error",
     "message": "Missing required field: model"
-  }
+  },
+  "request_id": "…"
 }
 ```
+
+Every response carries the request id twice, as `x-request-id` and as Anthropic's `request-id`.
 
 A failure after a stream has opened arrives in the stream, typed the way the buffered response
 would type it: an `error` chunk with `type` and `code` on `/v1/chat/completions`, an

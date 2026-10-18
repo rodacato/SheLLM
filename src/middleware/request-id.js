@@ -8,6 +8,7 @@ function requestId(req, res, next) {
     req.requestId ||
     randomUUID();
   res.set('x-request-id', req.requestId);
+  res.set('request-id', req.requestId);
   next();
 }
 

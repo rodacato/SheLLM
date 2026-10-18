@@ -10,7 +10,7 @@ const { initSSE, announceQueued, keepAlive } = require('../../lib/sse');
 const { shellmMeta } = require('../../lib/shellm-meta');
 const { estimateFor } = require('../../infra/model-prices');
 const {
-  sendMessageStart, sendContentBlockStart, sendContentBlockDelta,
+  sendMessageStart, sendContentBlockStart, sendPing, sendContentBlockDelta,
   sendContentBlockStop, sendMessageDelta, sendMessageStop, sendStreamError,
 } = require('../../lib/sse-anthropic');
 
@@ -252,6 +252,7 @@ async function messagesHandler(req, res) {
       stop_sequence: null,
       stop_details: null,
       container: null,
+      diagnostics: null,
       usage: anthropicUsage(result.usage),
       x_shellm: shellmMeta({
         cost_usd: result.cost_usd ?? null,
@@ -332,6 +333,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
       const estimatedInputTokens = Math.ceil(prompt.length / 4);
       sendMessageStart(res, id, responseModel, estimatedInputTokens);
       sendContentBlockStart(res, 0);
+      sendPing(res);
 
       const streamFn = provider.chatStream;
       let chunkCount = 0;

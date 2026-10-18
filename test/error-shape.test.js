@@ -37,7 +37,23 @@ describe('errors that reach next(err)', () => {
     assert.equal(res.body.type, 'error');
     assert.equal(res.body.error.type, 'invalid_request_error');
     assert.ok(res.headers['x-request-id']);
+    assert.equal(res.headers['request-id'], res.headers['x-request-id'], 'the header the Anthropic SDK reads');
+    assert.equal(res.body.request_id, res.headers['request-id'], 'the API quotes it in the body too');
     noLeak(res);
+  });
+
+  it('answers an unknown /v1 route in the Anthropic shape when the caller sends anthropic-version', async () => {
+    const res = await request(app).post('/v1/messages/count_tokens').set('x-api-key', key).set('anthropic-version', '2023-06-01').send({});
+    assert.equal(res.status, 404);
+    assert.equal(res.body.type, 'error');
+    assert.equal(res.body.error.type, 'not_found_error');
+  });
+
+  it('answers the same unknown route in the OpenAI shape without anthropic-version', async () => {
+    const res = await request(app).post('/v1/messages/count_tokens').set('Authorization', `Bearer ${key}`).send({});
+    assert.equal(res.status, 404);
+    assert.equal(res.body.type, undefined);
+    assert.equal(res.body.error.code, 'not_found');
   });
 
   it('answers a malformed body on /v1/chat/completions in the OpenAI shape', async () => {

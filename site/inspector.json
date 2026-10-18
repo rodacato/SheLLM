@@ -687,10 +687,11 @@
                 "stop_sequence": null,
                 "stop_details": null,
                 "container": null,
+                "diagnostics": null,
                 "usage": {
                   "input_tokens": 8,
-                  "cache_creation_input_tokens": null,
-                  "cache_read_input_tokens": null,
+                  "cache_creation_input_tokens": 0,
+                  "cache_read_input_tokens": 0,
                   "output_tokens": 0
                 }
               }
@@ -705,6 +706,12 @@
                 "type": "text",
                 "text": ""
               }
+            }
+          },
+          {
+            "event": "ping",
+            "data": {
+              "type": "ping"
             }
           },
           {
@@ -743,7 +750,8 @@
               "delta": {
                 "stop_reason": "end_turn",
                 "stop_sequence": null,
-                "stop_details": null
+                "stop_details": null,
+                "container": null
               },
               "usage": {
                 "output_tokens": 11,

@@ -8,6 +8,8 @@ properties:
     properties:
       type:
         type: string
-        enum: [invalid_request_error, authentication_error, rate_limit_error, api_error]
+        enum: [invalid_request_error, authentication_error, permission_error, not_found_error, rate_limit_error, api_error]
       message:
         type: string
+  request_id:
+    type: [string, "null"]
