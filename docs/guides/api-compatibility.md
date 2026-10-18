@@ -282,6 +282,12 @@ Known differences, left as they are:
 | `message_start.usage.input_tokens` | an estimate | The real count exists only once the CLI finishes; `message_delta` carries it and the SDK's stream helper adopts it |
 | OpenAI `system_fingerprint`, `service_tier` | absent | Optional in the SDK's types; nothing to report |
 
+`test/conformance/` closes the gap the SDK tests leave open, since their fixtures are ours: each
+case is sent once to the first-party API and recorded, and CI compares SheLLM's response with
+that recording field by field, offline. A difference is either fixed or accepted with its reason
+in the case, and the ones a client could notice belong in the table above. How to record and
+triage is in its README.
+
 ## Testing Compatibility
 
 To verify your client works with SheLLM, send a request with extra fields that your SDK might include:

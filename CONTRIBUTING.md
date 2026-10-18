@@ -169,6 +169,15 @@ bundle, so adding an endpoint means adding its path file and re-running `docs:bu
 is deliberately not part of the API — the dashboard's own pages, the PWA files — goes in that
 test's `NOT_AN_API_SURFACE` map with the reason.
 
+### Conformance with the first-party APIs
+
+`test/sdk/` checks SheLLM against fixtures we wrote; [`test/conformance/`](test/conformance/README.md)
+checks it against what Anthropic and OpenAI actually return. Each case is recorded once from the
+real API with your own key (`npm run conformance:record`, cents per run), and `npm test` then
+compares SheLLM's response with the recording offline, so CI needs no key and makes no network
+call. `npm run conformance:report` lists every difference to fix or accept. Re-record before a
+release or after an SDK bump.
+
 ## Testing Before Deployment
 
 `npm run smoke` runs the end-to-end check against a server you already started — the closest thing
