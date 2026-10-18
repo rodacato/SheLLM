@@ -9,13 +9,20 @@ const FIXTURES = path.resolve(__dirname, '../fixtures/claude/2.1.273');
 
 const FAIL = 'FAIL_THIS_RUN';
 
+const UNKNOWN_MODEL = 'does-not-exist';
+
 // The real transcripts of claude 2.1.273: stream-json when asked to stream, one result object
-// otherwise. A prompt carrying FAIL makes it exit 1 the way a crashed CLI does.
+// otherwise. A prompt carrying FAIL makes it exit 1 the way a crashed CLI does, and a model
+// naming UNKNOWN_MODEL gets the CLI's own rejection.
 function fakeClaude() {
   return `#!${process.execPath}
 const fs = require('fs');
 const streaming = process.argv.includes('stream-json');
-const file = streaming ? 'stream-json.jsonl' : 'result-haiku.json';
+const schema = process.argv.includes('--json-schema');
+const unknown = process.argv.some((arg) => arg.includes(${JSON.stringify(UNKNOWN_MODEL)}));
+let file = streaming ? 'stream-json.jsonl' : 'result-haiku.json';
+if (schema) file = streaming ? 'stream-json-schema.jsonl' : 'result-json-schema.json';
+if (unknown) file = 'result-unknown-model.json';
 let input = '';
 process.stdin.on('data', (chunk) => { input += chunk; });
 process.stdin.on('end', () => {
@@ -24,6 +31,7 @@ process.stdin.on('end', () => {
     process.exit(1);
   }
   process.stdout.write(fs.readFileSync(${JSON.stringify(FIXTURES)} + '/' + file, 'utf8'));
+  if (unknown) process.exit(1);
 });
 `;
 }
@@ -68,4 +76,4 @@ const RESULT_TEXT = 'OK';
 const RESULT_USAGE = { input_tokens: 10, cache_creation_input_tokens: 8190, cache_read_input_tokens: 20828, output_tokens: 61 };
 const STREAM_USAGE = { input_tokens: 2, cache_creation_input_tokens: 43249, cache_read_input_tokens: 19670, output_tokens: 11 };
 
-module.exports = { startShellm, FAIL, STREAM_TEXT, RESULT_TEXT, RESULT_USAGE, STREAM_USAGE };
+module.exports = { startShellm, FAIL, UNKNOWN_MODEL, STREAM_TEXT, RESULT_TEXT, RESULT_USAGE, STREAM_USAGE };
