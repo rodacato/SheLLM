@@ -372,7 +372,7 @@ describe('the Logs markup', () => {
   });
 
   it('offers to clear the filters when they are what emptied the table', () => {
-    const empty = page().slice(page().indexOf('<tr x-show="logs.length === 0">'));
+    const empty = page().slice(page().indexOf('<tr x-show="logs.length === 0"'));
     assert.match(empty.slice(0, empty.indexOf('</tr>')), /hasFilters[\s\S]*clearFilters\(\)/);
   });
 

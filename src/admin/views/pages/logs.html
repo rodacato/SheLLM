@@ -142,8 +142,8 @@
         <!-- Table -->
         <div class="bg-surface-container overflow-hidden">
           <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead class="bg-surface-container-lowest">
+            <table class="w-full text-sm max-md:block">
+              <thead class="bg-surface-container-lowest max-md:hidden">
                 <tr class="whitespace-nowrap">
                   <th class="px-6 py-4 text-left text-[11px] font-headline font-bold uppercase tracking-[0.08em] text-outline">Time</th>
                   <th class="px-6 py-4 text-left text-[11px] font-headline font-bold uppercase tracking-[0.08em] text-outline">Status</th>
@@ -159,42 +159,42 @@
               <!-- Live from the queue, not from the log: a request writes its row only when it
                    finishes, so a long one is otherwise invisible here. No filter applies to it. -->
               <tbody x-show="offset === 0 && healthRead === 'ok' && shownInFlight.length > 0" x-cloak
-                class="bg-surface-container-low border-b border-outline-variant/30">
-                <tr>
-                  <td colspan="9" class="px-6 py-2.5">
+                class="bg-surface-container-low border-b border-outline-variant/30 max-md:block">
+                <tr class="max-md:block">
+                  <td colspan="9" class="px-6 py-2.5 max-md:block max-md:px-4">
                     <span class="text-[11px] font-headline font-bold uppercase tracking-[0.08em] text-primary-container"
                       x-text="'In flight · ' + shownInFlight.length"></span>
                     <span class="ml-2 text-[10px] font-mono text-outline">live from the queue — not filtered, gone on restart</span>
                   </td>
                 </tr>
                 <template x-for="job in shownInFlight" :key="job.request_id + job.state">
-                  <tr class="border-t border-outline-variant/20 whitespace-nowrap">
-                    <td class="px-6 py-4 text-on-surface font-mono text-sm whitespace-nowrap" x-text="formatTime(shownJobStartedAt(job))"></td>
-                    <td class="px-6 py-4">
+                  <tr class="border-t border-outline-variant/20 whitespace-nowrap max-md:grid max-md:grid-cols-[auto_minmax(0,1fr)_auto] max-md:gap-x-3 max-md:gap-y-1 max-md:px-4 max-md:py-3 max-md:whitespace-normal">
+                    <td class="px-6 py-4 text-on-surface font-mono text-sm whitespace-nowrap max-md:p-0 max-md:col-start-1 max-md:row-start-1" x-text="formatTime(shownJobStartedAt(job))"></td>
+                    <td class="px-6 py-4 max-md:p-0 max-md:col-start-2 max-md:row-start-1">
                       <span class="inline-block border px-1.5 py-0.5 text-[10px] font-bold font-mono uppercase whitespace-nowrap"
                         :class="job.state === 'queued' ? 'border-status-warn text-status-warn' : 'border-primary-container text-primary-container'"
                         x-text="inFlightState(job)"></span>
                     </td>
-                    <td class="px-6 py-4 font-mono text-[11px] whitespace-nowrap">
+                    <td class="px-6 py-4 font-mono text-[11px] whitespace-nowrap max-md:p-0 max-md:col-span-2 max-md:col-start-1 max-md:row-start-3 max-md:truncate">
                       <span class="text-outline">POST</span>
                       <span class="text-on-surface-variant ml-1" x-text="job.path"></span>
                     </td>
-                    <td class="px-6 py-4 text-on-surface text-sm font-medium" x-text="job.client || '-'"></td>
-                    <td class="px-6 py-4 text-outline text-sm" x-text="job.provider"></td>
-                    <td class="px-6 py-4 text-sm font-headline text-primary-container" x-text="job.model"></td>
-                    <td class="px-6 py-4 font-mono text-sm">
+                    <td class="px-6 py-4 text-on-surface text-sm font-medium max-md:p-0 max-md:col-span-2 max-md:col-start-1 max-md:row-start-2 max-md:truncate" x-text="job.client || '-'"></td>
+                    <td class="px-6 py-4 text-outline text-sm max-md:hidden" x-text="job.provider"></td>
+                    <td class="px-6 py-4 text-sm font-headline text-primary-container max-md:p-0 max-md:col-start-3 max-md:row-start-2 max-md:text-right max-md:truncate" x-text="job.model"></td>
+                    <td class="px-6 py-4 font-mono text-sm max-md:p-0 max-md:col-start-3 max-md:row-start-1 max-md:text-right">
                       <span :class="shownJobNearTimeout(job) ? 'text-error' : (job.state === 'queued' ? 'text-status-warn' : 'text-primary-container')"
                         x-text="formatAge(shownJobAge(job))"></span>
                       <span x-show="job.stream" class="text-[10px] text-outline block">stream</span>
                     </td>
-                    <td class="px-6 py-4 text-outline font-mono text-sm">-</td>
-                    <td class="px-6 py-4 text-outline font-mono text-sm">-</td>
+                    <td class="px-6 py-4 text-outline font-mono text-sm max-md:hidden">-</td>
+                    <td class="px-6 py-4 text-outline font-mono text-sm max-md:hidden">-</td>
                   </tr>
                 </template>
               </tbody>
-              <tbody>
-                <tr x-show="logs.length === 0">
-                  <td colspan="9" class="px-6 py-10 text-center font-mono text-sm"
+              <tbody class="max-md:block">
+                <tr x-show="logs.length === 0" class="max-md:block">
+                  <td colspan="9" class="px-6 py-10 text-center font-mono text-sm max-md:block max-md:px-4"
                     :class="loadError && !loading ? 'text-error' : 'text-outline'">
                     <span x-text="loading ? 'Loading...' : (loadError ? 'Could not read the logs — ' + loadError : 'No logs found')"></span>
                     <template x-if="!loading && !loadError && hasFilters">
@@ -205,11 +205,11 @@
               </tbody>
               <!-- One tbody per row: x-for takes a single root element, and a row plus its detail are two. -->
               <template x-for="log in logs" :key="log.id">
-                <tbody>
+                <tbody class="max-md:block">
                   <tr @click="toggleRow(log.id)"
                     :class="expandedId === log.id ? 'bg-surface-container-lowest' : ''"
-                    class="border-t border-outline-variant/20 whitespace-nowrap hover:bg-surface-container-high transition-colors duration-fast cursor-pointer">
-                    <td class="px-6 py-4 text-on-surface font-mono text-sm whitespace-nowrap">
+                    class="border-t border-outline-variant/20 whitespace-nowrap hover:bg-surface-container-high transition-colors duration-fast cursor-pointer max-md:grid max-md:grid-cols-[auto_minmax(0,1fr)_auto] max-md:gap-x-3 max-md:gap-y-1 max-md:px-4 max-md:py-3 max-md:whitespace-normal">
+                    <td class="px-6 py-4 text-on-surface font-mono text-sm whitespace-nowrap max-md:p-0 max-md:col-start-1 max-md:row-start-1">
                       <button type="button" @click.stop="toggleRow(log.id)"
                         :aria-expanded="expandedId === log.id" :aria-controls="'log-' + log.id + '-detail'"
                         class="flex items-center gap-1 -ml-1 text-left">
@@ -218,29 +218,29 @@
                         <span x-text="formatTime(log.created_at)"></span>
                       </button>
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-6 py-4 max-md:p-0 max-md:col-start-2 max-md:row-start-1 max-md:truncate">
                       <span class="px-2 py-0.5 text-[10px] font-bold font-mono"
                         :class="statusBadgeClass(log.status)" x-text="log.status"></span>
-                      <span x-show="log.error_code" class="block mt-1 text-[10px] font-mono text-error" x-text="log.error_code"></span>
+                      <span x-show="log.error_code" class="block mt-1 text-[10px] font-mono text-error max-md:inline max-md:mt-0 max-md:ml-2" x-text="log.error_code"></span>
                     </td>
-                    <td class="px-6 py-4 font-mono text-[11px] whitespace-nowrap">
+                    <td class="px-6 py-4 font-mono text-[11px] whitespace-nowrap max-md:p-0 max-md:col-span-2 max-md:col-start-1 max-md:row-start-3 max-md:truncate">
                       <span class="text-outline" x-text="log.method || '-'"></span>
                       <span class="text-on-surface-variant ml-1" x-text="log.path || '-'"></span>
                     </td>
-                    <td class="px-6 py-4 text-on-surface text-sm font-medium" x-text="log.client_name || '-'"></td>
-                    <td class="px-6 py-4 text-outline text-sm" x-text="log.provider || '-'"></td>
-                    <td class="px-6 py-4 text-sm font-headline" :class="log.model ? 'text-primary-container' : 'text-outline'" x-text="log.model || '-'"></td>
-                    <td class="px-6 py-4 font-mono text-sm">
+                    <td class="px-6 py-4 text-on-surface text-sm font-medium max-md:p-0 max-md:col-span-2 max-md:col-start-1 max-md:row-start-2 max-md:truncate" x-text="log.client_name || '-'"></td>
+                    <td class="px-6 py-4 text-outline text-sm max-md:hidden" x-text="log.provider || '-'"></td>
+                    <td class="px-6 py-4 text-sm font-headline max-md:p-0 max-md:col-start-3 max-md:row-start-2 max-md:text-right max-md:truncate" :class="log.model ? 'text-primary-container' : 'text-outline'" x-text="log.model || '-'"></td>
+                    <td class="px-6 py-4 font-mono text-sm max-md:p-0 max-md:col-start-3 max-md:row-start-1 max-md:text-right">
                       <span class="text-white" x-text="formatDuration(log.duration_ms)"></span>
                       <span x-show="log.queued_ms" class="text-[10px] text-status-warn block" x-text="'(' + formatDuration(log.queued_ms) + ' queued)'"></span>
                     </td>
-                    <td class="px-6 py-4 text-on-surface font-mono text-sm" x-text="log.tokens != null ? log.tokens.toLocaleString() : '-'"></td>
-                    <td class="px-6 py-4 font-mono text-sm font-bold"
+                    <td class="px-6 py-4 text-on-surface font-mono text-sm max-md:hidden" x-text="log.tokens != null ? log.tokens.toLocaleString() : '-'"></td>
+                    <td class="px-6 py-4 font-mono text-sm font-bold max-md:p-0 max-md:col-start-3 max-md:row-start-3 max-md:text-right"
                       :class="log.cost_usd > 0 ? 'text-primary-container' : 'text-outline'"
                       x-text="rowCost(log)"></td>
                   </tr>
-                  <tr x-show="expandedId === log.id" :id="'log-' + log.id + '-detail'" class="border-t border-outline-variant/20 bg-surface-container-lowest">
-                    <td colspan="9" class="px-6 py-4">
+                  <tr x-show="expandedId === log.id" :id="'log-' + log.id + '-detail'" class="border-t border-outline-variant/20 bg-surface-container-lowest max-md:block">
+                    <td colspan="9" class="px-6 py-4 max-md:block max-md:px-4">
                       <dl class="grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px] font-mono">
                         <div>
                           <dt class="text-outline uppercase text-[10px]">Request id</dt>

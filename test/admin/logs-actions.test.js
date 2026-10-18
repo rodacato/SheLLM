@@ -108,8 +108,8 @@ describe('an expanded log detail sits under the row it belongs to', () => {
 
   it('gives each row its own tbody, the single root x-for allows', () => {
     const loop = slice(page, '<template x-for="log in logs"', '</template>');
-    assert.match(loop.trim(), /^<template[^>]*>\s*<tbody>/, 'two <tr> need a row group to be one root');
-    assert.strictEqual((loop.match(/<tbody>/g) || []).length, 1, 'one root, not a row group per <tr>');
+    assert.match(loop.trim(), /^<template[^>]*>\s*<tbody[\s>]/, 'two <tr> need a row group to be one root');
+    assert.strictEqual((loop.match(/<tbody[\s>]/g) || []).length, 1, 'one root, not a row group per <tr>');
     assert.match(loop.trim(), /<\/tbody>\s*$/, 'the group closes inside the loop');
   });
 });
