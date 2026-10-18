@@ -1,0 +1,49 @@
+{
+  "case": "C09-invalid-key",
+  "target": "anthropic",
+  "model": "claude-haiku-5-5",
+  "request": {
+    "method": "POST",
+    "path": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-5-5",
+      "max_tokens": 64,
+      "messages": [
+        {
+          "role": "user",
+          "content": "Reply with the single word OK."
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "content-type": "application/json",
+      "request-id": "req_011Cg9pHBRMTWcuJCigBHyMC"
+    },
+    "header_names": [
+      "cache-control",
+      "cf-cache-status",
+      "cf-ray",
+      "connection",
+      "content-length",
+      "content-security-policy",
+      "content-type",
+      "date",
+      "request-id",
+      "server",
+      "x-robots-tag",
+      "x-should-retry"
+    ],
+    "body": {
+      "type": "error",
+      "error": {
+        "type": "authentication_error",
+        "message": "invalid x-api-key"
+      },
+      "request_id": "req_011Cg9pHBRMTWcuJCigBHyMC"
+    }
+  },
+  "recorded_at": "2026-10-18T13:54:38.270Z"
+}

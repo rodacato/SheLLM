@@ -1,0 +1,54 @@
+{
+  "case": "C05-empty-content",
+  "target": "anthropic",
+  "model": "claude-haiku-5-5",
+  "request": {
+    "method": "POST",
+    "path": "/v1/messages",
+    "body": {
+      "model": "claude-haiku-5-5",
+      "max_tokens": 64,
+      "messages": [
+        {
+          "role": "user",
+          "content": ""
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 400,
+    "headers": {
+      "content-type": "application/json",
+      "request-id": "req_011Cg9pH7hNnBxaoipfYkFQN"
+    },
+    "header_names": [
+      "anthropic-organization-id",
+      "anthropic-workspace-id",
+      "cf-cache-status",
+      "cf-ray",
+      "connection",
+      "content-encoding",
+      "content-security-policy",
+      "content-type",
+      "date",
+      "request-id",
+      "server",
+      "strict-transport-security",
+      "traceresponse",
+      "transfer-encoding",
+      "vary",
+      "x-robots-tag",
+      "x-should-retry"
+    ],
+    "body": {
+      "type": "error",
+      "error": {
+        "type": "invalid_request_error",
+        "message": "messages.0: user messages must have non-empty content"
+      },
+      "request_id": "req_011Cg9pH7hNnBxaoipfYkFQN"
+    }
+  },
+  "recorded_at": "2026-10-18T13:54:37.464Z"
+}

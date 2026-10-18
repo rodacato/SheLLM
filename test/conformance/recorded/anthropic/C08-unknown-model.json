@@ -1,0 +1,54 @@
+{
+  "case": "C08-unknown-model",
+  "target": "anthropic",
+  "model": "claude-haiku-5-5",
+  "request": {
+    "method": "POST",
+    "path": "/v1/messages",
+    "body": {
+      "model": "claude-does-not-exist",
+      "max_tokens": 64,
+      "messages": [
+        {
+          "role": "user",
+          "content": "Reply with the single word OK."
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 404,
+    "headers": {
+      "content-type": "application/json",
+      "request-id": "req_011Cg9pHAUJx2x5cyo3CUa1n"
+    },
+    "header_names": [
+      "anthropic-organization-id",
+      "anthropic-workspace-id",
+      "cf-cache-status",
+      "cf-ray",
+      "connection",
+      "content-encoding",
+      "content-security-policy",
+      "content-type",
+      "date",
+      "request-id",
+      "server",
+      "strict-transport-security",
+      "traceresponse",
+      "transfer-encoding",
+      "vary",
+      "x-robots-tag",
+      "x-should-retry"
+    ],
+    "body": {
+      "type": "error",
+      "error": {
+        "type": "not_found_error",
+        "message": "model: claude-does-not-exist"
+      },
+      "request_id": "req_011Cg9pHAUJx2x5cyo3CUa1n"
+    }
+  },
+  "recorded_at": "2026-10-18T13:54:38.162Z"
+}
