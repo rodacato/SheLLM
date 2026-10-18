@@ -31,16 +31,29 @@
                 <div class="mt-5">
                   <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline" x-text="snippet.label"></p>
                   <p class="text-[11px] font-mono text-outline mt-1" x-text="snippet.help"></p>
-                  <div class="flex items-stretch gap-2 mt-2">
-                    <code class="flex-1 min-w-0 bg-surface-container-lowest border border-outline-variant/40 px-4 py-3 text-[11px] font-mono text-on-surface-variant select-all break-all" x-text="snippet.command"></code>
-                    <button @click="copy(snippet.id, snippet.command)"
-                      class="shrink-0 px-3 border border-outline-variant/40 text-outline hover:text-on-surface hover:border-outline/50 transition-colors duration-fast flex items-center"
-                      :title="copied === snippet.id ? 'Copied' : 'Copy to clipboard'" :aria-label="'Copy the ' + snippet.label + ' line'">
-                      <span aria-hidden="true" class="material-symbols-outlined text-[16px]" :class="copied === snippet.id ? 'text-primary-container' : ''"
-                        x-text="copied === snippet.id ? 'check' : 'content_copy'"></span>
-                    </button>
+                  <dl class="mt-2 bg-surface-container-lowest border border-outline-variant/40 divide-y divide-outline-variant/20">
+                    <template x-for="v in snippet.vars" :key="v.name">
+                      <div class="flex items-center gap-3 px-4 py-2">
+                        <dt class="shrink-0 md:w-44 text-[10px] font-mono text-outline" x-text="v.name"></dt>
+                        <dd class="flex-1 min-w-0 text-[11px] font-mono text-on-surface-variant select-all break-all" x-text="v.value"></dd>
+                        <button x-show="v.copyable" @click="copy(snippet.id + ':' + v.name, v.value)"
+                          class="shrink-0 p-1 text-outline hover:text-on-surface transition-colors duration-fast flex items-center"
+                          :title="copied === snippet.id + ':' + v.name ? 'Copied' : 'Copy to clipboard'" :aria-label="'Copy ' + v.name">
+                          <span aria-hidden="true" class="material-symbols-outlined text-[16px]" :class="copied === snippet.id + ':' + v.name ? 'text-primary-container' : ''"
+                            x-text="copied === snippet.id + ':' + v.name ? 'check' : 'content_copy'"></span>
+                        </button>
+                      </div>
+                    </template>
+                  </dl>
+                  <div class="flex items-center gap-5 mt-2">
+                    <button @click="copy(snippet.id + ':env', snippet.env)" class="link-brand py-1 text-[11px] font-mono transition-colors duration-fast"
+                      :aria-label="(copied === snippet.id + ':env' ? 'Copied' : 'Copy as .env') + ' — ' + snippet.label"
+                      x-text="copied === snippet.id + ':env' ? 'Copied' : 'Copy as .env'"></button>
+                    <button @click="copy(snippet.id + ':export', snippet.command)" class="link-brand py-1 text-[11px] font-mono transition-colors duration-fast"
+                      :aria-label="(copied === snippet.id + ':export' ? 'Copied' : 'Copy as export') + ' — ' + snippet.label"
+                      x-text="copied === snippet.id + ':export' ? 'Copied' : 'Copy as export'"></button>
                   </div>
-                  <p x-show="copyError === snippet.id" x-cloak class="text-[11px] font-mono text-status-warn mt-2">Could not reach the clipboard — select the line and copy it by hand.</p>
+                  <p x-show="copyError?.startsWith(snippet.id + ':')" x-cloak class="text-[11px] font-mono text-status-warn mt-2">Could not reach the clipboard — select the value and copy it by hand.</p>
                 </div>
               </template>
             </div>
@@ -79,16 +92,29 @@
             <div class="mt-4">
               <p class="text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline" x-text="snippet.label"></p>
               <p class="text-[11px] font-mono text-outline mt-1" x-text="snippet.help"></p>
-              <div class="flex items-stretch gap-2 mt-2">
-                <code class="flex-1 min-w-0 bg-surface-container-lowest border border-outline-variant/40 px-4 py-3 text-[11px] font-mono text-on-surface-variant select-all break-all" x-text="snippet.command"></code>
-                <button @click="copy('sample-' + snippet.id, snippet.command)"
-                  class="shrink-0 px-3 border border-outline-variant/40 text-outline hover:text-on-surface hover:border-outline/50 transition-colors duration-fast flex items-center"
-                  :title="copied === 'sample-' + snippet.id ? 'Copied' : 'Copy to clipboard'" :aria-label="'Copy the ' + snippet.label + ' line'">
-                  <span aria-hidden="true" class="material-symbols-outlined text-[16px]" :class="copied === 'sample-' + snippet.id ? 'text-primary-container' : ''"
-                    x-text="copied === 'sample-' + snippet.id ? 'check' : 'content_copy'"></span>
-                </button>
-              </div>
-              <p x-show="copyError === 'sample-' + snippet.id" x-cloak class="text-[11px] font-mono text-status-warn mt-2">Could not reach the clipboard — select the line and copy it by hand.</p>
+                  <dl class="mt-2 bg-surface-container-lowest border border-outline-variant/40 divide-y divide-outline-variant/20">
+                    <template x-for="v in snippet.vars" :key="v.name">
+                      <div class="flex items-center gap-3 px-4 py-2">
+                        <dt class="shrink-0 md:w-44 text-[10px] font-mono text-outline" x-text="v.name"></dt>
+                        <dd class="flex-1 min-w-0 text-[11px] font-mono text-on-surface-variant select-all break-all" x-text="v.value"></dd>
+                        <button x-show="v.copyable" @click="copy('sample-' + snippet.id + ':' + v.name, v.value)"
+                          class="shrink-0 p-1 text-outline hover:text-on-surface transition-colors duration-fast flex items-center"
+                          :title="copied === 'sample-' + snippet.id + ':' + v.name ? 'Copied' : 'Copy to clipboard'" :aria-label="'Copy ' + v.name">
+                          <span aria-hidden="true" class="material-symbols-outlined text-[16px]" :class="copied === 'sample-' + snippet.id + ':' + v.name ? 'text-primary-container' : ''"
+                            x-text="copied === 'sample-' + snippet.id + ':' + v.name ? 'check' : 'content_copy'"></span>
+                        </button>
+                      </div>
+                    </template>
+                  </dl>
+                  <div class="flex items-center gap-5 mt-2">
+                    <button @click="copy('sample-' + snippet.id + ':env', snippet.env)" class="link-brand py-1 text-[11px] font-mono transition-colors duration-fast"
+                      :aria-label="(copied === 'sample-' + snippet.id + ':env' ? 'Copied' : 'Copy as .env') + ' — ' + snippet.label"
+                      x-text="copied === 'sample-' + snippet.id + ':env' ? 'Copied' : 'Copy as .env'"></button>
+                    <button @click="copy('sample-' + snippet.id + ':export', snippet.command)" class="link-brand py-1 text-[11px] font-mono transition-colors duration-fast"
+                      :aria-label="(copied === 'sample-' + snippet.id + ':export' ? 'Copied' : 'Copy as export') + ' — ' + snippet.label"
+                      x-text="copied === 'sample-' + snippet.id + ':export' ? 'Copied' : 'Copy as export'"></button>
+                  </div>
+                  <p x-show="copyError?.startsWith('sample-' + snippet.id + ':')" x-cloak class="text-[11px] font-mono text-status-warn mt-2">Could not reach the clipboard — select the value and copy it by hand.</p>
             </div>
           </template>
 

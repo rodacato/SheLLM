@@ -130,8 +130,44 @@ describe('a created key says where to send it', () => {
 
   it('keeps the sample copy buttons from claiming the real key was copied', () => {
     const page = keysPageHtml();
-    assert.match(page, /copy\('sample-' \+ snippet\.id, snippet\.command\)/);
-    assert.match(page, /copy\(snippet\.id, snippet\.command\)/);
+    assert.match(page, /copy\('sample-' \+ snippet\.id \+ ':export', snippet\.command\)/);
+    assert.match(page, /copy\(snippet\.id \+ ':export', snippet\.command\)/);
+  });
+
+  // Pasted into a tool's base-URL field, the whole line has to be cut back down by hand.
+  it('copies one value on its own', async () => {
+    const written = [];
+    const page = loadKeys('https://shellm.example.dev', { writeText: async (t) => written.push(t) }, true);
+    page.newKeyResult = { raw_key: 'shellm-deadbeef', action: 'created' };
+    const url = page.snippets[0].vars.find((v) => v.name === 'OPENAI_BASE_URL');
+    await page.copy('openai:' + url.name, url.value);
+    assert.deepStrictEqual(written, ['https://shellm.example.dev/v1']);
+    assert.strictEqual(page.keyCopied, false, 'copying the URL counted as copying the key');
+  });
+
+  it('copies a snippet as .env lines, one variable per line and no export', () => {
+    const page = loadKeys('https://shellm.example.dev');
+    page.newKeyResult = { raw_key: 'shellm-deadbeef', action: 'created' };
+    const [openai, anthropic] = page.snippets;
+    assert.strictEqual(openai.env, 'OPENAI_BASE_URL=https://shellm.example.dev/v1\nOPENAI_API_KEY=shellm-deadbeef');
+    assert.strictEqual(anthropic.env, 'ANTHROPIC_BASE_URL=https://shellm.example.dev\nANTHROPIC_API_KEY=shellm-deadbeef');
+  });
+
+  it('counts the bare key copied from a snippet as the key copied', async () => {
+    const page = loadKeys('https://shellm.example.dev', { writeText: async () => {} }, true);
+    page.newKeyResult = { raw_key: 'shellm-deadbeef', action: 'created' };
+    const key = page.snippets[0].vars.find((v) => v.name === 'OPENAI_API_KEY');
+    await page.copy('openai:' + key.name, key.value);
+    assert.strictEqual(page.keyCopied, true);
+  });
+
+  it('offers no control that copies the placeholder as if it were a key', () => {
+    const page = loadKeys('https://shellm.example.dev');
+    for (const snippet of page.sampleSnippets) {
+      const key = snippet.vars.find((v) => v.value === '$SHELLM_KEY');
+      assert.strictEqual(key.copyable, false, `${snippet.id} copies the placeholder on its own`);
+    }
+    assert.match(keysPageHtml(), /x-show="v\.copyable"/, 'the value control ignores copyable');
   });
 
   // The string is authored on the canvas first and the artboard renders it verbatim, so a silent
@@ -149,7 +185,8 @@ describe('a created key says where to send it', () => {
     const page = keysPageHtml();
     assert.match(page, /@click="copy\('base', baseUrl\)"/);
     assert.match(page, /@click="copy\('key', newKeyResult\?\.raw_key\)"/);
-    assert.match(page, /@click="copy\(snippet\.id, snippet\.command\)"/);
+    assert.match(page, /@click="copy\(snippet\.id \+ ':env', snippet\.env\)"/);
+    assert.match(page, /@click="copy\(snippet\.id \+ ':' \+ v\.name, v\.value\)"/);
   });
 
   // Both endpoints return raw_key, so a banner that infers the verb from its presence can only
