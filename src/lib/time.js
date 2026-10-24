@@ -38,4 +38,20 @@ function parseInstant(value) {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-module.exports = { DEFAULT_TIMEZONE, getTimezone, toInstant, parseInstant };
+// Spend limits reset on the first of the month in UTC, whatever zone the dashboard prints in.
+function monthStartUtc(now = new Date()) {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+}
+
+function nextMonthStartUtc(now = new Date()) {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+}
+
+// The format SQLite's datetime('now') writes, so a string comparison against created_at holds.
+function toSqliteDatetime(instant) {
+  return instant.toISOString().slice(0, 19).replace('T', ' ');
+}
+
+module.exports = {
+  DEFAULT_TIMEZONE, getTimezone, toInstant, parseInstant, monthStartUtc, nextMonthStartUtc, toSqliteDatetime,
+};

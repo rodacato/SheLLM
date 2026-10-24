@@ -33,7 +33,7 @@ function instantFromZonedInput(text, tz) {
   return new Date(wall - zoneOffsetMs(new Date(first), tz));
 }
 
-const EMPTY_KEY_FORM = () => ({ name: '', rpm: 10, models: '', origins: '', expires_at: '', description: '' });
+const EMPTY_KEY_FORM = () => ({ name: '', rpm: 10, models: '', origins: '', spend_limit_usd: '', expires_at: '', description: '' });
 const UNCOPIED_KEY_WARNING = 'A key that was never copied cannot be read back — rotate it for a new one.';
 
 function keysPage() {
@@ -131,6 +131,29 @@ function keysPage() {
       this.copied = null;
     },
 
+    // A number input hands Alpine a number or ''; anything unparseable goes to the server as-is,
+    // so the refusal comes from the one place that validates it.
+    parseSpendLimit(value) {
+      const text = String(value ?? '').trim();
+      if (!text) return null;
+      const n = Number(text);
+      return Number.isFinite(n) ? n : text;
+    },
+
+    spendLine(key) {
+      const spend = key.month_spend;
+      if (!spend) return null;
+      return `$${spend.spent_usd.toFixed(2)} / $${key.spend_limit_usd.toFixed(2)} this month`;
+    },
+
+    spendTone(key) {
+      const spend = key.month_spend;
+      if (!spend) return 'text-outline';
+      const used = spend.spent_usd / key.spend_limit_usd;
+      if (used >= 1) return 'text-error';
+      return used >= 0.8 ? 'text-status-warn' : 'text-outline';
+    },
+
     splitList(value) {
       return value.split(',').map((item) => item.trim()).filter(Boolean);
     },
@@ -186,6 +209,8 @@ function keysPage() {
       if (this.createForm.origins.trim()) {
         body.origins = this.splitList(this.createForm.origins);
       }
+      const spendLimit = this.parseSpendLimit(this.createForm.spend_limit_usd);
+      if (spendLimit !== null) body.spend_limit_usd = spendLimit;
       const expires = instantFromZonedInput(this.createForm.expires_at, this.timezone);
       if (expires) body.expires_at = expires.toISOString();
       if (this.createForm.description.trim()) {
@@ -218,6 +243,7 @@ function keysPage() {
         rpm: key.rpm,
         models: (key.models || []).join(', '),
         origins: (key.origins || []).join(', '),
+        spend_limit_usd: key.spend_limit_usd ?? '',
         expires_at: zonedInputValue(key.expires_at, this.timezone),
         description: key.description || '',
       };
@@ -235,6 +261,7 @@ function keysPage() {
         rpm: parseInt(this.editForm.rpm, 10) || key.rpm,
         models: this.editForm.models.trim() ? this.splitList(this.editForm.models) : null,
         origins: this.editForm.origins.trim() ? this.splitList(this.editForm.origins) : null,
+        spend_limit_usd: this.parseSpendLimit(this.editForm.spend_limit_usd),
         expires_at: expires ? expires.toISOString() : null,
         description: this.editForm.description.trim() || null,
       };

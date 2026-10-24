@@ -214,6 +214,7 @@ format of the endpoint you called:
 | 403 | `origin_not_allowed` | The key is scoped to other browser origins |
 | 404 | `model_not_found` | The CLI does not know that model |
 | 429 | `rate_limited` | Too many requests, with `Retry-After` |
+| 429 | `spend_limit_exceeded` | The key reached its monthly spend limit |
 | 502 | `cli_failed` | The CLI exited with an error |
 | 503 | `provider_unavailable` | Provider disabled, not authenticated, or circuit open |
 | 504 | `timeout` | Killed after `TIMEOUT_MS` |

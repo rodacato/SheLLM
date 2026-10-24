@@ -372,7 +372,7 @@ describe('Keys: markup', () => {
   it('binds every label to a control that exists', () => {
     const html = markup();
     const labels = html.match(/<label[^>]*>/g) || [];
-    assert.strictEqual(labels.length, 12);
+    assert.strictEqual(labels.length, 14);
     for (const label of labels) {
       const [, bound, target] = label.match(/(:?)for="([^"]+)"/) || [];
       assert.ok(target, `unbound label: ${label}`);

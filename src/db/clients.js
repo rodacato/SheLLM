@@ -51,7 +51,7 @@ function generateKey() {
 
 // --- Client CRUD ---
 
-const CLIENT_COLUMNS = 'id, name, key_prefix, key_suffix, rpm, models, origins, active, expires_at, description, created_at';
+const CLIENT_COLUMNS = 'id, name, key_prefix, key_suffix, rpm, models, origins, spend_limit_usd, active, expires_at, description, created_at';
 
 // models and origins are both JSON arrays or NULL; a row is only usable once both are decoded.
 function decodeClient(row) {
@@ -67,7 +67,7 @@ function encodeList(list) {
   return list ? JSON.stringify(list) : null;
 }
 
-function createClient({ name, rpm = 10, models = null, origins = null, expires_at = null, description = null }) {
+function createClient({ name, rpm = 10, models = null, origins = null, spend_limit_usd = null, expires_at = null, description = null }) {
   const { getDb } = require('./index');
   const db = getDb();
   const rawKey = generateKey();
@@ -77,10 +77,10 @@ function createClient({ name, rpm = 10, models = null, origins = null, expires_a
   const key_suffix = rawKey.slice(-KEY_SUFFIX_LEN);
 
   const stmt = db.prepare(`
-    INSERT INTO clients (name, key_hash, key_prefix, key_suffix, rpm, models, origins, expires_at, description)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO clients (name, key_hash, key_prefix, key_suffix, rpm, models, origins, spend_limit_usd, expires_at, description)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  const info = stmt.run(name, key_hash, key_prefix, key_suffix, rpm, encodeList(models), encodeList(origins), expires_at, description);
+  const info = stmt.run(name, key_hash, key_prefix, key_suffix, rpm, encodeList(models), encodeList(origins), spend_limit_usd, expires_at, description);
 
   const row = db.prepare(`SELECT ${CLIENT_COLUMNS} FROM clients WHERE id = ?`).get(info.lastInsertRowid);
   return { ...decodeClient(row), rawKey };
@@ -96,7 +96,7 @@ function listClients() {
 function updateClient(id, fields) {
   const { getDb } = require('./index');
   const db = getDb();
-  const allowed = ['name', 'rpm', 'models', 'origins', 'active', 'expires_at', 'description'];
+  const allowed = ['name', 'rpm', 'models', 'origins', 'spend_limit_usd', 'active', 'expires_at', 'description'];
   const sets = [];
   const values = [];
 
@@ -150,7 +150,7 @@ function findClientByKey(rawKey) {
   const db = getDb();
   const secret = getHmacSecret();
   const hmacHash = hashKey(rawKey, secret);
-  const lookup = 'SELECT id, name, rpm, models, origins, active, expires_at FROM clients WHERE key_hash = ?';
+  const lookup = 'SELECT id, name, rpm, models, origins, spend_limit_usd, active, expires_at FROM clients WHERE key_hash = ?';
   let row = db.prepare(lookup).get(hmacHash);
 
   if (!row) {

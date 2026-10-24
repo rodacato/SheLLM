@@ -2302,6 +2302,15 @@
             "example": [
               "https://you.github.io"
             ]
+          },
+          "spend_limit_usd": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "exclusiveMinimum": 0,
+            "description": "Monthly cap on the key's API-equivalent cost (reported plus estimated), in USD, per calendar month in UTC. null or absent means no cap. Once reached, requests get 429 spend_limit_exceeded until the 1st. Approximate: the request that crosses it still finishes.\n",
+            "example": 100
           }
         }
       },
@@ -2339,6 +2348,15 @@
             "example": [
               "https://you.github.io"
             ]
+          },
+          "spend_limit_usd": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "exclusiveMinimum": 0,
+            "description": "Monthly cap on the key's API-equivalent cost (reported plus estimated), in USD, per calendar month in UTC. null or absent means no cap. Once reached, requests get 429 spend_limit_exceeded until the 1st. Approximate: the request that crosses it still finishes.\n",
+            "example": 100
           },
           "active": {
             "type": "integer",
@@ -2395,6 +2413,31 @@
             "example": [
               "https://you.github.io"
             ]
+          },
+          "spend_limit_usd": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "exclusiveMinimum": 0,
+            "description": "Monthly cap on the key's API-equivalent cost (reported plus estimated), in USD, per calendar month in UTC. null or absent means no cap. Once reached, requests get 429 spend_limit_exceeded until the 1st. Approximate: the request that crosses it still finishes.\n",
+            "example": 100
+          },
+          "month_spend": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Listed by GET /admin/keys for a key with a spend limit; null otherwise.",
+            "properties": {
+              "spent_usd": {
+                "type": "number"
+              },
+              "resets_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
           },
           "active": {
             "type": "integer",
@@ -3085,7 +3128,7 @@
         }
       },
       "RateLimitedOpenAI": {
-        "description": "Rate limit exceeded",
+        "description": "Rate limit exceeded (rate_limited), or the key reached its monthly spend limit (spend_limit_exceeded, sent with x-should-retry: false).\n",
         "headers": {
           "X-Request-Id": {
             "schema": {
@@ -3095,6 +3138,15 @@
           "Retry-After": {
             "schema": {
               "type": "integer"
+            }
+          },
+          "x-should-retry": {
+            "description": "false on spend_limit_exceeded: waiting seconds will not help.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "false"
+              ]
             }
           }
         },
@@ -3158,7 +3210,7 @@
         }
       },
       "RateLimitedAnthropic": {
-        "description": "Rate limit exceeded",
+        "description": "Rate limit exceeded (rate_limited), or the key reached its monthly spend limit (spend_limit_exceeded, sent with x-should-retry: false).\n",
         "headers": {
           "X-Request-Id": {
             "schema": {
@@ -3168,6 +3220,15 @@
           "Retry-After": {
             "schema": {
               "type": "integer"
+            }
+          },
+          "x-should-retry": {
+            "description": "false on spend_limit_exceeded: waiting seconds will not help.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "false"
+              ]
             }
           }
         },

@@ -1,5 +1,6 @@
-const { sendApiError, authRequired, rateLimited, originNotAllowed } = require('../errors');
-const { findClientByKey, listClients } = require('../db');
+const { sendApiError, authRequired, rateLimited, spendLimitReached, originNotAllowed } = require('../errors');
+const { findClientByKey, listClients, spentThisMonth } = require('../db');
+const { nextMonthStartUtc } = require('../lib/time');
 const logger = require('../lib/logger');
 const config = require('../config');
 
@@ -38,6 +39,16 @@ function retryAfter(timestamps, maxRpm) {
   }
 
   return 0;
+}
+
+// Checked before a request runs, and its cost is known only after: the last admitted request
+// overshoots the limit by its own cost. The cap is approximate on purpose (ADR-0013).
+function spendRefusal(client, now = new Date()) {
+  if (client.spend_limit_usd == null) return null;
+  if (spentThisMonth(client.id, now) < client.spend_limit_usd) return null;
+  const resetsAt = nextMonthStartUtc(now);
+  const retryAfter = Math.ceil((resetsAt.getTime() - now.getTime()) / 1000);
+  return spendLimitReached(client.name, client.spend_limit_usd, retryAfter, resetsAt.toISOString());
 }
 
 function getOrCreateTimestamps(clientName) {
@@ -124,6 +135,12 @@ function createAuthMiddleware() {
     if (origin && dbClient.origins?.length > 0 && !dbClient.origins.includes(origin)) {
       logger.warn({ event: 'origin_rejected', client: dbClient.name, origin, request_id: req.requestId });
       return sendApiError(req, res, originNotAllowed(origin), req.requestId);
+    }
+
+    const refusal = spendRefusal(dbClient);
+    if (refusal) {
+      logger.warn({ event: 'spend_limit_reached', client: dbClient.name, request_id: req.requestId });
+      return sendApiError(req, res, refusal, req.requestId);
     }
 
     const clientName = dbClient.name;
