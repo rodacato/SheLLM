@@ -54,9 +54,10 @@ function checkConfig() {
 }
 
 function checkHost() {
-  const host = config.get('HOST');
-  if (LOOPBACK_HOSTS.has(host)) return pass('Bind address', host);
-  return warn('Bind address', `HOST=${host} exposes SheLLM beyond this machine`, `set HOST=127.0.0.1 in ${CONFIG_FILE}`);
+  const hosts = config.get('HOST');
+  const exposed = hosts.filter((host) => !LOOPBACK_HOSTS.has(host));
+  if (exposed.length === 0) return pass('Bind address', hosts.join(','));
+  return warn('Bind address', `HOST=${hosts.join(',')} exposes SheLLM beyond loopback on ${exposed.join(',')}`, `set HOST=127.0.0.1 in ${CONFIG_FILE}, or keep only internal addresses a firewall guards`);
 }
 
 async function checkClaude() {

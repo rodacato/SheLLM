@@ -24,13 +24,29 @@ function tlsOptions() {
   return { cert: readFileSync(cert), key: readFileSync(key) };
 }
 
-function startServer({ port = config.get('PORT'), host = config.get('HOST') } = {}, onListening) {
-  const tls = tlsOptions();
+function listen(tls, port, host, onListening) {
   const server = tls ? https.createServer(tls, app) : http.createServer(app);
   server.listen(port, host, () => {
     logger.info({ event: 'server_start', host, port: server.address().port, tls: Boolean(tls) });
-    if (onListening) onListening(server);
+    onListening(server);
   });
+  return server;
+}
+
+const extraListeners = new WeakMap();
+
+// The first address is the one returned and reported; the others listen on the port it got, which
+// matters only when that port was 0. Closing the returned server closes them too.
+function startServer({ port = config.get('PORT'), host = config.get('HOST') } = {}, onListening) {
+  const tls = tlsOptions();
+  const [primary, ...others] = [].concat(host);
+  const extras = [];
+  const server = listen(tls, port, primary, (listening) => {
+    for (const address of others) extras.push(listen(tls, listening.address().port, address, () => {}));
+    if (onListening) onListening(listening);
+  });
+  extraListeners.set(server, extras);
+  server.on('close', () => extras.forEach((extra) => extra.close()));
   return server;
 }
 
@@ -42,6 +58,7 @@ function gracefulShutdown(server, signal) {
   logger.info({ event: 'shutdown', signal });
   const { stopHealthPoller } = require('./infra/health');
   stopHealthPoller();
+  for (const extra of extraListeners.get(server) ?? []) extra.close();
   server.close(() => {
     logger.info({ event: 'shutdown_complete' });
     process.exit(0);
