@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.25.0] - 2026-10-24
+
+### Added
+
+- **logs:** keep stacks in the JSON line and stop logging probes
+- **metrics:** expose Prometheus metrics on GET /metrics
+- **server:** bind every address listed in HOST
+
+
 ## [1.24.0] - 2026-10-24
 
 ### Added
@@ -1215,7 +1224,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.24.0...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.25.0...HEAD
+[1.25.0]: https://github.com/rodacato/SheLLM/compare/v1.24.0...v1.25.0
 [1.24.0]: https://github.com/rodacato/SheLLM/compare/v1.23.0...v1.24.0
 [1.23.0]: https://github.com/rodacato/SheLLM/compare/v1.22.0...v1.23.0
 [1.22.0]: https://github.com/rodacato/SheLLM/compare/v1.21.0...v1.22.0
