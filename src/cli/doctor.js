@@ -20,10 +20,30 @@ function pass(name, detail) { return { level: 'pass', name, detail }; }
 function warn(name, detail, fix) { return { level: 'warn', name, detail, fix }; }
 function fail(name, detail, fix) { return { level: 'fail', name, detail, fix }; }
 
-function checkNode() {
-  const major = Number(process.versions.node.split('.')[0]);
-  if (major >= 24) return pass('Node.js', process.version);
-  return fail('Node.js', `${process.version}, SheLLM needs 24 or newer`, 'nvm install 24 && nvm use 24');
+const NODE_FLOOR = require('../../package.json').engines.node.replace(/^>=\s*/, '');
+
+function versionParts(version) {
+  return version.replace(/^v/, '').split('.').map(Number);
+}
+
+function isBelow(version, floor) {
+  const a = versionParts(version);
+  const b = versionParts(floor);
+  for (let i = 0; i < 3; i++) {
+    if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) < (b[i] || 0);
+  }
+  return false;
+}
+
+// The floor is the newest patch release SheLLM was tested against; an older 24.x still runs.
+function checkNode(version = process.versions.node) {
+  if (versionParts(version)[0] < 24) {
+    return fail('Node.js', `v${version}, SheLLM needs 24 or newer`, 'nvm install 24 && nvm use 24');
+  }
+  if (isBelow(version, NODE_FLOOR)) {
+    return warn('Node.js', `v${version} is older than ${NODE_FLOOR}`, 'sudo apt-get update && sudo apt-get install --only-upgrade nodejs');
+  }
+  return pass('Node.js', `v${version}`);
 }
 
 function checkConfig() {
@@ -116,4 +136,4 @@ async function run(args = []) {
   process.exitCode = failures ? 1 : 0;
 }
 
-module.exports = { run, diagnose, report };
+module.exports = { run, diagnose, report, checkNode, NODE_FLOOR };

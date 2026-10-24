@@ -97,3 +97,28 @@ process.exit(2);
     assert.match(result.stdout, /validity checked only with --live/);
   });
 });
+
+describe('shellm doctor: the Node.js check', () => {
+  const { checkNode, NODE_FLOOR } = require('../../src/cli/doctor');
+
+  it('reads its floor from package.json engines', () => {
+    assert.strictEqual(NODE_FLOOR, require('../../package.json').engines.node.replace(/^>=\s*/, ''));
+  });
+
+  it('passes the floor itself and anything newer, comparing numbers rather than strings', () => {
+    assert.strictEqual(checkNode(NODE_FLOOR).level, 'pass');
+    const [major, minor, patch] = NODE_FLOOR.split('.').map(Number);
+    assert.strictEqual(checkNode(`${major}.${minor}.${patch + 10}`).level, 'pass');
+    assert.strictEqual(checkNode(`${major}.${minor + 1}.0`).level, 'pass');
+  });
+
+  it('warns on an older 24.x, which still runs, and names the upgrade', () => {
+    const result = checkNode('24.0.0');
+    assert.strictEqual(result.level, 'warn');
+    assert.match(result.fix, /only-upgrade nodejs/);
+  });
+
+  it('fails a major SheLLM cannot run on', () => {
+    assert.strictEqual(checkNode('22.20.0').level, 'fail');
+  });
+});
