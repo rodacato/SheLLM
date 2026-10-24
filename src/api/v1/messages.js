@@ -265,6 +265,7 @@ async function messagesHandler(req, res) {
     const result = await route({ model, prompt, system, max_tokens, temperature, top_p, response_format, effort, longContext, request_id: req.requestId, allowFallback, job: jobFor(req) });
     res.locals.provider = result.provider;
     res.locals.queued_ms = result.queued_ms ?? null;
+    res.locals.cli_ms = result.cli_ms ?? null;
     res.locals.cost_usd = result.cost_usd ?? null;
     res.locals.usage = result.usage ?? null;
     res.locals.metrics = result.metrics ?? null;
@@ -300,6 +301,7 @@ async function messagesHandler(req, res) {
     });
   } catch (catchErr) {
     res.locals.provider = catchErr.provider ?? null;
+    res.locals.cli_ms = catchErr.cli_ms ?? null;
     const errObj = fromCatchable(catchErr, model);
     errObj.duration_ms = Date.now() - startTime;
     sendAnthropicError(res, errObj);
@@ -358,7 +360,6 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
     await queue.enqueue(async ({ queued_ms }) => {
       if (stopQueueNotices) stopQueueNotices();
       queuedMs = queued_ms;
-      cliStart = Date.now();
       res.locals.queued_ms = queued_ms;
       // Stream concurrency check (inside queue to avoid holding slots while waiting)
       if (!acquireStreamSlot()) {
@@ -366,6 +367,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
         return;
       }
       slotAcquired = true;
+      cliStart = Date.now();
       // Estimate input tokens from prompt length (real count unavailable during streaming)
       const estimatedInputTokens = Math.ceil(prompt.length / 4);
       sendMessageStart(res, id, responseModel, estimatedInputTokens);
@@ -407,6 +409,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
 
       if (!ac.signal.aborted) {
         recordSuccess(provider.name);
+        res.locals.cli_ms = Date.now() - cliStart;
         const outputTokens = reportedUsage?.output_tokens ?? Math.ceil(totalChars / 4);
         sendContentBlockStop(res, 0);
         sendMessageDelta(res, 'end_turn', outputTokens, {
@@ -417,7 +420,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
             cost_usd: res.locals.cost_usd ?? null,
             cost_estimate_usd: res.locals.cost_estimate_usd ?? null,
             queue_ms: queuedMs,
-            cli_ms: cliStart == null ? null : Date.now() - cliStart,
+            cli_ms: res.locals.cli_ms,
             ttft_ms: ttftMs,
           }),
         });
@@ -430,6 +433,7 @@ async function handleAnthropicStream(req, res, { model, max_tokens, temperature,
     const failure = fromCatchable(err, provider.name);
     if (!ac.signal.aborted && !isClientError(failure)) recordFailure(provider.name, failure);
     keepProviderLimit(res, failure, cliStart);
+    if (cliStart != null) res.locals.cli_ms = Date.now() - cliStart;
     if (!ac.signal.aborted && !res.writableEnded) {
       recordErrorCode(res, failure);
       sendStreamError(res, failure);

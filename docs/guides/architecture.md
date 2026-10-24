@@ -25,6 +25,7 @@ src/
 │   ├── circuit-breaker.js # Per-provider circuit breaker (closed → open → half_open)
 │   ├── stream-slots.js    # Streaming concurrency slots (acquireStreamSlot/releaseStreamSlot)
 │   ├── health.js          # Provider health checks, caching, background polling, alerts
+│   ├── metrics.js         # Prometheus registry: HTTP histogram, shellm_llm_* by provider and model
 │   ├── model-catalog.js   # Live model list from the CLIs, cached (ADR-0005)
 │   ├── model-limits.js    # Per-model limits: CLI > config/model-limits.yaml > 200k default (ADR-0009)
 │   ├── model-prices.js    # List-price estimate for a request the CLI did not price (ADR-0012)
@@ -61,7 +62,8 @@ src/
 │   ├── cors.js            # CORS for /v1 only, off unless SHELLM_CORS_ORIGINS names an origin
 │   ├── request-id.js      # Request ID generation/pass-through
 │   ├── error-handler.js   # Last stop for next(err): JSON in the path's error shape
-│   ├── logging.js         # Request/response logging to DB
+│   ├── logging.js         # Request/response logging to DB, and the metrics each request records
+│   ├── metrics-auth.js    # GET /metrics: 404 without METRICS_TOKEN, 401 on a wrong bearer
 │   └── sanitize.js        # Input normalization
 │
 ├── db/                    # SQLite persistence layer
@@ -226,7 +228,8 @@ unrecorded, so it is retried on the next start.
 
 Middleware runs in order — changing the order changes behavior:
 
-1. `requestLogger` — Log request completion with timing, status, provider, origin
+1. `requestLogger` — Log request completion with timing, status, provider, origin, and record
+   its metrics. Gateway metrics count only requests where a CLI started (`res.locals.cli_ms`)
 2. `corsV1` — Mounted on `/v1` only, before the body parser and before `auth`: a 400 or 413 from
    the parser still reaches the browser, and a preflight, which carries no credentials, is
    answered without one

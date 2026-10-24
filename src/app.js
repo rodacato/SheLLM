@@ -7,6 +7,8 @@ const { requestLogger } = require('./middleware/logging');
 const { requestId } = require('./middleware/request-id');
 const { errorHandler } = require('./middleware/error-handler');
 const { createAuthMiddleware } = require('./middleware/auth');
+const { metricsAuth } = require('./middleware/metrics-auth');
+const { registry: metricsRegistry } = require('./infra/metrics');
 const { corsV1 } = require('./middleware/cors');
 const config = require('./config');
 const { createAdminAuth } = require('./middleware/admin-auth');
@@ -96,6 +98,11 @@ const adminAuth = createAdminAuth();
 // --- GET /health (minimal, unauthenticated — Docker healthcheck) ---
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
+});
+
+// --- GET /metrics (Prometheus scrape, bearer METRICS_TOKEN; 404 while it is unset) ---
+app.get('/metrics', metricsAuth, async (_req, res) => {
+  res.type(metricsRegistry.contentType).send(await metricsRegistry.metrics());
 });
 
 // --- GET /health/detailed (full diagnostics, admin auth required) ---

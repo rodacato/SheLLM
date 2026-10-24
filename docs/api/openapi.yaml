@@ -75,6 +75,8 @@ paths:
     $ref: "./paths/health.yaml"
   /health/detailed:
     $ref: "./paths/health_detailed.yaml"
+  /metrics:
+    $ref: "./paths/metrics.yaml"
   /docs/openapi.json:
     $ref: "./paths/docs_openapi.yaml"
   /v1/models:
@@ -123,6 +125,10 @@ components:
       type: http
       scheme: basic
       description: Admin password via `SHELLM_ADMIN_PASSWORD`
+    MetricsToken:
+      type: http
+      scheme: bearer
+      description: The scrape token in `METRICS_TOKEN`, not a client API key
 
   schemas:
     LivenessResponse:

@@ -1,0 +1,22 @@
+get:
+  operationId: getMetrics
+  tags: [Health]
+  summary: Prometheus metrics
+  description: |
+    Prometheus text exposition: `http_request_duration_seconds{method,route,status_code}`, the
+    gateway's `shellm_llm_*` series labelled by provider and model, and the process defaults.
+    Off unless `METRICS_TOKEN` is set; until then it answers 404 like a route that does not
+    exist. A model name a provider does not declare is reported as `other`.
+  security:
+    - MetricsToken: []
+  responses:
+    '200':
+      description: Current metrics
+      content:
+        text/plain:
+          schema:
+            type: string
+    '401':
+      $ref: "../responses/Unauthorized.yaml"
+    '404':
+      $ref: "../responses/NotFound.yaml"

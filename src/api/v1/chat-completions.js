@@ -284,6 +284,7 @@ async function chatCompletionsHandler(req, res) {
     const result = await route({ model, prompt, parts, system, max_tokens, temperature, top_p, response_format, effort, longContext, request_id: req.requestId, allowFallback, job: jobFor(req) });
     res.locals.provider = result.provider;
     res.locals.queued_ms = result.queued_ms ?? null;
+    res.locals.cli_ms = result.cli_ms ?? null;
     res.locals.cost_usd = result.cost_usd ?? null;
     res.locals.usage = result.usage ?? null;
     res.locals.metrics = result.metrics ?? null;
@@ -319,6 +320,7 @@ async function chatCompletionsHandler(req, res) {
     });
   } catch (catchErr) {
     res.locals.provider = catchErr.provider ?? null;
+    res.locals.cli_ms = catchErr.cli_ms ?? null;
     const errObj = fromCatchable(catchErr, model);
     errObj.duration_ms = Date.now() - startTime;
     sendOpenAIError(res, errObj);
@@ -382,7 +384,6 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
     await queue.enqueue(async ({ queued_ms }) => {
       if (stopQueueNotices) stopQueueNotices();
       queuedMs = queued_ms;
-      cliStart = Date.now();
       res.locals.queued_ms = queued_ms;
       logger.debug({ event: 'stream_queue_entered', request_id: req.requestId });
 
@@ -392,6 +393,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
         return;
       }
       slotAcquired = true;
+      cliStart = Date.now();
       // Determine if provider supports streaming
       const streamFn = provider.chatStream;
 
@@ -432,11 +434,12 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
       // Final chunk with finish_reason + TTFT metric
       if (!ac.signal.aborted) {
         recordSuccess(provider.name);
+        res.locals.cli_ms = Date.now() - cliStart;
         const meta = shellmMeta({
           cost_usd: res.locals.cost_usd ?? null,
           cost_estimate_usd: res.locals.cost_estimate_usd ?? null,
           queue_ms: queuedMs,
-          cli_ms: cliStart == null ? null : Date.now() - cliStart,
+          cli_ms: res.locals.cli_ms,
           ttft_ms: ttftMs,
         });
         const finalChunk = { id, object: 'chat.completion.chunk', created, model: responseModel, choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] };
@@ -467,6 +470,7 @@ async function handleStream(req, res, { model, max_tokens, temperature, top_p, r
     const failure = fromCatchable(err, provider.name);
     if (!ac.signal.aborted && !isClientError(failure)) recordFailure(provider.name, failure);
     keepProviderLimit(res, failure, cliStart);
+    if (cliStart != null) res.locals.cli_ms = Date.now() - cliStart;
     if (!ac.signal.aborted && !res.writableEnded) {
       // The headers went out as 200, so the log learns what failed from error_code alone.
       recordErrorCode(res, failure);

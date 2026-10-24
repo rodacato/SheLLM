@@ -123,6 +123,39 @@
         }
       }
     },
+    "/metrics": {
+      "get": {
+        "operationId": "getMetrics",
+        "tags": [
+          "Health"
+        ],
+        "summary": "Prometheus metrics",
+        "description": "Prometheus text exposition: `http_request_duration_seconds{method,route,status_code}`, the\ngateway's `shellm_llm_*` series labelled by provider and model, and the process defaults.\nOff unless `METRICS_TOKEN` is set; until then it answers 404 like a route that does not\nexist. A model name a provider does not declare is reported as `other`.\n",
+        "security": [
+          {
+            "MetricsToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current metrics",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
     "/docs/openapi.json": {
       "get": {
         "operationId": "getOpenApiSpec",
@@ -1305,6 +1338,11 @@
         "type": "http",
         "scheme": "basic",
         "description": "Admin password via `SHELLM_ADMIN_PASSWORD`"
+      },
+      "MetricsToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "The scrape token in `METRICS_TOKEN`, not a client API key"
       }
     },
     "schemas": {

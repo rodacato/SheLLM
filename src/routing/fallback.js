@@ -45,8 +45,9 @@ async function routeWithFallback({ model, prompt, parts, system, max_tokens, tem
     const startTime = Date.now();
     try {
       const result = await queue.enqueue(({ queued_ms, position }) => {
+        const cliStart = Date.now();
         return candidate.chat({ prompt, parts, system, max_tokens, temperature, top_p, response_format, effort, longContext, model })
-          .then((r) => ({ ...r, queued_ms, queue_position: position }), (err) => { throw blame(err, candidate.name); });
+          .then((r) => ({ ...r, queued_ms, queue_position: position, cli_ms: Date.now() - cliStart }), (err) => { throw blame(err, candidate.name, Date.now() - cliStart); });
       }, { ...job, provider: candidate.name, model: model || candidate.name });
       recordSuccess(candidate.name);
 
@@ -62,6 +63,7 @@ async function routeWithFallback({ model, prompt, parts, system, max_tokens, tem
         duration_ms: Date.now() - startTime,
         queued_ms: result.queued_ms,
         queue_position: result.queue_position,
+        cli_ms: result.cli_ms,
         request_id: request_id || null,
         ...(result.cost_usd != null && { cost_usd: result.cost_usd }),
         ...(result.usage && { usage: result.usage }),

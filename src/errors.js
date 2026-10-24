@@ -63,8 +63,8 @@ function isClientError(err) {
 
 // The request log credits a failure to the provider that produced it. A gateway refusal (full
 // queue) is never blamed on one: the usage-limit banner reads a provider 429 as the CLI's own.
-function blame(err, provider) {
-  if (err && typeof err === 'object') err.provider = provider;
+function blame(err, provider, cliMs) {
+  if (err && typeof err === 'object') Object.assign(err, { provider, cli_ms: cliMs });
   return err;
 }
 
