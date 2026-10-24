@@ -4,7 +4,8 @@ const logger = require('../lib/logger');
 const { getDb, insertRequestLog } = require('../db');
 const metrics = require('../infra/metrics');
 
-const QUIET_PATHS = ['/health'];
+// Scraped and probed every few seconds. A failure still logs: a wrong scrape token is worth a line.
+const QUIET_PATHS = ['/health', '/metrics'];
 const UNMEASURED_PATHS = ['/metrics'];
 
 function isUnder(path, prefixes) {
@@ -41,9 +42,7 @@ function requestLogger(req, res, next) {
       logger.error(entry);
     } else if (res.statusCode >= 400) {
       logger.warn(entry);
-    } else if (QUIET_PATHS.some((p) => req.url.startsWith(p))) {
-      logger.debug(entry);
-    } else {
+    } else if (!isUnder(req.url, QUIET_PATHS)) {
       logger.info(entry);
     }
 

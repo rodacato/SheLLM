@@ -218,7 +218,7 @@ function sendAlertWebhook(provider, from, to) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
     signal: AbortSignal.timeout(5000),
-  }).catch((err) => logger.error({ event: 'alert_webhook_error', error: err.message }));
+  }).catch((err) => logger.error({ event: 'alert_webhook_error', err }));
 }
 
 async function pollAllProviders() {
@@ -259,7 +259,7 @@ async function pollAllProviders() {
     }
     cache = { data: { status: computeHealthStatus(providers), providers }, expires: Date.now() + getPollInterval() + 5000 };
   } catch (err) {
-    logger.error({ event: 'health_poll_error', error: err.message });
+    logger.error({ event: 'health_poll_error', err });
   }
 }
 
