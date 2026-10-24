@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.24.0] - 2026-10-24
+
+### Added
+
+- **keys:** cap a key's monthly spend in API-equivalent dollars
+
+### Maintenance
+
+- **node:** require Node 24.22.1 and upgrade it on setup
+- **deps:** bump express, dotenv and dev dependencies
+- **deps:** bump dotenv from 18.0.6 to 18.0.7
+
+
 ## [1.23.0] - 2026-10-18
 
 ### Added
@@ -1202,7 +1215,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.23.0...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.24.0...HEAD
+[1.24.0]: https://github.com/rodacato/SheLLM/compare/v1.23.0...v1.24.0
 [1.23.0]: https://github.com/rodacato/SheLLM/compare/v1.22.0...v1.23.0
 [1.22.0]: https://github.com/rodacato/SheLLM/compare/v1.21.0...v1.22.0
 [1.21.0]: https://github.com/rodacato/SheLLM/compare/v1.20.0...v1.21.0
