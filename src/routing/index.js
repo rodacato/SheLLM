@@ -22,8 +22,9 @@ async function route({ model, prompt, parts, system, max_tokens, temperature, to
   let result;
   try {
     result = await queue.enqueue(({ queued_ms, position }) => {
+      const cliStart = Date.now();
       return provider.chat({ prompt, parts, system, max_tokens, temperature, top_p, response_format, effort, longContext, model })
-        .then((r) => ({ ...r, queued_ms, queue_position: position }), (err) => { throw blame(err, provider.name); });
+        .then((r) => ({ ...r, queued_ms, queue_position: position, cli_ms: Date.now() - cliStart }), (err) => { throw blame(err, provider.name, Date.now() - cliStart); });
     }, { ...job, provider: provider.name, model: model || provider.name });
     recordSuccess(provider.name);
   } catch (err) {
@@ -40,6 +41,7 @@ async function route({ model, prompt, parts, system, max_tokens, temperature, to
     duration_ms: Date.now() - startTime,
     queued_ms: result.queued_ms,
     queue_position: result.queue_position,
+    cli_ms: result.cli_ms,
     request_id: request_id || null,
     ...(result.cost_usd != null && { cost_usd: result.cost_usd }),
     ...(result.usage && { usage: result.usage }),

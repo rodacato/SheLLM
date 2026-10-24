@@ -70,6 +70,7 @@ Everything else is documented in [`.env.example`](../../.env.example). What matt
 | Variable | Default | Why you would change it |
 |---|---|---|
 | `HOST` | `127.0.0.1` | Keep it. Expose SheLLM through a tunnel or proxy, not by binding publicly. A comma-separated list adds an internal address, such as the one Prometheus scrapes from |
+| `METRICS_TOKEN` | unset | Turns on `GET /metrics` for a Prometheus scrape with this bearer token; unset, it answers 404 |
 | `PORT` | `6100` | A port collision |
 | `MAX_CONCURRENT` | `4` | Each CLI process costs 150–215 MB of RAM (measured in [`benchmarks.md`](./benchmarks.md)). Every claude spawn rewrites the shared `~/.claude.json`; 5 parallel spawns were measured without corrupting it, so 4 stays under what was proven |
 | `MAX_STREAM_CONCURRENT` | `4` | Streaming holds a slot for the whole response and is capped separately |

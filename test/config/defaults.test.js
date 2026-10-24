@@ -47,6 +47,7 @@ const BEFORE = {
 
 // Settings born after the migration, with the default they were introduced with.
 const ADDED = {
+  METRICS_TOKEN: null,
   SHELLM_MAX_CHAT_BODY_BYTES: 20971520,
   SHELLM_MAX_IMAGES: 8,
   SHELLM_MAX_IMAGE_BYTES: 5242880,

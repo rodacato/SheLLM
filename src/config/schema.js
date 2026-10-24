@@ -151,6 +151,11 @@ module.exports = {
     section: 'Health and alerts', type: 'string', default: null, since: 'v0.3.0', reload: 'live', secret: true,
     describe: 'POST alerts (provider health transitions, auth failure spikes) to Slack, Discord, Uptime Kuma…',
   },
+  METRICS_TOKEN: {
+    section: 'Health and alerts', type: 'string', default: null, since: 'v1.25.0', reload: 'live', secret: true,
+    describe: `Bearer token Prometheus scrapes GET /metrics with. Unset, /metrics answers 404, as if it
+      did not exist. Metrics carry provider and model labels only, never a client, key or prompt.`,
+  },
   SHELLM_AUTH_ALERT_THRESHOLD: {
     section: 'Health and alerts', type: 'int', default: 10, since: 'v0.4.0', reload: 'live',
     describe: 'Auth failures in one minute before the webhook fires',

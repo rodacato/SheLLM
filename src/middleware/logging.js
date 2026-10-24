@@ -2,8 +2,14 @@
 
 const logger = require('../lib/logger');
 const { getDb, insertRequestLog } = require('../db');
+const metrics = require('../infra/metrics');
 
 const QUIET_PATHS = ['/health'];
+const UNMEASURED_PATHS = ['/metrics'];
+
+function isUnder(path, prefixes) {
+  return prefixes.some((p) => path === p || path.startsWith(`${p}/`) || path.startsWith(`${p}?`));
+}
 
 // Cache reads and writes are billed and dominate the count; summing only in/out under-reports
 // a cached request by orders of magnitude and stops `tokens` from matching `cost_usd`.
@@ -40,6 +46,9 @@ function requestLogger(req, res, next) {
     } else {
       logger.info(entry);
     }
+
+    if (!isUnder(req.url, UNMEASURED_PATHS)) metrics.recordHttp(req, res, duration_ms);
+    metrics.recordLlm(res);
 
     // Persist /v1/* requests to SQLite and emit for live feed. A CORS preflight is not a call
     // to a provider, and counting it would skew every per-key request and cost figure.
