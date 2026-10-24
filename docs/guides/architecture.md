@@ -229,7 +229,8 @@ unrecorded, so it is retried on the next start.
 Middleware runs in order — changing the order changes behavior:
 
 1. `requestLogger` — Log request completion with timing, status, provider, origin, and record
-   its metrics. Gateway metrics count only requests where a CLI started (`res.locals.cli_ms`)
+   its metrics. Gateway metrics count only requests where a CLI started (`res.locals.cli_ms`);
+   a successful `/health` or `/metrics` is not logged
 2. `corsV1` — Mounted on `/v1` only, before the body parser and before `auth`: a 400 or 413 from
    the parser still reaches the browser, and a preflight, which carries no credentials, is
    answered without one

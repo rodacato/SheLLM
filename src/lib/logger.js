@@ -19,6 +19,14 @@ function getCurrentLevel() {
   return startupLevel;
 }
 
+// JSON.stringify drops an Error's own fields, so a thrown error would reach the log as `{}`.
+function serializeError(err) {
+  if (!(err instanceof Error)) {
+    return { type: err?.constructor?.name ?? typeof err, message: err?.message ?? String(err), stack: null };
+  }
+  return { type: err.name, message: err.message, stack: err.stack ?? null };
+}
+
 function log(level, data) {
   if (LEVELS[level] < getCurrentLevel()) return;
 
@@ -27,6 +35,7 @@ function log(level, data) {
     level,
     ...data,
   };
+  if (data.err !== undefined) entry.err = serializeError(data.err);
 
   const line = JSON.stringify(entry);
   if (level === 'warn' || level === 'error') {

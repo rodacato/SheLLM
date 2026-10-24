@@ -16,7 +16,7 @@ function errorHandler(err, req, res, next) {
     return sendApiError(req, res, payloadTooLarge(`Request body exceeds ${err.limit} bytes`), req.requestId);
   }
 
-  logger.error({ event: 'unhandled_error', error: err.message, path: req.path, request_id: req.requestId });
+  logger.error({ event: 'unhandled_error', err, path: req.path, request_id: req.requestId });
   return sendApiError(req, res, { status: 500, code: 'internal_error', message: 'Internal server error' }, req.requestId);
 }
 

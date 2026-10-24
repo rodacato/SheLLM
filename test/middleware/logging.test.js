@@ -51,16 +51,25 @@ describe('logging middleware', () => {
     assert.strictEqual(next.mock.callCount(), 1);
   });
 
-  it('logs /health requests at debug level', () => {
-    fireRequest('/health', 200);
+  it('does not log a successful /health probe or /metrics scrape', () => {
+    for (const url of ['/health', '/metrics']) fireRequest(url, 200);
 
-    assert.strictEqual(mockDebug.mock.callCount(), 1);
-    assert.strictEqual(mockInfo.mock.callCount(), 0);
+    for (const level of [mockDebug, mockInfo, mockWarn, mockError]) {
+      assert.strictEqual(level.mock.callCount(), 0);
+    }
+  });
 
-    const entry = mockDebug.mock.calls[0].arguments[0];
-    assert.strictEqual(entry.event, 'request');
-    assert.strictEqual(entry.url, '/health');
-    assert.strictEqual(entry.status, 200);
+  it('still logs a refused /metrics scrape', () => {
+    fireRequest('/metrics', 401);
+
+    assert.strictEqual(mockWarn.mock.callCount(), 1);
+    assert.strictEqual(mockWarn.mock.calls[0].arguments[0].url, '/metrics');
+  });
+
+  it('does not mistake a path that only starts like a quiet one for it', () => {
+    fireRequest('/healthz', 200);
+
+    assert.strictEqual(mockInfo.mock.callCount(), 1);
   });
 
   it('logs normal 2xx requests at info level', () => {

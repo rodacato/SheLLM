@@ -65,6 +65,29 @@ describe('logger', () => {
     assert.match(parsed.ts, /^\d{4}-\d{2}-\d{2}T/);
   });
 
+  it('keeps a thrown error\'s type, message and stack inside the JSON line', () => {
+    const logger = loadLogger('info');
+    captureOutput();
+
+    logger.error({ event: 'unhandled_error', err: new TypeError('cannot read x') });
+
+    const parsed = JSON.parse(stderrMock.mock.calls[0].arguments[0].trim());
+    assert.strictEqual(parsed.err.type, 'TypeError');
+    assert.strictEqual(parsed.err.message, 'cannot read x');
+    assert.match(parsed.err.stack, /^TypeError: cannot read x\n\s+at /);
+    assert.strictEqual(stderrMock.mock.callCount(), 1, 'the stack must not spill onto lines of its own');
+  });
+
+  it('reports a thrown non-Error with a null stack instead of an empty object', () => {
+    const logger = loadLogger('info');
+    captureOutput();
+
+    logger.error({ event: 'health_poll_error', err: { message: 'plain object' } });
+
+    const parsed = JSON.parse(stderrMock.mock.calls[0].arguments[0].trim());
+    assert.deepStrictEqual(parsed.err, { type: 'Object', message: 'plain object', stack: null });
+  });
+
   it('routes debug/info to stdout and warn/error to stderr', () => {
     const logger = loadLogger('debug');
     captureOutput();
