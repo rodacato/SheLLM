@@ -4,7 +4,7 @@ const { CONFIG_FILE } = require('./paths');
 const config = require('../config');
 
 function baseUrl() {
-  return `http://${config.get('HOST')}:${config.get('PORT')}`;
+  return `http://${config.get('HOST')[0]}:${config.get('PORT')}`;
 }
 
 // What the running process says about itself: the build it serves and whether any provider can

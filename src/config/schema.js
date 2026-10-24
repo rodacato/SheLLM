@@ -15,8 +15,10 @@ module.exports = {
     describe: 'Port the HTTP server listens on',
   },
   HOST: {
-    section: 'Server', type: 'string', default: '127.0.0.1', since: 'v1.0.0', reload: 'restart', prominent: true,
-    describe: 'Interface to bind. Loopback keeps SheLLM reachable only through a local tunnel or proxy.',
+    section: 'Server', type: 'list', default: ['127.0.0.1'], since: 'v1.0.0', reload: 'restart', prominent: true,
+    describe: `Interfaces to bind, comma-separated, all on PORT. Loopback keeps SheLLM reachable only
+      through a local tunnel or proxy; add one internal address when something else on the host,
+      such as Prometheus, has to reach it — never 0.0.0.0 for that.`,
   },
   LOG_LEVEL: {
     section: 'Server', type: 'string', default: 'info', since: 'v0.1.0', reload: 'restart', prominent: true,
