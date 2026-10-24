@@ -3,7 +3,9 @@
 const { describe, it, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { DEFAULT_TIMEZONE, getTimezone, toInstant, parseInstant } = require('../../src/lib/time');
+const {
+  DEFAULT_TIMEZONE, getTimezone, toInstant, parseInstant, monthStartUtc, nextMonthStartUtc, toSqliteDatetime,
+} = require('../../src/lib/time');
 
 describe('lib/time', () => {
   afterEach(() => { delete process.env.SHELLM_TZ; });
@@ -39,5 +41,15 @@ describe('lib/time', () => {
     assert.strictEqual(parseInstant('2026-10-01T01:00:00-05:00').getTime(), utc);
     assert.strictEqual(parseInstant('not a date'), null);
     assert.strictEqual(parseInstant(null), null);
+  });
+
+  it('bounds a month in UTC, rolling December into the next year', () => {
+    const lateDecember = new Date('2026-12-31T23:30:00Z');
+    assert.strictEqual(monthStartUtc(lateDecember).toISOString(), '2026-12-01T00:00:00.000Z');
+    assert.strictEqual(nextMonthStartUtc(lateDecember).toISOString(), '2027-01-01T00:00:00.000Z');
+  });
+
+  it('writes an instant the way SQLite stores created_at', () => {
+    assert.strictEqual(toSqliteDatetime(new Date('2026-10-01T00:00:00.000Z')), '2026-10-01 00:00:00');
   });
 });

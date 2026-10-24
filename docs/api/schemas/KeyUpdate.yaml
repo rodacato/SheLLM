@@ -23,6 +23,14 @@ properties:
       means any caller. A request carrying another Origin gets 403 origin_not_allowed; a request
       with no Origin is accepted, so this scopes pages rather than authenticating callers.
     example: ["https://you.github.io"]
+  spend_limit_usd:
+    type: [number, 'null']
+    exclusiveMinimum: 0
+    description: >
+      Monthly cap on the key's API-equivalent cost (reported plus estimated), in USD, per calendar
+      month in UTC. null or absent means no cap. Once reached, requests get 429
+      spend_limit_exceeded until the 1st. Approximate: the request that crosses it still finishes.
+    example: 100
   active:
     type: integer
     enum: [0, 1]

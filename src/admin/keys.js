@@ -4,8 +4,9 @@ const { Router } = require('express');
 const { sendError, invalidRequest } = require('../errors');
 const {
   createClient, listClients, updateClient, deleteClient, rotateClientKey,
-  insertAuditLog, getAuditLogs,
+  insertAuditLog, getAuditLogs, spentThisMonth,
 } = require('../db');
+const { nextMonthStartUtc } = require('../lib/time');
 const stats = require('../db/stats');
 const { isValidOrigin } = require('../middleware/cors');
 
@@ -24,19 +25,33 @@ function validateOrigins(origins) {
   return null;
 }
 
+function validateSpendLimit(limit) {
+  if (limit === undefined || limit === null) return null;
+  if (typeof limit !== 'number' || !Number.isFinite(limit) || limit <= 0) {
+    return invalidRequest('Field "spend_limit_usd" must be a positive number of US dollars, or null for no limit');
+  }
+  return null;
+}
+
+function monthSpend(key, now) {
+  if (key.spend_limit_usd == null) return null;
+  return { spent_usd: spentThisMonth(key.id, now), resets_at: nextMonthStartUtc(now).toISOString() };
+}
+
 const USAGE_PERIOD = '7d';
 const USAGE_INTERVAL = '-7 days';
 
 // GET /admin/keys
 router.get('/keys', (req, res) => {
   const usage = new Map(stats.usageByKey(USAGE_INTERVAL).map(({ id, ...row }) => [id, row]));
-  const keys = listClients().map((key) => ({ ...key, usage: usage.get(key.id) || null }));
+  const now = new Date();
+  const keys = listClients().map((key) => ({ ...key, usage: usage.get(key.id) || null, month_spend: monthSpend(key, now) }));
   res.json({ keys, usage_period: USAGE_PERIOD });
 });
 
 // POST /admin/keys
 router.post('/keys', (req, res) => {
-  const { name, rpm, models, origins, expires_at, description } = req.body || {};
+  const { name, rpm, models, origins, spend_limit_usd, expires_at, description } = req.body || {};
 
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
     return sendError(res, invalidRequest('Missing required field: name'), req.requestId);
@@ -56,11 +71,11 @@ router.post('/keys', (req, res) => {
     }
   }
 
-  const originsError = validateOrigins(origins);
-  if (originsError) return sendError(res, originsError, req.requestId);
+  const fieldError = validateOrigins(origins) || validateSpendLimit(spend_limit_usd);
+  if (fieldError) return sendError(res, fieldError, req.requestId);
 
   try {
-    const client = createClient({ name: name.trim(), rpm, models, origins, expires_at, description: description?.trim() || null });
+    const client = createClient({ name: name.trim(), rpm, models, origins, spend_limit_usd, expires_at, description: description?.trim() || null });
     insertAuditLog({ action: 'created', resource: 'key', resource_id: client.id, details: client.name });
     res.status(201).json({
       key: {
@@ -72,6 +87,7 @@ router.post('/keys', (req, res) => {
         rpm: client.rpm,
         models: client.models,
         origins: client.origins,
+        spend_limit_usd: client.spend_limit_usd,
         expires_at: client.expires_at || null,
         description: client.description || null,
         created_at: client.created_at,
@@ -92,7 +108,7 @@ router.patch('/keys/:id', (req, res) => {
     return sendError(res, invalidRequest('Invalid key id'), req.requestId);
   }
 
-  const { name, rpm, models, origins, active, expires_at, description } = req.body || {};
+  const { name, rpm, models, origins, spend_limit_usd, active, expires_at, description } = req.body || {};
 
   if (name !== undefined && (typeof name !== 'string' || name.trim().length === 0)) {
     return sendError(res, invalidRequest('Field "name" must be a non-empty string'), req.requestId);
@@ -116,8 +132,8 @@ router.patch('/keys/:id', (req, res) => {
     }
   }
 
-  const originsError = validateOrigins(origins);
-  if (originsError) return sendError(res, originsError, req.requestId);
+  const fieldError = validateOrigins(origins) || validateSpendLimit(spend_limit_usd);
+  if (fieldError) return sendError(res, fieldError, req.requestId);
 
   let updated;
   try {
@@ -126,6 +142,7 @@ router.patch('/keys/:id', (req, res) => {
       rpm,
       models,
       origins,
+      spend_limit_usd,
       active,
       expires_at,
       description: description !== undefined ? (description?.trim() || null) : undefined,

@@ -55,7 +55,7 @@ src/
 │   └── index.js           # get/sourceOf/isInConfigFile; .env.example is generated from the schema
 │
 ├── middleware/            # Express middleware
-│   ├── auth.js            # Bearer token auth + per-client/global rate limiting + per-key origins
+│   ├── auth.js            # Bearer token auth + per-client/global rate limiting + per-key origins and spend limit
 │   ├── admin-auth.js      # Admin authentication: session cookie for browsers, Basic for scripts
 │   ├── admin-session.js   # HMAC-signed session cookie, content negotiation (wantsHtml)
 │   ├── cors.js            # CORS for /v1 only, off unless SHELLM_CORS_ORIGINS names an origin
@@ -235,8 +235,8 @@ Middleware runs in order — changing the order changes behavior:
    more than a header read
 4. `requestId` — Extract `x-request-id` header or `request_id` from the body, or generate a UUID
 5. Content-Type check — Reject non-JSON POST/PATCH
-6. `auth` — Validate Bearer token, check rate limits (global + per-client), enforce the key's
-   own origin list
+6. `auth` — Validate Bearer token, enforce the key's own origin list and monthly spend limit
+   (ADR-0013), check rate limits (global + per-client)
 
 After the routes: an unmatched path gets a JSON 404, and `errorHandler` turns anything passed to
 `next(err)` — a body that is not JSON, one past the limit, a thrown error — into the error shape

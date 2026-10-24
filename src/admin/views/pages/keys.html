@@ -162,6 +162,9 @@
                     <span class="text-on-surface" x-text="key.rpm + ' rpm'"></span>
                     <span class="text-outline block mt-0.5" x-text="key.models ? key.models.join(', ') : 'all models'"></span>
                     <span x-show="key.origins && key.origins.length" class="text-outline block mt-0.5" x-text="'browser: ' + (key.origins || []).join(', ')"></span>
+                    <span x-show="key.month_spend" class="block mt-0.5" :class="spendTone(key)"
+                      :title="key.month_spend ? 'API-equivalent cost, reported plus estimated. Resets ' + formatTime(key.month_spend.resets_at) : null"
+                      x-text="spendLine(key)"></span>
                   </td>
                   <td class="px-4 py-3 font-mono text-xs max-md:p-0 max-md:col-start-1 max-md:row-start-3">
                     <template x-if="key.usage && key.usage.requests > 0">
@@ -235,11 +238,15 @@
                         <label :for="'edit-expires-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1" x-text="'Expires (' + timezone + ', blank = never)'"></label>
                         <input :id="'edit-expires-' + key.id" type="datetime-local" x-model="editForm.expires_at" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
                       </div>
-                      <div class="md:col-span-2">
+                      <div>
+                        <label :for="'edit-spend-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Monthly spend limit, USD (blank = none)</label>
+                        <input :id="'edit-spend-' + key.id" type="number" min="0.01" step="0.01" x-model="editForm.spend_limit_usd" placeholder="100" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
+                      </div>
+                      <div class="md:col-span-3">
                         <label :for="'edit-description-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Description</label>
                         <input :id="'edit-description-' + key.id" type="text" x-model="editForm.description" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
                       </div>
-                      <div class="md:col-span-2">
+                      <div class="md:col-span-4">
                         <label :for="'edit-origins-' + key.id" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Browser origins (blank = any caller)</label>
                         <input :id="'edit-origins-' + key.id" type="text" x-model="editForm.origins" placeholder="https://rodacato.github.io, http://localhost:5173" class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface px-2 py-1.5 text-xs font-mono focus:outline-none focus:border-primary-container">
                       </div>
@@ -311,6 +318,13 @@
                 <input type="text" id="create-origins" x-model="createForm.origins"
                   class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"
                   placeholder="https://rodacato.github.io">
+              </div>
+              <div>
+                <label for="create-spend" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-1">Monthly spend limit, USD (blank = none)</label>
+                <p class="text-[11px] font-mono text-outline mb-2">API-equivalent cost, reported plus estimated. Approximate: the request that crosses it still finishes. Resets on the 1st, UTC.</p>
+                <input type="number" id="create-spend" x-model="createForm.spend_limit_usd" min="0.01" step="0.01"
+                  class="w-full bg-surface-container-lowest border border-outline-variant/40 text-on-surface px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-primary-container"
+                  placeholder="100">
               </div>
               <div>
                 <label for="create-expires" class="block text-[10px] font-headline font-bold uppercase tracking-[0.2em] text-outline mb-2" x-text="'Expires At (' + timezone + ', optional)'"></label>

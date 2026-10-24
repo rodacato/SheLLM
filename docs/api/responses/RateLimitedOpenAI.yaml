@@ -1,4 +1,6 @@
-description: Rate limit exceeded
+description: >
+  Rate limit exceeded (rate_limited), or the key reached its monthly spend limit
+  (spend_limit_exceeded, sent with x-should-retry: false).
 headers:
   X-Request-Id:
     schema:
@@ -6,6 +8,11 @@ headers:
   Retry-After:
     schema:
       type: integer
+  x-should-retry:
+    description: "false on spend_limit_exceeded: waiting seconds will not help."
+    schema:
+      type: string
+      enum: ['false']
 content:
   application/json:
     schema:

@@ -229,6 +229,7 @@ something is wrong. You can also set it yourself to correlate with your own logs
 | 404 | `model_not_found` | the CLI does not know that `claude-*` model | use one from `GET /v1/models` |
 | 413 | — | body over 256 kB, or over `SHELLM_MAX_CHAT_BODY_BYTES` on `/v1/chat/completions` | send less; resize images before sending |
 | 429 | `rate_limited` | per-key or global rate limit, or the queue is full | honor `Retry-After`; do not hammer |
+| 429 | `spend_limit_exceeded` | the key reached its monthly spend limit (OpenAI type `insufficient_quota`) | wait for the month to reset, or raise the limit; `x-should-retry: false` |
 | 502 | `cli_failed` | the CLI exited with an error | check the admin dashboard logs |
 | 503 | `provider_unavailable` | provider disabled, not logged in, or its circuit is open | the CLI login probably expired |
 | 504 | `timeout` | killed after `TIMEOUT_MS` (300 s by default) | shorten the work or raise the limit |
@@ -245,6 +246,7 @@ never on 429 before `Retry-After`.
 | `MAX_STREAM_CONCURRENT` | 4 | streaming slots are counted separately |
 | Global rate limit | 60 req/min | shared by every key |
 | Per-key rate limit | set when the key is created | 429 with `Retry-After` |
+| Per-key spend limit | optional, USD of API-equivalent cost per calendar month (UTC) | 429 `spend_limit_exceeded` until the 1st; approximate, the request that crosses it finishes |
 | `TIMEOUT_MS` | 300 000 | the CLI process is killed and you get a 504 |
 | A proxy in front | Cloudflare: 100 s to the first byte | a non-streaming answer slower than that gets the proxy's 524, with no CORS headers — a browser sees only "Failed to fetch". Send `stream: true`: headers go out at once and the proxy stops waiting |
 | Request body | 256 kB; 20 MiB on `/v1/chat/completions` (`SHELLM_MAX_CHAT_BODY_BYTES`) | 413 |

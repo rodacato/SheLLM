@@ -104,7 +104,7 @@ describe('admin /admin/stats', () => {
 
     const w = res.body.window;
     assert.strictEqual(w.requests, 3, 'the window counts the rows the totals came from');
-    assert.strictEqual(w.retention_days, 30);
+    assert.strictEqual(w.retention_days, 31);
     assert.ok(Date.parse(w.from) <= Date.parse(w.to), 'the window starts before it ends');
     assert.ok(w.hours > 0, 'an observed window has a length');
   });
