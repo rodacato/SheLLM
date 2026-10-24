@@ -44,7 +44,7 @@
     "yaml": "2.9.1"
   },
   "devDependencies": {
-    "@anthropic-ai/sdk": "^0.132.1",
+    "@anthropic-ai/sdk": "^0.135.0",
     "@redocly/cli": "^2.62.1",
     "@resvg/resvg-js": "2.6.2",
     "eslint": "^10.12.0",
