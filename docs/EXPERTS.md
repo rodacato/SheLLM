@@ -64,7 +64,8 @@ Core seats are consulted whenever their lens is touched; situational seats only 
 The runtime seats are chosen to disagree. `tomas` wants the warm pool, supervised and reused;
 `rafael` wants every failure mode of that pool measured before it ships; `dhh` pushes back toward
 spawn-per-request until the numbers prove it hurts. **When these three agree, it is probably
-right.**
+right.** They last met on the pool: it was measured and dropped
+([ADR-0006](./adr/0006-spawn-per-request-stays.md)), and only SheLLM growing sessions reopens it.
 
 The contract seats pull the same way. `marta` wants byte-level fidelity to the provider APIs;
 `dhh` wants only the subset an app actually calls; `el-integrador` settles it by asking which apps
@@ -110,7 +111,7 @@ shortcut is worth leaving the official, unmodified CLI binary.**
 - **Brings:** spawn vs long-lived processes, stdin/stdout framing, SIGTERM→SIGKILL, zombie
   reaping, pool sizing, backpressure, memory per process, isolating context between requests.
 - **Consult when:** `src/providers/base.js`, `src/infra/queue.js`, `src/infra/stream-slots.js`;
-  the warm pool; anything that holds a process across requests.
+  a proposal to reopen the pool; anything that holds a process across requests.
 - **Style:** draws the process lifecycle first — start, ready, busy, dead, replaced.
 
 ### C4 — Amara Nwosu · `amara` · Application security
@@ -185,8 +186,8 @@ that serves SheLLM's ambition over the integrator wiring it into another app.
 ### S1 — Lucas Ferreira · `lucas` · Testing strategy
 
 - **Trigger:** a new provider or endpoint needs a test surface; the suite is flaky or slow.
-- **Brings:** `node:test` and its mocking; mocking at the `execute()` boundary, never in the
-  middle; when an e2e run against a real CLI earns its cost.
+- **Brings:** `node:test`; a fake CLI written to disk and put on `PATH` rather than mocking
+  `execute()`; when an e2e run against a real CLI earns its cost.
 
 ### S2 — Vera Kostić · `vera` · Offensive security
 
