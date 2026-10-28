@@ -280,7 +280,7 @@ async function chatCompletionsHandler(req, res) {
   res.locals.model = model;
 
   try {
-    const allowFallback = req.headers['x-shellm-allow-fallback'] === 'true' || undefined;
+    const allowFallback = req.headers['x-shellm-allow-fallback'] !== 'false';
     const result = await route({ model, prompt, parts, system, max_tokens, temperature, top_p, response_format, effort, longContext, request_id: req.requestId, allowFallback, job: jobFor(req) });
     res.locals.provider = result.provider;
     res.locals.queued_ms = result.queued_ms ?? null;
