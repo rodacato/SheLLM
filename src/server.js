@@ -16,7 +16,7 @@ const app = require('./app');
 
 // HTTP/1.1 over TLS. Express does not survive Node's http2 compat layer — an h2 request kills
 // the process in IncomingMessage._read — so a browser that needs more than six connections to
-// one host gets HTTP/2 from a reverse proxy, not from here. See the README.
+// one host gets HTTP/2 from a reverse proxy, not from here. See docs/guides/usage.md.
 function tlsOptions() {
   const cert = config.get('SHELLM_TLS_CERT');
   const key = config.get('SHELLM_TLS_KEY');
