@@ -3,10 +3,11 @@ title = "SheLLM Gitleaks Config"
 [extend]
 useDefault = true
 
-[[allowlists]]
-description = "Pencil writes a per-file identifier into every .pen document; it is not a credential"
-targetRules = ["generic-api-key"]
-condition = "AND"
-paths = ['''\.pen$''']
+# gitleaks-action runs 8.24, which silently ignores [[allowlists]] and targetRules; it reads only this table.
+[allowlist]
+description = "Identifiers generic-api-key mistakes for keys: Pencil's .pen fileToken, claude's api_message_id"
 regexTarget = "match"
-regexes = ['''^fileToken"?\s*:''']
+regexes = [
+  '''fileToken"?\s*:''',
+  '''api_message_id"?\s*:\s*"msg_[A-Za-z0-9]+''',
+]
