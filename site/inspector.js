@@ -142,7 +142,10 @@
     timers.forEach(clearTimeout);
     timers = [];
     root.querySelectorAll('.node').forEach((n) => n.classList.remove('on', 'fail'));
-    root.querySelectorAll('.core li').forEach((li) => li.classList.remove('ok', 'fail'));
+    root.querySelectorAll('.core li').forEach((li) => {
+      li.classList.remove('ok', 'fail');
+      li.querySelector('i').textContent = '●';
+    });
     svg.querySelectorAll('path').forEach((p) => p.classList.remove('hot', 'fail'));
     out('log').classList.remove('in');
 
@@ -200,7 +203,12 @@
     const api = scenario.api;
     const refused = !scenario.engine;
     const steps = [...root.querySelectorAll('.core li')];
-    const light = (name, cls = 'ok') => steps.find((li) => li.dataset.step === name).classList.add(cls);
+    // A refused step gets its own glyph, so the stop does not depend on telling the two colours apart.
+    const light = (name, cls = 'ok') => {
+      const li = steps.find((step) => step.dataset.step === name);
+      li.classList.add(cls);
+      if (cls === 'fail') li.querySelector('i').textContent = '✕';
+    };
     const link = (name, cls = 'hot') => svg.querySelector(`[data-link="${name}"]`)?.classList.add(...cls.split(' '));
     const eventLis = [...out('events').children];
     const responseLis = [...out('response').children];
