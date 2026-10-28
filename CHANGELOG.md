@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking Changes
 
-- **routing:** a request can opt out of fallback, never into it
+- **routing:** a request can opt out of fallback, never into it. `SHELLM_FALLBACK_ENABLED` is now the ceiling: `x-shellm-allow-fallback: false` still opts a request out while it is on, but `true` no longer turns fallback on when the server has it off. A caller that relied on the header gets the primary provider's error instead; set `SHELLM_FALLBACK_ENABLED=true` on the server if you want fallback.
 
 ### Added
 
@@ -22,7 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **auth:** read the credential header in linear time
 - **claude:** always pass a system prompt, empty when the caller sends none
 - **site:** mark a refused inspector step with its own glyph
-- **routing:** a request can opt out of fallback, never into it
 - **config:** describe the health poller and the HTTP/2 note as they are
 - **admin:** put SHELLM_REF after sudo in the rollback hint
 - **codex:** pin memories off for every request
@@ -59,6 +58,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### CI
 
 - **deps:** let Dependabot propose patch and minor CLI bumps
+
+### Upgrade notes
+
+**This release moves the CLIs to claude 2.1.312 and codex 0.165.0, and the update to it does not
+install them.** The update that installs a release's pins arrives in this release, and an update
+runs the version it is leaving. After `sudo shellm update` (or the dashboard's Update) reaches
+v1.26.0, re-run `scripts/setup/vps.sh` once, then `shellm doctor` to confirm both versions match
+the pins. From the next release on, the update moves them itself.
+
+**A claude request with no system prompt now spends about 550 prompt tokens, not about 3,500.**
+SheLLM always passes a system prompt file, empty when the caller sends none; without one the CLI
+used its own coding-agent prompt. Answers to a bare prompt may read less like a coding assistant.
+
+**codex's default model is now gpt-6.1-sol.** The baked catalog follows codex 0.165.0, which also
+drops the retired gpt-5.5. A request for `codex` with no model gets the new default.
 
 
 ## [1.25.0] - 2026-10-24
