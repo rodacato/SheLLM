@@ -85,9 +85,12 @@ function keepProviderLimit(res, failure, cliStart) {
   res.locals.metrics = { ...res.locals.metrics, api_error_status: 429 };
 }
 
-// The request log needs the code the caller actually received, and every sender passes here.
+// The request log needs the code the caller actually received, and the status the provider's API
+// answered when the CLI reported one. Every sender passes here.
 function recordErrorCode(res, err) {
-  if (res.locals) res.locals.error_code = err.code || 'internal_error';
+  if (!res.locals) return;
+  res.locals.error_code = err.code || 'internal_error';
+  if (err.api_error_status) res.locals.metrics = { ...res.locals.metrics, api_error_status: err.api_error_status };
 }
 
 function setRetryHeaders(res, err) {

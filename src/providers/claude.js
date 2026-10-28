@@ -253,12 +253,21 @@ function isPromptTooLong(result) {
   return result?.terminal_reason === 'prompt_too_long';
 }
 
+// The CLI's own template for a subscription limit; the label after it changes between releases.
+const LIMIT_MESSAGE = /^You've hit your /;
+
 // On an API failure the CLI exits 1 with stderr empty: the cause is the result event on stdout.
 function failureFrom(result, model) {
   if (result?.type !== 'result' || !result.is_error) return null;
+  const failure = classifyFailure(result, model);
+  if (result.api_error_status) failure.api_error_status = result.api_error_status;
+  return failure;
+}
+
+function classifyFailure(result, model) {
   if (isPromptTooLong(result)) return contextLengthExceeded(model, result.result);
   if (result.api_error_status === 404) return modelNotFound(model);
-  if (result.api_error_status === 429 || /usage limit|rate limit/i.test(result.result || '')) {
+  if (result.api_error_status === 429 || LIMIT_MESSAGE.test(result.result || '')) {
     return rateLimited(`claude: ${result.result}`);
   }
   return cliFailed('claude', result.result || `API error ${result.api_error_status}`);
