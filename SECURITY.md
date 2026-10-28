@@ -119,7 +119,7 @@ ask. The flag removes the prompt, not the sandbox. **Compensating controls:**
 
 ### Claude CLI Installer
 
-`scripts/setup/vps.sh` installs Claude Code with `curl https://claude.ai/install.sh | bash -s <version>`, pinned to `CLAUDE_VERSION` and run as the unprivileged service user. The installer publishes no checksum, so the pin is what makes an install reproducible.
+`scripts/setup/vps.sh` installs Claude Code with `curl https://claude.ai/install.sh | bash -s <version>`, pinned in `config/cli-versions/package.json` and run as the unprivileged service user. The installer publishes no checksum, so the pin is what makes an install reproducible.
 
 ### CSP `unsafe-inline` / `unsafe-eval`
 

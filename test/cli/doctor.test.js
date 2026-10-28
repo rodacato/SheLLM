@@ -7,6 +7,7 @@ const path = require('node:path');
 
 const CLI = path.resolve(__dirname, '../../src/cli.js');
 const DB = path.resolve(__dirname, '../../src/db');
+const PINS = require('../../config/cli-versions/package.json').dependencies;
 
 function shellm(args, { home, bin }) {
   return new Promise((resolve) => {
@@ -32,11 +33,19 @@ describe('shellm doctor', () => {
     fs.rmSync(bin, { recursive: true, force: true });
   });
 
-  function installFakeClaude(authStatus) {
+  function installFakeClaude(authStatus, version = PINS['@anthropic-ai/claude-code']) {
     fs.writeFileSync(path.join(bin, 'claude'), `#!${process.execPath}
 const args = process.argv.slice(2);
-if (args[0] === '--version') { console.log('2.1.273 (Claude Code)'); process.exit(0); }
+if (args[0] === '--version') { console.log('${version} (Claude Code)'); process.exit(0); }
 if (args[0] === 'auth') { console.log(${JSON.stringify(JSON.stringify(authStatus))}); process.exit(${authStatus.loggedIn ? 0 : 1}); }
+process.exit(2);
+`, { mode: 0o755 });
+  }
+
+  function installFakeCodex(dir, version = PINS['@openai/codex']) {
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'codex'), `#!${process.execPath}
+if (process.argv[2] === '--version') { console.log('codex-cli ${version}'); process.exit(0); }
 process.exit(2);
 `, { mode: 0o755 });
   }
@@ -62,6 +71,34 @@ process.exit(2);
     const result = await shellm(['doctor'], { home, bin });
     assert.strictEqual(result.code, 0, result.stdout);
     assert.match(result.stdout, /All checks passed/);
+  });
+
+  it('passes CLIs on their pinned versions, finding codex where vps.sh installs it', async () => {
+    installFakeClaude({ loggedIn: true, authMethod: 'oauth_token' });
+    installFakeCodex(path.join(home, '.npm-global', 'bin'));
+    await createKey();
+    const result = await shellm(['doctor'], { home, bin });
+    assert.match(result.stdout, new RegExp(`✓ Claude CLI: ${PINS['@anthropic-ai/claude-code']}, the pinned version`));
+    assert.match(result.stdout, new RegExp(`✓ Codex CLI: ${PINS['@openai/codex']}, the pinned version`));
+  });
+
+  it('warns, without failing, when a CLI drifted from its pin', async () => {
+    installFakeClaude({ loggedIn: true, authMethod: 'oauth_token' }, '9.9.9');
+    installFakeCodex(bin, '0.0.1');
+    await createKey();
+    const result = await shellm(['doctor'], { home, bin });
+    assert.strictEqual(result.code, 0, result.stdout);
+    assert.match(result.stdout, new RegExp(`! Claude CLI: 9\\.9\\.9, pinned ${PINS['@anthropic-ai/claude-code']}`));
+    assert.match(result.stdout, new RegExp(`! Codex CLI: 0\\.0\\.1, pinned ${PINS['@openai/codex']}`));
+    assert.match(result.stdout, /fix: sudo bash .*scripts\/setup\/vps\.sh to install the pinned version/);
+  });
+
+  it('warns, without failing, when codex is not installed', async () => {
+    installFakeClaude({ loggedIn: true, authMethod: 'oauth_token' });
+    await createKey();
+    const result = await shellm(['doctor'], { home, bin });
+    assert.strictEqual(result.code, 0, result.stdout);
+    assert.match(result.stdout, /! Codex CLI: not found on PATH, the codex provider cannot answer/);
   });
 
   it('fails a config file other users can read', async () => {
