@@ -85,7 +85,8 @@ function imageFile(image) {
 }
 
 function buildArgs({ parts, response_format, model, effort }) {
-  const args = ['exec', '--ephemeral', '--skip-git-repo-check', '-s', 'read-only', '--json'];
+  // Memories would carry one client's prompts into another's; pinned off whatever config.toml says.
+  const args = ['exec', '--ephemeral', '--skip-git-repo-check', '-s', 'read-only', '--json', '-c', 'features.memories=false'];
   if (cliModel(model)) args.push('-m', cliModel(model));
   // Without a level codex keeps its own configuration's.
   if (effort) args.push('-c', `model_reasoning_effort="${effort}"`);

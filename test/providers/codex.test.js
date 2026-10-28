@@ -54,6 +54,7 @@ process.exit(file === 'exec-json-unknown-model.jsonl' ? 1 : 0);
     assert.equal(args[args.indexOf('-m') + 1], 'gpt-5.6-sol', 'the codex- prefix is stripped for the CLI');
     assert.equal(args[args.indexOf('-s') + 1], 'read-only');
     assert.ok(args.includes('--ephemeral'), 'no session files survive the request');
+    assert.equal(args[args.indexOf('features.memories=false') - 1], '-c', 'no memory carries one request into the next');
     assert.ok(args.includes('--skip-git-repo-check'));
     assert.equal(args.at(-1), '-', 'the CLI reads the prompt from stdin');
     assert.equal(stdinOf(), 'ping');
