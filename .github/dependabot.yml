@@ -21,6 +21,18 @@ updates:
       - dependency-name: better-sqlite3
         update-types: [version-update:semver-major]
 
+  # The CLI pins. A major can change the flags or the output the adapters parse, so it moves by
+  # hand; ci-cli-contract runs the proposed versions on the PR.
+  - package-ecosystem: npm
+    directory: "/config/cli-versions"
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
+
   - package-ecosystem: docker
     directory: "/"
     schedule:

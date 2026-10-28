@@ -1,7 +1,7 @@
 name: CI · CLI Contract
 
-# vps.sh pins both CLIs, so an upstream release can drop a flag the providers pass long before
-# the pin moves. This runs against the latest of each, weekly, to catch it before the bump.
+# A PR runs the pinned CLIs, so a Dependabot bump is tested at the version it proposes. The weekly
+# run takes the latest of each, which is the only warning of a major Dependabot does not propose.
 on:
   schedule:
     - cron: "0 14 * * 1"
@@ -11,6 +11,7 @@ on:
     paths:
       - "src/providers/**"
       - "test/cli/**"
+      - "config/cli-versions/**"
       - ".github/workflows/ci-cli-contract.yml"
 
 permissions:
@@ -33,6 +34,18 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm install -g @anthropic-ai/claude-code@latest @openai/codex@latest
+      - name: Install the CLIs
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" = pull_request ]; then
+            pins=config/cli-versions/package.json
+            claude=$(node -p "require('./$pins').dependencies['@anthropic-ai/claude-code']")
+            codex=$(node -p "require('./$pins').dependencies['@openai/codex']")
+          else
+            claude=latest
+            codex=latest
+          fi
+          npm install -g "@anthropic-ai/claude-code@$claude" "@openai/codex@$codex"
       - run: claude --version && codex --version
       - run: npm run test:cli

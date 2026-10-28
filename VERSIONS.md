@@ -37,6 +37,15 @@ pin moves.
 
 ## How to Update a CLI Version
 
+Each week Dependabot opens one PR per CLI, to its newest patch or minor release that is at least
+seven days old, and the CLI contract workflow runs `npm run test:cli` on that PR at the proposed
+version. A green PR proves
+only that the flags are still accepted, not that the output still parses, so steps 1, 3 and 4 still
+apply before merging. A major is never proposed: it moves by hand, the same way.
+
+Codex is still `0.x`, where every release is a minor, so for codex the filter excludes nothing
+until `1.0`.
+
 1. Read the tool's changelog for breaking changes to flags, output format, or auth flow.
 2. Update the version in `config/cli-versions/package.json`.
 3. Run `npm run test:cli` to check every flag the providers pass is still accepted, then `npm run test:e2e` with the CLIs logged in to verify output parsing.
