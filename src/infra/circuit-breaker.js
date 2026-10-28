@@ -7,7 +7,7 @@ const THRESHOLD = config.get('CIRCUIT_BREAKER_THRESHOLD');
 const RESET_MS = config.get('CIRCUIT_BREAKER_RESET_MS');
 
 // Per-provider state: { state, failures, lastFailureAt, lastError, lastTransitionAt, probing }
-const circuits = {};
+const circuits = Object.create(null);
 
 function getOrCreate(name) {
   if (!circuits[name]) {
