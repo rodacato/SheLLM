@@ -2,11 +2,15 @@
 
 const { execFile } = require('node:child_process');
 const fs = require('node:fs');
+const path = require('node:path');
 const { CONFIG_FILE } = require('./paths');
 const config = require('../config');
 
 const LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);
 const CLAUDE_INSTALL = 'curl -fsSL https://claude.ai/install.sh | bash';
+const CLI_PINS = require('../../config/cli-versions/package.json').dependencies;
+const VPS_SCRIPT = path.resolve(__dirname, '../../scripts/setup/vps.sh');
+const PIN_FIX = `sudo bash ${VPS_SCRIPT} to install the pinned version, or move the pin in config/cli-versions/package.json`;
 
 function exec(command, args, env) {
   return new Promise((resolve) => {
@@ -33,6 +37,14 @@ function isBelow(version, floor) {
     if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) < (b[i] || 0);
   }
   return false;
+}
+
+// A CLI that drifted from its pin still answers, so this warns: the combination is untested, not broken.
+function checkPin(name, pkg, versionOutput) {
+  const installed = /\d+\.\d+\.\d+/.exec(versionOutput)?.[0] ?? versionOutput.trim();
+  const pinned = CLI_PINS[pkg];
+  if (installed === pinned) return pass(name, `${installed}, the pinned version`);
+  return warn(name, `${installed}, pinned ${pinned}`, PIN_FIX);
 }
 
 // The floor is the newest patch release SheLLM was tested against; an older 24.x still runs.
@@ -74,12 +86,23 @@ async function checkClaude() {
   let auth = {};
   try { auth = JSON.parse(status.stdout); } catch { /* reported below */ }
 
-  const installed = pass('Claude CLI', version.stdout.trim());
+  const installed = checkPin('Claude CLI', '@anthropic-ai/claude-code', version.stdout);
   if (!auth.loggedIn) return [installed, fail('Claude login', 'not logged in', `claude setup-token, then add CLAUDE_CODE_OAUTH_TOKEN to ${CONFIG_FILE}`)];
   // auth status accepts any token string, so only --live proves the token works.
   if (auth.authMethod === 'oauth_token') return [installed, pass('Claude login', 'CLAUDE_CODE_OAUTH_TOKEN set (validity checked only with --live)')];
   // A file session expires on its own and nothing renews it for a service, so the token is the path.
   return [installed, warn('Claude login', `${auth.authMethod} session, which expires; the service is meant to run on CLAUDE_CODE_OAUTH_TOKEN`, `claude setup-token, then add CLAUDE_CODE_OAUTH_TOKEN to ${CONFIG_FILE}`)];
+}
+
+async function checkCodex() {
+  // The unit puts ~/.npm-global/bin on PATH, where vps.sh installs codex; a login shell usually does not.
+  const env = { PATH: `${process.env.PATH}:${path.join(process.env.HOME, '.npm-global', 'bin')}`, HOME: process.env.HOME };
+  const version = await exec('codex', ['--version'], env);
+  if (!version.ok) {
+    const detail = version.missing ? 'not found on PATH, the codex provider cannot answer' : version.stderr.trim();
+    return warn('Codex CLI', detail, PIN_FIX);
+  }
+  return checkPin('Codex CLI', '@openai/codex', version.stdout);
 }
 
 function checkApiKeys() {
@@ -123,7 +146,7 @@ function report(results) {
 
 async function diagnose({ live = false } = {}) {
   require('dotenv').config({ path: CONFIG_FILE, quiet: true });
-  const results = [checkNode(), checkConfig(), checkHost(), ...(await checkClaude()), checkApiKeys(), checkNewSettings()];
+  const results = [checkNode(), checkConfig(), checkHost(), ...(await checkClaude()), await checkCodex(), checkApiKeys(), checkNewSettings()];
   if (live) results.push(await checkLive());
   return results;
 }

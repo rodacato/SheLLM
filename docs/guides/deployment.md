@@ -14,21 +14,23 @@ provider suspends if something looks automated — read the fair-use section in 
 ssh root@your-server 'bash -s' < scripts/setup/vps.sh
 ```
 
-The script is safe to re-run. It creates the `shellmer` user, installs Node.js 24, installs Claude
-Code pinned to `CLAUDE_VERSION` and Codex pinned to `CODEX_VERSION` (see
-[`VERSIONS.md`](../../VERSIONS.md)), clones the repository to `/home/shellmer/shellm`, links the
-`shellm` command, and installs the systemd unit, the logrotate config and the update trigger. It
+The script is safe to re-run. It creates the `shellmer` user, installs Node.js 24, clones the
+repository to `/home/shellmer/shellm`, links the `shellm` command, installs Claude Code and Codex at
+the versions the checked-out release pins in
+[`config/cli-versions/package.json`](../../config/cli-versions/package.json) (see
+[`VERSIONS.md`](../../VERSIONS.md)), and installs the systemd unit, the logrotate config and the update trigger. It
 does **not** start the service, does **not** enable the update trigger, and does **not** configure
 a tunnel.
 
 Both CLIs are installed as `shellmer`, not system-wide: Claude Code under `~/.local/bin` and Codex
 under `~/.npm-global/bin`, the two paths the systemd unit puts on `PATH`.
 
-**The pin holds only for what the service runs.** SheLLM starts Claude Code with
-`DISABLE_AUTOUPDATER=1`, but a `claude` you open by hand as `shellmer` updates itself as usual and
-the service picks the new binary up on its next spawn. Open it as
-`DISABLE_AUTOUPDATER=1 claude …`, and re-run `vps.sh` to go back to the pin; the System page's CLI
-version says which one the host is on.
+**The pin holds for the whole host, not only the service.** SheLLM starts Claude Code with
+`DISABLE_AUTOUPDATER=1`, and `vps.sh` sets the same variable in `shellmer`'s
+`~/.claude/settings.json`, so a `claude` opened by hand for `setup-token` does not update itself
+either. A CLI someone upgrades by hand still drifts: `shellm doctor` warns when an installed version
+differs from the pin, and re-running `vps.sh` puts it back. `sudo shellm update` does not reinstall
+the CLIs, so after a release that moves a pin, re-run `vps.sh`.
 
 **It installs the newest published release**, not the tip of the default branch, so the host runs
 something with a version number and release notes. A repository with no tags yet falls back to the

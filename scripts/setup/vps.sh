@@ -6,8 +6,6 @@ set -euo pipefail
 
 REPO="${SHELLM_REPO:-https://github.com/rodacato/SheLLM.git}"
 SHELLM_REF="${SHELLM_REF:-}"
-CLAUDE_VERSION="${CLAUDE_VERSION:-2.1.273}"
-CODEX_VERSION="${CODEX_VERSION:-0.154.0}"
 SERVICE_USER="shellmer"
 SERVICE_HOME="/home/${SERVICE_USER}"
 APP_DIR="${SERVICE_HOME}/shellm"
@@ -42,17 +40,6 @@ else
   echo "  installed $(node --version)"
 fi
 
-echo "==> Claude Code ${CLAUDE_VERSION}"
-as_service_user "curl -fsSL https://claude.ai/install.sh | bash -s ${CLAUDE_VERSION}"
-
-echo "==> Codex ${CODEX_VERSION}"
-if as_service_user "${NPM_PREFIX}/bin/codex --version 2>/dev/null" | grep -qFw "${CODEX_VERSION}"; then
-  echo "  codex ${CODEX_VERSION} already installed"
-else
-  as_service_user "npm install -g --prefix ${NPM_PREFIX} @openai/codex@${CODEX_VERSION}"
-  echo "  installed codex ${CODEX_VERSION}"
-fi
-
 # A host follows published releases, not the tip of a branch, so what it runs has a name and
 # release notes. SHELLM_REF deploys a branch or an older tag deliberately.
 resolve_ref() {
@@ -77,6 +64,34 @@ as_service_user "git -C ${APP_DIR} checkout --detach ${REF}"
 as_service_user "cd ${APP_DIR} && npm ci --omit=dev"
 (cd "${APP_DIR}" && npm link)
 as_service_user "mkdir -p ~/.shellm/logs"
+
+# The pins travel with the release just checked out, so a host runs the CLIs that release was tested with.
+pinned() { node -p "require('${APP_DIR}/config/cli-versions/package.json').dependencies['$1']"; }
+CLAUDE_VERSION="${CLAUDE_VERSION:-$(pinned @anthropic-ai/claude-code)}"
+CODEX_VERSION="${CODEX_VERSION:-$(pinned @openai/codex)}"
+
+echo "==> Claude Code ${CLAUDE_VERSION}"
+as_service_user "curl -fsSL https://claude.ai/install.sh | bash -s ${CLAUDE_VERSION}"
+
+echo "==> Codex ${CODEX_VERSION}"
+if as_service_user "${NPM_PREFIX}/bin/codex --version 2>/dev/null" | grep -qFw "${CODEX_VERSION}"; then
+  echo "  codex ${CODEX_VERSION} already installed"
+else
+  as_service_user "npm install -g --prefix ${NPM_PREFIX} @openai/codex@${CODEX_VERSION}"
+  echo "  installed codex ${CODEX_VERSION}"
+fi
+
+# The service passes DISABLE_AUTOUPDATER itself; this stops a claude opened by hand moving the pin.
+sudo -u "${SERVICE_USER}" -H node - <<'EOF'
+const fs = require('node:fs');
+const path = require('node:path');
+const file = path.join(process.env.HOME, '.claude', 'settings.json');
+const settings = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {};
+settings.env = { ...settings.env, DISABLE_AUTOUPDATER: '1' };
+fs.mkdirSync(path.dirname(file), { recursive: true });
+fs.writeFileSync(file, `${JSON.stringify(settings, null, 2)}\n`);
+EOF
+echo "  claude's autoupdater is off for ${SERVICE_USER}"
 
 echo "==> Config"
 as_service_user "mkdir -p -m 700 $(dirname "${CONFIG_FILE}")"

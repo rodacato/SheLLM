@@ -45,8 +45,8 @@ The tag is what a deployment follows, so the release is not cosmetic: it is what
 
 ## Then
 
-- If the release pins a different CLI version (`CLAUDE_VERSION` in
-  [`scripts/setup/vps.sh`](../../scripts/setup/vps.sh)), update the tested-combinations table in
+- If the release pins a different CLI version (in
+  [`config/cli-versions/package.json`](../../config/cli-versions/package.json)), update the tested-combinations table in
   [`VERSIONS.md`](../../VERSIONS.md).
 - Deploy it on the host — see [deployment.md](./deployment.md).
 
