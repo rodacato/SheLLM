@@ -78,6 +78,15 @@ for (const provider of ['claude', 'codex']) {
   });
 }
 
+describe('e2e: claude without a system prompt', () => {
+  it('does not carry the CLI\'s own coding-agent prompt', async (t) => {
+    if (!ready.claude) return t.skip('claude not signed in');
+    const res = await post('/v1/chat/completions', { model: 'claude-haiku', messages: ask('Hello') });
+    assert.equal(res.status, 200, JSON.stringify(res.body));
+    assert.ok(res.body.usage.prompt_tokens < 2000, `${res.body.usage.prompt_tokens} prompt tokens for "Hello"`);
+  });
+});
+
 describe('e2e: the error contract', () => {
   it('refuses a model no provider serves with the OpenAI error shape', async () => {
     const res = await post('/v1/chat/completions', { model: 'gpt-4', messages: ask('test') });

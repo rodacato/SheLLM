@@ -4,7 +4,7 @@ const path = require('node:path');
 const { readFileSync } = require('node:fs');
 
 // Pure function tests — import directly (no mock needed)
-const { buildArgs, parseOutput } = require('../../src/providers/claude');
+const { buildArgs, buildFiles, parseOutput, SYSTEM_FILE } = require('../../src/providers/claude');
 
 describe('claude provider', () => {
   it('buildArgs constructs correct CLI arguments', () => {
@@ -18,7 +18,8 @@ describe('claude provider', () => {
     assert.ok(!args.includes('hello'), 'the prompt is written to stdin, not passed');
 
     const args2 = buildArgs({ prompt: 'just prompt' });
-    assert.ok(!args2.includes('--system-prompt-file'), 'no system prompt, no file');
+    assert.ok(args2.includes('--system-prompt-file'), 'without a file the CLI uses its own coding-agent prompt');
+    assert.deepEqual(buildFiles({ prompt: 'just prompt' }), { [SYSTEM_FILE]: '' });
   });
 
   it('buildArgs includes --dangerously-skip-permissions by default', () => {

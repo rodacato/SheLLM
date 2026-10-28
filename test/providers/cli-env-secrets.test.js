@@ -89,9 +89,9 @@ process.stdout.write(JSON.stringify({ result: 'ok', response: 'ok' }));
       const second = await serve(cli);
       assert.ok(!first.cwd.startsWith(REPO_ROOT), `${cli} ran inside ${REPO_ROOT}`);
       assert.notEqual(first.cwd, second.cwd, `${cli} reused a directory`);
-      const requestFiles = Object.keys(require(`../../src/providers/${cli}`).buildFiles(withSystem) || {});
-      assert.deepEqual(first.files.sort(), requestFiles.sort(), `${cli} found ${first.files.join(', ')}`);
-      assert.deepEqual(second.files, [], `${cli} found ${second.files.join(', ')}`);
+      const filesFor = (params) => Object.keys(require(`../../src/providers/${cli}`).buildFiles(params) || {}).sort();
+      assert.deepEqual(first.files.sort(), filesFor(withSystem), `${cli} found ${first.files.join(', ')}`);
+      assert.deepEqual(second.files.sort(), filesFor({ prompt: 'hi' }), `${cli} found ${second.files.join(', ')}`);
     }
   });
 
