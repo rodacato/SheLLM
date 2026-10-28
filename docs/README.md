@@ -14,11 +14,11 @@
 
 | | |
 |---|---|
-| [`guides/architecture.md`](guides/architecture.md) | Module layout, request flow, the provider and error contracts |
+| [`guides/architecture.md`](guides/architecture.md) | The map: what each area does, request flow, the provider and error contracts, adding a provider |
 | [`guides/releasing.md`](guides/releasing.md) | How a release is cut |
 | [`../design/brand/`](../design/brand/README.md) | Brand identity: logo, color, type, voice, asset sources and regeneration |
 | [`adr/`](adr/) | Decisions already taken. [ADR-0001](adr/0001-baseline.md) is the baseline; each later one says what it supersedes |
-| [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | Setup, conventions, tests, adding a provider |
+| [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | Setup, conventions, adding a setting, tests, commits and pull requests |
 
 ## Not product documentation
 

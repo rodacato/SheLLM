@@ -45,7 +45,7 @@ expect_break "changelog links" test/docs/changelog-links.test.js
 cp "$BACKUP/CHANGELOG.md" CHANGELOG.md
 
 # 2. A module the guide names and the tree does not contain.
-sed -i 's|└── time\.js|└── log-emitter.js|' docs/guides/architecture.md
+sed -i 's|`src/routing/engines.js` — the provider registry|`src/routing/log-emitter.js` — the provider registry|' docs/guides/architecture.md
 expect_break "architecture paths" test/docs/doc-paths.test.js
 cp "$BACKUP/architecture.md" docs/guides/architecture.md
 

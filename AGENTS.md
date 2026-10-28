@@ -48,34 +48,13 @@ source of truth, copy is never invented, and disagreements between design and co
 Brand sources and the brand guide live in [`design/brand/`](design/brand/README.md). Edit the
 sources there and run `npm run brand:build`; never hand-edit the exports or their runtime copies.
 
-## Project conventions
+## Conventions
 
-- **English only, everywhere in the repo**: product copy (dashboard, landing, brand page, social
-  card), code, comments, docs, commits and the `.pen` designs. One locale, never a mix.
-- CommonJS, no TypeScript, no ESM, no build step.
-- Semicolons, single quotes, 2-space indentation, trailing commas in multi-line literals.
-- Comments only where the *why* isn't self-evident.
-- [`docs/guides/architecture.md`](docs/guides/architecture.md) is the map: directory layout,
-  request flow, provider and error contracts. Update it when you move a module instead of copying
-  a tree into another doc.
-
-**Adding a setting:** one entry in [`src/config/schema.js`](src/config/schema.js) — `default`,
-`since` (the release you are adding it in), `reload`, `describe` — then `npm run config:build` and
-commit the regenerated `.env.example`. Read it with `config.get('NAME')`, never
-`process.env.NAME || 'default'`; the default belongs in the schema and CI fails when the generated
-file is stale. Keep the read where it is: a module-level `const` stays `restart`, a read inside a
-function stays `live`. See [ADR-0008](docs/adr/0008-configuration-schema-in-code.md).
-
-**Adding a provider:** `src/providers/<name>.js` following the contract in the architecture guide,
-registered in `src/routing/engines.js`, exporting an `authProbe` that costs no quota, tests
-in `test/providers/`, and the CLI version it was tested against in `VERSIONS.md`. Export a
-`models` array of the names that map to a real CLI model — `/v1/models` lists those plus the
-models the CLI reports; limits the CLI does not report go in `config/model-limits.yaml` (ADR-0009).
-
-**Tests:** `npm test` (Node's runner). Prefer the real thing: temp directories, real function
-calls, and a fake CLI written to disk and put on `PATH` over mocking `execute()`. `base.js`
-captures `PATH` when it loads, so a test that installs a fake CLI must do it before requiring any
-provider. API tests use the Express app directly.
+Before your first edit, read [`CONTRIBUTING.md`](CONTRIBUTING.md): it is the home of the style
+rules (English only, CommonJS, no build step), the architecture rules, adding a setting, tests,
+commit messages and pull requests. [`docs/guides/architecture.md`](docs/guides/architecture.md)
+is the map: what each area does, request flow, the provider contract and adding a provider. Update
+it when you move a module instead of copying a tree into another doc.
 
 ## Boundaries
 
@@ -87,19 +66,9 @@ provider. API tests use the Express app directly.
 - **Human scale.** No automatic retries when a provider reports a usage limit, a concurrency cap
   by default, and health checks that spend no quota.
 - **Secrets stay out of the checkout** and out of the CLI environment; `CLAUDE_CODE_OAUTH_TOKEN`
-  is the one value claude receives.
+  is the one secret claude receives, and codex receives none.
 
 ## Git workflow
 
-- Conventional commits: `type(scope): description`.
-- Each commit is a coherent working state — PRs are rebase-merged, so every commit lands as written.
-- Keep branches linear: rebase onto `master`, never merge `master` in.
+- Conventional commits, rebase-merged, linear branches: the rules are in `CONTRIBUTING.md`.
 - No `Co-Authored-By` trailers or any AI attribution.
-
-## What not to do
-
-- Don't add TypeScript, ESM or a build step.
-- Don't add an ORM or a second datastore. SQLite holds data; configuration is the config file.
-- Don't add a framework on top of Express.
-- Don't add auth mechanisms beyond client keys and admin auth.
-- Don't reopen an ADR without writing the next one.
