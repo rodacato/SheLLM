@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-09-26",
+  "generated_at": "2026-10-28",
   "cli": {
-    "codex": "0.154.0",
-    "claude": "2.1.273"
+    "codex": "0.165.0",
+    "claude": "2.1.312"
   },
   "providers": {
     "codex": {
       "models": [
         {
-          "id": "codex-gpt-6-astra",
-          "label": "GPT-6-Astra",
-          "description": "Frontier intelligence for the most demanding work.",
+          "id": "codex-gpt-6.1-sol",
+          "label": "GPT-6.1-Sol",
+          "description": "Latest workhorse model for coding and everyday work.",
           "isDefault": true,
           "retiresAt": null,
           "upgradeTo": null,
@@ -29,9 +29,92 @@
           ]
         },
         {
+          "id": "codex-gpt-6-astra",
+          "label": "GPT-6-Astra",
+          "description": "Frontier intelligence for the most demanding work.",
+          "isDefault": false,
+          "retiresAt": null,
+          "upgradeTo": null,
+          "reasoningEfforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max",
+            "ultra"
+          ],
+          "defaultReasoningEffort": "low",
+          "inputModalities": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "codex-gpt-6.1-terra",
+          "label": "GPT-6.1 Terra",
+          "description": "GPT-6.1 Terra Codex model.",
+          "isDefault": false,
+          "retiresAt": null,
+          "upgradeTo": null,
+          "reasoningEfforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max",
+            "ultra"
+          ],
+          "defaultReasoningEffort": "low",
+          "inputModalities": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "codex-gpt-6-sol",
+          "label": "GPT-6-Sol",
+          "description": "Previous generation workhorse model.",
+          "isDefault": false,
+          "retiresAt": null,
+          "upgradeTo": null,
+          "reasoningEfforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max",
+            "ultra"
+          ],
+          "defaultReasoningEffort": "medium",
+          "inputModalities": [
+            "text",
+            "image"
+          ]
+        },
+        {
+          "id": "codex-gpt-6-luna",
+          "label": "GPT-6-Luna",
+          "description": "Fast and affordable model for easier tasks.",
+          "isDefault": false,
+          "retiresAt": null,
+          "upgradeTo": null,
+          "reasoningEfforts": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ],
+          "defaultReasoningEffort": "medium",
+          "inputModalities": [
+            "text",
+            "image"
+          ]
+        },
+        {
           "id": "codex-gpt-5.6-sol",
           "label": "GPT-5.6-Sol",
-          "description": "Older coding model for complex work.",
+          "description": "Older generation workhorse model.",
           "isDefault": false,
           "retiresAt": null,
           "upgradeTo": null,
@@ -83,25 +166,6 @@
             "high",
             "xhigh",
             "max"
-          ],
-          "defaultReasoningEffort": "medium",
-          "inputModalities": [
-            "text",
-            "image"
-          ]
-        },
-        {
-          "id": "codex-gpt-5.5",
-          "label": "GPT-5.5",
-          "description": "Legacy coding model.",
-          "isDefault": false,
-          "retiresAt": "2026-10-14",
-          "upgradeTo": "codex-gpt-5.6-sol",
-          "reasoningEfforts": [
-            "low",
-            "medium",
-            "high",
-            "xhigh"
           ],
           "defaultReasoningEffort": "medium",
           "inputModalities": [

@@ -878,7 +878,7 @@
         "-c",
         "features.memories=false",
         "-m",
-        "gpt-6-astra",
+        "gpt-6.1-sol",
         "--output-schema",
         "output-schema.json",
         "-"
