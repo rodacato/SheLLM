@@ -103,7 +103,7 @@ function createAuthMiddleware() {
   return (req, res, next) => {
     // Support both Authorization: Bearer <token> and x-api-key: <token>
     const header = req.headers.authorization || '';
-    const match = header.match(/^Bearer\s+(.+)$/i);
+    const match = header.match(/^Bearer\s+(\S.*)$/i);
     const token = match ? match[1] : (req.headers['x-api-key'] || null);
 
     if (!token) {

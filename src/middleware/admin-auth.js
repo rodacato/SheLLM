@@ -143,7 +143,7 @@ function createAdminAuth() {
     }
 
     const header = req.headers.authorization || '';
-    const match = header.match(/^Basic\s+(.+)$/i);
+    const match = header.match(/^Basic\s+(\S.*)$/i);
 
     if (!match) {
       if (wantsHtml(req)) return res.redirect(302, `/admin/login?next=${encodeURIComponent(req.originalUrl)}`);

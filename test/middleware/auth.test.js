@@ -1,5 +1,6 @@
 const { describe, it, mock, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
+const { performance } = require('node:perf_hooks');
 const { initDb, closeDb, createClient } = require('../../src/db');
 const { createAuthMiddleware } = require('../../src/middleware/auth');
 
@@ -40,6 +41,16 @@ describe('auth middleware', () => {
     const res2 = mockRes();
     middleware({ headers: { authorization: 'Bearer wrong-token-xyz789' }, requestId: 'req-2' }, res2, mock.fn());
     assert.strictEqual(res2._status, 401);
+  });
+
+  it('reads a header of padding in linear time', () => {
+    createClient({ name: 'testclient', rpm: 10 });
+    const middleware = createAuthMiddleware();
+    const res = mockRes();
+    const started = performance.now();
+    middleware({ headers: { authorization: `Bearer${' '.repeat(50_000)}\r` }, requestId: 'req-redos' }, res, mock.fn());
+    assert.ok(performance.now() - started < 100, 'a backtracking pattern takes over a second here');
+    assert.strictEqual(res._status, 401);
   });
 
   it('accepts valid Bearer token and sets clientName', () => {
