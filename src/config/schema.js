@@ -40,7 +40,8 @@ module.exports = {
   SHELLM_TLS_CERT: {
     section: 'Server', type: 'string', default: null, since: 'v1.10.0', reload: 'restart', example: '/etc/shellm/tls/cert.pem',
     describe: `Serve HTTPS instead of plain HTTP. Both this and SHELLM_TLS_KEY are needed; either
-      alone is ignored. HTTP/1.1 only — for HTTP/2 put Caddy in front, as the README describes.`,
+      alone is ignored. HTTP/1.1 only — for HTTP/2 put a proxy in front, as
+      docs/guides/usage.md "Calling it from a browser" describes.`,
   },
   SHELLM_TLS_KEY: {
     section: 'Server', type: 'string', default: null, since: 'v1.10.0', reload: 'restart', example: '/etc/shellm/tls/key.pem',
@@ -145,7 +146,7 @@ module.exports = {
   },
   HEALTH_POLL_INTERVAL_MS: {
     section: 'Health and alerts', type: 'int', default: 300000, since: 'v0.3.0', reload: 'live',
-    describe: 'How often (ms) the background poller runs `--version` checks. Spends no quota.',
+    describe: 'How often (ms) the background poller runs each provider\'s auth probe. Spends no quota.',
   },
   SHELLM_ALERT_WEBHOOK_URL: {
     section: 'Health and alerts', type: 'string', default: null, since: 'v0.3.0', reload: 'live', secret: true,
