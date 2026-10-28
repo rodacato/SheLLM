@@ -7,6 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.26.0] - 2026-10-28
+
+### Breaking Changes
+
+- **routing:** a request can opt out of fallback, never into it
+
+### Added
+
+- **update:** install the CLIs a release pins, and put them back on rollback
+
+### Fixed
+
+- **auth:** read the credential header in linear time
+- **claude:** always pass a system prompt, empty when the caller sends none
+- **site:** mark a refused inspector step with its own glyph
+- **routing:** a request can opt out of fallback, never into it
+- **config:** describe the health poller and the HTTP/2 note as they are
+- **admin:** put SHELLM_REF after sudo in the rollback hint
+- **codex:** pin memories off for every request
+- **claude:** read limits from the CLI's own message and log a failure's API status
+- **setup:** hold the CLI pins on the host and report drift in doctor
+
+### Changed
+
+- **circuit-breaker:** keep circuits in a prototype-less object
+
+### Documentation
+
+- **site:** recut the Overview and System captures from the current design
+- **site:** show a recorded response in the quick start
+- **site:** state the pitch's limits, and replay the pinned CLIs in the inspector
+- **adr:** amend ADR-0007, the service worker does precache the CDN
+- benchmarks open with where latency stands, persona files match the ADRs
+- ops, release and security docs checked against the scripts
+- architecture as a map, contributor rules in CONTRIBUTING
+- one home per topic for callers, and the contract checked against the code
+
+### Maintenance
+
+- **gitleaks:** a CLI's API message id is not a key
+- **catalog:** rebuild the model catalog against claude 2.1.312 and codex 0.165.0
+- **prices:** price the four codex models 0.165.0 added
+- **deps:** bump claude to 2.1.312 and codex to 0.165.0
+- **deps:** bump zizmorcore/zizmor-action from 0.6.4 to 0.7.1
+
+### Testing
+
+- **e2e:** run the suite against the app as it is today
+
+### CI
+
+- **deps:** let Dependabot propose patch and minor CLI bumps
+
+
 ## [1.25.0] - 2026-10-24
 
 ### Added
@@ -1224,7 +1278,8 @@ single REST API — one interface, any provider.
 - **Test suite** — 180+ tests across 28 files using `node:test` + `supertest`,
   runs in under 1 second.
 
-[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.25.0...HEAD
+[Unreleased]: https://github.com/rodacato/SheLLM/compare/v1.26.0...HEAD
+[1.26.0]: https://github.com/rodacato/SheLLM/compare/v1.25.0...v1.26.0
 [1.25.0]: https://github.com/rodacato/SheLLM/compare/v1.24.0...v1.25.0
 [1.24.0]: https://github.com/rodacato/SheLLM/compare/v1.23.0...v1.24.0
 [1.23.0]: https://github.com/rodacato/SheLLM/compare/v1.22.0...v1.23.0
