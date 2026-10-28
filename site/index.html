@@ -523,18 +523,18 @@
 <pre><span class="p">$</span> curl http://127.0.0.1:6100/v1/chat/completions \
     -H <span class="s">"Authorization: Bearer $SHELLM_KEY"</span> \
     -H <span class="s">"Content-Type: application/json"</span> \
-    -d <span class="s">'{"model":"claude-haiku","messages":[{"role":"user","content":"Hello"}]}'</span>
+    -d <span class="s">'{"model":"claude-haiku","messages":[{"role":"user","content":"Name the three primary colors, comma-separated."}]}'</span>
 
 {
-  "id": "chatcmpl-9f3a41c6-0b7e-4d21-a5f8-1c2e7b904dd3",
+  "id": "chatcmpl-2210cffb-a2b8-4f3c-96c1-4027e089fca4",
   "object": "chat.completion",
-  "model": "claude-haiku-4-5-20251001",
+  "model": "claude-haiku",
   "choices": [{
     "index": 0,
-    "message": { "role": "assistant", "content": "Hello! How can I help you today?" },
+    "message": { "role": "assistant", "content": "Red, yellow, blue" },
     "finish_reason": "stop"
   }],
-  "usage": { "prompt_tokens": 10, "completion_tokens": 9, "total_tokens": 19 }
+  "usage": { "prompt_tokens": 553, "completion_tokens": 11, "total_tokens": 564 }
 }</pre>
     </div>
     <div class="term frame snippets">

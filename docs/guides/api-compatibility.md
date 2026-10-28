@@ -213,7 +213,7 @@ Not all SheLLM providers support all parameters equally:
 | Capability | Claude | Codex |
 |---|---|---|
 | Prompt | stdin: plain text, or one stream-json message when it carries images. Never an argument, which Linux caps at 128 KiB | stdin (`-`), with the system prompt prepended |
-| System prompt | `--system-prompt-file`, the text in a `0600` file in the request's directory — always passed, empty when the caller sends none, so the CLI never falls back to its own coding-agent prompt | Prepended to the prompt |
+| System prompt | `--system-prompt-file`, the text in a `0600` file in the request's directory — always passed, empty when the caller sends none, so the CLI never falls back to its own coding-agent prompt. The CLI still adds its working directory, an empty temp dir, to the context, so a bare greeting may mention it | Prepended to the prompt |
 | Reasoning effort | `--effort` | `-c model_reasoning_effort="<level>"` |
 | Temperature | Ignored — no CLI flag | Ignored — no CLI flag |
 | Top P | Ignored — no CLI flag | Ignored — no CLI flag |
