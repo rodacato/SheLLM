@@ -44,8 +44,8 @@ keeps the old values; **Dev Containers: Rebuild Container** picks up new ones.
    ```
    Doing this after the container exists works too, followed by a rebuild.
 3. Open the folder in VS Code and run **Dev Containers: Reopen in Container**. `post-create.sh`
-   fixes volume ownership, runs `npm install` and creates `~/.config/shellm/env` from
-   `.env.example` on first creation. That copy has every
+   fixes volume ownership, runs `npm install` (rebuilding `better-sqlite3` if the volume holds a
+   build for another Node) and creates `~/.config/shellm/env` from `.env.example` on first creation. That copy has every
    secret commented out, so `shellm init` is still what makes `/admin/*` answer. `.env.example` is
    generated from `src/config/schema.js`; to change a setting, edit your own
    `~/.config/shellm/env` and restart, and run `shellm config` to see what is in effect.
@@ -84,9 +84,6 @@ provisioning. No production secret lives in this container.
 - **Never pass it as `GH_TOKEN`** in `local.env` or the Compose environment: an environment
   variable beats the stored login, shows up in `docker inspect`, and survives in the container's
   configuration.
-- **GitHub Projects owned by a user account are out of reach for fine-grained tokens.** If you
-  work a board from here, use a separate classic token with only `project`, `read:org` and
-  `read:discussion` for it, never a wider one.
 - **Provider logins are subscription credentials.** Wherever a CLI keeps its login inside the
   container, anything running in the container can read it. Log out, or delete that home, to
   revoke it here.

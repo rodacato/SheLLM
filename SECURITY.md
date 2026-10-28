@@ -14,13 +14,13 @@ SheLLM is designed as an **internal service**. It is not intended to be exposed 
 - **No TLS termination** is performed by SheLLM — this is the responsibility of the reverse proxy (if any)
 - **Multi-client bearer token authentication** managed via the Admin API. Set `SHELLM_REQUIRE_AUTH=true` (default) to reject all requests when no API keys are configured. Network isolation remains the primary trust boundary in production; bearer tokens add defense-in-depth.
 - **Rate limiting**: Global + per-client sliding window (requests per minute). Prevents abuse even from trusted internal clients.
-- **Auth failure alerting**: Spikes in auth failures (default: 10/min) fire a webhook to `SHELLM_ALERT_WEBHOOK_URL` for incident response.
+- **Auth failure alerting**: A spike in auth failures above `SHELLM_AUTH_ALERT_THRESHOLD` per minute fires a webhook to `SHELLM_ALERT_WEBHOOK_URL` for incident response.
 
 ### Admin Authentication Hardening
 
 The admin dashboard (`/admin/*`) authenticates in two ways against the same `SHELLM_ADMIN_PASSWORD`:
 
-- **Browsers** sign in at `/admin/login` and get a session cookie: HMAC-signed with a key derived from the database's key-hashing secret, `HttpOnly`, `SameSite=Lax`, `Secure` behind TLS, scoped to `/admin`, valid 7 days and renewed on use (at most once an hour), cleared by `POST /admin/logout`. `Lax` rather than `Strict` because some browsers treat launching the installed app from the home screen as arriving from another site and drop a `Strict` cookie; a cross-site `POST` still carries no `Lax` cookie, and the `Sec-Fetch-Site` check below refuses it regardless. Sessions are stateless — there is nothing to steal from the server, and rotating the secret invalidates every one of them.
+- **Browsers** sign in at `/admin/login` and get a session cookie: HMAC-signed with a key derived from the database's key-hashing secret, `HttpOnly`, `SameSite=Lax`, `Secure` behind TLS, scoped to `/admin`, renewed while in use (lifetime and renewal interval in `src/middleware/admin-session.js`), cleared by `POST /admin/logout`. `Lax` rather than `Strict` because some browsers treat launching the installed app from the home screen as arriving from another site and drop a `Strict` cookie; a cross-site `POST` still carries no `Lax` cookie, and the `Sec-Fetch-Site` check below refuses it regardless. Sessions are stateless — there is nothing to steal from the server, and rotating the secret invalidates every one of them.
 - **Scripts** keep using HTTP Basic, so `curl -u admin:… /admin/keys` still works.
 
 A cookie-authenticated request that is not a GET is refused when the browser reports `Sec-Fetch-Site` as anything but `same-origin`, which is what stops a cross-site form from using the session.
@@ -29,7 +29,7 @@ A cookie-authenticated request that is not a GET is refused when the browser rep
 
 The SPA's own files (JS, CSS, images, the manifest and the worker) are served without a session — they carry no account data — while `/admin/dashboard/` itself and every `/admin/*` API route need one. The service worker caches that shell and the CDN scripts, stylesheets and fonts it loads, and nothing else: it ignores non-GET requests, any other origin, and any path outside its hardcoded shell list, so no key, log or provider response is ever written to a device's cache.
 
-**Brute-force protection:** Failed login attempts are tracked per IP address using an in-memory sliding window. After 5 failures within 5 minutes (configurable via `SHELLM_ADMIN_MAX_ATTEMPTS`), further attempts from that IP are rejected with `429 Too Many Requests` and a `Retry-After` header.
+**Brute-force protection:** Failed login attempts are tracked per IP address using an in-memory sliding window. After `SHELLM_ADMIN_MAX_ATTEMPTS` failures within the window, further attempts from that IP are rejected with `429 Too Many Requests` and a `Retry-After` header.
 
 **Audit logging:** All admin authentication attempts (success and failure) are logged via the structured JSON logger. Failed attempts include: IP address, attempted username, and failure reason (`missing_header`, `invalid_encoding`, `invalid_format`, `wrong_password`, `wrong_username`). Successful attempts log the IP and username at `info` level.
 
@@ -59,20 +59,20 @@ Client API keys are managed via the Admin API (`/admin/keys`). Keys are stored h
 
 SheLLM manages auth tokens for two CLI tools. These tokens are **equivalent to API keys** and must be treated accordingly.
 
-| Provider | Token Location | Persistence |
-|---|---|---|
-| Claude Code | `~/.claude/` | Native home dir (`~shellmer/`) |
-| Codex CLI | `~/.codex/` | Native home dir (`~shellmer/`) |
+| Provider | Where the credential lives |
+|---|---|
+| Claude Code | `CLAUDE_CODE_OAUTH_TOKEN` in the config file, `~shellmer/.config/shellm/env` (mode 600); the CLI's own state is in `~shellmer/.claude/` |
+| Codex CLI | `~shellmer/.codex/` |
 
 **Rules:**
 
 - Auth token directories live in the `shellmer` user's home directory on the VPS, outside the
   checkout entirely — there is nothing for `.gitignore` to exclude
-- Auth tokens should be rotated by running `sudo -iu shellmer` then `<cli> auth login`
+- Rotate them as the service user (`sudo -iu shellmer`): `claude setup-token`, then replace `CLAUDE_CODE_OAUTH_TOKEN` in the config file and restart; `codex login` for codex
 
 ## Input Handling
 
-All user-supplied input passes through sanitization before reaching a CLI subprocess or API call.
+Prompt text passes through sanitization before reaching a CLI subprocess. The request body size is capped by `SHELLM_MAX_CHAT_BODY_BYTES`.
 
 ### Sanitization (src/middleware/sanitize.js)
 
@@ -80,18 +80,16 @@ All user-supplied input passes through sanitization before reaching a CLI subpro
 - **Zero-width character stripping** — removes U+200B-200F, U+2028-202F, U+FEFF, U+00AD
 - Null bytes (`\0`) are stripped — prevents injection in C-based CLI parsers
 - Carriage returns (`\r`) are normalized — prevents log injection
-- Input is truncated to **50,000 characters** — prevents memory abuse and excessive token consumption
 
 ### Subprocess Safety
 
-- The prompt is written to stdin and stdin is closed; nothing the caller wrote goes in argv. With no input, stdin is `ignore`, so a CLI never hangs on an interactive prompt
-- `NO_COLOR=1` is injected — prevents ANSI escape codes in output
-- **Output sanitization** — ANSI escape codes and control characters are stripped from CLI responses
-- Arguments are passed as an array to `spawn()` — **no shell interpolation**, preventing command injection
-- Each subprocess has a configurable timeout (default: 120s) — prevents runaway processes
-- **Process group kill** — subprocesses run in detached mode; timeout kills the entire process group (including grandchild processes)
-- **Environment isolation** — subprocesses receive an allowlist: PATH, HOME, TMPDIR, NO_COLOR, NODE_EXTRA_CA_CERTS and the XDG config/data paths (via `buildSafeEnv()`), plus `CLAUDE_CODE_OAUTH_TOKEN` for claude only. No other SheLLM setting reaches a CLI
-- **Per-request working directory** — each CLI starts in a fresh temp directory outside the checkout, holding only that request's files, removed when it exits
+What a spawned CLI is prevented from doing — nothing the caller wrote in argv, no shell, an
+allowlisted environment, a per-request working directory, a timeout that kills the whole process
+group — is the floor table in [ADR-0011](docs/adr/0011-security-model.md), with the file that
+enforces each row. Two more:
+
+- `NO_COLOR=1` is injected, and ANSI escape codes and control characters are stripped from CLI output
+- With no input, stdin is `ignore`, so a CLI never hangs on an interactive prompt
 
 ### Health Endpoint
 
@@ -130,7 +128,7 @@ The admin dashboard CSP allows `unsafe-inline` and `unsafe-eval` for Tailwind CS
 - **Prompt injection**: SheLLM does not inspect prompt content. A pattern-based guard was removed in 2026-09 because it blocked ordinary coding prompts while missing real injections; isolating what the CLI can reach is the defense that works.
 - **PII exposure**: SheLLM does not inspect prompt content. Callers must anonymize data before sending it.
 - **Rate limiting bypass**: A compromised client key still allows requests up to its RPM limit.
-- **CLI vulnerabilities**: If a CLI tool has a vulnerability, SheLLM inherits it. Keep CLI tools updated.
+- **CLI vulnerabilities**: If a CLI tool has a vulnerability, SheLLM inherits it. A host runs the versions its release pins, so a fix reaches it when the pin moves ([VERSIONS.md](VERSIONS.md)).
 
 ## Supported Versions
 
@@ -176,15 +174,15 @@ controls. The accepted risks named above are accepted, not vulnerabilities.
 
 ## Dependency Policy
 
-- **Minimize dependencies.** SheLLM has three runtime dependencies (Express, dotenv, better-sqlite3). Every additional package increases supply chain risk.
+- **Minimize dependencies.** The runtime set is `dependencies` in [`package.json`](package.json), kept small on purpose. Every additional package increases supply chain risk.
 - **Audit before adding.** Before adding any dependency, verify: maintenance status, download count, known vulnerabilities (`npm audit`), and whether a built-in alternative exists.
 - **Lock versions.** `package-lock.json` is committed and used for reproducible installs (`npm ci`).
 - **No postinstall scripts.** If a dependency runs scripts on install, evaluate whether it's worth the risk.
-- **CI audit:** Run `npm run audit:security` to check for high/critical vulnerabilities.
+- **CI audit:** CI runs `npm run audit:security`, which fails on high/critical vulnerabilities.
 
 ## Runtime Security
 
 - In production, the service runs as a dedicated **non-root user** (`shellmer`) on the VPS via systemd
-- Network access via `cloudflared` tunnel — zero open ports, Cloudflare handles TLS
-- Resource limits enforced by systemd unit configuration
+- Bound to loopback and reached through a tunnel, reverse proxy or private network that terminates TLS ([deployment guide](docs/guides/deployment.md#5-reach-it-from-outside))
+- The unit sets no memory or CPU limit; `MAX_CONCURRENT` and the rate limits are what bound load
 - `LOG_LEVEL=debug` in production emits a startup warning (may expose sensitive data)

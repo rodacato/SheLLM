@@ -14,13 +14,14 @@ provider suspends if something looks automated — read the fair-use section in 
 ssh root@your-server 'bash -s' < scripts/setup/vps.sh
 ```
 
-The script is safe to re-run. It creates the `shellmer` user, installs Node.js 24, clones the
+The script is safe to re-run. It creates the `shellmer` user, installs Node.js, clones the
 repository to `/home/shellmer/shellm`, links the `shellm` command, installs Claude Code and Codex at
 the versions the checked-out release pins in
-[`config/cli-versions/package.json`](../../config/cli-versions/package.json) (see
-[`VERSIONS.md`](../../VERSIONS.md)), and installs the systemd unit, the logrotate config and the update trigger. It
-does **not** start the service, does **not** enable the update trigger, and does **not** configure
-a tunnel.
+[`config/cli-versions/package.json`](../../config/cli-versions/package.json), and installs every
+file SheLLM keeps outside the checkout — the same set `SYSTEM_FILES` in
+[`src/cli/update.js`](../../src/cli/update.js) keeps in step on an update. It does **not** start
+the service, does **not** enable the update trigger or the backup timer, and does **not**
+configure a tunnel.
 
 Both CLIs are installed as `shellmer`, not system-wide: Claude Code under `~/.local/bin` and Codex
 under `~/.npm-global/bin`, the two paths the systemd unit puts on `PATH`.
@@ -36,11 +37,12 @@ new version when the host updates to it, from the dashboard or with `sudo shellm
 something with a version number and release notes. A repository with no tags yet falls back to the
 default branch.
 
-Override defaults with environment variables:
+Override defaults with environment variables. A CLI version given this way holds only until a
+release moves that pin, and `shellm doctor` warns about it meanwhile:
 
 ```bash
-ssh root@your-server 'CLAUDE_VERSION=2.1.273 bash -s' < scripts/setup/vps.sh
-ssh root@your-server 'CODEX_VERSION=0.154.0 bash -s' < scripts/setup/vps.sh
+ssh root@your-server 'CLAUDE_VERSION=<version> bash -s' < scripts/setup/vps.sh
+ssh root@your-server 'CODEX_VERSION=<version> bash -s' < scripts/setup/vps.sh
 ssh root@your-server 'SHELLM_REF=v1.0.0 bash -s' < scripts/setup/vps.sh   # a specific release
 ssh root@your-server 'SHELLM_REF=master bash -s' < scripts/setup/vps.sh   # or a branch, deliberately
 ```
@@ -67,17 +69,18 @@ sudo -iu shellmer shellm init
 previous step, generates an admin password, creates the first API key — shown once — and runs the
 checks. Values you already set are never overwritten, so re-running it is safe.
 
-Everything else is documented in [`.env.example`](../../.env.example). What matters on a server:
+Every setting, with its default, is in [`.env.example`](../../.env.example), generated from
+[`src/config/schema.js`](../../src/config/schema.js). What matters on a server:
 
-| Variable | Default | Why you would change it |
-|---|---|---|
-| `HOST` | `127.0.0.1` | Keep it. Expose SheLLM through a tunnel or proxy, not by binding publicly. A comma-separated list adds an internal address, such as the one Prometheus scrapes from |
-| `METRICS_TOKEN` | unset | Turns on `GET /metrics` for a Prometheus scrape with this bearer token; unset, it answers 404 |
-| `PORT` | `6100` | A port collision |
-| `MAX_CONCURRENT` | `4` | Each CLI process costs 150–215 MB of RAM (measured in [`benchmarks.md`](./benchmarks.md)). Every claude spawn rewrites the shared `~/.claude.json`; 5 parallel spawns were measured without corrupting it, so 4 stays under what was proven |
-| `MAX_STREAM_CONCURRENT` | `4` | Streaming holds a slot for the whole response and is capped separately |
-| `SHELLM_GLOBAL_RPM` | `60` | Requests per minute across all keys |
-| `SHELLM_ADMIN_PASSWORD` | generated | The dashboard login, at `/admin/login` |
+| Variable | Why you would change it |
+|---|---|
+| `HOST` | Keep it on loopback. Expose SheLLM through a tunnel or proxy, not by binding publicly. A comma-separated list adds an internal address, such as the one Prometheus scrapes from |
+| `METRICS_TOKEN` | Turns on `GET /metrics` for a Prometheus scrape with this bearer token; unset, it answers 404 |
+| `PORT` | A port collision |
+| `MAX_CONCURRENT` | Each CLI process costs 150–215 MB of RAM (measured in [`benchmarks.md`](./benchmarks.md)). Every claude spawn rewrites the shared `~/.claude.json`; 5 parallel spawns were measured without corrupting it, and the default stays below that |
+| `MAX_STREAM_CONCURRENT` | Streaming holds a slot for the whole response and is capped separately |
+| `SHELLM_GLOBAL_RPM` | Requests per minute across all keys |
+| `SHELLM_ADMIN_PASSWORD` | The dashboard login, at `/admin/login`. `init` generates one |
 
 `init` writes the load knobs into the config file rather than leaving them implicit, so the file
 lists what you can tune. Changing one is an edit and a restart:
@@ -85,7 +88,7 @@ lists what you can tune. Changing one is an edit and a restart:
 ```bash
 sudo -iu shellmer sed -i 's/^MAX_CONCURRENT=.*/MAX_CONCURRENT=6/' ~/.config/shellm/env
 sudo systemctl restart shellm
-curl -su "admin:$SHELLM_ADMIN_PASSWORD" localhost:6100/health/detailed | jq .queue
+curl -su 'admin:<admin password from the config file>' localhost:6100/health/detailed | jq .queue
 ```
 
 That last line reports the values the process is running, which is the only thing that proves the
@@ -99,8 +102,8 @@ ready to paste — a release can add a knob, and a config file written before it
 it on its own.
 
 Every limit is read from the environment, so nothing takes effect until the restart. The pair worth
-moving together is `MAX_CONCURRENT` and `SHELLM_GLOBAL_RPM`: at ~3 s per request, 60 req/min
-sustains about 3 concurrent, so raising the process cap alone only absorbs bursts. Overview says
+moving together is `MAX_CONCURRENT` and `SHELLM_GLOBAL_RPM`: at ~3 s per request, every 20 req/min
+sustains about one concurrent request, so raising the process cap alone only absorbs bursts. Overview says
 which of the two is binding — it splits the time a request spent queueing from the time it spent
 executing, and only queueing is fixed by raising a limit.
 
@@ -112,8 +115,10 @@ sudo systemctl status shellm
 sudo -iu shellmer shellm doctor --live   # spends one small request
 ```
 
-`shellm doctor` without `--live` checks Node, the config file's permissions, the bind address, the
-CLI and its login, and that an API key exists. Every failure prints the command that fixes it.
+`shellm doctor` without `--live` spends nothing: it checks Node, the config file's permissions, the
+bind address, each CLI against its pin, claude's login, that an API key exists, and settings a
+release added that this config does not set. Every failure and warning prints the command that
+fixes it. `--live` sends one request through claude only; it proves nothing about codex.
 
 ## 5. Reach it from outside
 
@@ -131,13 +136,9 @@ Whatever you choose, the API key is the only thing between a caller and your sub
 Do not expose `/admin/*` to the internet without a second factor in front of it.
 
 Over HTTPS the dashboard installs as a PWA: open it on a phone and use the browser's "Add to home
-screen". It runs standalone, keeps a seven-day session that renews while you use it, and caches only its own shell — every
-request for keys, logs or provider status still goes to the server.
-
-**The install is a launcher, not an offline app.** Tailwind, Alpine and Chart.js come from a CDN,
-so the page needs the network to assemble itself at all — and every number on every screen comes
-from the gateway, so there would be nothing to show offline anyway
-([ADR-0007](../adr/0007-installed-dashboard-is-a-launcher.md)).
+screen". **It is a launcher, not an offline app** ([ADR-0007](../adr/0007-installed-dashboard-is-a-launcher.md)):
+it caches its own shell and the CDN files that shell loads, never a response with account data,
+and every number on every screen comes from the server.
 
 ## Operating it
 
@@ -162,13 +163,14 @@ sudo shellm update
 
 That is the whole thing. It moves to the newest published release and does the rest in order:
 **snapshots the database and the config file** before anything moves, installs dependencies only
-if `package-lock.json` changed, installs any CLI whose pin the release moved, runs migrations, re-installs any file the release changed that
-lives outside the checkout, restarts, and then asks the running service what it serves. It is
+if `package-lock.json` changed, installs any CLI whose pin the release moved, runs migrations, re-installs any file the release
+changed that lives outside the checkout (`SYSTEM_FILES` in [`src/cli/update.js`](../../src/cli/update.js),
+the same set `vps.sh` installs), restarts, and then asks the running service what it serves. It is
 healthy only when the process reports **the commit it was asked to run and at least one provider
 that can answer** — a port that answers proves only that node started. **If any step after the
 checkout fails, or the service is not healthy, it checks out the previous commit, reinstalls that
-release's dependencies and CLI pins if they were replaced, restarts, confirms the previous release is serving,
-and exits non-zero** — so a bad release leaves you where you were. Its last line, `RESULT:`, says
+release's dependencies and CLI pins if they were replaced, restarts, confirms the previous release
+is serving, and exits non-zero** — so a bad release leaves you where you were. Its last line, `RESULT:`, says
 which of those happened; the dashboard shows the same line.
 
 The check reads the admin credentials from the config file, as the service user. On a host with no
@@ -177,22 +179,17 @@ claiming more.
 
 The snapshot comes first because migrations only go forward: the rollback restores the code, and
 the snapshot is what lets you restore the data behind it. When the failed release did carry a
-migration, `RESULT:` names the snapshot to restore — that step stays yours ([Restoring](#restoring)). It is the same `shellm backup` described
-below, writing to the same directory, and it runs whether the update came from the dashboard or
+migration, `RESULT:` names the snapshot to restore — that step stays yours
+([Restoring](#restoring)). It is the same `shellm backup` described below, writing to the same directory, and it runs whether the update came from the dashboard or
 from this command — **if it cannot be written, the update stops there with nothing changed.**
 
-Those outside files are the systemd units, the `tmpfiles.d` entry, the updater script and the
-logrotate config — the same set `vps.sh` installs. Keeping them in step is what lets a release
-that ships new wiring actually deliver it to a host that upgrades this way; it would otherwise
-arrive as code with nothing behind it. Nothing is *enabled* by an update: a unit that was off
-stays off.
+Nothing is *enabled* by an update: a unit that was off stays off.
 
-It takes a few seconds, and prints each step.
-
-To move to a specific release, or back to an earlier one:
+To move to a specific release, or back to an earlier one — after `sudo`, because `sudo` drops
+variables set before it:
 
 ```bash
-SHELLM_REF=v1.0.0 sudo shellm update
+sudo SHELLM_REF=v1.0.0 shellm update
 ```
 
 ### Updating from the dashboard (off by default)
@@ -206,38 +203,30 @@ sudo systemctl enable --now shellm-update.path
 sudo systemctl is-active shellm-update.path    # what the dashboard reports
 ```
 
-What it installs, and what each piece is for:
-
-| | |
-|---|---|
-| `shellm-update.path` | Watches `/run/shellm/update-request.json`, which the dashboard writes |
-| `shellm-update.service` | Runs the updater once, as root |
-| `/usr/local/lib/shellm/shellm-update-runner.sh` | Validates the request, resolves the tag to a commit id against the repository, snapshots the database, then calls `shellm update` |
-| `/etc/tmpfiles.d/shellm.conf` | Creates `/run/shellm`, owned by `shellmer` |
+The dashboard writes `/run/shellm/update-request.json`; `shellm-update.path` sees it and starts
+`shellm-update.service`, a root oneshot that runs
+[`shellm-update-runner.sh`](../../scripts/setup/shellm-update-runner.sh). The runner validates
+the request, resolves the tag to a commit id against the repository, and hands that id to
+`shellm update`, which takes the snapshot and does everything else
+([ADR-0003](../adr/0003-release-and-update-cycle.md), [ADR-0004](../adr/0004-backup-is-a-command.md)).
 
 The page offers only releases **newer** than the one running, with a link to each one's notes. A
 major version jump asks for the version to be typed before the button works, because that is where
 a migration can be one-way. Rolling back is deliberately not offered here — it is
-`SHELLM_REF=vX.Y.Z sudo shellm update`, where someone is already looking at the host.
+`sudo SHELLM_REF=vX.Y.Z shellm update`, where someone is already looking at the host.
 
 When the trigger is not armed the page says which of the two reasons applies, because they have
 different fixes: the units are not installed at all (re-run `vps.sh`) or they are installed and
 switched off (`systemctl enable --now`). `systemctl is-active` cannot tell those apart — it
 answers `inactive` for both — so the dashboard asks about the unit file as well.
 
-The runner refuses anything that is not a published release tag, and it checks out a **commit id**
-it resolved itself rather than the name it was given, so a rewritten local tag cannot redirect it.
-The snapshot is `shellm update`'s, not the runner's, so the button and the SSH command take the
-same one. The outcome lands in `/home/shellmer/.shellm/update-status.json` — durable on
-purpose, because you read it *after* the restart, which is when a rollback is what you want to
-know about.
+The outcome lands in `/home/shellmer/.shellm/update-status.json`, which survives the restart — you
+read it *after* the restart, which is when a rollback is what you want to know about.
 
 **A request is consumed even if the update then fails, and nothing retries it.** The runner claims
-the request before it does any work, because the trigger re-fires while the file is on disk and a
-request cleared at the end would loop forever on any crash. That means a failure — a database
-snapshot that would not write, a tag that does not resolve — stops there and says so in
-`update-status.json` rather than arming itself again as root. Pressing the button a second time is
-a person's decision.
+the request before it does any work, because the trigger re-fires while the file is on disk. A
+failure — a snapshot that would not write, a tag that does not resolve — stops there and says so
+in `update-status.json`. Pressing the button a second time is a person's decision.
 
 The status file is also how you tell a killed update from one that never started: it is written as
 `"state": "running"` with no `finished_at` before any work begins, and rewritten with the outcome
@@ -255,8 +244,7 @@ service is the first time it creates `/run/shellm` (see the troubleshooting tabl
 to), so follow it with `sudo systemctl restart shellm`.
 
 The checkout is left detached at a tag either way, so `git pull` inside it does nothing useful:
-the ref is chosen by the tooling, not by a tracking branch. A repository with no tags at all
-falls back to the default branch.
+the ref is chosen by the tooling, not by a tracking branch.
 
 **The service runs confined.** The unit mounts the filesystem read-only, grants
 `/home/shellmer` back, and then makes the checkout itself read-only — so neither the service nor
@@ -275,16 +263,17 @@ debug something strange:
 sudo -u shellmer -H shellm backup
 ```
 
-That writes one snapshot into `/var/lib/shellm/backups`, keeping the newest 7 and deleting older
-ones it wrote itself:
+That writes one snapshot into `/var/lib/shellm/backups` and prunes the oldest ones it wrote itself
+(`--keep N` sets how many stay; the default is in [`src/cli/backup.js`](../../src/cli/backup.js)):
 
 ```
 /var/lib/shellm/backups/20260920T031500Z/
   shellm.db     the database — API keys, request logs, audit trail
   config.env    the config file — admin password and the CLI OAuth tokens
+  claude.json   claude's own state, when the service user has one
 ```
 
-**Both files are mode 0600 and the directory is 0700, and they should stay that way wherever you
+**Every file is mode 0600 and the directory is 0700, and they should stay that way wherever you
 copy them.** Between them they are enough to impersonate this install.
 
 A snapshot is written to a temporary name, verified, and only then renamed into place, so a run
@@ -306,20 +295,17 @@ owns; copying that directory somewhere else — rsync, restic, borg, an object s
 already use — and deciding how long to keep it are yours. Point your tool at
 `/var/lib/shellm/backups` and nothing here needs to know which one you picked.
 
-`--dir` writes somewhere else. Note that `shellm-backup.service` can only write
-`/home/shellmer/.shellm` and `/var/lib/shellm`, so a different directory in the timer's path needs
-a drop-in granting it, or the unit fails with a read-only filesystem error.
+`--dir` writes somewhere else; under the timer that directory needs a drop-in granting it (see
+[Troubleshooting](#troubleshooting)).
 
 **Do not run it as root.** It refuses, and the refusal is the point: opening the database creates
 its `-wal` and `-shm` files, and root-owned ones in `/home/shellmer/.shellm` leave the service
 unable to write its own database.
 
-**Why not just copy the file.** The database runs in WAL mode, so **`cp` of the `.db` is not a
-backup** — the copy comes out torn or missing recent writes. On a live install the `.db` file was
-86 KB with an mtime six months old while the `-wal` beside it held 3.3 MB: a `cp` of the `.db`
-alone hands you the state of six months ago, at full size, with nothing about it looking wrong.
-`shellm backup` uses SQLite's online backup, which is consistent while the service is running and
-under load.
+**`cp` of the `.db` is not a backup.** The database runs in WAL mode, so the copy comes out torn or
+months stale with nothing about it looking wrong ([ADR-0004](../adr/0004-backup-is-a-command.md)
+has the measured case). `shellm backup` uses SQLite's online backup, which is consistent while the
+service is running.
 
 ### Restoring
 
@@ -389,8 +375,10 @@ ssh root@your-server 'bash -s -- --purge' < scripts/setup/vps-uninstall.sh # rem
 | `doctor` says the config is readable by other users | `chmod 600 /home/shellmer/.config/shellm/env` |
 | `Claude login: not logged in` | The token expired or was never set. Repeat step 2 and put it in `CLAUDE_CODE_OAUTH_TOKEN` |
 | `503 provider_unavailable` | The provider is disabled, unauthenticated, or its circuit is open after repeated failures. `shellm doctor --live` says which; for an open circuit, the System page's Failures section shows the last failure's message, and its Retry now routes to the provider again once the cause is fixed |
-| `504 timeout` | The CLI outlived `TIMEOUT_MS` (default 300 s). Cold starts are 2–4 s, so a timeout usually means the provider is degraded |
-| `429 rate_limited` | Your own limit (`SHELLM_GLOBAL_RPM`, or the key's `rpm`), not the provider's |
+| `504 timeout` | The CLI outlived `TIMEOUT_MS`. Cold starts are 2–4 s, so a timeout usually means the provider is degraded |
+| `429 rate_limited` | A message starting `claude:` or `codex:` is the subscription's own usage limit, in the CLI's words; nothing retries it. Any other message is your own limit (`SHELLM_GLOBAL_RPM`, the key's `rpm`, or the stream cap) |
+| `429 spend_limit_exceeded` | The key reached its monthly spend limit; the message says when it resets |
+| `doctor` warns `Claude CLI: X, pinned Y` (or Codex) | Someone upgraded a CLI by hand. `sudo bash /home/shellmer/shellm/scripts/setup/vps.sh` puts the pinned version back |
 | The service starts and exits immediately | `journalctl -u shellm -n 50`. A missing config file is the common cause: run `shellm init` as `shellmer` |
 | `Failed to set up mount namespacing` and the service will not start | A path the unit grants does not exist. The unit tolerates `/run/shellm` being absent; a hand-edited `ReadWritePaths` naming something else does not |
 | `EROFS` or "read-only file system" in the logs | Something tried to write inside the checkout, which the unit mounts read-only on purpose. State belongs under `/home/shellmer`, not next to the code |
@@ -405,6 +393,3 @@ ssh root@your-server 'bash -s -- --purge' < scripts/setup/vps-uninstall.sh # rem
 | `shellm-backup.service` fails with a read-only filesystem error | The unit grants `/home/shellmer/.shellm` and `/var/lib/shellm` and nothing else. A `--dir` elsewhere needs `systemctl edit shellm-backup.service` with a `ReadWritePaths=` for it |
 | A `.partial-…` directory in the backup directory | A snapshot that was killed outright. It is not a snapshot, nothing will ever read it, and it is safe to delete |
 | Works locally but not through the tunnel | The tunnel points at the wrong port, or `HOST` is not loopback |
-
-When the subscription's own quota runs out, the CLI says so and the error surfaces as
-`502 cli_failed` carrying the CLI's message.
