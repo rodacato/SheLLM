@@ -17,7 +17,7 @@ The last known-good version of each upstream CLI. Read this table and the tool's
 
 | SheLLM | claude | codex | Node.js | Last tested |
 |---|---|---|---|---|
-| after v1.25.0 | 2.1.312 | 0.165.0 | 24.x | 2026-10-28 — `npm run test:cli` for both CLIs; claude `chat` and stream-json parsed live through the provider. codex not checked live: this machine's codex session answered 401 on 0.160.1 too, so only its flags are verified |
+| after v1.25.0 | 2.1.312 | 0.165.0 | 24.x | 2026-10-28 — `npm run test:cli` and `npm run test:e2e` for both CLIs: OpenAI and Anthropic shapes, streaming, usage, and a 404 for a model the CLI lacks |
 | v1.1.1 | 2.1.273 | 0.154.0 | 24.x | 2026-09-19 — `npm run test:cli` for both CLIs; codex `exec --json` output recorded from the real binary; claude stream-json output recorded too |
 
 This row records the pinned pair at the date it was verified by hand. What keeps it honest between
