@@ -21,7 +21,7 @@ post:
   description: |
     Writes the request and returns. It does not deploy — a root systemd unit picks the request up,
     or nothing does. Only upgrades are accepted here: rolling back stays on the SSH path
-    (`SHELLM_REF=vX.Y.Z sudo shellm update`), so the worst outcome of a forged request is an
+    (`sudo SHELLM_REF=vX.Y.Z shellm update`), so the worst outcome of a forged request is an
     upgrade rather than a downgrade to a release with a known hole.
   security:
     - BasicAuth: []
