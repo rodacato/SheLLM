@@ -1,300 +1,209 @@
 # Architecture Guide
 
-SheLLM is a lightweight Node.js/Express service that wraps LLM CLI tools (Claude Code, Codex CLI) as a unified REST API. It runs as a single process with SQLite for persistence.
+SheLLM is one Node.js/Express process that runs the official Claude Code and Codex CLIs as
+subprocesses and answers in the OpenAI and Anthropic formats. SQLite holds keys and logs.
+
+This guide is the map: what each area is responsible for, the order things happen in, and the
+contracts that are not obvious from any single file. Values (defaults, limits, timeouts) live in
+[`src/config/schema.js`](../../src/config/schema.js), not here.
 
 ---
 
-## Directory Structure
+## Map
 
 ```
 src/
-├── server.js              # Process lifecycle: DB init, listen, shutdown, signals
-├── app.js                 # Express app: middleware chain, route mounting, static files
-├── errors.js              # Error factories (invalidRequest, rateLimited, etc.)
-├── cli.js                 # CLI dispatcher (shellm command)
-├── cli/                   # CLI subcommands (init, doctor, start, stop, status, logs, …)
-│
-├── routing/               # Request routing and provider dispatch
-│   ├── index.js           # route() — main dispatch + barrel exports
-│   ├── engines.js         # Engine registry (one entry per CLI provider)
-│   ├── provider-select.js # Provider selection, availability checks, fail-fast
-│   └── fallback.js        # Fallback routing across providers, provider listing
-│
-├── infra/                 # Infrastructure and reliability primitives
-│   ├── queue.js           # RequestQueue — concurrency control (max_concurrent, max_queue_depth)
-│   ├── circuit-breaker.js # Per-provider circuit breaker (closed → open → half_open)
-│   ├── stream-slots.js    # Streaming concurrency slots (acquireStreamSlot/releaseStreamSlot)
-│   ├── health.js          # Provider health checks, caching, background polling, alerts
-│   ├── metrics.js         # Prometheus registry: HTTP histogram, shellm_llm_* by provider and model
-│   ├── model-catalog.js   # Live model list from the CLIs, cached (ADR-0005)
-│   ├── model-limits.js    # Per-model limits: CLI > config/model-limits.yaml > 200k default (ADR-0009)
-│   ├── model-prices.js    # List-price estimate for a request the CLI did not price (ADR-0012)
-│   ├── yaml-manifest.js   # Hand-kept YAML under config/, re-read when the file changes
-│   ├── build-info.js      # Version and commit the running process reports
-│   ├── provider-lock.js   # Serializes operations that must not overlap per provider
-│   └── updater.js         # `shellm update` orchestration behind /admin/update
-│
-├── catalog/               # Baked model catalog
-│   └── models.json        # Fallback list when the CLIs cannot be asked
-│
-├── providers/             # LLM provider adapters
-│   ├── base.js            # Subprocess execution (spawn, timeout, output capture, env isolation, per-request temp dir and stdin)
-│   ├── claude.js          # Claude Code CLI adapter
-│   ├── codex.js           # Codex CLI adapter
-│   └── model-list.js      # Shared model enumeration across adapters
-│
-├── api/v1/                # API endpoint handlers (versioned)
-│   ├── chat-completions.js # POST /v1/chat/completions (OpenAI format)
-│   ├── messages.js        # POST /v1/messages (Anthropic format)
-│   ├── models.js          # GET /v1/models — the catalog, with each model's limits (ADR-0009)
-│   ├── image-parts.js     # Image content parts: data: URLs, type and size checks
-│   ├── usage.js           # Token usage in each format's own terms (cache, reasoning)
-│   └── betas.js           # anthropic-beta: context-1m-* (1M is also the default; see ADR-0009)
-│
-├── config/                # The configuration surface (ADR-0008)
-│   ├── schema.js          # Every setting: default, since, reload, describe — the only defaults
-│   └── index.js           # get/sourceOf/isInConfigFile; .env.example is generated from the schema
-│
-├── middleware/            # Express middleware
-│   ├── auth.js            # Bearer token auth + per-client/global rate limiting + per-key origins and spend limit
-│   ├── admin-auth.js      # Admin authentication: session cookie for browsers, Basic for scripts
-│   ├── admin-session.js   # HMAC-signed session cookie, content negotiation (wantsHtml)
-│   ├── cors.js            # CORS for /v1 only, off unless SHELLM_CORS_ORIGINS names an origin
-│   ├── request-id.js      # Request ID generation/pass-through
-│   ├── error-handler.js   # Last stop for next(err): JSON in the path's error shape
-│   ├── logging.js         # Request/response logging to DB, and the metrics each request records
-│   ├── metrics-auth.js    # GET /metrics: 404 without METRICS_TOKEN, 401 on a wrong bearer
-│   └── sanitize.js        # Input normalization
-│
-├── db/                    # SQLite persistence layer
-│   ├── index.js           # DB lifecycle (initDb/closeDb/getDb) + barrel re-exports
-│   ├── clients.js         # Client CRUD + key hashing (HMAC-SHA256, legacy SHA-256)
-│   ├── request-logs.js    # Request log insertion and pruning
-│   ├── providers.js       # Provider CRUD and settings
-│   ├── stats.js           # Aggregate queries behind the dashboard
-│   ├── audit.js           # Admin audit log
-│   ├── migrate.js         # Migration runner (one statement at a time, one transaction per file)
-│   └── migrations/        # SQL migration files (001–017)
-│
-├── lib/                   # Shared utilities
-│   ├── logger.js          # Structured JSON logger (level-aware)
-│   ├── sse.js             # Server-Sent Events helpers (OpenAI format)
-│   ├── sse-anthropic.js   # Anthropic-specific SSE formatting
-│   ├── shellm-meta.js     # The x_shellm block both formats carry
-│   └── time.js            # Window and duration helpers shared by stats and health
-│
-├── admin/                 # Admin dashboard backend
-│   ├── keys.js            # API key management routes
-│   ├── logs.js            # Request log query routes
-│   ├── stats.js           # Analytics routes
-│   ├── providers.js       # Provider management routes
-│   ├── config.js          # Settings read-out for the System page
-│   ├── login.js           # Sign-in page and session routes
-│   ├── update.js          # Update check and trigger routes
-│   ├── views.js           # Server-side page composition
-│   ├── views/             # Dashboard markup — the design system's fidelity target
-│   └── public/            # Dashboard frontend (Alpine.js, Tailwind and Chart.js from CDN)
+├── server.js          # Process lifecycle: config file, DB init, listen, health poller, shutdown
+├── app.js             # Middleware chain and every route mount; the order is behavior
+├── errors.js          # Error factories, and sendApiError, which picks the response shape by path
+├── cli.js             # The `shellm` command; one file per subcommand under cli/
+├── config/            # Every setting and its default (ADR-0008)
+├── api/v1/            # OpenAI and Anthropic handlers: validate, translate, stream, shape usage
+├── routing/           # Model to provider, availability checks, queue, fallback
+├── providers/         # One adapter per CLI, plus the subprocess runner they share
+├── infra/             # Queue, circuit breaker, stream slots, health, metrics, model catalog,
+│                      # limits and prices, the updater behind /admin/update
+├── middleware/        # Auth, admin auth, CORS, request id, logging, error handler
+├── db/                # SQLite: one module per table group, the migration runner and its files
+├── lib/               # Logger, SSE writers, token redaction, shared helpers
+├── catalog/           # Baked model list, used when the CLIs cannot be asked
+└── admin/             # Dashboard routes, server-side views, and the browser app in public/
 ```
+
+The modules a newcomer needs first:
+
+- `src/routing/engines.js` — the provider registry. Everything that dispatches reads it.
+- `src/routing/index.js` — `route()`, the non-streaming path: select, enqueue, call, record.
+- `src/providers/base.js` — the only place a subprocess is spawned. It builds the minimal
+  environment and the per-request temp directory, and captures `PATH` when it loads.
+- `src/config/schema.js` — every setting, its default and whether it reloads live.
+- `src/infra/health.js` — the probes that decide whether a provider is authenticated.
+
+`src/middleware/sanitize.js` is a function the handlers call, not middleware that `app.js` mounts.
 
 ---
 
 ## Request Flow
 
 ```
-HTTP Request
+HTTP request
   │
   ▼
-┌─────────────────────────────────────────────┐
-│  Express Middleware Chain                     │
-│  1. requestLogger           log completion   │
-│  2. corsV1 (/v1 only)       before the parser│
-│  3. express.json()          256kb; not chat  │
-│  4. requestId               generate/extract │
-│  5. Content-Type check      POST/PATCH only  │
-│  6. auth (Bearer token)     validate + rate  │
-│  7. chat body parser        chat only, 20MiB │
-└──────────────┬──────────────────────────────┘
-               │
-               ▼
-┌──────────────────────────┐
-│  Handler (api/v1/)        │
-│  • Validate request body  │
-│  • Extract messages       │
-│  • Sanitize + guard       │
-│  • Check model allowlist  │
-└──────────┬───────────────┘
-           │
-           ▼
-┌──────────────────────────────────────────────┐
-│  routing/index.js — route()                   │
-│  1. selectProvider(model)                     │
-│     ├─ resolveProvider()    model → engine    │
-│     └─ checkAvailability()  enabled? auth?    │
-│                              circuit ok?      │
-│  2. queue.enqueue()         concurrency gate  │
-│  3. provider.chat()         spawn the CLI     │
-│  4. recordSuccess/Failure   circuit breaker   │
-└──────────┬───────────────────────────────────┘
-           │
-           ▼
-┌──────────────────────────────────────────────┐
-│  Provider (providers/)                        │
-│  spawn the CLI; prompt on stdin, system in a  │
-│  0600 file; stdout decoded as UTF-8           │
-│  streams: headers at once, `: keepalive` each │
-│  15 s, an error event if the CLI is killed    │
-└──────────┬───────────────────────────────────┘
-           │
-           ▼
-  Response (OpenAI or Anthropic format)
+middleware chain (src/app.js, order below)
+  │
+  ▼
+handler (api/v1/)
+  validate the body, check the key's model list, sanitize prompt and system
+  │
+  ▼
+routing/index.js: route()        (streams take the same steps in the handler,
+  1. selectProvider(model)        and also hold a stream slot inside the queue slot)
+       resolveProvider()          model name to engine
+       checkProviderAvailability  enabled? authenticated? circuit allows it?
+  2. queue.enqueue()              concurrency gate, 429 when the queue is full
+  3. provider.chat()              spawn the CLI
+  4. recordSuccess/Failure        circuit breaker; a 4xx is not the provider's failure
+  │
+  ▼
+provider (providers/)
+  prompt on stdin; claude reads its system prompt from a 0600 file in the request's
+  temp directory, codex gets it prepended to the prompt; stdout decoded as UTF-8.
+  Streams send headers at once, a `: keepalive` comment on an interval so a
+  silent model does not trip the tunnel's idle timeout, and an error event if the
+  CLI is killed.
+  │
+  ▼
+response in the caller's format
 ```
+
+### Middleware order
+
+Changing the order changes behavior:
+
+1. `requestLogger` — logs completion and records metrics. Gateway metrics count only requests
+   where a CLI started (`res.locals.cli_ms`); a successful `/health` or `/metrics` is not logged.
+2. `corsV1` — on `/v1` only, before the body parser and before `auth`: a 400 or 413 from the
+   parser still reaches the browser, and a preflight, which carries no credentials, is answered.
+3. JSON body parser — a small limit for every path except `/v1/chat/completions`, which is parsed
+   after `auth` up to `SHELLM_MAX_CHAT_BODY_BYTES`, so a caller without a key never gets more than
+   a header read.
+4. `requestId` — `x-request-id` header, `request_id` in the body, or a new UUID.
+5. Content-Type check — rejects non-JSON POST/PATCH, except the admin login and logout forms.
+6. `auth`, per route — bearer key, the key's origin list and monthly spend limit (ADR-0013),
+   global and per-client rate limits.
+
+After the routes, an unmatched path gets a JSON 404, and `errorHandler` turns anything passed to
+`next(err)` into the error shape the path speaks, never Express's HTML page.
+
+### Error shapes
+
+Errors are built with the factories in `src/errors.js` and sent with `sendApiError`, which picks
+the shape from the path: Anthropic's for `/v1/messages` (or any `/v1/` call carrying
+`anthropic-version`), OpenAI's for the rest of `/v1/`, and a flat
+`{ error, message, request_id }` everywhere else.
 
 ---
 
-## Key Modules
+## Reliability
 
-### routing/ — Provider Dispatch
+- **Queue** (`src/infra/queue.js`) — limits concurrent CLI processes and answers 429 when the
+  waiting line is full. Its limits are read on every call, so changing them needs no restart.
+- **Circuit breaker** (`src/infra/circuit-breaker.js`) — per provider,
+  `closed → open → half_open → closed`. In `half_open` exactly one probe request gets through.
+- **Stream slots** (`src/infra/stream-slots.js`) — a second cap that only streams take, inside
+  their queue slot, so long streams cannot hold every slot.
+- **Fallback** (`src/routing/fallback.js`) — when enabled, tries the other providers in
+  `SHELLM_FALLBACK_ORDER`, or their DB priority order, skipping unavailable ones. A 4xx is the caller's error and never falls back.
+- **Health** (`src/infra/health.js`) — polls each provider with its `authProbe`, which spends no
+  quota, through the provider's own lock when it has one. A provider without a probe falls back to
+  `--version`, which proves installation only. A failure it cannot classify is recorded as unknown,
+  never as a logout: guessing "logged out" once took a whole provider offline. Fires webhook alerts
+  on status changes.
 
-The routing layer maps a model name to a provider engine and dispatches the request:
+---
 
-1. **index.js** — `route()`, the entry point: selects a provider, enqueues the call, dispatches it and records the outcome on the circuit breaker. Also the barrel the rest of the app imports from.
+## Providers
 
-2. **engines.js** — Maintains the `engines` registry object; every provider is a CLI subprocess registered at require-time.
-
-3. **provider-select.js** — `selectProvider(model)` resolves a model to an engine, then runs fail-fast checks: is the provider enabled? Is it authenticated (from cached health)? Is the circuit breaker allowing traffic?
-
-4. **fallback.js** — When fallback is enabled, tries providers in priority order, skipping unavailable ones. Does not fallback on 400-level client errors.
-
-### infra/ — Reliability Primitives
-
-1. **queue.js** — `RequestQueue` limits concurrent CLI executions. Default: 4 concurrent, 10 queue depth. Returns 429 when full. Read from the environment on every call; migration 013 dropped the settings table, so there is nothing to hot-reload.
-
-2. **circuit-breaker.js** — Per-provider state machine: `closed → open → half_open → closed`. Opens after 3 consecutive failures (configurable). Resets after 60s timeout. Only allows one probe request in half_open state.
-
-3. **stream-slots.js** — Separate concurrency counter for streaming requests (default: 4). Prevents streams from monopolizing all queue slots.
-
-4. **health.js** — Background polling of provider health. It asks the provider module for a probe that spends no quota (`authProbe`) and runs it through the provider's own lock when it has one; a provider without a probe falls back to `--version`, which proves installation only. A failure it cannot classify is recorded as an unknown, never as a logout. Caches results with configurable TTL. Fires webhook alerts on status transitions.
-
-### providers/ — Provider Adapters
-
-Every provider implements this interface:
+A provider is a plain object exported by `src/providers/<name>.js`.
+[`src/providers/claude.js`](../../src/providers/claude.js) and
+[`src/providers/codex.js`](../../src/providers/codex.js) are the reference; what the rest of the
+app relies on is:
 
 ```javascript
-{
+module.exports = {
   name: 'provider-name',
-  // parts: null, or the prompt as text and image parts in order, when the request has images.
-  // effort: low|medium|high, or undefined. longContext: the caller sent the context-1m beta
-  // (claude also uses 1M by default, per SHELLM_CLAUDE_LONG_CONTEXT).
-  // max_tokens, temperature and top_p are passed and ignored: neither CLI has a flag for them.
-  chat: async ({ prompt, parts, system, response_format, model, effort, longContext }) => {
-    return { content, cost_usd, usage };
-  },
-  chatStream: async function* ({ ...same, signal }) { ... },  // optional; signal aborts on disconnect
-  models: ['model-a', 'model-b'],
-  authProbe: async () => ({ ok, reason }),
-  env: { /* the only variables the subprocess receives */ },
-}
+  // Names that route here. GET /v1/models lists these plus what the CLI's catalog reports, and
+  // any id starting with "provider-name-" also routes here.
+  models: ['provider-name'],
+  // Merged over base.js's minimal environment (PATH, HOME, TMPDIR, NO_COLOR).
+  env: { /* only what this CLI needs */ },
+  // parts: null, or the prompt as text and image parts in order. effort: low|medium|high.
+  // longContext: the caller sent the context-1m beta. max_tokens, temperature and top_p are
+  // passed too and ignored: neither CLI has a flag for them.
+  chat: async ({ prompt, parts, system, response_format, model, effort, longContext }) =>
+    ({ content, cost_usd, usage, metrics }),
+  // Optional. Yields { type: 'delta', content }, { type: 'usage', ... }, then { type: 'done' };
+  // signal aborts when the client disconnects.
+  chatStream: async function* ({ ...same, signal }) {},
+  // A command that costs no quota, and a parser that answers true, false, or null (cannot tell).
+  authProbe: { args: ['auth', 'status'], parse: (stdout, stderr) => true },
+  // Optional. Health probes run inside it, so they do not race a request (codex holds one).
+  withLock: async (fn) => fn(),
+};
 ```
 
 `usage` is Anthropic-shaped for every provider, because one logging path serves them all:
 `input_tokens` is the **fresh** input only, with `cache_read_input_tokens` and
 `cache_creation_input_tokens` beside it rather than inside it, and `output_tokens` already
-including any reasoning tokens. A CLI that reports its counters another way converts in its own
-`usageFrom` — codex breaks its cache counters out of a total `input_tokens`, so it subtracts them.
-A counter the CLI did not report is **omitted**, which the log stores as NULL; a reported zero is
-stored as `0`.
+includes any reasoning tokens. A CLI that counts another way converts in its own adapter — codex
+reports cache reads inside its `input_tokens`, so it subtracts them. A counter the CLI did not
+report is **omitted**, which the log stores as NULL; a reported zero is stored as `0`.
 
-**Adding a new subprocess provider:**
+### Adding a provider
 
-1. Create `src/providers/<name>.js` implementing the interface above
-2. Register it in `src/routing/engines.js`: `const name = require('../providers/<name>'); engines[name] = ...`
-3. Add a migration to seed the provider in the DB. Its model names live in the adapter's `models`
-   and the catalog; limits the CLI does not report go in `config/model-limits.yaml`
-4. Export an `authProbe` (a free command plus a parser) from the provider module
+Read the provider's terms first: SheLLM only drives official binaries with the owner's own
+subscription (see the README's fair-use section). Then:
 
-### db/ — Persistence
-
-SQLite (better-sqlite3) with synchronous API. Each domain has its own module:
-
-- **clients.js** — API key management with HMAC-SHA256 hashing. Legacy SHA-256 keys are auto-upgraded on successful auth.
-- **providers.js** — Provider registry with capabilities JSON and health check config.
-
-Migrations live in `src/db/migrations/` and run automatically on startup. `migrate.js` applies a
-file one statement at a time inside a single transaction: a `duplicate column` error is ignored for
-an `ALTER TABLE` and nothing else, and any other failure rolls the file back and leaves it
-unrecorded, so it is retried on the next start.
-
-### middleware/ — Request Processing
-
-Middleware runs in order — changing the order changes behavior:
-
-1. `requestLogger` — Log request completion with timing, status, provider, origin, and record
-   its metrics. Gateway metrics count only requests where a CLI started (`res.locals.cli_ms`);
-   a successful `/health` or `/metrics` is not logged
-2. `corsV1` — Mounted on `/v1` only, before the body parser and before `auth`: a 400 or 413 from
-   the parser still reaches the browser, and a preflight, which carries no credentials, is
-   answered without one
-3. `express.json()` — Parse JSON body (256kb limit); `/v1/chat/completions` is skipped here and
-   parsed after `auth`, up to `SHELLM_MAX_CHAT_BODY_BYTES`, so a caller without a key never gets
-   more than a header read
-4. `requestId` — Extract `x-request-id` header or `request_id` from the body, or generate a UUID
-5. Content-Type check — Reject non-JSON POST/PATCH
-6. `auth` — Validate Bearer token, enforce the key's own origin list and monthly spend limit
-   (ADR-0013), check rate limits (global + per-client)
-
-After the routes: an unmatched path gets a JSON 404, and `errorHandler` turns anything passed to
-`next(err)` — a body that is not JSON, one past the limit, a thrown error — into the error shape
-the path speaks, never Express's HTML page.
+1. Write `src/providers/<name>.js` to the contract above, spawning through `execute()` from
+   `src/providers/base.js`.
+2. Register it in `src/routing/engines.js`.
+3. Add a migration in `src/db/migrations/` that inserts its row into `providers`. Health checks,
+   fallback order and the enable switch read that table, not the registry.
+4. Pin its CLI in `config/cli-versions/package.json`, and teach the installers about it:
+   `scripts/setup/vps.sh`, `src/cli/update.js` and the pin check in `src/cli/doctor.js` each name
+   their CLIs explicitly.
+5. Put limits the CLI does not report in `config/model-limits.yaml` (ADR-0009).
+6. Tests in `test/providers/`, and add it to `test/cli/contract.cli.js` and
+   `test/e2e/providers.e2e.js`, so an upstream flag or output change is caught.
+7. Record the tested version in `VERSIONS.md`.
 
 ---
 
-## Dependency Graph
+## Persistence
 
-```
-server.js
-  └── app.js
-        ├── middleware/*
-        ├── api/v1/*
-        │     └── routing/ (route, selectProvider, queue, stream-slots)
-        ├── admin/*
-        │     ├── db/* (clients, providers, audit)
-        │     └── routing/ (engines)
-        └── infra/health (getHealthStatus)
+SQLite through better-sqlite3, synchronous, one module per table group under `src/db/`. Client
+keys are stored as HMAC-SHA256; a legacy SHA-256 key is upgraded on its next successful auth.
 
-routing/
-  ├── index.js (route function)
-  ├── engines.js → providers/*
-  ├── provider-select.js → engines, infra/circuit-breaker, infra/health
-  └── fallback.js → provider-select, engines, infra/queue, infra/circuit-breaker
-
-infra/
-  ├── queue.js → errors
-  ├── stream-slots.js (no deps)
-  ├── circuit-breaker.js → lib/logger
-  └── health.js → queue, circuit-breaker, providers/base, db
-
-db/
-  ├── index.js (lifecycle + barrel)
-  ├── clients.js → index (getDb)
-  ├── request-logs.js → index (getDb)
-  ├── providers.js → index (getDb)
-  ├── audit.js → index (getDb)
-  └── migrate.js (no deps)
-```
+Migrations in `src/db/migrations/` run on every start. `src/db/migrate.js` applies a file one
+statement at a time inside a single transaction: a `duplicate column` error is ignored for an
+`ALTER TABLE` and nothing else, and any other failure rolls the file back and leaves it
+unrecorded, so it is retried on the next start.
 
 ---
 
 ## Design Decisions
 
-- **CommonJS, not ESM** — No transpilation step. `require()` is synchronous and debuggable.
-- **Express only** — No Nest, Fastify, or framework additions. Boring technology wins.
-- **SQLite, not Postgres** — Single-file database. No connection pool, no migration tooling. `better-sqlite3` is synchronous, which simplifies the code.
-- **No ORM** — Raw SQL in prepared statements. The schema is small enough that an ORM adds complexity without value.
-- **Subprocess providers** — CLI tools are invoked via `spawn()`, not SDK imports. This keeps auth isolated to the host (CLI subscriptions, not API keys).
-- **No TypeScript** — The codebase is about 7,500 lines of server JavaScript (9,400 with the dashboard's browser assets). TypeScript would add a build step for a project that fits in your head.
-- **Debuggability > simplicity > elegance** — When in doubt, choose the option that's easiest to debug at 2 AM.
-- **The service does not deploy itself** — It reports what it is running and can request an
-  update; a privileged component outside the process performs one, checking out a published tag.
-  See [ADR-0003](../adr/0003-release-and-update-cycle.md) for why the two halves are separate.
+- **CommonJS, no TypeScript, no build step** — the code runs as written, and a stack trace points
+  at the file you edit.
+- **Express only, no ORM** — raw SQL in prepared statements; the schema is small enough that an
+  ORM adds a layer without removing a problem.
+- **SQLite, not Postgres** — one file, no server, no connection pool. Synchronous calls keep the
+  code straight.
+- **Subprocess providers** — the CLIs are spawned, never imported as SDKs, so authentication stays
+  the CLI's own subscription login on the host.
+- **Debuggability first** — when in doubt, choose what is easiest to debug at 2 AM.
+- **The service does not deploy itself** — it reports what it runs and can request an update; a
+  privileged component outside the process checks out a published tag. See
+  [ADR-0003](../adr/0003-release-and-update-cycle.md).
 
-See [IDENTITY.md](../IDENTITY.md) for the full decision-making framework and project principles.
+See [IDENTITY.md](../IDENTITY.md) for the principles behind these.

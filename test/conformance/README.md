@@ -17,7 +17,7 @@ Keys go in `.env.conformance` at the repo root (gitignored). The prefix matters:
 ```sh
 CONFORMANCE_ANTHROPIC_API_KEY=sk-ant-...
 CONFORMANCE_OPENAI_API_KEY=sk-...
-# optional: CONFORMANCE_ANTHROPIC_MODEL (claude-haiku-5-5), CONFORMANCE_OPENAI_MODEL (gpt-4.1-mini)
+# optional: CONFORMANCE_ANTHROPIC_MODEL, CONFORMANCE_OPENAI_MODEL (defaults in targets.js)
 # optional, for --target shellm: CONFORMANCE_SHELLM_URL, CONFORMANCE_SHELLM_API_KEY, CONFORMANCE_SHELLM_MODEL
 ```
 
@@ -29,7 +29,7 @@ npm run conformance:record -- --target anthropic --only B03-prefill # one case a
 
 Two more targets: `anthropic-openai` records the OpenAI-format cases against Anthropic's own
 OpenAI-compatible endpoint (Claude behind the OpenAI format, like SheLLM), and `shellm` records a
-live SheLLM, real CLIs included. A full run is ~70 tiny requests: cents, not dollars. Recordings
+live SheLLM, real CLIs included. A full run is one small request per case in `cases/`: cents, not dollars. Recordings
 are redacted of the key and of org/project ids, but read the diff before committing them.
 
 ## Triage

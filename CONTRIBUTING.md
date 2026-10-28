@@ -4,7 +4,7 @@
 
 ### Prerequisites
 
-- Node.js >= 24
+- Node.js at the version `engines` names in [`package.json`](package.json)
 - Access to at least one CLI tool (Claude Code or Codex CLI)
 - Docker (optional — only for the devcontainer)
 
@@ -54,73 +54,34 @@ codex --version
 
 ### Language & Style
 
-- **CommonJS** — `require()` / `module.exports` (no ESM)
-- **Semicolons** — yes
-- **Single quotes** — for strings
-- **2 spaces** — for indentation
-- **Trailing commas** — in multi-line objects and arrays
-- **No TypeScript** — plain JavaScript with clear naming
+- **English only, everywhere in the repo**: product copy (dashboard, landing, brand page, social
+  card), code, comments, docs, commits and the `.pen` designs. One locale, never a mix.
+- **CommonJS** — `require()` / `module.exports`. No ESM, no TypeScript, no build step.
+- Semicolons, single quotes, 2-space indentation, trailing commas in multi-line literals.
+- Comments only where the *why* isn't self-evident.
 
 ### Architecture Rules
 
-1. **Minimal dependencies** (Express, dotenv, better-sqlite3). Don't add packages unless you can justify why a Node.js built-in won't work.
-2. **One file per provider.** Each provider is a self-contained module with the same export shape.
-3. **No classes.** Providers export plain objects with functions. No inheritance, no `this` binding issues.
-4. **Errors are objects, not strings.** Every error response has `{ error, message, request_id }`.
-5. **No silent failures.** If something fails, it returns a structured error with an actionable message.
+1. **Few dependencies.** The list is in [`package.json`](package.json); justify any addition
+   against the Node.js built-in that would otherwise do the job.
+2. **One file per provider**, exporting a plain object with the shape in the
+   [architecture guide](docs/guides/architecture.md#providers). Adding one is covered there too.
+3. **No ORM and no second datastore.** SQLite holds data; configuration is the config file.
+4. **No framework on top of Express**, and no auth mechanism beyond client keys and admin auth.
+5. **Errors are built with the factories in `src/errors.js`**, never as strings; the response
+   shape depends on the path ([error shapes](docs/guides/architecture.md#error-shapes)).
+6. **No silent failures.** A failure returns a structured error with an actionable message.
+7. **Decisions already taken live in [`docs/adr/`](docs/adr/).** Reopening one means writing the
+   next ADR.
 
-### Provider Contract
+### Adding a setting
 
-Every provider in `src/providers/` must export:
-
-```javascript
-module.exports = {
-  name: 'provider-name',
-  // Names that map to a real CLI model. GET /v1/models lists exactly these, and any
-  // id starting with "provider-name-" routes here and is passed to the CLI as given.
-  models: ['provider-name', 'provider-name-fast'],
-  chat: async ({ prompt, system, response_format, model }) => {
-    return { content: '...', cost_usd: null, usage: null };
-  },
-  chatStream: async function* ({ prompt, system, model, signal }) {
-    yield { type: 'delta', content: '...' };
-    yield { type: 'done' };
-  },
-  buildArgs: (params) => ['--flag', params.prompt],
-  parseOutput: (stdout) => ({ content: stdout }),
-};
-```
-
-`chatStream` is optional — without it, streaming requests buffer the `chat()` result and flush it
-as one chunk. `buildArgs` and `parseOutput` are exported so they can be tested as pure functions
-against recorded CLI output.
-
-## Adding a New Provider
-
-1. Create `src/providers/<name>.js` following the contract above
-2. Register the engine in `src/routing/engines.js`
-3. Add it to the provider list in `src/infra/health.js` and a migration that inserts its row
-4. Write tests in `test/providers/<name>.test.js`, and add it to the CLI contract suite
-   (`test/cli/contract.cli.js`) so an upstream flag change is caught
-5. Record the CLI version you tested against in `VERSIONS.md`
-6. Check the provider's terms first: SheLLM only drives official binaries with the owner's own
-   subscription, and the README's fair-use table says what that means per provider
-
-For CLI-based providers, use `execute()` from `src/providers/base.js`:
-
-```javascript
-const { execute } = require('./base');
-
-async function chat({ prompt, system, max_tokens }) {
-  const args = buildArgs({ prompt, system, max_tokens });
-  const result = await execute('cli-command', args);
-  return parseOutput(result.stdout);
-}
-```
-
-Every CLI runs in a temporary working directory with a minimal environment: only `PATH`, `HOME`,
-`TMPDIR`, `NO_COLOR` and whatever the provider explicitly passes. A provider's own credential is
-the only configured value it may receive.
+One entry in [`src/config/schema.js`](src/config/schema.js) — `default`, `since` (the release you
+are adding it in), `reload`, `describe` — then `npm run config:build` and commit the regenerated
+`.env.example`. Read it with `config.get('NAME')`, never `process.env.NAME || 'default'`; the
+default belongs in the schema and CI fails when the generated file is stale. Keep the read where it
+is: a module-level `const` stays `restart`, a read inside a function stays `live`. See
+[ADR-0008](docs/adr/0008-configuration-schema-in-code.md).
 
 ## Testing
 
@@ -141,7 +102,11 @@ node --test test/providers/claude.test.js
   put on `PATH` over mocking `execute()`. `base.js` captures `PATH` when it loads, so a test that
   installs a fake CLI must do it before requiring any provider
 - API tests import the Express `app` directly — don't start a server
-- Tests should be fast and deterministic: no network calls, no timers, no real CLI in CI
+- `npm test` is fast and deterministic: no network calls, no timers, no real CLI
+- The real binaries are exercised separately: `npm run test:cli` checks every argument the
+  adapters pass (no login needed; the CLI contract workflow runs it at the pinned versions on PRs
+  that touch a provider or a pin, and weekly against the latest releases), and `npm run test:e2e` checks real output and needs both
+  CLIs logged in
 
 ### Coverage
 
@@ -186,7 +151,7 @@ to "does this actually work" short of deploying. `shellm help` lists the CLI; da
 undoes the link.
 
 **`scripts/setup/vps.sh` cannot be rehearsed in a container.** It is `set -euo pipefail` and calls
-`systemctl daemon-reload` at line 90, so a stock `ubuntu:22.04` image dies there — after creating
+`systemctl daemon-reload`, so a stock `ubuntu:22.04` image dies there — after creating
 a user and installing Node. Test it on a disposable VPS, or read
 [`docs/guides/deployment.md`](docs/guides/deployment.md), which documents what it does step by
 step. It does not configure cloudflared; the tunnel is a separate manual step.
@@ -219,18 +184,17 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/). 
 
 ### Breaking changes
 
-Append `!` to the type or add a `BREAKING CHANGE:` footer. Triggers a **major** bump:
+Append `!` to the type. The changelog reads only the subject, so a `BREAKING CHANGE:` footer alone
+is not seen; the version bump itself is chosen by hand when the release is cut:
 
 ```
 feat!: rename /v1/complete to /v1/chat/completions
-
-BREAKING CHANGE: the old endpoint path is removed
 ```
 
 ### Examples
 
 ```
-feat(providers): add Mistral CLI provider
+feat(messages): accept a system prompt as content blocks
 
 fix(queue): prevent double-resolution when subprocess times out
 
@@ -238,12 +202,13 @@ docs(contributing): add conventional commits section
 
 chore(deps): bump @openai/codex to 0.155.1
 
-refactor(router): extract queue logic into separate module
+refactor(routing): extract queue logic into separate module
 ```
 
 ### Scopes (optional but recommended)
 
-`providers`, `router`, `queue`, `auth`, `admin`, `cli`, `health`, `deps`, `ci`, `docs`
+The area the change touches, the way `git log` already names it: a provider (`claude`, `codex`),
+an endpoint (`messages`), a dashboard area (`admin`, `keys`), or `deps`, `ci`, `docs`.
 
 ### Release flow
 
@@ -258,6 +223,8 @@ release branch, not after publication.
 ## Pull Requests
 
 - Keep PRs focused — one feature or fix per PR
+- PRs are rebase-merged, so every commit lands as written: each one must be a coherent working state
+- Keep the branch linear: rebase onto `master`, never merge `master` in
 - Include a brief description of what changed and why
 - If the PR changes the API contract, document the change
 - All tests must pass before merging
