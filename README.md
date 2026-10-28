@@ -134,7 +134,7 @@ export SHELLM_KEY=shellm-...   # the key init printed, shown once
 
 curl http://127.0.0.1:6100/v1/chat/completions \
   -H "Authorization: Bearer $SHELLM_KEY" -H "Content-Type: application/json" \
-  -d '{"model": "claude-haiku", "messages": [{"role": "user", "content": "Hello"}]}'
+  -d '{"model": "claude-haiku", "messages": [{"role": "user", "content": "Name the three primary colors, comma-separated."}]}'
 ```
 
 Official SDKs need no code change:
