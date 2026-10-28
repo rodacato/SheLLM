@@ -50,9 +50,9 @@ Running your own subscription through your own software still carries risk, and 
 
 | Provider | Status |
 |---|---|
-| **Claude** (Claude Code) | Supported. Anthropic's terms forbid intermediating Claude.ai credentials; SheLLM spawns the official binary, which keeps its own login. |
-| **Codex** (ChatGPT Plus/Pro/Business) | Supported, at your own risk. OpenAI documents `codex exec` for scripts and CI but recommends API keys for automation. No terms clause forbids wrapping your own subscription; anti-abuse classifiers are the real exposure, and a suspension takes the whole ChatGPT account with it. |
-| **Gemini** | Not supported. Gemini CLI stopped serving personal plans on 2026-06-18, and Antigravity's terms forbid "using the Service in connection with products not provided by us". |
+| **Claude** (Claude Code) | Supported. Anthropic's terms forbid passing a Claude.ai login through another service; SheLLM never touches it — it spawns the official binary, which keeps its own login. |
+| **Codex** (ChatGPT Plus/Pro/Business) | Supported, at your own risk. OpenAI documents `codex exec` for scripts and CI but recommends API keys for automation. No terms clause forbids wrapping your own subscription; OpenAI's automated abuse detection is the real exposure, and a suspension takes the whole ChatGPT account with it. |
+| **Gemini** | Not supported. Gemini CLI stopped serving personal plans on 2026-06-18, and the terms of Google's Antigravity forbid "using the Service in connection with products not provided by us". |
 
 Keep it human-scale. SheLLM never retries a request on its own, caps concurrent CLI processes
 (`MAX_CONCURRENT`) and probes provider health with `claude auth status` and
@@ -63,7 +63,8 @@ volume, buy API access — that is what it is for.
 
 ## What you'd build with it
 
-You already pay the subscription, so the marginal request costs nothing extra — and for Claude the
+You already pay the subscription, so the marginal request costs no extra money — it spends the same
+quota your own sessions do — and for Claude the
 CLI reports what that request *would* have cost on the API, attributed to the key that made it.
 Build the feature, run it for a week, and you know the bill before you decide to pay one. Codex
 reports tokens but no cost, so its requests carry an estimate at API list price, marked `est.` and
@@ -109,7 +110,8 @@ anything past about 1568 px down anyway, so a bigger photo only costs upload tim
 
 ## Getting started
 
-Requires Node.js 24 and a logged-in `claude` (or `codex`) on the same machine.
+Requires Node.js 24.22 or newer and a logged-in `claude` (or `codex`) on the same machine. With a
+system-wide Node, `npm link` writes to the global prefix and needs `sudo`.
 
 ```bash
 git clone https://github.com/rodacato/SheLLM.git && cd SheLLM
@@ -177,8 +179,7 @@ months ago still needs.
 
 ![Playground — a client key, a format selector set to Anthropic /v1/messages and a model field across one row, a prompt box under them, and the response below at full width showing a 200 with round trip, token counts and request id](design/exports/admin-playground-answered.png)
 
-The playground sends a real request through the same path an app takes, so a key that works here
-works everywhere.
+The playground sends a real request through the same path your app takes, with the same key.
 
 ## Models
 

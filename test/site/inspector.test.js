@@ -15,12 +15,12 @@ const ROOT = path.join(__dirname, '../..');
 const DATA = path.join(ROOT, 'site/inspector.json');
 const FIXTURES = path.join(ROOT, 'test/fixtures');
 
-const CLAUDE_STREAM = 'claude/2.1.273/stream-json.jsonl';
-const CODEX_SCHEMA = 'codex/0.154.0/exec-json-output-schema.jsonl';
+const CLAUDE_STREAM = 'claude/2.1.312/stream-json.jsonl';
+const CODEX_SCHEMA = 'codex/0.165.0/exec-json-output-schema.jsonl';
 
 // Line numbers (0-based) of the recording the page shows. The ones left out are the CLI's session
-// preamble and a duplicate of the streamed text.
-const CLAUDE_EVENTS = [3, 4, 5, 6, 8, 9, 10, 11];
+// preamble, a duplicate of the streamed text and the rate-limit event.
+const CLAUDE_EVENTS = [2, 3, 4, 5, 7, 8, 9, 11];
 const CODEX_EVENTS = [0, 1, 2, 3];
 
 const COUNT = 'Count to 5, one number per line.';
@@ -136,11 +136,11 @@ process.stdin.on('end', () => {
 
   before(async () => {
     fakeBin = fs.mkdtempSync(path.join(os.tmpdir(), 'shellm-inspector-'));
-    writeCli('claude', `if (args[0] === '--version') { process.stdout.write('2.1.273 (Claude Code)'); return; }
+    writeCli('claude', `if (args[0] === '--version') { process.stdout.write('2.1.312 (Claude Code)'); return; }
 if (args[0] === 'auth') { process.stdout.write('{"loggedIn":true}'); return; }
 if (args.includes('/model')) return;
 ${replay(CLAUDE_STREAM)}`);
-    writeCli('codex', `if (args[0] === '--version') { process.stdout.write('codex-cli 0.154.0'); return; }
+    writeCli('codex', `if (args[0] === '--version') { process.stdout.write('codex-cli 0.165.0'); return; }
 if (args[0] === 'login') { process.stdout.write('Logged in using ChatGPT'); return; }
 if (args[0] === 'app-server') { process.stdout.write('{"id":1,"result":null}\\n'); return; }
 ${replay(CODEX_SCHEMA)}`);
