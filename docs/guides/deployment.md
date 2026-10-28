@@ -29,8 +29,8 @@ under `~/.npm-global/bin`, the two paths the systemd unit puts on `PATH`.
 `DISABLE_AUTOUPDATER=1`, and `vps.sh` sets the same variable in `shellmer`'s
 `~/.claude/settings.json`, so a `claude` opened by hand for `setup-token` does not update itself
 either. A CLI someone upgrades by hand still drifts: `shellm doctor` warns when an installed version
-differs from the pin, and re-running `vps.sh` puts it back. `sudo shellm update` does not reinstall
-the CLIs, so after a release that moves a pin, re-run `vps.sh`.
+differs from the pin, and re-running `vps.sh` puts it back. A release that moves a pin installs the
+new version when the host updates to it, from the dashboard or with `sudo shellm update`.
 
 **It installs the newest published release**, not the tip of the default branch, so the host runs
 something with a version number and release notes. A repository with no tags yet falls back to the
@@ -162,12 +162,12 @@ sudo shellm update
 
 That is the whole thing. It moves to the newest published release and does the rest in order:
 **snapshots the database and the config file** before anything moves, installs dependencies only
-if `package-lock.json` changed, runs migrations, re-installs any file the release changed that
+if `package-lock.json` changed, installs any CLI whose pin the release moved, runs migrations, re-installs any file the release changed that
 lives outside the checkout, restarts, and then asks the running service what it serves. It is
 healthy only when the process reports **the commit it was asked to run and at least one provider
 that can answer** — a port that answers proves only that node started. **If any step after the
 checkout fails, or the service is not healthy, it checks out the previous commit, reinstalls that
-release's dependencies if they were replaced, restarts, confirms the previous release is serving,
+release's dependencies and CLI pins if they were replaced, restarts, confirms the previous release is serving,
 and exits non-zero** — so a bad release leaves you where you were. Its last line, `RESULT:`, says
 which of those happened; the dashboard shows the same line.
 

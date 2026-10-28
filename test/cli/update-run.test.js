@@ -30,7 +30,7 @@ function commitFiles(files, message) {
   return git(app, 'rev-parse', 'HEAD').trim();
 }
 
-function buildReleases(secondRelease) {
+function buildReleases(secondRelease, firstRelease = {}) {
   workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'shellm-update-run-'));
   const origin = path.join(workspace, 'origin.git');
   app = path.join(workspace, 'app');
@@ -40,7 +40,7 @@ function buildReleases(secondRelease) {
   git(app, 'config', 'user.name', 'test');
   git(app, 'remote', 'add', 'origin', origin);
 
-  v1 = commitFiles({ 'package-lock.json': '{"v":1}', 'README': 'one' }, 'v1');
+  v1 = commitFiles({ 'package-lock.json': '{"v":1}', 'README': 'one', ...firstRelease }, 'v1');
   git(app, 'tag', '-a', 'v1.0.0', '-m', 'v1.0.0');
   v2 = commitFiles(secondRelease, 'v2');
   git(app, 'tag', '-a', 'v2.0.0', '-m', 'v2.0.0');
@@ -216,5 +216,50 @@ describe('shellm update, judged by what the service runs', () => {
     const outcome = run({ host });
     assert.equal(outcome.code, 0);
     assert.match(outcome.summary, /\(not verified: SHELLM_ADMIN_PASSWORD is unset\)$/);
+  });
+
+  describe('the CLI pins', () => {
+    const pins = (claude, codex) => ({
+      'config/cli-versions/package.json': JSON.stringify({ dependencies: { '@anthropic-ai/claude-code': claude, '@openai/codex': codex } }),
+    });
+    const installs = (calls) => calls.filter((c) => c.includes('install.sh') || c.includes('@openai/codex@'));
+
+    it('installs only the CLI whose pin moved, before the restart', () => {
+      buildReleases(pins('2.1.302', '0.165.0'), pins('2.1.302', '0.163.0'));
+      const { host, calls } = fakeHost();
+      const outcome = run({ host });
+      assert.equal(outcome.code, 0, outcome.summary);
+      assert.deepEqual(installs(calls), ['npm install -g --prefix "$HOME/.npm-global" @openai/codex@0.165.0']);
+      assert.ok(calls.indexOf(installs(calls)[0]) < calls.indexOf('systemctl restart shellm'));
+    });
+
+    it('puts the previous pins back when the release it installed them for is rolled back', () => {
+      buildReleases(pins('2.1.312', '0.163.0'), pins('2.1.302', '0.163.0'));
+      const { host, calls } = fakeHost({ statusFor: (commit) => (commit === v2 ? 'down' : 'ok') });
+      const outcome = run({ host });
+      assert.match(outcome.summary, /rolled back to .*, which is serving\.$/);
+      assert.deepEqual(installs(calls), [
+        'curl -fsSL https://claude.ai/install.sh | bash -s 2.1.312',
+        'curl -fsSL https://claude.ai/install.sh | bash -s 2.1.302',
+      ]);
+    });
+
+    it('installs the pins a release adds over one that had none, and reinstalls nothing on its rollback', () => {
+      buildReleases(pins('2.1.302', '0.163.0'));
+      const { host, calls } = fakeHost({ statusFor: (commit) => (commit === v2 ? 'down' : 'ok') });
+      const outcome = run({ host });
+      assert.match(outcome.summary, /rolled back to .*, which is serving\.$/);
+      assert.equal(installs(calls).length, 2, 'the rollback had no earlier pin to go back to');
+    });
+
+    it('refuses a pin that is not a version before anything reaches a shell', () => {
+      buildReleases(pins('2.1.302; rm -rf ~', '0.163.0'), pins('2.1.273', '0.163.0'));
+      const { host, calls, running } = fakeHost();
+      const outcome = run({ host });
+      assert.equal(outcome.code, 1);
+      assert.deepEqual(installs(calls), []);
+      assert.equal(running(), v1);
+      assert.match(outcome.summary, /failed at CLIs \(@anthropic-ai\/claude-code is pinned to .*, which is not a version\)/);
+    });
   });
 });
