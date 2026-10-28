@@ -74,7 +74,7 @@ router.post('/update', (req, res) => {
   if (direction === null) {
     return sendError(res, invalidRequest(`Cannot compare ${ref} against the running version ${current}`), req.requestId);
   }
-  // Rolling back is a real need and it stays on the SSH path (`SHELLM_REF=vX.Y.Z sudo shellm
+  // Rolling back is a real need and it stays on the SSH path (`sudo SHELLM_REF=vX.Y.Z shellm
   // update`), where a person is already looking at the host. Offering it here would make the
   // worst outcome of a forged request "downgrade to a release with a known hole" instead of
   // "update to the newest one".
@@ -84,7 +84,7 @@ router.post('/update', (req, res) => {
       code: 'not_an_upgrade',
       message: direction === 0
         ? `This host already runs ${ref}`
-        : `${ref} is older than the running ${current}. Roll back over SSH: SHELLM_REF=${ref} sudo shellm update`,
+        : `${ref} is older than the running ${current}. Roll back over SSH: sudo SHELLM_REF=${ref} shellm update`,
     }, req.requestId);
   }
 

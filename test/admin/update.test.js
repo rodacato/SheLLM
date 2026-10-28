@@ -127,7 +127,7 @@ describe('admin /admin/update', () => {
     const res = await post({ ref: 'v1.1.1' });
     assert.equal(res.status, 409);
     assert.equal(res.body.error, 'not_an_upgrade');
-    assert.match(res.body.message, /SHELLM_REF=v1\.1\.1 sudo shellm update/);
+    assert.match(res.body.message, /sudo SHELLM_REF=v1\.1\.1 shellm update/);
     assert.deepEqual(state.written, []);
   });
 
