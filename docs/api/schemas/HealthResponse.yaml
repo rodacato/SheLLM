@@ -9,8 +9,8 @@ properties:
   timezone:
     type: string
     description: |
-      IANA zone the dashboard renders every timestamp in, from `SHELLM_TZ`. Defaults to
-      `America/Mexico_City`; an unknown name falls back to it rather than failing the request.
+      IANA zone the dashboard renders every timestamp in, from `SHELLM_TZ`. Unset or unknown, it
+      falls back to the default in `src/lib/time.js` rather than failing the request.
     example: America/Mexico_City
   providers:
     type: object

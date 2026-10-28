@@ -7,8 +7,10 @@ properties:
         type: string
       type:
         type: string
-        enum: [invalid_request_error, authentication_error, rate_limit_error, server_error]
+        enum: [invalid_request_error, authentication_error, rate_limit_error, insufficient_quota, server_error]
+        description: '`insufficient_quota` is a key past its monthly spend limit (code `spend_limit_exceeded`).'
       code:
         type: string
       param:
-        type: ['null']
+        type: [string, 'null']
+        description: The field at fault, on an `unsupported_parameter` error; null otherwise.

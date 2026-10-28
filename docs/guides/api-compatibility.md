@@ -1,43 +1,8 @@
 # API Compatibility Guide
 
-How SheLLM maps to the official OpenAI and Anthropic APIs. Use this guide to understand what works, what's ignored, and what differs when swapping `base_url` from a first-party API to SheLLM.
-
----
-
-## Quick Start — Drop-in Swap
-
-### OpenAI SDK
-
-```python
-from openai import OpenAI
-
-client = OpenAI(
-    base_url="http://localhost:6100/v1",  # SheLLM instead of api.openai.com
-    api_key="shellm-your-key-here",       # SheLLM API key, not OpenAI key
-)
-
-response = client.chat.completions.create(
-    model="claude",  # SheLLM model name (see GET /v1/models)
-    messages=[{"role": "user", "content": "Hello"}],
-)
-```
-
-### Anthropic SDK
-
-```python
-import anthropic
-
-client = anthropic.Anthropic(
-    base_url="http://localhost:6100",     # SheLLM instead of api.anthropic.com
-    api_key="shellm-your-key-here",
-)
-
-message = client.messages.create(
-    model="claude",
-    max_tokens=1024,
-    messages=[{"role": "user", "content": "Hello"}],
-)
-```
+How SheLLM maps to the official OpenAI and Anthropic APIs: what works, what is ignored, and what
+differs when you point an SDK's base URL at SheLLM instead of a first-party API. For a first call
+and SDK snippets, start with [`usage.md`](./usage.md).
 
 ---
 
@@ -63,7 +28,7 @@ message = client.messages.create(
 | `max_tokens` | **Accepted** | Integer 1-128000. Validated, then ignored — no CLI has a token-cap flag, so it does not shorten the answer |
 | `temperature` | **Accepted** | Number 0-2 |
 | `top_p` | **Accepted** | Number 0-1 |
-| `reasoning_effort` | **Supported** | `minimal`, `low`, `medium` or `high`; `minimal` runs as `low`, the floor both CLIs accept. Omitted, Claude uses `SHELLM_CLAUDE_EFFORT` (`medium`) and Codex its own configuration. Any other value is a 400 |
+| `reasoning_effort` | **Supported** | `minimal`, `low`, `medium` or `high`; `minimal` runs as `low`, the floor both CLIs accept. Omitted, Claude uses `SHELLM_CLAUDE_EFFORT` and Codex its own configuration. Any other value is a 400 |
 | `stream` | **Supported** | `true` enables SSE streaming |
 | `response_format` | **Supported** | `{ type: "json_schema", json_schema: { name, schema, strict? } }`, `{ type: "json_object" }` or `{ type: "text" }`. `name` is 1–64 letters, digits, `_` or `-`; the schema is at most 100 KiB, because Claude takes it as one command-line argument. The answer is the JSON as a string in `choices[0].message.content`; streamed, it arrives whole in a single `delta.content` chunk once the CLI has validated it (see the capability matrix) |
 | `stop` | **Validated** | String or array of up to 4 strings. Validated but not passed to providers |
@@ -112,7 +77,7 @@ A name no provider owns (`gpt-4o`) is rejected with 400 `invalid_request` before
 
 ### 2. Authentication
 
-SheLLM uses its own API keys (created via `/admin/keys`), not OpenAI or Anthropic keys. Pass them in the `Authorization: Bearer <key>` header — same header format both APIs use.
+SheLLM uses its own API keys (printed by `shellm init`, or created in the dashboard or with `POST /admin/keys`), not OpenAI or Anthropic keys. Pass them as `Authorization: Bearer <key>` or `x-api-key: <key>`; both work on every `/v1` endpoint, so either SDK's default header is accepted.
 
 ### 3. `temperature` Range
 
@@ -125,7 +90,7 @@ The claude and codex CLIs have no temperature flag, so SheLLM validates the valu
 
 ### 4. `max_tokens` Requirement
 
-- **OpenAI endpoint**: Optional (defaults vary by provider)
+- **OpenAI endpoint**: Optional. Validated when present and never passed on: no CLI has a token cap
 - **Anthropic endpoint**: **Required** (per Anthropic spec). Requests without `max_tokens` return 400.
 
 ### 5. Token Usage
@@ -157,10 +122,10 @@ On `/v1/chat/completions` a `user` message may also carry images, as OpenAI's `i
 
 - **Only `data:` URLs** of `image/jpeg`, `image/png`, `image/webp` or `image/gif`. A remote URL
   is a 400: fetching whatever address a caller names, from the server, is an SSRF.
-- **Limits:** `SHELLM_MAX_IMAGES` per request (default 8, counted across every message; `0` turns
-  images off) and `SHELLM_MAX_IMAGE_BYTES` per image, decoded (default 5 MiB). The body of this
-  endpoint may be up to `SHELLM_MAX_CHAT_BODY_BYTES` (default 20 MiB, a 413 beyond it); every other
-  endpoint stays at 256 kB.
+- **Limits:** `SHELLM_MAX_IMAGES` per request (counted across every message; `0` turns images
+  off) and `SHELLM_MAX_IMAGE_BYTES` per image, decoded. The body of this endpoint may be up to
+  `SHELLM_MAX_CHAT_BODY_BYTES` (a 413 beyond it); every other endpoint stays at the fixed 256 kB.
+  Defaults are in [`src/config/schema.js`](../../src/config/schema.js).
 - **The bytes must match the declared type.** A PNG labelled `image/jpeg` is a 400 here instead of
   a 502 from the provider.
 - **Every refusal is a 400 whose message names the image**, so a client can drop them and retry
@@ -258,7 +223,7 @@ Not all SheLLM providers support all parameters equally:
 | Images | One stream-json user message on stdin (`--input-format stream-json`), images as base64 blocks in place; never written to disk | `-i image-N.<ext>` per image, each a `0600` file in the request's directory, removed with it on success, failure or disconnect |
 | Streaming | Token deltas (`--output-format stream-json`) | Whole messages — it yields on `item.completed`, not per token |
 
-Codex runs `codex exec --ephemeral --skip-git-repo-check -s read-only --json`, one process at a time: concurrent processes race on its OAuth refresh (openai/codex#17340). A failed turn is read from the events, never from the exit code, which can be 0 on a failure (openai/codex#1018).
+Codex runs `codex exec --ephemeral --skip-git-repo-check -s read-only --json -c features.memories=false`, one process at a time: concurrent processes race on its OAuth refresh (openai/codex#17340). Memories are pinned off whatever the host's `config.toml` says, because they would carry one client's prompts into another's answer. A failed turn is read from the events, never from the exit code, which can be 0 on a failure (openai/codex#1018).
 
 Bare `codex` resolves to the default from the baked catalog, **not** to `~/.codex/config.toml`: without `-m` the CLI falls back to whatever that file names, and a ChatGPT account answers *"model is not supported"* to it. `codex-<model>` passes `<model>` to `-m` directly.
 

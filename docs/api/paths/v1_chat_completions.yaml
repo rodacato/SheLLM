@@ -52,8 +52,8 @@ post:
       $ref: "../responses/OriginNotAllowedOpenAI.yaml"
     '413':
       description: |
-        The body is larger than `SHELLM_MAX_CHAT_BODY_BYTES` (20 MiB by default). Checked after the
-        key, so an unauthenticated caller gets a 401 instead.
+        The body is larger than `SHELLM_MAX_CHAT_BODY_BYTES`. Checked after the key, so an
+        unauthenticated caller gets a 401 instead.
       content:
         application/json:
           schema:

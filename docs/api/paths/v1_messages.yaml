@@ -50,6 +50,12 @@ post:
       $ref: "../responses/UnauthorizedAnthropic.yaml"
     '403':
       $ref: "../responses/OriginNotAllowedAnthropic.yaml"
+    '413':
+      description: The body is larger than 256 kB.
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/AnthropicError.yaml"
     '429':
       $ref: "../responses/RateLimitedAnthropic.yaml"
     '502':
