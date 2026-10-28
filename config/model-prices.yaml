@@ -14,6 +14,35 @@ models:
     output: 50.00
     long_context: { input: 20.00, cached_input: 2.00, cache_write: 25.00, output: 75.00 }
 
+  # Source: the same page, read 2026-10-28; codex 0.165.0 lists all four.
+  gpt-6.1-terra:
+    input: 1.00
+    cached_input: 0.05
+    cache_write: 1.25
+    output: 5.00
+    long_context: { input: 2.00, cached_input: 0.10, cache_write: 2.50, output: 7.50 }
+
+  gpt-6.1-sol:
+    input: 2.00
+    cached_input: 0.10
+    cache_write: 2.50
+    output: 10.00
+    long_context: { input: 4.00, cached_input: 0.20, cache_write: 5.00, output: 15.00 }
+
+  gpt-6-sol:
+    input: 2.00
+    cached_input: 0.20
+    cache_write: 2.50
+    output: 10.00
+    long_context: { input: 4.00, cached_input: 0.40, cache_write: 5.00, output: 15.00 }
+
+  gpt-6-luna:
+    input: 0.10
+    cached_input: 0.01
+    cache_write: 0.125
+    output: 0.50
+    long_context: { input: 0.20, cached_input: 0.02, cache_write: 0.25, output: 0.75 }
+
   # Promotional pricing "at least through November 21, 2026"; the later price is not published.
   gpt-5.6-sol:
     input: 4.00
