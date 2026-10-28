@@ -9,6 +9,16 @@ const FIXTURE = path.resolve(__dirname, '../fixtures/claude/2.1.273/result-unkno
 
 const OVERLOADED = 'API Error: 529 {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}';
 const LIMITED = 'API Error: 429 rate limit exceeded';
+// The two labels the CLI's limit template has carried: 2.1.302 and earlier, then 2.1.312.
+const SESSION_LIMIT = "You've hit your session limit · resets 3pm (UTC)";
+const FIVE_HOUR_LIMIT = "You've hit your 5-hour limit · resets 3pm (UTC)";
+const FAILURES = {
+  limited: [429, LIMITED],
+  session: [null, SESSION_LIMIT],
+  fivehour: [null, FIVE_HOUR_LIMIT],
+  mentions: [null, 'The tool reported a usage limit of its own'],
+  overloaded: [529, OVERLOADED],
+};
 
 describe('a claude API failure', () => {
   const originalPath = process.env.PATH;
@@ -23,7 +33,7 @@ describe('a claude API failure', () => {
 const fs = require('fs');
 const prompt = fs.readFileSync(0, 'utf8');
 const result = JSON.parse(fs.readFileSync(${JSON.stringify(FIXTURE)}, 'utf8'));
-const [status, text] = prompt.includes('limited') ? [429, ${JSON.stringify(LIMITED)}] : [529, ${JSON.stringify(OVERLOADED)}];
+const [status, text] = ${JSON.stringify(FAILURES)}[prompt.trim()];
 Object.assign(result, { api_error_status: status, result: text });
 process.stdout.write(JSON.stringify(result) + '\\n');
 process.exit(1);
@@ -54,5 +64,19 @@ process.exit(1);
 
   it('is the same 429 without streaming', async () => {
     await assert.rejects(claude.chat({ prompt: 'limited', model: 'claude' }), (err) => err.status === 429 && err.code === 'rate_limited');
+  });
+
+  it('carries the status the API answered, for the request log', async () => {
+    await assert.rejects(claude.chat({ prompt: 'overloaded', model: 'claude' }), (err) => err.api_error_status === 529);
+  });
+
+  for (const [prompt, text] of [['session', SESSION_LIMIT], ['fivehour', FIVE_HOUR_LIMIT]]) {
+    it(`is a 429 from the limit message alone: "${text}"`, async () => {
+      await assert.rejects(claude.chat({ prompt, model: 'claude' }), (err) => err.status === 429 && err.code === 'rate_limited');
+    });
+  }
+
+  it('does not read a limit into a message that only mentions one', async () => {
+    await assert.rejects(claude.chat({ prompt: 'mentions', model: 'claude' }), (err) => err.code === 'cli_failed');
   });
 });

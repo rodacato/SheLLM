@@ -6,6 +6,7 @@ const EventEmitter = require('node:events');
 
 const { initDb, closeDb, getDb } = require('../../src/db');
 const { requestLogger } = require('../../src/middleware/logging');
+const { rateLimited, recordErrorCode } = require('../../src/errors');
 
 function fireRequest(locals, statusCode = 200) {
   const req = { method: 'POST', url: '/v1/chat/completions', requestId: 'req-1', clientName: 'app1' };
@@ -68,5 +69,13 @@ describe('request logging — metrics persisted', () => {
     const row = getDb().prepare("SELECT queued_ms, cost_usd FROM request_logs WHERE request_id = 'req-1' ORDER BY id DESC").get();
     assert.strictEqual(row.queued_ms, null);
     assert.strictEqual(row.cost_usd, null);
+  });
+
+  it('keeps the API status of a failed request, which is how a limit is told from a gateway 429', () => {
+    const locals = { provider: 'claude', model: 'claude' };
+    recordErrorCode({ locals }, Object.assign(rateLimited("claude: You've hit your 5-hour limit"), { api_error_status: 429 }));
+    fireRequest(locals, 429);
+    const row = getDb().prepare('SELECT error_code, api_error_status FROM request_logs ORDER BY id DESC LIMIT 1').get();
+    assert.deepStrictEqual({ ...row }, { error_code: 'rate_limited', api_error_status: 429 });
   });
 });
