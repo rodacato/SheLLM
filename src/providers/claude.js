@@ -22,8 +22,10 @@ function shouldSkipPermissions() {
   return config.get('SHELLM_CLAUDE_SKIP_PERMISSIONS');
 }
 
+// Always a file, empty when the caller sent none: without one the CLI falls back to its own coding
+// agent prompt, about 3,000 tokens of quota per request that the provider APIs never add.
 function systemPromptFor({ system, response_format }) {
-  if (response_format?.type !== 'json_object') return system;
+  if (response_format?.type !== 'json_object') return system ?? '';
   return system ? system + '\n\nRespond with valid JSON only.' : 'Respond with valid JSON only.';
 }
 
@@ -68,13 +70,13 @@ function modelArg(model, longContext) {
   return entry?.longContext ? `${alias}[1m]` : alias;
 }
 
-function buildBaseArgs({ system, response_format, model, effort, longContext }) {
+function buildBaseArgs({ response_format, model, effort, longContext }) {
   const args = ['--print', ...ISOLATION_ARGS];
   if (shouldSkipPermissions()) args.push('--dangerously-skip-permissions');
   const modelName = modelArg(model, longContext);
   if (modelName) args.push('--model', modelName);
   if (effortFor(effort)) args.push('--effort', effortFor(effort));
-  if (systemPromptFor({ system, response_format })) args.push('--system-prompt-file', SYSTEM_FILE);
+  args.push('--system-prompt-file', SYSTEM_FILE);
   // The flag takes the schema inline only; a path is refused as invalid JSON.
   if (wantsSchema(response_format)) args.push('--json-schema', JSON.stringify(cliSchema(response_format.json_schema.schema)));
   return args;
@@ -112,8 +114,7 @@ function contentBlock(part) {
 }
 
 function buildFiles(params) {
-  const systemPrompt = systemPromptFor(params);
-  return systemPrompt ? { [SYSTEM_FILE]: systemPrompt } : undefined;
+  return { [SYSTEM_FILE]: systemPromptFor(params) };
 }
 
 function buildInput(params) {
