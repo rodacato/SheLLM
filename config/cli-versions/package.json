@@ -3,7 +3,7 @@
   "private": true,
   "description": "The CLI versions vps.sh installs and shellm doctor checks the host against.",
   "dependencies": {
-    "@anthropic-ai/claude-code": "2.1.273",
+    "@anthropic-ai/claude-code": "2.1.306",
     "@openai/codex": "0.154.0"
   }
 }
