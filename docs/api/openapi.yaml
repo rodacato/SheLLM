@@ -19,9 +19,11 @@ info:
     ## Rate Limiting
 
     When rate-limited, responses include a `Retry-After` header (seconds).
-    - **Global limit**: configurable via `SHELLM_GLOBAL_RPM` (default 60 RPM)
-    - **Per-client limit**: configurable per API key (default 10 RPM)
-    - **Admin brute-force**: 5 failed attempts per IP triggers a 5-minute lockout
+    - **Global limit**: `SHELLM_GLOBAL_RPM`, shared by every key
+    - **Per-client limit**: the key's own `rpm`, set when it is created
+    - **Admin brute-force**: `SHELLM_ADMIN_MAX_ATTEMPTS` failed logins per IP trigger a lockout
+
+    Every setting's default is in `src/config/schema.js`.
   x-logo:
     url: logo.svg
     altText: SheLLM

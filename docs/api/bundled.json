@@ -3,7 +3,7 @@
   "info": {
     "title": "SheLLM API",
     "version": "1.25.0",
-    "description": "SheLLM exposes the owner's own LLM CLI subscriptions (Claude Code, Codex)\nas one REST API that answers in both the OpenAI and the Anthropic formats.\nIt spawns the official CLI binary per request; see the repository README for\nthe fair-use position on provider terms.\n\n## Authentication\n\n**Client endpoints** (`/v1/*`) take an API key as `Authorization: Bearer <key>`\nor `x-api-key`. Keys are created by `shellm init` and managed through the Admin API.\n\n**Admin endpoints** (`/admin/*`) use HTTP Basic authentication.\nThe password is set via the `SHELLM_ADMIN_PASSWORD` environment variable.\n\n## Rate Limiting\n\nWhen rate-limited, responses include a `Retry-After` header (seconds).\n- **Global limit**: configurable via `SHELLM_GLOBAL_RPM` (default 60 RPM)\n- **Per-client limit**: configurable per API key (default 10 RPM)\n- **Admin brute-force**: 5 failed attempts per IP triggers a 5-minute lockout\n",
+    "description": "SheLLM exposes the owner's own LLM CLI subscriptions (Claude Code, Codex)\nas one REST API that answers in both the OpenAI and the Anthropic formats.\nIt spawns the official CLI binary per request; see the repository README for\nthe fair-use position on provider terms.\n\n## Authentication\n\n**Client endpoints** (`/v1/*`) take an API key as `Authorization: Bearer <key>`\nor `x-api-key`. Keys are created by `shellm init` and managed through the Admin API.\n\n**Admin endpoints** (`/admin/*`) use HTTP Basic authentication.\nThe password is set via the `SHELLM_ADMIN_PASSWORD` environment variable.\n\n## Rate Limiting\n\nWhen rate-limited, responses include a `Retry-After` header (seconds).\n- **Global limit**: `SHELLM_GLOBAL_RPM`, shared by every key\n- **Per-client limit**: the key's own `rpm`, set when it is created\n- **Admin brute-force**: `SHELLM_ADMIN_MAX_ATTEMPTS` failed logins per IP trigger a lockout\n\nEvery setting's default is in `src/config/schema.js`.\n",
     "x-logo": {
       "url": "logo.svg",
       "altText": "SheLLM",
@@ -283,7 +283,7 @@
             "$ref": "#/components/responses/OriginNotAllowedOpenAI"
           },
           "413": {
-            "description": "The body is larger than `SHELLM_MAX_CHAT_BODY_BYTES` (20 MiB by default). Checked after the\nkey, so an unauthenticated caller gets a 401 instead.\n",
+            "description": "The body is larger than `SHELLM_MAX_CHAT_BODY_BYTES`. Checked after the key, so an\nunauthenticated caller gets a 401 instead.\n",
             "content": {
               "application/json": {
                 "schema": {
@@ -400,6 +400,16 @@
           },
           "403": {
             "$ref": "#/components/responses/OriginNotAllowedAnthropic"
+          },
+          "413": {
+            "description": "The body is larger than 256 kB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnthropicError"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/RateLimitedAnthropic"
@@ -1217,7 +1227,7 @@
           "Update"
         ],
         "summary": "Request an update to a release tag",
-        "description": "Writes the request and returns. It does not deploy — a root systemd unit picks the request up,\nor nothing does. Only upgrades are accepted here: rolling back stays on the SSH path\n(`SHELLM_REF=vX.Y.Z sudo shellm update`), so the worst outcome of a forged request is an\nupgrade rather than a downgrade to a release with a known hole.\n",
+        "description": "Writes the request and returns. It does not deploy — a root systemd unit picks the request up,\nor nothing does. Only upgrades are accepted here: rolling back stays on the SSH path\n(`sudo SHELLM_REF=vX.Y.Z shellm update`), so the worst outcome of a forged request is an\nupgrade rather than a downgrade to a release with a known hole.\n",
         "security": [
           {
             "BasicAuth": []
@@ -1372,7 +1382,7 @@
           },
           "timezone": {
             "type": "string",
-            "description": "IANA zone the dashboard renders every timestamp in, from `SHELLM_TZ`. Defaults to\n`America/Mexico_City`; an unknown name falls back to it rather than failing the request.\n",
+            "description": "IANA zone the dashboard renders every timestamp in, from `SHELLM_TZ`. Unset or unknown, it\nfalls back to the default in `src/lib/time.js` rather than failing the request.\n",
             "example": "America/Mexico_City"
           },
           "providers": {
@@ -2788,16 +2798,20 @@
                   "invalid_request_error",
                   "authentication_error",
                   "rate_limit_error",
+                  "insufficient_quota",
                   "server_error"
-                ]
+                ],
+                "description": "`insufficient_quota` is a key past its monthly spend limit (code `spend_limit_exceeded`)."
               },
               "code": {
                 "type": "string"
               },
               "param": {
                 "type": [
+                  "string",
                   "null"
-                ]
+                ],
+                "description": "The field at fault, on an `unsupported_parameter` error; null otherwise."
               }
             }
           }

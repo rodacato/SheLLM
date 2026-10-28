@@ -55,11 +55,11 @@ Running your own subscription through your own software still carries risk, and 
 | **Gemini** | Not supported. Gemini CLI stopped serving personal plans on 2026-06-18, and Antigravity's terms forbid "using the Service in connection with products not provided by us". |
 
 Keep it human-scale. SheLLM never retries a request on its own, caps concurrent CLI processes
-(`MAX_CONCURRENT`, default 4) and probes provider health with `claude auth status` and
-`codex login status`, which spend no quota.
-Cross-provider fallback is off unless you turn it on. What is left to you: one login per provider,
-and not pointing a batch job at it. If you need machine-scale volume, buy API access — that is
-what it is for.
+(`MAX_CONCURRENT`) and probes provider health with `claude auth status` and
+`codex login status`, which spend no quota. Cross-provider fallback is off unless you turn it on
+(`SHELLM_FALLBACK_ENABLED`, or per request with `x-shellm-allow-fallback: true`). What is left to
+you: one login per provider, and not pointing a batch job at it. If you need machine-scale
+volume, buy API access — that is what it is for.
 
 ## What you'd build with it
 
@@ -82,8 +82,8 @@ graph LR
 ```
 
 **A chatbot or an assistant inside your app.** Someone is waiting, so latency is the constraint:
-the floor for any answer is about 2.5 s ([benchmarks](docs/guides/benchmarks.md)) and four requests
-run at a time by default. Fine for one person talking to your app; not a support queue.
+the floor for any answer is about 2.5 s ([benchmarks](docs/guides/benchmarks.md)) and only
+`MAX_CONCURRENT` requests run at a time. Fine for one person talking to your app; not a support queue.
 
 **A nightly report over your own data.** A cron job that reads yesterday's rows and leaves a
 summary you find in the morning. **One report, not one per row** — pushing a backlog through a
@@ -184,46 +184,35 @@ works everywhere.
 
 | Provider | Models |
 |---|---|
-| Claude | `claude` (the CLI's default), `claude-haiku`, `claude-sonnet`, `claude-opus`, and any other `claude-*` id the CLI accepts, passed through as `--model` |
-| Codex | `codex` (the default model of the baked catalog) and any `codex-<model>` id, passed through as `-m <model>` — for example `codex-gpt-5.6-sol`. The CLI runs `--ephemeral` and `-s read-only`, one process at a time |
+| Claude | `claude` (the CLI's default), `claude-haiku`, `claude-sonnet`, `claude-opus`, and any other `claude-*` id the CLI accepts |
+| Codex | `codex` (the default model of the baked catalog) and any `codex-<model>` id, for example `codex-gpt-5.6-sol` |
 
-A model the CLI rejects comes back as `404 model_not_found`.
+A model the CLI rejects comes back as `404 model_not_found`. How a name becomes a CLI flag, and
+what `GET /v1/models` reports, is in [`docs/guides/usage.md`](docs/guides/usage.md#3-naming-a-model).
 
 ## API
 
 | Endpoint | Notes |
 |---|---|
-| `POST /v1/chat/completions` | OpenAI format. `model` and `messages` required, `max_tokens` optional (1–128000). `response_format` takes `json_schema` for structured output, and user messages take `data:` URL images |
-| `POST /v1/messages` | Anthropic format. `model`, `max_tokens` and `messages` required, top-level `system` optional |
-| `GET /v1/models` | OpenAI model list: the declared names plus the models the CLIs report, each with `context_window`, `context_window_1m` and `reasoning_efforts`, and where each figure came from ([ADR-0009](docs/adr/0009-model-limits-manifest.md)) |
+| `POST /v1/chat/completions` | OpenAI format, including streaming, `response_format` JSON Schema and `data:` URL images |
+| `POST /v1/messages` | Anthropic format, including streaming and `output_config.format` |
+| `GET /v1/models` | OpenAI model list, each model with its context window and reasoning efforts |
 | `GET /health` | `{ "status": "ok" }`, unauthenticated |
 | `/admin/*` | Keys, request logs and provider status — see [The dashboard](#the-dashboard) |
+
+Requests to `/v1/*` take the key as `Authorization: Bearer <key>` or `x-api-key`, and errors come
+back in the format of the endpoint you called. The status codes and what to do about each are in
+[`docs/guides/usage.md`](docs/guides/usage.md#7-errors); parameter-by-parameter support is in
+[`docs/guides/api-compatibility.md`](docs/guides/api-compatibility.md).
 
 The full contract — request and response schemas, the admin endpoints, streaming — is the
 OpenAPI document in [`docs/api/openapi.yaml`](docs/api/openapi.yaml). A running instance serves
 the bundled version of it at `/docs/openapi.json`, and `npm run docs:preview` opens it as a page.
 
-Requests to `/v1/*` need `Authorization: Bearer <key>` or `x-api-key`. Errors come back in the
-format of the endpoint you called:
-
-| Status | Code | Meaning |
-|---|---|---|
-| 400 | `invalid_request` | Bad input |
-| 400 | `context_length_exceeded` | The prompt is past the model's context window |
-| 401 | `auth_required` | Missing or invalid key |
-| 403 | `origin_not_allowed` | The key is scoped to other browser origins |
-| 404 | `model_not_found` | The CLI does not know that model |
-| 429 | `rate_limited` | Too many requests, with `Retry-After` |
-| 429 | `spend_limit_exceeded` | The key reached its monthly spend limit |
-| 502 | `cli_failed` | The CLI exited with an error |
-| 503 | `provider_unavailable` | Provider disabled, not authenticated, or circuit open |
-| 504 | `timeout` | Killed after `TIMEOUT_MS` |
-
 ## Using SheLLM from a browser
 
 A page on another origin — `https://you.github.io`, `http://localhost:5173` — can call `/v1`
-directly once you allow its origin. Nothing changes for existing callers: with
-`SHELLM_CORS_ORIGINS` unset, SheLLM answers exactly as it did before.
+directly once you allow its origin:
 
 ```bash
 SHELLM_CORS_ORIGINS=https://you.github.io,http://localhost:5173
@@ -231,106 +220,18 @@ SHELLM_CORS_ORIGINS=https://you.github.io,http://localhost:5173
 
 Exact match, one entry per origin — scheme, host and port, no path and no trailing slash. There is
 no wildcard: `*` matches nothing, because a page you did not mean to allow should fail rather than
-inherit access.
+inherit access. The list covers `/v1` only; the admin endpoints never answer a cross-origin
+request, so no page can read your keys or your logs.
 
-The list covers `/v1` only. The admin endpoints never answer a cross-origin request, so no page can
-read your keys or your logs.
-
-### Scope the key to the page
-
-A key can carry its own origin list, set when you create it in the dashboard or over the admin API:
-
-```bash
-curl -u admin:$PASSWORD -X POST http://127.0.0.1:6100/admin/keys \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"bench-page","rpm":30,"origins":["https://you.github.io"]}'
-```
-
-A request carrying any other `Origin` gets `403 origin_not_allowed`. A key's list narrows
-`SHELLM_CORS_ORIGINS`, it never widens it.
-
-**This is a guardrail, not authentication.** `Origin` is set by browsers; anything else holding the
-key can send whatever it likes, or nothing at all — a request with no `Origin` is accepted, so
-`curl` still works. What the list actually buys you is that a key pasted into the wrong page stops
-working, loudly, instead of quietly running up your subscription.
-
-### The key is in the page
-
-Whatever you ship to a browser is public — view-source, devtools, the network tab. Treat a browser
-key as published:
-
-- **A dedicated key**, never the one your servers use.
-- **A low `rpm`** and a short `expires_at`. A benchmark page needs a few requests a minute.
-- **The model list** narrowed to what the page actually calls.
-- **Rotate it** when the page changes hands, and after any public demo.
-
-### Six connections, and how to get past them
-
-A browser opens about **six HTTP/1.1 connections per host**. Request seven streams at once and the
-seventh does not queue in SheLLM — it waits in the browser, invisible from the server side, which
-will quietly ruin a concurrency benchmark.
-
-HTTP/2 lifts that limit, and SheLLM does not serve it: Express 5 on Node's `http2` compat layer
-crashes the process on the first HTTP/2 request. Put a proxy in front instead.
-
-```bash
-caddy trust                                                   # once, trusts Caddy's local CA
-caddy reverse-proxy --from localhost:6443 --to 127.0.0.1:6100
-```
-
-The page then talks to `https://localhost:6443` over HTTP/2, and Caddy talks HTTP/1.1 to SheLLM.
-Caddy does not buffer SSE, so streaming still arrives token by token. If the proxy is not on the
-same machine, set `SHELLM_TRUST_PROXY` (`loopback`, a hop count, or the proxy's address) so the
-admin login lockout counts real client IPs rather than the proxy's.
-
-For TLS without a proxy — enough for a plain `fetch`, still HTTP/1.1 and still six connections:
-
-```bash
-mkcert -install && mkcert localhost 127.0.0.1                 # a locally trusted certificate
-SHELLM_TLS_CERT=./localhost+1.pem
-SHELLM_TLS_KEY=./localhost+1-key.pem
-```
-
-Chrome needs one more thing for a public `https://` page to reach `127.0.0.1`: it sends a Private
-Network Access preflight, and SheLLM answers it for allowed origins. No setting to turn on.
-
-### Reading the numbers back
-
-Every `/v1` response carries what a benchmark needs:
-
-| | Where |
-|---|---|
-| `x-shellm-queue-ms`, `x-shellm-queue-position` | response headers (a stream reports its position before it starts) |
-| `cost_usd`, `queue_ms`, `cli_ms`, `ttft_ms` | the `x_shellm` block in the body, the final stream chunk, or `message_delta` |
-| token counts | `usage` — on a stream, send `stream_options: {"include_usage": true}` |
-
-All of them are in `Access-Control-Expose-Headers`, so JavaScript can actually read them.
-
-A request waiting for a free slot flushes its headers immediately and, while streaming, writes SSE
-comment lines every few seconds:
-
-```
-: queued position=3 waiting_ms=6012
-```
-
-Once the request is running, the stream writes `: keepalive` every 15 s until it ends, so a model
-that thinks for minutes before its first token does not look like a dead connection to a proxy
-such as Cloudflare, which drops one after 100 s of silence.
-
-Every SSE parser ignores a comment line, so this needs no client change — it is there so you can
-tell a queued request from a wedged one, and so intermediaries see traffic.
+Whatever you ship to a browser is public, so give the page a key of its own and scope it to the
+page's origin. Getting past the browser's six connections per host (HTTP/2 through Caddy), TLS
+without a proxy, and reading queue and timing figures back from JavaScript are in
+[`docs/guides/usage.md`](docs/guides/usage.md#10-calling-it-from-a-browser).
 
 ## CLI
 
-```
-shellm init                    Create the config file and a first API key
-shellm doctor [--live]         Check the setup; --live sends one real request
-shellm start [-p PORT]         Start the server in the foreground (Ctrl+C to stop)
-shellm status                  Report whether the server answers
-shellm config [--new]          Show every setting and where its value came from
-shellm backup [--dir DIR]      Snapshot the database and config file into one directory
-shellm update | version        Update the install, print the version
-```
+`shellm help` lists every command and its options. Besides the ones above, `shellm status` reports
+whether the server answers and `shellm config` shows the settings in effect.
 
 ## Configuration
 
@@ -340,64 +241,15 @@ startup. Anything not set there falls back to a default declared in
 [`.env.example`](.env.example) is the full reference list and is **generated** from that schema by
 `npm run config:build`, so edit the schema and never the generated file.
 
-`shellm config` prints what is actually in effect and where each value came from:
+`shellm config` prints every setting with the value in effect and where it came from (`default`,
+`config file` or `environment`; the real environment wins over the file). After an update,
+`shellm doctor` and the dashboard's System page list the settings the new release added that your
+file does not set, and `shellm config --new` prints each one with a line ready to paste.
 
-```
-SETTING              VALUE                     SOURCE         SINCE    RELOAD
-MAX_CONCURRENT       4                         default        v0.1.0   live
-SHELLM_CORS_ORIGINS  https://you.github.io     config file    v1.10.0  live
-LOG_LEVEL            debug                     environment    v0.1.0   restart
-```
-
-`SOURCE` is `default`, `config file` or `environment`, and a value in the real environment wins
-over the file.
-
-`RELOAD` says whether the code re-reads the value while running (`live`) or froze it at startup
-(`restart`). **Editing the config file needs a restart either way** — the file is loaded into the
-environment once, when the process starts. The distinction is there for changing a value in place,
-which nothing does yet, and it is why `PORT` can never be one of them: the socket is already bound.
-
-### Changing a setting
-
-Locally, append it, stop the running `shellm start` with Ctrl+C and start it again:
-
-```bash
-echo 'MAX_CONCURRENT=8' >> ~/.config/shellm/env
-shellm start
-```
-
-On a server the file belongs to the service user, and systemd owns the restart:
-
-```bash
-sudo -iu shellmer bash -c "echo 'SHELLM_CORS_ORIGINS=https://you.github.io' >> ~/.config/shellm/env"
-sudo systemctl restart shellm
-```
-
-Look for an existing line before appending — a key written twice is ambiguous:
-
-```bash
-sudo -iu shellmer grep -nE '^#? *SHELLM_CORS_ORIGINS=' ~/.config/shellm/env
-```
-
-### After an update
-
-A release can add a setting, and a config file written before it will not mention it. `shellm
-doctor` says so, and the dashboard's System page shows the same list:
-
-```
-! Settings: 1 available and unset: SHELLM_CORS_ORIGINS
-      fix: shellm config --new
-```
-
-`shellm config --new` prints each one with what it does and a line ready to paste. Re-running
-`shellm init` will not add them — it only writes the handful of keys it knows about, and never
-touches a key you already have.
-
-A config created by `shellm init` carries `# shellm-config-version:` on its first line, which is
-how a fresh install knows it is not missing anything: the settings the release you just installed
-introduced were never withheld from you. Only a release that lands *after* your config was written
-is reported. A config written before that marker existed is told about the current release's
-settings instead, which is what those hosts already saw.
+**Editing the config file needs a restart**, whatever the `RELOAD` column says: the file is loaded
+into the environment once, when the process starts. On a server that is
+`sudo systemctl restart shellm`; [`docs/guides/deployment.md`](docs/guides/deployment.md#3-configure)
+has the commands for editing the file as the service user.
 
 ## How it works
 
