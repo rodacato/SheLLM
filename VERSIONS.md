@@ -10,13 +10,14 @@ The last known-good version of each upstream CLI. Read this table and the tool's
 
 | Tool | Version | Pinned | Notes |
 |---|---|:---:|---|
-| `claude` (Claude Code) | `2.1.273` | ✅ | `@anthropic-ai/claude-code` in `config/cli-versions/package.json`; `vps.sh` passes it to the official installer |
-| `codex` | `0.154.0` | ✅ | `@openai/codex` in `config/cli-versions/package.json`, installed as the service user from the npm package `@openai/codex`. The adapter was rewritten against this version on 2026-09-19 and its event output is recorded in `test/fixtures/codex/0.154.0/` |
+| `claude` (Claude Code) | `2.1.312` | ✅ | `@anthropic-ai/claude-code` in `config/cli-versions/package.json`; `vps.sh` passes it to the official installer |
+| `codex` | `0.165.0` | ✅ | `@openai/codex` in `config/cli-versions/package.json`, installed as the service user from the npm package `@openai/codex`. The adapter was rewritten against 0.154.0 on 2026-09-19, and that version's event output is recorded in `test/fixtures/codex/0.154.0/` |
 
 ## Tested Combinations
 
 | SheLLM | claude | codex | Node.js | Last tested |
 |---|---|---|---|---|
+| after v1.25.0 | 2.1.312 | 0.165.0 | 24.x | 2026-10-28 — `npm run test:cli` for both CLIs; claude `chat` and stream-json parsed live through the provider. codex not checked live: this machine's codex session answered 401 on 0.160.1 too, so only its flags are verified |
 | v1.1.1 | 2.1.273 | 0.154.0 | 24.x | 2026-09-19 — `npm run test:cli` for both CLIs; codex `exec --json` output recorded from the real binary; claude stream-json output recorded too |
 
 This row records the pinned pair at the date it was verified by hand. What keeps it honest between
