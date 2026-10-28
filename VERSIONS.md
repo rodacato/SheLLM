@@ -18,7 +18,7 @@ moving one.
 
 | SheLLM | claude | codex | Node.js | Last tested |
 |---|---|---|---|---|
-| after v1.25.0 | 2.1.312 | 0.165.0 | 24.x | 2026-10-28 — `npm run test:cli` and `npm run test:e2e` for both CLIs: OpenAI and Anthropic shapes, streaming, usage, and a 404 for a model the CLI lacks |
+| v1.26.0 | 2.1.312 | 0.165.0 | 24.x | 2026-10-28 — `npm run test:cli` and `npm run test:e2e` for both CLIs: OpenAI and Anthropic shapes, streaming, usage, and a 404 for a model the CLI lacks |
 | v1.1.1 | 2.1.273 | 0.154.0 | 24.x | 2026-09-19 — `npm run test:cli` for both CLIs; codex `exec --json` output recorded from the real binary; claude stream-json output recorded too |
 
 Each row is the pinned pair on the date it was verified by hand. Between bumps, the **CLI
