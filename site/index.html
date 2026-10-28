@@ -335,7 +335,7 @@
     <h1><img src="assets/logo/logo-dark.svg" alt="SheLLM"></h1>
     <p class="cursor">Your LLM subscription — as a REST API for your own apps</p>
     <p class="aside">A personal project for experimenting on the subscriptions you already pay for,
-      through the official, unmodified CLIs — <a href="#terms">the lowest-risk way to do it</a>.</p>
+      through the official, unmodified CLIs — <a href="#terms">the lowest-risk way to do it, not a risk-free one</a>.</p>
     <div class="actions">
       <a class="btn btn-solid" href="#start">Get started</a>
       <a class="btn btn-ghost" href="https://github.com/rodacato/SheLLM">GitHub</a>
@@ -369,7 +369,8 @@
       </p>
       <div>
         <p class="sub">
-          You already pay the subscription, so the marginal request costs nothing extra — and for
+          You already pay the subscription, so the marginal request costs no extra money — it spends the
+          same quota your own sessions do — and for
           Claude the CLI reports what it <em>would</em> have cost on the API, attributed to the key
           that made it. That is the figure above.
         </p>
@@ -391,8 +392,8 @@
       <p class="lede">Four requests, played through SheLLM. Pick one and watch what it becomes on the way
         to the CLI and back.</p>
       <p class="sub">Nothing here is typed by hand. The argv, the responses and the log rows come from running
-        each request through the app against CLI output recorded from <code>claude</code> 2.1.273 and
-        <code>codex</code> 0.154.0 — and <a href="https://github.com/rodacato/SheLLM/blob/master/test/site/inspector.test.js">a test</a>
+        each request through the app against CLI output recorded from <code>claude</code> 2.1.312 and
+        <code>codex</code> 0.165.0 — and <a href="https://github.com/rodacato/SheLLM/blob/master/test/site/inspector.test.js">a test</a>
         fails the day any of it stops being true.</p>
     </div>
     <div class="ins-picker" role="tablist" aria-label="Request"></div>
@@ -415,8 +416,8 @@
         </div>
       </div>
       <div class="col engines"><span>Official CLI</span>
-        <div class="node" data-node="claude"><b>claude</b>Claude Code 2.1.273</div>
-        <div class="node" data-node="codex"><b>codex</b>Codex CLI 0.154.0</div>
+        <div class="node" data-node="claude"><b>claude</b>Claude Code 2.1.312</div>
+        <div class="node" data-node="codex"><b>codex</b>Codex CLI 0.165.0</div>
       </div>
       <div class="packet"></div>
     </div>
@@ -509,9 +510,10 @@
     <h2>Get started</h2>
     <div class="term frame">
       <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i></div>
-<pre><span class="c"># Node.js 24 and a logged-in claude (or codex) on the same machine</span>
+<pre><span class="c"># Node.js 24.22 or newer and a logged-in claude (or codex) on the same machine</span>
 <span class="p">$</span> git clone https://github.com/rodacato/SheLLM.git &amp;&amp; cd SheLLM
 <span class="p">$</span> npm install &amp;&amp; npm link
+<span class="c"># shellm init asks for the token that `claude setup-token` prints</span>
 <span class="p">$</span> shellm init
 <span class="c"># prints the API key (shown once, store it now) — export it as SHELLM_KEY</span>
 <span class="p">$</span> shellm start</pre>
@@ -704,15 +706,15 @@ await stream.finalMessage();</pre>
       <tbody>
         <tr>
           <td>Claude</td>
-          <td>Supported. Anthropic forbids intermediating Claude.ai credentials; the official binary keeps its own login.</td>
+          <td>Supported. Anthropic forbids passing a Claude.ai login through another service; SheLLM never touches it — the official binary keeps its own login.</td>
         </tr>
         <tr>
           <td>Codex</td>
-          <td>Supported, at your own risk. <code>codex exec</code> is documented for scripts; anti-abuse classifiers are the real exposure, and a suspension takes the whole ChatGPT account.</td>
+          <td>Supported, at your own risk. <code>codex exec</code> is documented for scripts; OpenAI's automated abuse detection is the real exposure, and a suspension takes the whole ChatGPT account.</td>
         </tr>
         <tr>
           <td>Gemini</td>
-          <td>Not supported. Gemini CLI stopped serving personal plans, and Antigravity's terms forbid it.</td>
+          <td>Not supported. Gemini CLI stopped serving personal plans, and the terms of Google's Antigravity forbid it.</td>
         </tr>
       </tbody>
     </table>
