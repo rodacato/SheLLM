@@ -835,6 +835,8 @@
         "-s",
         "read-only",
         "--json",
+        "-c",
+        "features.memories=false",
         "-m",
         "gpt-6-astra",
         "--output-schema",
