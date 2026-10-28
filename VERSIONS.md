@@ -58,7 +58,9 @@ until `1.0`.
 
 `vps.sh` installs both CLIs at the versions the checked-out release pins, and turns off Claude
 Code's autoupdater for the service user, so a server stays on the versions in the table until you
-bump them. `shellm doctor` warns when an installed CLI differs from its pin. `CLAUDE_VERSION` and
+bump them. A host that updates to a release with a new pin installs it as part of the update, and
+puts the previous one back if the update rolls back. `shellm doctor` warns when an installed CLI
+differs from its pin. `CLAUDE_VERSION` and
 `CODEX_VERSION` override the pin for one run of `vps.sh`. A developer
 machine usually runs whatever the CLI updated itself to: if parsing breaks there, compare
 `claude --version` or `codex --version` against the table and check the provider in

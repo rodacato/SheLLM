@@ -37,6 +37,15 @@ const REF_FORMS = [
 ];
 const REF_MAX_LENGTH = 128;
 
+// The same two installs vps.sh runs, as the service user. A pin reaches a shell, so it has to be a
+// bare version first.
+const CLI_PINS_FILE = 'config/cli-versions/package.json';
+const CLI_INSTALLS = {
+  '@anthropic-ai/claude-code': (version) => `curl -fsSL https://claude.ai/install.sh | bash -s ${version}`,
+  '@openai/codex': (version) => `npm install -g --prefix "$HOME/.npm-global" @openai/codex@${version}`,
+};
+const PIN_FORM = /^\d+\.\d+\.\d+$/;
+
 function isSupportedRef(ref) {
   if (typeof ref !== 'string' || ref.length === 0 || ref.length > REF_MAX_LENGTH) return false;
   if (ref.includes('..')) return false;
@@ -111,7 +120,7 @@ function update(host) {
   const snap = host.snapshot();
   if (!snap.ok) return { code: 1, summary: snap.summary };
 
-  const applied = { deps: false, migrations: false, systemFiles: [] };
+  const applied = { deps: false, clis: false, migrations: false, systemFiles: [] };
   let current = 'checkout';
   try {
     host.log(`  checking out ${ref}`);
@@ -132,6 +141,12 @@ function update(host) {
     } else {
       host.log('  no dependency changes — skipping npm ci');
     }
+
+    current = 'CLIs';
+    step(host, 'Checking CLI pins');
+    const pins = movedPins(host, prevCommit, target);
+    applied.clis = pins.length > 0;
+    installPins(host, pins);
 
     current = 'migrations';
     step(host, 'Running migrations');
@@ -167,13 +182,13 @@ function update(host) {
   } catch (err) {
     const reason = String(err.stderr || err.message || err).trim().split('\n').pop();
     host.error(`  FAILED at ${current} — ${reason}`);
-    return rollback(host, { ref, prevCommit, applied, snapshot: snap.path, step: current, reason });
+    return rollback(host, { ref, prevCommit, target, applied, snapshot: snap.path, step: current, reason });
   }
 }
 
 // Every failure after the checkout lands here, not only a failed health check. It ends with a
 // service that runs the previous release, or with the command that gets one.
-function rollback(host, { ref, prevCommit, applied, snapshot: snapPath, step: failedAt, reason }) {
+function rollback(host, { ref, prevCommit, target, applied, snapshot: snapPath, step: failedAt, reason }) {
   const prev = prevCommit.slice(0, 8);
   const failed = `update to ${ref} failed at ${failedAt} (${reason})`;
   host.error(`\nRolling back to ${prev}...`);
@@ -182,6 +197,10 @@ function rollback(host, { ref, prevCommit, applied, snapshot: snapPath, step: fa
     if (applied.deps) {
       host.error('  restoring the previous release\'s dependencies');
       host.exec('npm ci --omit=dev');
+    }
+    if (applied.clis) {
+      host.error('  restoring the previous release\'s CLI pins');
+      installPins(host, movedPins(host, target, prevCommit));
     }
     if (applied.systemFiles.length) {
       installSystemFiles(host, new Set(applied.systemFiles.map((f) => f.src)));
@@ -252,6 +271,38 @@ function installSystemFiles(host, touched) {
   }
   host.log('  done');
   return changed;
+}
+
+// Only the CLIs whose pin moved: reinstalling Claude Code downloads the whole binary again. A
+// release from before the manifest pins nothing, and leaves whatever is installed.
+function movedPins(host, from, to) {
+  const before = cliPins(host, from);
+  const after = cliPins(host, to);
+  const moved = Object.keys(CLI_INSTALLS).filter((pkg) => after[pkg] && after[pkg] !== before[pkg]);
+  for (const pkg of moved) {
+    if (!PIN_FORM.test(after[pkg])) throw new Error(`${pkg} is pinned to ${JSON.stringify(after[pkg])}, which is not a version`);
+  }
+  return moved.map((pkg) => ({ pkg, from: before[pkg], to: after[pkg] }));
+}
+
+function installPins(host, pins) {
+  if (!pins.length) {
+    host.log('  no pin changes');
+    return;
+  }
+  for (const { pkg, from, to } of pins) {
+    host.log(`  ${pkg} ${from || 'unpinned'} → ${to}`);
+    host.exec(CLI_INSTALLS[pkg](to));
+  }
+  host.log('  done');
+}
+
+function cliPins(host, commit) {
+  try {
+    return JSON.parse(host.git('show', `${commit}:${CLI_PINS_FILE}`)).dependencies || {};
+  } catch {
+    return {};
+  }
 }
 
 // The host follows published releases; SHELLM_REF deploys a specific one, a commit id, or a branch.
