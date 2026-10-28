@@ -56,8 +56,8 @@ Running your own subscription through your own software still carries risk, and 
 
 Keep it human-scale. SheLLM never retries a request on its own, caps concurrent CLI processes
 (`MAX_CONCURRENT`) and probes provider health with `claude auth status` and
-`codex login status`, which spend no quota. Cross-provider fallback is off unless you turn it on
-(`SHELLM_FALLBACK_ENABLED`, or per request with `x-shellm-allow-fallback: true`). What is left to
+`codex login status`, which spend no quota. Cross-provider fallback is off unless you turn it on with
+`SHELLM_FALLBACK_ENABLED`; a request can opt out of it, never in. What is left to
 you: one login per provider, and not pointing a batch job at it. If you need machine-scale
 volume, buy API access — that is what it is for.
 

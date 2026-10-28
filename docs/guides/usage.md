@@ -231,7 +231,8 @@ something is wrong. You can also set it yourself to correlate with your own logs
 | 504 | `timeout` | killed after `TIMEOUT_MS` | shorten the work or raise the limit |
 
 SheLLM never retries for you, by design; the one exception is cross-provider fallback, off unless
-the server sets `SHELLM_FALLBACK_ENABLED` or the request sends `x-shellm-allow-fallback: true`. If
+the server sets `SHELLM_FALLBACK_ENABLED`. A request can send `x-shellm-allow-fallback: false` to
+opt out while it is on; it cannot turn fallback on when the server has it off. If
 you retry, do it on 502/503/504 with a backoff, and never on 429 before `Retry-After`.
 
 ## 8. Limits you will hit

@@ -20,6 +20,7 @@ describe('circuit breaker probe slot', () => {
     assert.ok(!require.cache[require.resolve('../../src/providers/base')], 'base.js already captured the real PATH');
     process.env.CIRCUIT_BREAKER_THRESHOLD = '1';
     process.env.CIRCUIT_BREAKER_RESET_MS = '0';
+    process.env.SHELLM_FALLBACK_ENABLED = 'true';
     fakeBin = fs.mkdtempSync(path.join(os.tmpdir(), 'shellm-fakebin-'));
     modeFile = path.join(fakeBin, 'mode');
     fs.writeFileSync(path.join(fakeBin, 'claude'), `#!/usr/bin/env node
@@ -38,6 +39,7 @@ process.exit(1);
     process.env.PATH = originalPath;
     delete process.env.CIRCUIT_BREAKER_THRESHOLD;
     delete process.env.CIRCUIT_BREAKER_RESET_MS;
+    delete process.env.SHELLM_FALLBACK_ENABLED;
     fs.rmSync(fakeBin, { recursive: true, force: true });
   });
 

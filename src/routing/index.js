@@ -9,8 +9,10 @@ const config = require('../config');
 
 const FALLBACK_ENABLED = config.get('SHELLM_FALLBACK_ENABLED');
 
+// A request can opt out of fallback, never into it: the operator's setting is the ceiling, so a
+// key holder cannot send a claude request to the codex account the operator kept out of it.
 async function route({ model, prompt, parts, system, max_tokens, temperature, top_p, response_format, effort, longContext, request_id, allowFallback, job }) {
-  const useFallback = allowFallback ?? FALLBACK_ENABLED;
+  const useFallback = FALLBACK_ENABLED && allowFallback !== false;
   if (useFallback) {
     return routeWithFallback({ model, prompt, parts, system, max_tokens, temperature, top_p, response_format, effort, longContext, request_id, job });
   }
