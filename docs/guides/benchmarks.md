@@ -1,14 +1,64 @@
 # Benchmarks
 
-Every dated section below stands on its own; the first, from 2026-09-19, is the production
-latency run.
+Dated measurements. Each section names its machine, CLI version and sample count; a later run gets
+a section of its own and never rewrites an earlier one.
 
-The first latency measurement of SheLLM on the real server. Until now the only numbers were from
-a laptop (3–4 s spawned per request, ~1 s with a warm process), which is what
-[`IDENTITY.md`](../IDENTITY.md) decision 4 rested on until this run. These replace them with
-something measured where the service actually runs.
+## Where latency stands, and how to re-measure it
 
-## What was measured, and how
+| | Figure | Measured |
+|---|---|---|
+| Floor for any answer, end to end through the tunnel | about 2.5 s | [Production, 2026-09-19](#production-latency--2026-09-19-on-the-server) |
+| Network and tunnel inside it | about 0.26 s | same run |
+| Process startup inside it | about 0.9 s | [Process level on the server, 2026-09-21](#what-a-pool-would-actually-save) |
+| Generation once the process is up | about 250 characters/s | production, 2026-09-19 |
+| First text, `claude-sonnet` streaming | about 1.7 s | [Local, after the streaming fix](#streaming-before-and-after-the-fix) |
+
+These are `claude` 2.1.273 numbers. The production run predates both the streaming fix and
+`--tools ""` ([ADR-0002](../adr/0002-cli-internal-tools-off.md), about 0.2 s off locally), and
+nothing here has been re-run on the versions [`VERSIONS.md`](../../VERSIONS.md) pins today. Spawn
+per request is the decision ([ADR-0006](../adr/0006-spawn-per-request-stays.md)), so the startup
+component is permanent; latency work happens where it does not touch process lifetime.
+
+**From the request log, no quota.** On the server, where the database is:
+
+```bash
+node scripts/latency-breakdown.js --days 7 --provider claude
+```
+
+It splits real traffic into queue, upstream API time and the remainder — startup plus SheLLM's own
+layer. Only a provider that reports its upstream time can be split; codex reports none.
+
+**Against a running server, real requests:**
+
+```bash
+export SHELLM_BASE=https://shellm.example.com
+export SHELLM_KEY=shellm-...
+
+node scripts/bench.js --suite latency --iterations 3 --concurrency 6 --model claude-sonnet
+node scripts/bench.js --suite capabilities --model claude-sonnet
+node scripts/bench.js --suite latency --only streaming --iterations 5   # re-measure one thing
+```
+
+`--out run.json` records the raw result. Every request is real, so a full run spends about 50
+requests of subscription quota — and a benchmark outruns the default global rate limit
+(`SHELLM_GLOBAL_RPM` in [`src/config/schema.js`](../../src/config/schema.js)) on a fast instance,
+so raise it or use `--only`. The run reports how many requests came back 429 rather than quietly
+averaging them away.
+
+**Which catalog models answer** needs no server, only the two CLIs signed in:
+
+```bash
+node scripts/probe-models.js
+```
+
+It spends one completion per model and prints codex's rate-limit delta around the run.
+
+## Production latency — 2026-09-19, on the server
+
+The first latency measurement of SheLLM where the service actually runs. Before it, the only
+numbers were from a laptop: 3–4 s spawned per request, ~1 s with a warm process.
+
+### What was measured, and how
 
 | | |
 |---|---|
@@ -23,7 +73,7 @@ something measured where the service actually runs.
 **Three samples is not a distribution.** Read these as orders of magnitude, not as an SLA. Where
 the range is wide, the range is the finding.
 
-## Overhead floor — no CLI, no quota
+### Overhead floor — no CLI, no quota
 
 | Request | Median | Range |
 |---|---|---|
@@ -32,7 +82,7 @@ the range is wide, the range is the finding.
 
 Roughly a quarter of a second is network and tunnel. Every number below carries it.
 
-## Model — tiny prompt, one-word answer
+### Model — tiny prompt, one-word answer
 
 | Model | Median | Range |
 |---|---|---|
@@ -44,7 +94,7 @@ Roughly a quarter of a second is network and tunnel. Every number below carries 
 The models are indistinguishable here, haiku included. For a short answer you are paying for
 process startup, not for inference — **picking a cheaper model to go faster does not work**.
 
-## Prompt length — `claude-sonnet`, one-word answer
+### Prompt length — `claude-sonnet`, one-word answer
 
 | Prompt | Median | Range |
 |---|---|---|
@@ -55,7 +105,7 @@ process startup, not for inference — **picking a cheaper model to go faster do
 A 4 000-token prompt costs about a second more than a ten-token one, and no more than a
 500-token one. Context is close to free; do not compress a prompt to save latency.
 
-## Output length — `claude-sonnet`, tiny prompt
+### Output length — `claude-sonnet`, tiny prompt
 
 | Answer asked for | Median | Range |
 |---|---|---|
@@ -67,14 +117,15 @@ This is the dimension that costs. Generation runs at roughly 250 characters per 
 process is up. A request that asks for a page of text needs a client timeout well above the
 default of most HTTP libraries.
 
-## Streaming — 100-word answer on `/v1/chat/completions`
+### Streaming — 100-word answer on `/v1/chat/completions`
 
 | Model | Total (median) | Range | First chunk |
 |---|---|---|---|
 | `claude-haiku (stream)` | 17.60 s | 12.43–19.92 s | 17.11 s |
 | `claude-sonnet (stream)` | 6.00 s | 5.70–7.17 s | 5.44 s |
 
-This run is what uncovered the bug fixed in the section below: the first chunk arrived at 5.44 s
+This run is what uncovered the bug fixed in
+[*Streaming, before and after the fix*](#streaming-before-and-after-the-fix): the first chunk arrived at 5.44 s
 of a 6.00 s request, because the CLI finished and the whole answer was then flushed at once.
 
 **A correction worth stating plainly.** The first reading of this run was that `/v1/messages`
@@ -82,6 +133,33 @@ streamed properly, because its first *event* arrived at 0.76 s. It did not. That
 `message_start`, which SheLLM sends before calling the CLI at all. Measuring time-to-first-*text*
 instead — `scripts/bench.js` now records both — shows the Anthropic endpoint was flushing at the
 end too. A metric that moves when nothing real moved is worse than no metric.
+
+### Endpoint parity — `claude-sonnet`, tiny prompt
+
+| Endpoint | Median | Range |
+|---|---|---|
+| `POST /v1/chat/completions` | 2.78 s | 2.70–3.73 s |
+| `POST /v1/messages` | 4.07 s | 2.78–4.25 s |
+
+The ranges overlap; with three samples this is not evidence that one format is faster.
+
+### Concurrency — 6 at once, `claude-haiku`
+
+| Measure | Value |
+|---|---|
+| `6 parallel (claude-haiku)` — per-request median | 3.09 s (range 2.88–5.10 s) |
+| Wall clock for all six | 5.10 s |
+| Statuses | `200 200 200 200 200 200` |
+
+Six simultaneous requests all succeeded, none was rate limited, and the slowest paid about two
+extra seconds queueing. The queue does what it says; there is no need to serialize calls in a
+client, as long as you stay at this scale.
+
+### What this does not measure
+
+Token throughput as the provider counts it, a cold VPS, sustained load over hours, the behaviour
+at a usage limit, and anything at all about answer quality. This run covered Claude only; codex is measured in its own sections, on a dev
+container rather than the server.
 
 ## Streaming, before and after the fix
 
@@ -111,51 +189,6 @@ the server logs its first token from the provider at the same moment the client 
 (`ttft_ms=9534` in one traced haiku request, against `ttft_ms=1823` for sonnet). Yet the same CLI
 called directly produced haiku's first text in 1.6 s. Unexplained, reproducible, and reason enough
 not to pick haiku for latency.
-
-## Endpoint parity — `claude-sonnet`, tiny prompt
-
-| Endpoint | Median | Range |
-|---|---|---|
-| `POST /v1/chat/completions` | 2.78 s | 2.70–3.73 s |
-| `POST /v1/messages` | 4.07 s | 2.78–4.25 s |
-
-The ranges overlap; with three samples this is not evidence that one format is faster.
-
-## Concurrency — 6 at once, `claude-haiku`
-
-| Measure | Value |
-|---|---|
-| `6 parallel (claude-haiku)` — per-request median | 3.09 s (range 2.88–5.10 s) |
-| Wall clock for all six | 5.10 s |
-| Statuses | `200 200 200 200 200 200` |
-
-Six simultaneous requests all succeeded, none was rate limited, and the slowest paid about two
-extra seconds queueing. The queue does what it says; there is no need to serialize calls in a
-client, as long as you stay at this scale.
-
-## What this says about the warm pool
-
-> **Superseded.** [ADR-0006](../adr/0006-spawn-per-request-stays.md) dropped the warm pool, and
-> the "2.2 s per request is process startup" figure below is wrong — it subtracted network from an
-> end-to-end floor instead of measuring the process. *What a pool would actually save*, further
-> down this file, measures it at **0.9 s**. The section is kept because the dated run stands on its
-> own; read it as the question, not the answer.
-
-Decision 4 in [`IDENTITY.md`](../IDENTITY.md) said latency gets fixed by keeping processes warm.
-The server numbers do not contradict it, and now it has a baseline to beat:
-
-- The floor for **any** answer is about 2.5 s, of which 0.26 s is network. So roughly **2.2 s per
-  request is process startup** — the part a warm pool would remove.
-- On the laptop the same gap was 3–4 s spawned versus ~1 s warm. The server is faster than the
-  laptop was, so the prize is smaller than the original measurement suggested: expect to save
-  around 2 s, not 3.
-- Generation itself (250 chars/s) is untouched by any of this. For the long answers that cost 16 s,
-  a warm pool changes about 13 % of the wall clock.
-
-The honest reading: a warm pool is worth it for short, interactive calls and nearly irrelevant for
-long ones. **The streaming fix was the cheaper win, and it is already taken** — for
-`claude-sonnet` it moved perceived latency from 5.17 s to 1.71 s by changing two CLI flags,
-without touching process lifetime or the ban-risk boundary.
 
 ## CLI startup flags — 2026-09-19, local
 
@@ -210,8 +243,9 @@ Dev container, `codex` 0.154.0, tiny prompt and a one-word answer, **5 samples e
 | `codex` on master, before the change | — | — | 5 of 5 failed, n=5 |
 | `codex-gpt-5.6-sol` after the change | 4.49 s | 3.88–5.34 s | 5 of 5 answered, n=5 |
 
-`codex` with no suffix still fails after the change, for the same reason: with no `-m` the CLI
-falls back to its configured default. The fix is not that SheLLM got faster, it is that a caller
+`codex` with no suffix still failed after the change, for the same reason: with no `-m` the CLI
+fell back to its configured default. Since 2026-09-20 a bare `codex` gets its `-m` from the
+catalog (next section). The fix is not that SheLLM got faster, it is that a caller
 can now name a model the account can actually use — which is also why codex can appear in
 `GET /v1/models` at all.
 
@@ -306,40 +340,6 @@ working.
   the whole reason `src/catalog/models.json` is a fallback floor and a live probe outranks it.
 - Nothing about answer quality, or whether a model that returns one word handles a real prompt.
 
-## Reproduce it
-
-```bash
-export SHELLM_BASE=https://shellm.example.com
-export SHELLM_KEY=shellm-...
-
-node scripts/bench.js --suite latency --iterations 3 --concurrency 6 --model claude-sonnet
-node scripts/bench.js --suite capabilities --model claude-sonnet
-node scripts/bench.js --suite latency --only streaming --iterations 5   # re-measure one thing
-```
-
-`--out run.json` records the raw result. Every request is real, so a full run spends about 50
-requests of subscription quota — and a benchmark outruns the default 60 req/min global limit on a
-fast instance, so raise `SHELLM_GLOBAL_RPM` or use `--only`. The run reports how many requests came
-back 429 rather than quietly averaging them away.
-
-The catalog validation is a separate script and needs no server, only the two CLIs signed in:
-
-```bash
-node scripts/probe-models.js
-```
-
-It spends one completion per model and prints codex's rate-limit delta around the run.
-
-**The production table above predates the streaming fix.** Re-run the latency suite against the
-server after the next deploy and replace it.
-
-## What this does not measure
-
-Token throughput as the provider counts it, a cold VPS, sustained load over hours, the behaviour
-at a usage limit, and anything at all about answer quality. This section is the 2026-09-19
-production run, which covered Claude only; codex is measured in its own sections below, on a dev
-container rather than the server.
-
 ## Warm pool and CLI behaviour under concurrency — 2026-09-21, on the server
 
 Run on the production VPS as the service user, against the CLIs directly — no SheLLM, no tunnel.
@@ -409,7 +409,7 @@ Spawn, turn 1, then a second turn in the same process. `haiku`, tiny prompt, one
 **This corrects the 2026-09-19 figure.** That run derived "roughly 2.2 s per request is process
 startup" by subtracting network from a 2.5 s end-to-end floor. Measured at the process itself the
 startup component is about **0.9 s**; the rest of that floor is generation and protocol, which a
-pool does not touch. Decision 4 currently says "about 2 s on a short call" — on this box it is
+pool does not touch. Decision 4 said "about 2 s on a short call" at the time — on this box it is
 closer to one.
 
 ### Concurrency and the credential race
@@ -461,7 +461,8 @@ call the CLI" from "someone could log in at a terminal" — which, right now, ar
 
 **Spawn-per-request stays.** A warm process cannot be re-targeted, carries conversation history
 between turns, and has no documented reset, so decision 4's isolation requirement is what fails —
-and that decision drops the pool rather than redesigning around the leak. The latency it would have
+and [ADR-0006](../adr/0006-spawn-per-request-stays.md) drops the pool rather than redesigning
+around the leak. The latency it would have
 bought is about 0.9 s on a short call, not the 2 s previously estimated.
 
 ### Not measured, and why
@@ -539,18 +540,13 @@ server running on `CLAUDE_CODE_OAUTH_TOKEN` would not notice. (`auth status` acc
 string, so this proves which path is taken, not that a real token still serves; one real call on
 the server would settle that.)
 
-The middle row is the blocker. `.env.example` calls the token *"optional when the CLI is logged in
-for this user"* and `README.md` says to press Enter past it if `claude` is signed in — so an
-install authenticated by `claude login` alone is a documented, supported path, and a per-request
-config directory silently breaks every one of them.
+The middle row is the blocker. A file login for the service user is still accepted
+(`CLAUDE_CODE_OAUTH_TOKEN` in [`src/config/schema.js`](../../src/config/schema.js)), and `README.md`
+says pressing Enter at `shellm init` falls back to it — so an install authenticated by
+`claude login` alone is a documented path, and a per-request config directory silently breaks
+every one of them.
 
 **So this is a decision, not a fix.** Adopting it makes `CLAUDE_CODE_OAUTH_TOKEN` mandatory and
-retires a supported setup, which belongs in the security-model ADR alongside the other isolation
-controls — not in a patch that closes a concurrency finding. The finding it would close has held
+retires a supported setup, which is a security-model decision — not a patch that closes a
+concurrency finding. [ADR-0011](../adr/0011-security-model.md) does not take it, so it is still open. The finding it would close has held
 under every burst measured so far, so nothing is on fire while that decision waits.
-
-### Noted in passing
-
-`queued_ms` is recorded only on the non-streaming path (`res.locals.queued_ms` is set in the
-buffered branch of both endpoints and never in the streaming one), so a streamed request's queue
-time is absent from the log. The dashboard's "% spent queueing" reads only the rows that have it.
