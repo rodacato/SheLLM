@@ -20,6 +20,9 @@ updates:
     ignore:
       - dependency-name: better-sqlite3
         update-types: [version-update:semver-major]
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
 
   # The CLI pins. A major can change the flags or the output the adapters parse, so it moves by
   # hand; ci-cli-contract runs the proposed versions on the PR.
