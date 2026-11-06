@@ -29,15 +29,22 @@ Decisions already taken live in [`docs/adr/`](docs/adr/); ADR-0001 is the baseli
 
 ## Work tracking
 
-Planned work lives on a **private board**, never in a markdown file. An item becomes an **issue in
-this repo when work on it starts** — so the open issues are what is actually being worked on, not a
-backlog. A short list is the intended state.
+Work reaches a pull request by one of two lanes.
+
+**Planned work** — a feature, an idea, debt someone decided to pay — lives on a **private board**
+as a draft, never in a markdown file. The draft is **converted into an issue in this repo when work
+on it starts**, never copied into a fresh one — so the open issues are what is actually being
+worked on, not a backlog. A short list is the intended state. The pull request closes its issue
+with `Closes #<n>`, and carries the ADR if the work took a decision.
+
+**Maintenance found while working** — a fix, a chore, docs, CI, a dependency bump — may go straight
+to a pull request with no draft and no issue. The PR body is the record: what changed, why, and how
+it was verified. A maintenance PR that changes behaviour a user would notice was planned work, and
+gets a draft on the board.
 
 Two things stay off the issue tracker until they are fixed: anything with a security impact, and
 anything that would describe a live weakness in a service that handles subscription credentials.
-Report security problems as `SECURITY.md` describes.
-
-A pull request closes its issue with `Closes #<n>`.
+They stay drafts on the board. Report security problems as `SECURITY.md` describes.
 
 ## Design
 
