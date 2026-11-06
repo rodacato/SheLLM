@@ -71,8 +71,13 @@ codex --version
 5. **Errors are built with the factories in `src/errors.js`**, never as strings; the response
    shape depends on the path ([error shapes](docs/guides/architecture.md#error-shapes)).
 6. **No silent failures.** A failure returns a structured error with an actionable message.
-7. **Decisions already taken live in [`docs/adr/`](docs/adr/).** Reopening one means writing the
-   next ADR.
+7. **Decisions already taken live in [`docs/adr/`](docs/adr/).** Reopening one — a new or
+   reversed decision — means writing the next ADR; the old one's status line then reads
+   `superseded by ADR-NNNN` or `superseded in part by ADR-NNNN`. A refinement that leaves the
+   decision standing is edited in place as a dated `## Amendment, YYYY-MM-DD` section, and the
+   status line reads `accepted · amended YYYY-MM-DD`. When a later ADR refines an earlier one, the
+   earlier one gets an `**Amended by:** ADR-NNNN, YYYY-MM-DD — …` header line instead. An ADR born
+   from a piece of work lands in the pull request that carries it.
 
 ### Adding a setting
 
@@ -225,6 +230,7 @@ release branch, not after publication.
 - Keep PRs focused — one feature or fix per PR
 - PRs are rebase-merged, so every commit lands as written: each one must be a coherent working state
 - Keep the branch linear: rebase onto `master`, never merge `master` in
-- Include a brief description of what changed and why
+- Include a brief description of what changed, why, and how it was verified — for a PR with no
+  issue, the description is the only record
 - If the PR changes the API contract, document the change
 - All tests must pass before merging
